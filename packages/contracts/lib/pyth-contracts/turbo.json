@@ -1,0 +1,20 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "build:abis": {
+      "dependsOn": ["//#install:modules"],
+      "outputs": ["abis/**"]
+    },
+    "build:bin": {
+      "dependsOn": ["//#install:modules"],
+      "outputs": ["build/**"]
+    },
+    "build": {
+      "dependsOn": ["build:abis", "build:bin"]
+    },
+    "test": {
+      "dependsOn": ["build:abis"]
+    }
+  }
+}
