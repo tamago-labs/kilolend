@@ -2,7 +2,7 @@
 pragma solidity ^0.8.13;
 
 import {Test, console} from "forge-std/Test.sol";
-import {MockToken} from "../src/MockToken.sol";
+import { MockToken} from "../src/mocks/MockToken.sol";
 
 contract MockTokenTest is Test {
     MockToken public mockToken;
