@@ -75,12 +75,5 @@ contract MockPriceOracle is Ownable {
             emit PriceUpdated(tokens[i], _prices[i]);
         }
     }
-    
-    /**
-     * @dev Simulate stKAIA yield growth over time
-     */
-    function simulateStKaiaYield(uint256 additionalYield) external onlyOwner {
-        stKaiaExchangeRate += additionalYield;
-        emit StKaiaExchangeRateUpdated(stKaiaExchangeRate);
-    }
+     
 }
