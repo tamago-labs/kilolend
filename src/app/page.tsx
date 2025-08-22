@@ -1,19 +1,68 @@
 "use client";
-import styles from "./page.module.css";
-import {WalletButton} from "@/components/Wallet/Button/WalletButton";
-import {useState} from "react";
-import {useWalletAccountStore} from "@/components/Wallet/Account/auth.hooks";
+
+import styled from 'styled-components';
+import { useState } from "react";
+import { BottomNav, TabType } from '@/components/BottomNav/BottomNav';
+import { HomePage } from '@/components/Pages/HomePage';
+import { PortfolioPage } from '@/components/Pages/PortfolioPage';
+import { ActivityPage } from '@/components/Pages/ActivityPage';
+import { ProfilePage } from '@/components/Pages/ProfilePage';
+
+const PageContainer = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+`;
+
+const ContentArea = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
 
 export default function Home() {
-    const { account } = useWalletAccountStore();
-    const [count, setCount] = useState(0);
+    const [activeTab, setActiveTab] = useState<TabType>('home');
+
+    const handleAIDealsGenerated = (userQuery: string) => {
+        console.log('AI Query:', userQuery);
+        // TODO: Phase 4 - Generate AI deals and show Tinder cards
+        alert(`AI is processing: "${userQuery}"\n\nNext: Swipeable deals coming in Phase 4!`);
+    };
+
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'home':
+                return (
+                    <HomePage 
+                        onAIDealsGenerated={handleAIDealsGenerated}
+                    />
+                );
+            case 'portfolio':
+                return <PortfolioPage />;
+            case 'activity':
+                return <ActivityPage />;
+            case 'profile':
+                return <ProfilePage />;
+            default:
+                return (
+                    <HomePage 
+                        onAIDealsGenerated={handleAIDealsGenerated}
+                    />
+                );
+        }
+    };
 
     return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-          {account?<button className={styles.button} onClick={()=> setCount(count=> count+1)}>{count} combo</button>
-          :<WalletButton/>}
-      </main>
-    </div>
-  );
+        <PageContainer>
+            <ContentArea>
+                {renderContent()}
+            </ContentArea>
+            
+            <BottomNav 
+                activeTab={activeTab} 
+                onTabChange={setActiveTab}
+            />
+        </PageContainer>
+    );
 }

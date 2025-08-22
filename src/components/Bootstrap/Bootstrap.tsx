@@ -2,6 +2,24 @@
 
 import {ReactNode, useEffect} from "react";
 import {useKaiaWalletSecurity} from "@/components/Wallet/Sdk/walletSdk.hooks";
+import styled from 'styled-components';
+import { Header } from '@/components/Header/Header';
+
+const AppContainer = styled.div`
+  min-height: 100vh;
+  background-color: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+  max-width: 600px;
+  position: relative;
+`;
+
+const MainContent = styled.main`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+`;
 
 export type BootstrapProps = {
     className?: string;
@@ -12,7 +30,6 @@ export const Bootstrap = ({className, children}: BootstrapProps) => {
     const { isSuccess } = useKaiaWalletSecurity();
 
     useEffect(() => {
-
         const preventGoBack = () => {
             if(window.location.pathname === '/') {
                 const isConfirmed = confirm('Are you sure you want to go back?');
@@ -30,7 +47,15 @@ export const Bootstrap = ({className, children}: BootstrapProps) => {
     }, []);
 
     return (
-        <div className={className}>{isSuccess && children}</div>
+        <AppContainer className={className}>
+            {isSuccess && (
+                <>
+                    <Header />
+                    <MainContent>
+                        {children}
+                    </MainContent>
+                </>
+            )}
+        </AppContainer>
     )
 }
-
