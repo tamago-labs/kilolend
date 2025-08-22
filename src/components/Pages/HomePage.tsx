@@ -2,6 +2,10 @@
 
 import styled from 'styled-components';
 import { useState } from 'react';
+import { useMarketStore } from '@/stores/marketStore';
+import { useAIDealsStore } from '@/stores/aiDealsStore';
+import { usePriceUpdates } from '@/hooks/usePriceUpdates';
+import { AILoading } from '@/components/AIDeals/AILoading';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -176,28 +180,7 @@ const ExampleText = styled.span`
   line-height: 1.4;
 `;
 
-const LoadingState = styled.div`
-  text-align: center;
-  padding: 20px;
-  color: #64748b;
-`;
-
-const LoadingSpinner = styled.div`
-  width: 20px;
-  height: 20px;
-  border: 2px solid #e2e8f0;
-  border-top: 2px solid #00C300;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 12px;
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-// New Cards Section
+// Cards Section
 const CardsSection = styled.div`
   display: flex;
   flex-direction: column;
@@ -354,7 +337,25 @@ interface HomePageProps {
 
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const [userQuery, setUserQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const { isGenerating } = useAIDealsStore();
+
+  // Get market data from store
+  const { 
+    markets, 
+    totalTVL, 
+    bestSupplyAPY, 
+    bestBorrowAPR, 
+    avgUtilization,
+    getBestSupplyMarket,
+    getBestBorrowMarket 
+  } = useMarketStore();
+
+  // Set up live price updates
+  usePriceUpdates();
+
+  const bestSupplyMarket = getBestSupplyMarket();
+  const bestBorrowMarket = getBestBorrowMarket();
+  const activeMarkets = markets.filter(m => m.isActive);
 
   const exampleQuestions = [
     "I want safe returns around 4-5% APY with my stablecoins",
@@ -366,19 +367,35 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const handleAskAI = async () => {
     if (!userQuery.trim()) return;
     
-    setIsLoading(true);
-    
-    // Simulate AI processing time
-    setTimeout(() => {
-      setIsLoading(false);
-      onAIDealsGenerated?.(userQuery);
-      setUserQuery('');
-    }, 2000);
+    onAIDealsGenerated?.(userQuery);
+    setUserQuery('');
   };
 
   const handleExampleClick = (example: string) => {
     setUserQuery(example);
   };
+
+  const handleQuickAction = (marketId: string, action: 'supply' | 'borrow') => {
+    const market = markets.find(m => m.id === marketId);
+    if (!market) return;
+
+    alert(`Quick ${action} for ${market.symbol}\nAPY/APR: ${action === 'supply' ? market.supplyAPY : market.borrowAPR}%\n\nComing in Phase 8!`);
+  };
+
+  const formatTVL = (value: number) => {
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
+    return `$${value.toFixed(0)}`;
+  };
+
+  // Show loading state if AI is generating
+  if (isGenerating) {
+    return (
+      <PageContainer>
+        <AILoading query={userQuery} />
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -404,30 +421,21 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           Describe your lending or borrowing needs in natural language. Our AI will analyze the markets and create personalized deals just for you.
         </ChatDescription>
 
-        {isLoading ? (
-          <LoadingState>
-            <LoadingSpinner />
-            AI is analyzing markets and creating personalized deals...
-          </LoadingState>
-        ) : (
-          <>
-            <InputContainer>
-              <ChatInput
-                placeholder="e.g., I want to earn 5% on my USDT with low risk..."
-                value={userQuery}
-                onChange={(e) => setUserQuery(e.target.value)}
-                maxLength={500}
-              />
-            </InputContainer>
+        <InputContainer>
+          <ChatInput
+            placeholder="e.g., I want to earn 5% on my USDT with low risk..."
+            value={userQuery}
+            onChange={(e) => setUserQuery(e.target.value)}
+            maxLength={500}
+          />
+        </InputContainer>
 
-            <AskButton 
-              onClick={handleAskAI}
-              disabled={!userQuery.trim()}
-            >
-              Ask AI for Deals 🤖
-            </AskButton>
-          </>
-        )}
+        <AskButton 
+          onClick={handleAskAI}
+          disabled={!userQuery.trim()}
+        >
+          Ask AI for Deals 🤖
+        </AskButton>
 
         <ExampleQuestions>
           <ExampleTitle>Try these examples:</ExampleTitle>
@@ -448,22 +456,22 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           </CardDescription>
           <MarketGrid>
             <MarketStat>
-              <StatValue>$2.4M</StatValue>
+              <StatValue>{formatTVL(totalTVL)}</StatValue>
               <StatLabel>Total TVL</StatLabel>
               <StatChange positive>+12.5%</StatChange>
             </MarketStat>
             <MarketStat>
-              <StatValue>5.2%</StatValue>
+              <StatValue>{bestSupplyAPY.toFixed(1)}%</StatValue>
               <StatLabel>Best Supply APY</StatLabel>
-              <StatChange positive>USDT</StatChange>
+              <StatChange positive>{bestSupplyMarket?.symbol}</StatChange>
             </MarketStat>
             <MarketStat>
-              <StatValue>3.8%</StatValue>
+              <StatValue>{bestBorrowAPR.toFixed(1)}%</StatValue>
               <StatLabel>Best Borrow APR</StatLabel>
-              <StatChange>KRW</StatChange>
+              <StatChange>{bestBorrowMarket?.symbol}</StatChange>
             </MarketStat>
             <MarketStat>
-              <StatValue>76%</StatValue>
+              <StatValue>{avgUtilization.toFixed(0)}%</StatValue>
               <StatLabel>Avg Utilization</StatLabel>
               <StatChange>Healthy</StatChange>
             </MarketStat>
@@ -477,26 +485,27 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             Start earning or borrowing with one tap
           </CardDescription>
           <ActionsGrid>
-            <ActionButton>
-              <ActionIcon>💰</ActionIcon>
-              <ActionLabel>Supply USDT</ActionLabel>
-              <ActionRate>5.2% APY</ActionRate>
-            </ActionButton>
-            <ActionButton>
-              <ActionIcon>🏦</ActionIcon>
-              <ActionLabel>Supply KRW</ActionLabel>
-              <ActionRate>4.8% APY</ActionRate>
-            </ActionButton>
-            <ActionButton>
-              <ActionIcon>📈</ActionIcon>
-              <ActionLabel>Borrow USDT</ActionLabel>
-              <ActionRate>6.1% APR</ActionRate>
-            </ActionButton>
-            <ActionButton>
-              <ActionIcon>💸</ActionIcon>
-              <ActionLabel>Borrow KRW</ActionLabel>
-              <ActionRate>3.8% APR</ActionRate>
-            </ActionButton>
+            {activeMarkets.map((market, index) => (
+              <div key={index}>
+                <ActionButton 
+                  key={`supply-${market.id}`}
+                  onClick={() => handleQuickAction(market.id, 'supply')}
+                >
+                  <ActionIcon>{market.icon}</ActionIcon>
+                  <ActionLabel>Supply {market.symbol}</ActionLabel>
+                  <ActionRate>{market.supplyAPY.toFixed(1)}% APY</ActionRate>
+                </ActionButton>
+                
+                <ActionButton 
+                  key={`borrow-${market.id}`}
+                  onClick={() => handleQuickAction(market.id, 'borrow')}
+                >
+                  <ActionIcon>📈</ActionIcon>
+                  <ActionLabel>Borrow {market.symbol}</ActionLabel>
+                  <ActionRate>{market.borrowAPR.toFixed(1)}% APR</ActionRate>
+                </ActionButton>
+              </div>
+            ))}
           </ActionsGrid>
         </Card>
 

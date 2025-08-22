@@ -2,11 +2,14 @@
 
 import styled from 'styled-components';
 import { useState } from "react";
+import { useAppStore } from '@/stores/appStore';
+import { useAIDealsStore } from '@/stores/aiDealsStore';
 import { BottomNav, TabType } from '@/components/BottomNav/BottomNav';
 import { HomePage } from '@/components/Pages/HomePage';
 import { PortfolioPage } from '@/components/Pages/PortfolioPage';
 import { ActivityPage } from '@/components/Pages/ActivityPage';
 import { ProfilePage } from '@/components/Pages/ProfilePage';
+import { SwipeDeals } from '@/components/AIDeals/SwipeDeals';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -22,15 +25,47 @@ const ContentArea = styled.div`
 `;
 
 export default function Home() {
-    const [activeTab, setActiveTab] = useState<TabType>('home');
+    const { activeTab, setActiveTab } = useAppStore();
+    const { generateDeals, currentDeals } = useAIDealsStore();
+    const [showSwipeDeals, setShowSwipeDeals] = useState(false);
 
-    const handleAIDealsGenerated = (userQuery: string) => {
+    const handleAIDealsGenerated = async (userQuery: string) => {
         console.log('AI Query:', userQuery);
-        // TODO: Phase 4 - Generate AI deals and show Tinder cards
-        alert(`AI is processing: "${userQuery}"\n\nNext: Swipeable deals coming in Phase 4!`);
+        
+        // Generate AI deals
+        await generateDeals(userQuery);
+        
+        // Show swipe interface
+        setShowSwipeDeals(true);
+    };
+
+    const handleBackToHome = () => {
+        setShowSwipeDeals(false);
+    };
+
+    const handleExecuteDeals = (dealIds: string[]) => {
+        console.log('Executing deals:', dealIds);
+        
+        // Show success message
+        alert(`Successfully executed ${dealIds.length} deal${dealIds.length !== 1 ? 's' : ''}!\n\nCheck your Portfolio for new positions.`);
+        
+        // Navigate to portfolio to show new positions
+        setActiveTab('portfolio');
+        setShowSwipeDeals(false);
     };
 
     const renderContent = () => {
+        // Show swipe deals interface if deals are generated
+        if (showSwipeDeals && currentDeals.length > 0) {
+            return (
+                <SwipeDeals 
+                    onBack={handleBackToHome}
+                    onExecuteDeals={handleExecuteDeals}
+                />
+            );
+        }
+
+        // Show regular app content
         switch (activeTab) {
             case 'home':
                 return (
@@ -59,10 +94,13 @@ export default function Home() {
                 {renderContent()}
             </ContentArea>
             
-            <BottomNav 
-                activeTab={activeTab} 
-                onTabChange={setActiveTab}
-            />
+            {/* Hide bottom nav when in swipe mode */}
+            {!showSwipeDeals && (
+                <BottomNav 
+                    activeTab={activeTab} 
+                    onTabChange={setActiveTab}
+                />
+            )}
         </PageContainer>
     );
 }
