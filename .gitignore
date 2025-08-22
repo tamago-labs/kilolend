@@ -1,2 +1,5 @@
 node_modules/
 old/  
+.env.local
+.env
+.next/

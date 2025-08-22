@@ -1,0 +1,29 @@
+.root {
+  border: 1px solid black;
+  width: 100%;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+
+  @media (prefers-color-scheme: dark) {
+    border: 1px solid #cccccc;
+  }
+
+}
+
+.title {
+  font-size: 14px;
+}
+
+.footer {
+  margin-top: 10px;
+  display: flex;
+  gap:10px;
+  justify-content: center;
+}
+
+.button {
+  padding: 8px 12px;
+  border-radius: 99px;
+  border: none;
+}

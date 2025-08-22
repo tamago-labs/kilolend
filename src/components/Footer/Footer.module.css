@@ -1,0 +1,25 @@
+.root {
+    margin: auto auto env(safe-area-inset-bottom);
+    max-width: 600px;
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    border-top: 1px solid black;
+
+    @media (prefers-color-scheme: dark) {
+        border-top: 1px solid #cccccc;
+    }
+}
+
+.menu {
+    padding: 10px 20px;
+    color: #242424;
+    font-size: 18px;
+    @media (prefers-color-scheme: dark) {
+        color: #cccccc;
+    }
+}
+
+.active {
+    font-weight: 700;
+}

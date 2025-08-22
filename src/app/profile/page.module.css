@@ -1,0 +1,14 @@
+.body {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+}
+
+.button {
+    padding: 8px 12px;
+    border-radius: 99px;
+    border: none;
+}

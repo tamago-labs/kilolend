@@ -1,0 +1,11 @@
+.root {
+    margin: auto;
+    max-width: 600px;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    left:0;
+    right:0;
+}
