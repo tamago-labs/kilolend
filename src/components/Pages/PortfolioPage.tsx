@@ -72,9 +72,9 @@ const PositionsList = styled.div`
   gap: 12px;
 `;
 
-const PositionCard = styled.div<{ type: 'supply' | 'borrow' }>`
-  background: ${props => props.type === 'supply' ? '#f0fdf4' : '#fef2f2'};
-  border: 1px solid ${props => props.type === 'supply' ? '#00C300' : '#ef4444'};
+const PositionCard = styled.div<{ $type: 'supply' | 'borrow' }>`
+  background: ${props => props.$type === 'supply' ? '#f0fdf4' : '#fef2f2'};
+  border: 1px solid ${props => props.$type === 'supply' ? '#00C300' : '#ef4444'};
   border-radius: 12px;
   padding: 16px;
 `;
@@ -83,7 +83,7 @@ const PositionHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 `;
 
 const PositionInfo = styled.div`
@@ -100,12 +100,54 @@ const PositionTitle = styled.div`
 const PositionAmount = styled.div`
   font-size: 14px;
   color: #64748b;
+  margin-bottom: 4px;
 `;
 
-const PositionAPY = styled.div<{ type: 'supply' | 'borrow' }>`
+const PositionDetails = styled.div`
+  font-size: 12px;
+  color: #94a3b8;
+`;
+
+const PositionAPY = styled.div<{ $type: 'supply' | 'borrow' }>`
   font-size: 16px;
   font-weight: 600;
-  color: ${props => props.type === 'supply' ? '#00C300' : '#ef4444'};
+  color: ${props => props.$type === 'supply' ? '#00C300' : '#ef4444'};
+  text-align: right;
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+`;
+
+const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  
+  ${props => props.$variant === 'primary' ? `
+    background: linear-gradient(135deg, #00C300, #00A000);
+    color: white;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
+    }
+  ` : `
+    background: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    
+    &:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+  `}
 `;
 
 const EmptyState = styled.div`
@@ -125,7 +167,7 @@ const EmptyIcon = styled.div`
   margin: 0 auto 16px;
 `;
 
-const ActionButton = styled.button`
+const StartButton = styled.button`
   background: linear-gradient(135deg, #00C300, #00A000);
   color: white;
   border: none;
@@ -140,6 +182,17 @@ const ActionButton = styled.button`
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
   }
+`;
+
+const HealthFactorBadge = styled.div<{ $healthy: boolean }>`
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  background: ${props => props.$healthy ? '#dcfce7' : '#fee2e2'};
+  color: ${props => props.$healthy ? '#166534' : '#991b1b'};
+  margin-top: 8px;
 `;
 
 export const PortfolioPage = () => {
@@ -159,6 +212,15 @@ export const PortfolioPage = () => {
     return `$${value.toFixed(2)}`;
   };
 
+  const formatTime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   const getMarketInfo = (marketId: string) => {
     return markets.find(m => m.id === marketId);
   };
@@ -166,6 +228,20 @@ export const PortfolioPage = () => {
   const handleStartLending = () => {
     alert('Navigate to Home > AI Deal Finder to start lending!');
   };
+
+  const handleWithdraw = (positionId: string) => {
+    alert(`Withdraw functionality coming in Phase 8!\nPosition ID: ${positionId}`);
+  };
+
+  const handleRepay = (positionId: string) => {
+    alert(`Repay functionality coming in Phase 8!\nPosition ID: ${positionId}`);
+  };
+
+  const handleSupplyMore = (marketId: string) => {
+    alert(`Supply more to ${marketId.toUpperCase()} coming in Phase 8!`);
+  };
+
+  const isHealthy = healthFactor > 1.5;
 
   return (
     <PageContainer>
@@ -191,6 +267,9 @@ export const PortfolioPage = () => {
         <StatCard>
           <StatValue>{healthFactor > 999 ? '∞' : healthFactor.toFixed(2)}</StatValue>
           <StatLabel>Health Factor</StatLabel>
+          <HealthFactorBadge $healthy={isHealthy}>
+            {isHealthy ? 'Healthy' : 'At Risk'}
+          </HealthFactorBadge>
         </StatCard>
       </StatsGrid>
 
@@ -205,9 +284,9 @@ export const PortfolioPage = () => {
           </EmptyIcon>
           <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>No positions yet</h3>
           <p style={{ marginBottom: '16px' }}>Start lending or borrowing to see your positions here</p>
-          <ActionButton onClick={handleStartLending}>
+          <StartButton onClick={handleStartLending}>
             Start Lending
-          </ActionButton>
+          </StartButton>
         </EmptyState>
       ) : (
         <>
@@ -221,20 +300,31 @@ export const PortfolioPage = () => {
                   .map(position => {
                     const market = getMarketInfo(position.marketId);
                     return (
-                      <PositionCard key={position.id} type="supply">
+                      <PositionCard key={position.id} $type="supply">
                         <PositionHeader>
                           <PositionInfo>
                             <PositionTitle>
                               {market?.icon} {market?.symbol || position.marketId.toUpperCase()}
                             </PositionTitle>
                             <PositionAmount>
-                              {position.amount.toFixed(2)} ({formatValue(position.usdValue)})
+                              {position.amount.toFixed(2)} {market?.symbol} ({formatValue(position.usdValue)})
                             </PositionAmount>
+                            <PositionDetails>
+                              Started: {formatTime(position.timestamp)}
+                            </PositionDetails>
                           </PositionInfo>
-                          <PositionAPY type="supply">
+                          <PositionAPY $type="supply">
                             {position.apy.toFixed(2)}% APY
                           </PositionAPY>
                         </PositionHeader>
+                        <ActionButtons>
+                          <ActionButton $variant="primary" onClick={() => handleSupplyMore(position.marketId)}>
+                            Supply More
+                          </ActionButton>
+                          <ActionButton $variant="secondary" onClick={() => handleWithdraw(position.id)}>
+                            Withdraw
+                          </ActionButton>
+                        </ActionButtons>
                       </PositionCard>
                     );
                   })}
@@ -252,20 +342,31 @@ export const PortfolioPage = () => {
                   .map(position => {
                     const market = getMarketInfo(position.marketId);
                     return (
-                      <PositionCard key={position.id} type="borrow">
+                      <PositionCard key={position.id} $type="borrow">
                         <PositionHeader>
                           <PositionInfo>
                             <PositionTitle>
                               {market?.icon} {market?.symbol || position.marketId.toUpperCase()}
                             </PositionTitle>
                             <PositionAmount>
-                              {position.amount.toFixed(2)} ({formatValue(position.usdValue)})
+                              {position.amount.toFixed(2)} {market?.symbol} ({formatValue(position.usdValue)})
                             </PositionAmount>
+                            <PositionDetails>
+                              Started: {formatTime(position.timestamp)}
+                            </PositionDetails>
                           </PositionInfo>
-                          <PositionAPY type="borrow">
+                          <PositionAPY $type="borrow">
                             {position.apy.toFixed(2)}% APR
                           </PositionAPY>
                         </PositionHeader>
+                        <ActionButtons>
+                          <ActionButton $variant="primary" onClick={() => handleRepay(position.id)}>
+                            Repay
+                          </ActionButton>
+                          <ActionButton $variant="secondary" onClick={() => handleWithdraw(position.id)}>
+                            Partial Repay
+                          </ActionButton>
+                        </ActionButtons>
                       </PositionCard>
                     );
                   })}

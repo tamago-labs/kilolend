@@ -3,6 +3,7 @@
 import styled from 'styled-components';
 import { useState } from 'react';
 import { useMarketStore } from '@/stores/marketStore';
+import { useUserStore } from '@/stores/userStore';
 import { useAIDealsStore } from '@/stores/aiDealsStore';
 import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 import { AILoading } from '@/components/AIDeals/AILoading';
@@ -236,9 +237,9 @@ const StatLabel = styled.div`
   font-weight: 500;
 `;
 
-const StatChange = styled.span<{ positive?: boolean }>`
+const StatChange = styled.span<{ $positive?: boolean }>`
   font-size: 12px;
-  color: ${props => props.positive ? '#00C300' : '#ef4444'};
+  color: ${props => props.$positive ? '#00C300' : '#ef4444'};
   font-weight: 500;
 `;
 
@@ -331,13 +332,149 @@ const LearnButton = styled.button`
   }
 `;
 
+// Quick Action Modal
+const ModalOverlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+`;
+
+const ModalContent = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 400px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+`;
+
+const ModalTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ModalForm = styled.div`
+  margin-bottom: 20px;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 16px;
+`;
+
+const Label = styled.label`
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &:focus {
+    border-color: #00C300;
+  }
+`;
+
+const InfoBox = styled.div`
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+`;
+
+const InfoRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const InfoLabel = styled.span`
+  font-size: 14px;
+  color: #64748b;
+`;
+
+const InfoValue = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+`;
+
+const ModalButtons = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const ModalButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
+  flex: 1;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  
+  ${props => props.$variant === 'primary' ? `
+    background: linear-gradient(135deg, #00C300, #00A000);
+    color: white;
+    
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
+    }
+  ` : `
+    background: white;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+    
+    &:hover {
+      background: #f8fafc;
+    }
+  `}
+`;
+
 interface HomePageProps {
   onAIDealsGenerated?: (userQuery: string) => void;
 }
 
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const [userQuery, setUserQuery] = useState('');
+  const [showQuickAction, setShowQuickAction] = useState(false);
+  const [quickActionData, setQuickActionData] = useState<{
+    marketId: string;
+    action: 'supply' | 'borrow';
+  } | null>(null);
+  const [amount, setAmount] = useState('');
+  
   const { isGenerating } = useAIDealsStore();
+  const { addPosition, addTransaction } = useUserStore();
 
   // Get market data from store
   const { 
@@ -376,10 +513,42 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   };
 
   const handleQuickAction = (marketId: string, action: 'supply' | 'borrow') => {
-    const market = markets.find(m => m.id === marketId);
+    setQuickActionData({ marketId, action });
+    setShowQuickAction(true);
+    setAmount('');
+  };
+
+  const handleQuickActionSubmit = () => {
+    if (!quickActionData || !amount) return;
+
+    const market = markets.find(m => m.id === quickActionData.marketId);
     if (!market) return;
 
-    alert(`Quick ${action} for ${market.symbol}\nAPY/APR: ${action === 'supply' ? market.supplyAPY : market.borrowAPR}%\n\nComing in Phase 8!`);
+    const numAmount = parseFloat(amount);
+    const rate = quickActionData.action === 'supply' ? market.supplyAPY : market.borrowAPR;
+
+    // Add position
+    addPosition({
+      marketId: quickActionData.marketId,
+      type: quickActionData.action,
+      amount: numAmount,
+      apy: rate,
+      usdValue: numAmount
+    });
+
+    // Add transaction
+    addTransaction({
+      type: quickActionData.action,
+      marketId: quickActionData.marketId,
+      amount: numAmount,
+      status: 'confirmed',
+      usdValue: numAmount,
+      txHash: `0x${Math.random().toString(16).substring(2, 64).padStart(64, '0')}`
+    });
+
+    // Close modal and show success
+    setShowQuickAction(false);
+    alert(`Successfully ${quickActionData.action === 'supply' ? 'supplied' : 'borrowed'} ${amount} ${market.symbol}!\n\nCheck your Portfolio to see the new position.`);
   };
 
   const formatTVL = (value: number) => {
@@ -387,6 +556,10 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
     return `$${value.toFixed(0)}`;
   };
+
+  const currentMarket = quickActionData ? markets.find(m => m.id === quickActionData.marketId) : null;
+  const currentRate = currentMarket && quickActionData ? 
+    (quickActionData.action === 'supply' ? currentMarket.supplyAPY : currentMarket.borrowAPR) : 0;
 
   // Show loading state if AI is generating
   if (isGenerating) {
@@ -458,12 +631,12 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <MarketStat>
               <StatValue>{formatTVL(totalTVL)}</StatValue>
               <StatLabel>Total TVL</StatLabel>
-              <StatChange positive>+12.5%</StatChange>
+              <StatChange $positive={true}>+12.5%</StatChange>
             </MarketStat>
             <MarketStat>
               <StatValue>{bestSupplyAPY.toFixed(1)}%</StatValue>
               <StatLabel>Best Supply APY</StatLabel>
-              <StatChange positive>{bestSupplyMarket?.symbol}</StatChange>
+              <StatChange $positive={true}>{bestSupplyMarket?.symbol}</StatChange>
             </MarketStat>
             <MarketStat>
               <StatValue>{bestBorrowAPR.toFixed(1)}%</StatValue>
@@ -485,8 +658,8 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             Start earning or borrowing with one tap
           </CardDescription>
           <ActionsGrid>
-            {activeMarkets.map((market, index) => (
-              <div key={index}>
+            {activeMarkets.map((market) => (
+              <>
                 <ActionButton 
                   key={`supply-${market.id}`}
                   onClick={() => handleQuickAction(market.id, 'supply')}
@@ -504,7 +677,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                   <ActionLabel>Borrow {market.symbol}</ActionLabel>
                   <ActionRate>{market.borrowAPR.toFixed(1)}% APR</ActionRate>
                 </ActionButton>
-              </div>
+              </>
             ))}
           </ActionsGrid>
         </Card>
@@ -527,6 +700,61 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           </EducationalContent>
         </Card>
       </CardsSection>
+
+      {/* Quick Action Modal */}
+      {showQuickAction && quickActionData && currentMarket && (
+        <ModalOverlay onClick={() => setShowQuickAction(false)}>
+          <ModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>
+              {currentMarket.icon} {quickActionData.action === 'supply' ? 'Supply' : 'Borrow'} {currentMarket.symbol}
+            </ModalTitle>
+            
+            <ModalForm>
+              <FormGroup>
+                <Label>Amount ({currentMarket.symbol})</Label>
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  min="0"
+                  step="0.01"
+                />
+              </FormGroup>
+
+              {amount && (
+                <InfoBox>
+                  <InfoRow>
+                    <InfoLabel>{quickActionData.action === 'supply' ? 'APY' : 'APR'}:</InfoLabel>
+                    <InfoValue>{currentRate.toFixed(2)}%</InfoValue>
+                  </InfoRow>
+                  <InfoRow>
+                    <InfoLabel>Est. Monthly {quickActionData.action === 'supply' ? 'Earnings' : 'Cost'}:</InfoLabel>
+                    <InfoValue>${((parseFloat(amount) || 0) * currentRate / 100 / 12).toFixed(2)}</InfoValue>
+                  </InfoRow>
+                  <InfoRow>
+                    <InfoLabel>USD Value:</InfoLabel>
+                    <InfoValue>${(parseFloat(amount) || 0).toFixed(2)}</InfoValue>
+                  </InfoRow>
+                </InfoBox>
+              )}
+            </ModalForm>
+
+            <ModalButtons>
+              <ModalButton $variant="secondary" onClick={() => setShowQuickAction(false)}>
+                Cancel
+              </ModalButton>
+              <ModalButton 
+                $variant="primary" 
+                onClick={handleQuickActionSubmit}
+                disabled={!amount || parseFloat(amount) <= 0}
+              >
+                {quickActionData.action === 'supply' ? 'Supply' : 'Borrow'}
+              </ModalButton>
+            </ModalButtons>
+          </ModalContent>
+        </ModalOverlay>
+      )}
     </PageContainer>
   );
 };

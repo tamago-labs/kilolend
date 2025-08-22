@@ -1,6 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
+import { useState } from 'react';
 import { useUserStore } from '@/stores/userStore';
 import { useMarketStore } from '@/stores/marketStore';
 
@@ -23,19 +24,42 @@ const PageSubtitle = styled.p`
   line-height: 1.6;
 `;
 
+const FilterTabs = styled.div`
+  display: flex;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 4px;
+  margin-bottom: 20px;
+`;
+
+const FilterTab = styled.button<{ $active: boolean }>`
+  flex: 1;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  background: ${props => props.$active ? 'white' : 'transparent'};
+  color: ${props => props.$active ? '#1e293b' : '#64748b'};
+  box-shadow: ${props => props.$active ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none'};
+`;
+
 const TransactionsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
 `;
 
-const TransactionCard = styled.div<{ type: 'supply' | 'withdraw' | 'borrow' | 'repay' }>`
+const TransactionCard = styled.div<{ $type: 'supply' | 'withdraw' | 'borrow' | 'repay' }>`
   background: white;
   border-radius: 12px;
   padding: 16px;
   border: 1px solid #e2e8f0;
   border-left: 4px solid ${props => {
-    switch (props.type) {
+    switch (props.$type) {
       case 'supply': return '#00C300';
       case 'withdraw': return '#f59e0b';
       case 'borrow': return '#3b82f6';
@@ -78,13 +102,13 @@ const TransactionTime = styled.div`
   color: #94a3b8;
 `;
 
-const TransactionStatus = styled.div<{ status: 'pending' | 'confirmed' | 'failed' }>`
+const TransactionStatus = styled.div<{ $status: 'pending' | 'confirmed' | 'failed' }>`
   font-size: 12px;
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 4px;
   background: ${props => {
-    switch (props.status) {
+    switch (props.$status) {
       case 'confirmed': return '#dcfce7';
       case 'pending': return '#fef3c7';
       case 'failed': return '#fee2e2';
@@ -92,13 +116,38 @@ const TransactionStatus = styled.div<{ status: 'pending' | 'confirmed' | 'failed
     }
   }};
   color: ${props => {
-    switch (props.status) {
+    switch (props.$status) {
       case 'confirmed': return '#166534';
       case 'pending': return '#92400e';
       case 'failed': return '#991b1b';
       default: return '#374151';
     }
   }};
+`;
+
+const TransactionHash = styled.div`
+  font-size: 12px;
+  color: #64748b;
+  font-family: monospace;
+  margin-top: 8px;
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 6px;
+  word-break: break-all;
+`;
+
+const ViewOnExplorer = styled.button`
+  font-size: 12px;
+  color: #00C300;
+  border: none;
+  background: none;
+  cursor: pointer;
+  margin-top: 4px;
+  text-decoration: underline;
+  
+  &:hover {
+    color: #00A000;
+  }
 `;
 
 const EmptyState = styled.div`
@@ -118,7 +167,7 @@ const EmptyIcon = styled.div`
   margin: 0 auto 16px;
 `;
 
-const ActionButton = styled.button`
+const StartButton = styled.button`
   background: linear-gradient(135deg, #00C300, #00A000);
   color: white;
   border: none;
@@ -135,9 +184,12 @@ const ActionButton = styled.button`
   }
 `;
 
+type FilterType = 'all' | 'supply' | 'borrow';
+
 export const ActivityPage = () => {
   const { transactions } = useUserStore();
   const { markets } = useMarketStore();
+  const [filter, setFilter] = useState<FilterType>('all');
 
   const formatValue = (value: number) => {
     if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
@@ -189,6 +241,18 @@ export const ActivityPage = () => {
     alert('Navigate to Home > AI Deal Finder to start trading!');
   };
 
+  const handleViewOnExplorer = (txHash: string) => {
+    // In a real app, this would open the blockchain explorer
+    alert(`View transaction on explorer:\n${txHash}`);
+  };
+
+  const filteredTransactions = transactions.filter(tx => {
+    if (filter === 'all') return true;
+    if (filter === 'supply') return tx.type === 'supply' || tx.type === 'withdraw';
+    if (filter === 'borrow') return tx.type === 'borrow' || tx.type === 'repay';
+    return true;
+  });
+
   if (transactions.length === 0) {
     return (
       <PageContainer>
@@ -205,9 +269,9 @@ export const ActivityPage = () => {
           </EmptyIcon>
           <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>No activity yet</h3>
           <p style={{ marginBottom: '16px' }}>Your transactions will appear here</p>
-          <ActionButton onClick={handleStartTrading}>
+          <StartButton onClick={handleStartTrading}>
             Start Trading
-          </ActionButton>
+          </StartButton>
         </EmptyState>
       </PageContainer>
     );
@@ -217,14 +281,26 @@ export const ActivityPage = () => {
     <PageContainer>
       <PageTitle>Activity</PageTitle>
       <PageSubtitle>
-        View your transaction history
+        View your transaction history ({transactions.length} transaction{transactions.length !== 1 ? 's' : ''})
       </PageSubtitle>
       
+      <FilterTabs>
+        <FilterTab $active={filter === 'all'} onClick={() => setFilter('all')}>
+          All
+        </FilterTab>
+        <FilterTab $active={filter === 'supply'} onClick={() => setFilter('supply')}>
+          Supply
+        </FilterTab>
+        <FilterTab $active={filter === 'borrow'} onClick={() => setFilter('borrow')}>
+          Borrow
+        </FilterTab>
+      </FilterTabs>
+
       <TransactionsList>
-        {transactions.map(transaction => {
+        {filteredTransactions.map(transaction => {
           const market = getMarketInfo(transaction.marketId);
           return (
-            <TransactionCard key={transaction.id} type={transaction.type}>
+            <TransactionCard key={transaction.id} $type={transaction.type}>
               <TransactionHeader>
                 <TransactionInfo>
                   <TransactionTitle>
@@ -238,20 +314,32 @@ export const ActivityPage = () => {
                     {formatTime(transaction.timestamp)}
                   </TransactionTime>
                 </TransactionInfo>
-                <TransactionStatus status={transaction.status}>
+                <TransactionStatus $status={transaction.status}>
                   {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                 </TransactionStatus>
               </TransactionHeader>
               
               {transaction.txHash && (
-                <div style={{ fontSize: '12px', color: '#64748b', fontFamily: 'monospace' }}>
-                  TX: {transaction.txHash.slice(0, 8)}...{transaction.txHash.slice(-6)}
-                </div>
+                <TransactionHash>
+                  TX: {transaction.txHash}
+                  <ViewOnExplorer onClick={() => handleViewOnExplorer(transaction.txHash!)}>
+                    View on Explorer
+                  </ViewOnExplorer>
+                </TransactionHash>
               )}
             </TransactionCard>
           );
         })}
       </TransactionsList>
+
+      {filteredTransactions.length === 0 && filter !== 'all' && (
+        <EmptyState>
+          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>
+            No {filter} transactions yet
+          </h3>
+          <p>Start {filter === 'supply' ? 'supplying' : 'borrowing'} to see transactions here</p>
+        </EmptyState>
+      )}
     </PageContainer>
   );
 };
