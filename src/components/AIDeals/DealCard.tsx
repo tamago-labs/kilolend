@@ -34,7 +34,7 @@ const CardContainer = styled.div<{ $swiping?: 'left' | 'right' | null }>`
   position: relative;
   width: 100%;
   max-width: 380px;
-  height: 580px;
+  min-height: 580px;
   margin: 0 auto;
   perspective: 1000px;
   animation: ${slideIn} 0.5s ease-out;
