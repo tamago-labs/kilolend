@@ -260,23 +260,7 @@ const ActionsGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 `;
-
-const ActionButton = styled.button`
-  padding: 16px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  background: white;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
-
-  &:hover {
-    background: #f8fafc;
-    border-color: #00C300;
-    transform: translateY(-1px);
-  }
-`;
-
+ 
 const ActionIcon = styled.div`
   width: 32px;
   height: 32px;
@@ -300,6 +284,93 @@ const ActionRate = styled.div`
   font-size: 12px;
   color: #00C300;
   font-weight: 500;
+`;
+
+const MarketRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #00C300;
+    box-shadow: 0 4px 12px rgba(0, 195, 0, 0.1);
+  }
+`;
+
+const MarketInfo = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+const MarketIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  font-size: 18px;
+`;
+
+const MarketDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const MarketName = styled.div`
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 4px;
+`;
+
+const MarketRates = styled.div`
+  display: flex;
+  gap: 12px;
+`;
+
+const RateLabel = styled.div`
+  font-size: 12px;
+  color: #475569;
+`;
+
+const ActionButtons = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const ActionButton = styled.button<{ supply?: boolean; borrow?: boolean }>`
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+
+  ${({ supply }) =>
+    supply &&
+    `
+    background: #00C300;
+    color: white;
+    &:hover { background: #00a000; }
+  `}
+
+  ${({ borrow }) =>
+    borrow &&
+    `
+    background: #f3f4f6;
+    color: #1e293b;
+    &:hover { background: #e2e8f0; }
+  `}
 `;
 
 // Educational Card
@@ -646,10 +717,8 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 </HeroSection>
 
  <Card>
-          <EducationalContent>
-            <EducationalIcon>
-              👋
-            </EducationalIcon>
+          <EducationalContent> 
+            <CardTitle>👋</CardTitle>
             <EducationalText>
               <CardTitle style={{ marginBottom: '8px' }}>Welcome to KiloLend</CardTitle>
               <CardDescription style={{ marginBottom: '0' }}>
@@ -693,37 +762,38 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
       <CardsSection>
         
+ 
+        {/* Market Actions Card */}
+      <Card>
+        <CardTitle>⚡ Quick Actions</CardTitle>
+        <CardDescription>
+          Start earning or borrowing with one tap
+        </CardDescription>
 
-        {/* Quick Actions Card */}
-        <Card>
-          <CardTitle>⚡ Quick Actions</CardTitle>
-          <CardDescription>
-            Start earning or borrowing with one tap
-          </CardDescription>
-          <ActionsGrid>
-            {activeMarkets.map((market, index) => (
-              <div key={index}>
-                <ActionButton 
-                  key={`supply-${market.id}`}
-                  onClick={() => handleQuickAction(market.id, 'supply')}
-                >
-                  <ActionIcon>{market.icon}</ActionIcon>
-                  <ActionLabel>Supply {market.symbol}</ActionLabel>
-                  <ActionRate>{market.supplyAPY.toFixed(1)}% APY</ActionRate>
-                </ActionButton>
-                
-                <ActionButton 
-                  key={`borrow-${market.id}`}
-                  onClick={() => handleQuickAction(market.id, 'borrow')}
-                >
-                  <ActionIcon>📈</ActionIcon>
-                  <ActionLabel>Borrow {market.symbol}</ActionLabel>
-                  <ActionRate>{market.borrowAPR.toFixed(1)}% APR</ActionRate>
-                </ActionButton>
-              </div>
-            ))}
-          </ActionsGrid>
-        </Card>
+        {activeMarkets.map((market) => (
+          <MarketRow key={market.id}>
+            <MarketInfo>
+              <MarketIcon>{market.icon}</MarketIcon>
+              <MarketDetails>
+                <MarketName>{market.symbol}</MarketName>
+                <MarketRates>
+                  <RateLabel>Supply: {market.supplyAPY.toFixed(1)}% APY</RateLabel>
+                  <RateLabel>Borrow: {market.borrowAPR.toFixed(1)}% APR</RateLabel>
+                </MarketRates>
+              </MarketDetails>
+            </MarketInfo>
+
+            <ActionButtons>
+              <ActionButton onClick={() => handleQuickAction(market.id, 'supply')} supply>
+                Supply
+              </ActionButton>
+              <ActionButton onClick={() => handleQuickAction(market.id, 'borrow')} borrow>
+                Borrow
+              </ActionButton>
+            </ActionButtons>
+          </MarketRow>
+        ))}
+      </Card>
 
         {/* Educational Card */}
         <Card>
