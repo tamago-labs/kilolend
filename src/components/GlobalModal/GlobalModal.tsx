@@ -2,13 +2,14 @@
 
 import styled from 'styled-components';
 import { useModalStore } from '@/stores/modalStore';
-import { useMarketStore } from '@/stores/marketStore';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useUserStore } from '@/stores/userStore';
 import { useAIDealsStore } from '@/stores/aiDealsStore';
 import { useState, useEffect } from 'react';
 import useTokenBalances from '@/hooks/useTokenBalances';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { MarketInfo } from './MarketInfo';
+import { useTransactions } from '@/hooks/useTransactions';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -374,10 +375,11 @@ interface GlobalModalProps {
 
 export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
   const { isOpen, type, data, closeModal } = useModalStore();
-  const { markets } = useMarketStore();
+  const { markets } = useContractMarketStore();
   const { addPosition, addTransaction } = useUserStore();
   const { account } = useWalletAccountStore();
   const { balances, refreshBalances, getBalanceBySymbol } = useTokenBalances();
+  const { executeSupply, executeBorrow, isProcessing } = useTransactions();
   
   const [amount, setAmount] = useState('');
   const [userQuery, setUserQuery] = useState(data?.userQuery || '');

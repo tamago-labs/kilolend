@@ -2,11 +2,11 @@
 
 import styled from 'styled-components';
 import { useState } from 'react';
-import { useMarketStore } from '@/stores/marketStore';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useModalStore } from '@/stores/modalStore';
-import { usePriceUpdates } from '@/hooks/usePriceUpdates';
+import { useContractMarketData } from '@/hooks/useContractMarketData';
 import { AILoading } from '@/components/AIDeals/AILoading';
-import { useAIDealsStore } from '@/stores/aiDealsStore';
+import { useAIDealsStore } from '@/stores/aiDealsStore'; 
 
 const PageContainer = styled.div`
   flex: 1;
@@ -395,6 +395,25 @@ const EducationalIcon = styled.div`
 const EducationalText = styled.div`
   flex: 1;
 `;
+ 
+
+const LoadingIndicator = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  background: #f0fdf4;
+  border: 1px solid #00C300;
+  border-radius: 8px;
+  margin-bottom: 16px;
+`;
+
+const LoadingText = styled.span`
+  color: #166534;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+`;
 
 const LearnButton = styled.button`
   background: linear-gradient(135deg, #00C300, #00A000);
@@ -595,9 +614,9 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const [userQuery, setUserQuery] = useState('I want to earn 5% on my USDT with low risk');
   
   const { isGenerating } = useAIDealsStore();
-  const { openModal } = useModalStore();
-
-  // Get market data from store
+  const { openModal } = useModalStore(); 
+  
+  // Use contract-based market data
   const {
     markets,
     totalTVL,
@@ -605,26 +624,17 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     bestBorrowAPR,
     avgUtilization,
     getBestSupplyMarket,
-    getBestBorrowMarket
-  } = useMarketStore();
+    getBestBorrowMarket,
+    isLoading: marketsLoading
+  } = useContractMarketStore();
+  
+  // Initialize contract data fetching
+  useContractMarketData();
 
-  // Set up live price updates
-  usePriceUpdates();
-
-  const bestSupplyMarket = getBestSupplyMarket();
-  const bestBorrowMarket = getBestBorrowMarket();
-  const activeMarkets = markets.filter(m => m.isActive);
-
-  const exampleQuestions = [
-    "I want safe returns around 4-5% APY with my stablecoins",
-    "안전한 스테이블코인으로 4-5% 수익률을 원해요",
-    "Help me borrow against my KAIA tokens with low risk",
-    "KAIA 토큰을 담보로 낮은 리스크로 대출받고 싶어요",
-    "What's the best lending strategy for $1000 USDT?",
-    "1000달러 USDT로 최적의 렌딩 전략이 뭔가요?",
-    "I need to borrow KRW with minimal collateral requirements",
-    "최소한의 담보로 KRW를 빌리고 싶습니다"
-  ];
+  // const bestSupplyMarket = getBestSupplyMarket();
+  // const bestBorrowMarket = getBestBorrowMarket();
+  const activeMarkets = markets.filter(m => m.isActive && !m.isCollateralOnly);
+  
 
   const handleOpenAIModal = () => {
     openModal('ai-chat', { userQuery });
@@ -633,7 +643,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const handleQuickAction = (marketId: string, action: 'supply' | 'borrow') => {
     openModal(action, { marketId, action });
   };
-
+ 
   const formatTVL = (value: number) => {
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
@@ -650,7 +660,16 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   }
 
   return (
-    <PageContainer>
+    <PageContainer> 
+      
+      {/* Loading Indicator */}
+      {marketsLoading && (
+        <LoadingIndicator>
+          🔄
+          <LoadingText>Loading market data from contracts...</LoadingText>
+        </LoadingIndicator>
+      )}
+
       <HeroSection>
         <BrandLogo src="images/kilolend-logo.png" alt="KiloLend" />
         <HeroSubtitle>
@@ -673,12 +692,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
         </EducationalContent>
       </Card>
       <br />
-
-      {/* <SectionTitle>AI Deal Finder</SectionTitle>
-      <SectionSubtitle>
-        Tell our AI what you're looking for, and we'll find the perfect lending deals for you
-      </SectionSubtitle>*/}
-
+ 
       <ChatContainer>
         <ChatTitle>
           <BotIcon>AI</BotIcon>
@@ -712,7 +726,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             Start earning or borrowing with one tap
           </CardDescription>
 
-          {activeMarkets.map((market) => (
+          {activeMarkets.map((market: any) => (
             <MarketRow key={market.id}>
               <MarketInfo>
                 <MarketIcon>{market.icon}</MarketIcon>

@@ -117,7 +117,7 @@ export const useContractUserData = () => {
     } else {
       clearUserData();
     }
-  }, [account, fetchAllUserPositions, clearUserData]);
+  }, [account]);
 
   // Manual refresh
   const refreshData = useCallback(fetchAllUserPositions, [fetchAllUserPositions]);

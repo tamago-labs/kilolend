@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import { useModalStore } from '@/stores/modalStore';
-import { useMarketStore } from '@/stores/marketStore';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
 
 const QuickActionButton = styled.button<{ $variant?: 'supply' | 'borrow' }>`
   padding: 8px 16px;
@@ -57,7 +57,7 @@ export const QuickActions = ({
   size = 'medium' 
 }: QuickActionsProps) => {
   const { openModal } = useModalStore();
-  const { getMarketById } = useMarketStore();
+  const { getMarketById } = useContractMarketStore();
 
   const market = getMarketById(marketId);
   if (!market) return null;

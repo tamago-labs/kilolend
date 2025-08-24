@@ -194,7 +194,7 @@ export const useTokenBalances = () => {
       setBalances([]);
       setLastUpdate(null);
     }
-  }, [account, fetchAllBalances]);
+  }, [account]);
 
   /**
    * Auto-refresh balances every 30 seconds
@@ -207,7 +207,7 @@ export const useTokenBalances = () => {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [account, fetchAllBalances]);
+  }, [account]);
 
   return {
     balances,

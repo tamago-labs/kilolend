@@ -84,7 +84,7 @@ export const useContractMarketData = () => {
 
     const interval = setInterval(fetchAllMarketData, 30000);
     return () => clearInterval(interval);
-  }, [fetchAllMarketData]);
+  }, []);
 
   // Manual refresh function
   const refreshData = useCallback(fetchAllMarketData, [fetchAllMarketData]);

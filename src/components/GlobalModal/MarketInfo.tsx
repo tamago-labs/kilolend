@@ -1,7 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
-import { useMarketStore } from '@/stores/marketStore';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useUserStore } from '@/stores/userStore';
 
 const MarketInfoCard = styled.div`
@@ -109,7 +109,7 @@ interface MarketInfoProps {
 }
 
 export const MarketInfo = ({ marketId, actionType }: MarketInfoProps) => {
-  const { getMarketById } = useMarketStore();
+  const { getMarketById } = useContractMarketStore();
   const { positions } = useUserStore();
 
   const market = getMarketById(marketId);

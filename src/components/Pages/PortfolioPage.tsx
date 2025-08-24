@@ -2,9 +2,10 @@
 
 import styled from 'styled-components';
 import { useUserStore } from '@/stores/userStore';
-import { useMarketStore } from '@/stores/marketStore';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { QuickActions } from '@/components/GlobalModal/QuickActions';
 import { AIModalButton } from '@/components/GlobalModal/AIModalButton';
+import { useContractUserData } from '@/hooks/useContractUserData';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -206,7 +207,10 @@ export const PortfolioPage = () => {
     healthFactor 
   } = useUserStore();
   
-  const { markets } = useMarketStore();
+  const { markets } = useContractMarketStore();
+  
+  // Initialize contract user data fetching
+  useContractUserData();
 
   const formatValue = (value: number) => {
     if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;

@@ -19,5 +19,5 @@ export const usePriceUpdates = () => {
     }, priceUpdateInterval);
 
     return () => clearInterval(interval);
-  }, [updateMarkets, updateLastUpdated, priceUpdateInterval]);
+  }, []);
 };
