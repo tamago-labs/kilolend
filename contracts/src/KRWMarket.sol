@@ -132,5 +132,28 @@ contract KRWMarket is BaseLendingMarket {
     function convertKRWToUSD(uint256 krwAmount) external view returns (uint256) {
         return _convertStablecoinToUSD(krwAmount);
     }
+
+    /**
+     * @dev Get market info specific to KRW stablecoin
+     */
+    function getMarketInfo() external view returns (
+        uint256 totalSupply,
+        uint256 totalBorrow,
+        uint256 supplyAPY,
+        uint256 borrowAPR,
+        uint256 utilizationRate,
+        uint256 exchangeRate
+    ) {
+        totalSupply = totalStablecoinSupplied;
+        totalBorrow = totalStablecoinBorrowed;
+        utilizationRate = getUtilizationRate();
+        
+        uint256 borrowRate = interestRateModel.getBorrowRate(utilizationRate);
+        borrowAPR = borrowRate * 365 days / 1e18;
+        supplyAPY = interestRateModel.getSupplyRate(utilizationRate, borrowRate) * 365 days / 1e18;
+        
+        exchangeRate = oracle.getKRWUSDRate();
+    }
+
 }
         

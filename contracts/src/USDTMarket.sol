@@ -93,4 +93,27 @@ contract USDTMarket is BaseLendingMarket {
         uint256 maxBorrowUSDT = getMaxBorrowAmount(user);
         return _convertStablecoinToUSD(maxBorrowUSDT);
     }
+
+    /**
+     * @dev Get market info specific to USDT stablecoin
+     */
+    function getMarketInfo() external view returns (
+        uint256 totalSupply,
+        uint256 totalBorrow,
+        uint256 supplyAPY,
+        uint256 borrowAPR,
+        uint256 utilizationRate,
+        uint256 exchangeRate
+    ) {
+        totalSupply = totalStablecoinSupplied;
+        totalBorrow = totalStablecoinBorrowed;
+        utilizationRate = getUtilizationRate();
+        
+        uint256 borrowRate = interestRateModel.getBorrowRate(utilizationRate);
+        borrowAPR = borrowRate * 365 days / 1e18;
+        supplyAPY = interestRateModel.getSupplyRate(utilizationRate, borrowRate) * 365 days / 1e18;
+        
+        exchangeRate = 1e6;
+    }
+
 }

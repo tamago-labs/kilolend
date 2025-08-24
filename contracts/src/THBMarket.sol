@@ -138,16 +138,16 @@ contract THBMarket is BaseLendingMarket {
     /**
      * @dev Get market info specific to THB
      */
-    function getTHBMarketInfo() external view returns (
-        uint256 totalSupplyTHB,
-        uint256 totalBorrowTHB,
+    function getMarketInfo() external view returns (
+        uint256 totalSupply,
+        uint256 totalBorrow,
         uint256 supplyAPY,
         uint256 borrowAPR,
         uint256 utilizationRate,
         uint256 exchangeRate
     ) {
-        totalSupplyTHB = totalStablecoinSupplied;
-        totalBorrowTHB = totalStablecoinBorrowed;
+        totalSupply = totalStablecoinSupplied;
+        totalBorrow = totalStablecoinBorrowed;
         utilizationRate = getUtilizationRate();
         
         uint256 borrowRate = interestRateModel.getBorrowRate(utilizationRate);
@@ -157,30 +157,4 @@ contract THBMarket is BaseLendingMarket {
         exchangeRate = oracle.getTHBUSDRate();
     }
 
-    /**
-     * @dev Calculate interest earned on supply over time
-     * @param amount THB amount supplied
-     * @param timeInSeconds Time period in seconds
-     * @return Interest earned in THB
-     */
-    function calculateSupplyInterest(uint256 amount, uint256 timeInSeconds) external view returns (uint256) {
-        uint256 utilizationRate = getUtilizationRate();
-        uint256 borrowRate = interestRateModel.getBorrowRate(utilizationRate);
-        uint256 supplyRate = interestRateModel.getSupplyRate(utilizationRate, borrowRate);
-        
-        return amount * supplyRate * timeInSeconds / (1e18 * 365 days);
-    }
-
-    /**
-     * @dev Calculate interest owed on borrow over time
-     * @param amount THB amount borrowed
-     * @param timeInSeconds Time period in seconds
-     * @return Interest owed in THB
-     */
-    function calculateBorrowInterest(uint256 amount, uint256 timeInSeconds) external view returns (uint256) {
-        uint256 utilizationRate = getUtilizationRate();
-        uint256 borrowRate = interestRateModel.getBorrowRate(utilizationRate);
-        
-        return amount * borrowRate * timeInSeconds / (1e18 * 365 days);
-    }
 }

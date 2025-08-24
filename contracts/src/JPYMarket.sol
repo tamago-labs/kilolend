@@ -136,18 +136,18 @@ contract JPYMarket is BaseLendingMarket {
     }
 
     /**
-     * @dev Get market info specific to JPY
+     * @dev Get market info specific to JPY stablecoin
      */
-    function getJPYMarketInfo() external view returns (
-        uint256 totalSupplyJPY,
-        uint256 totalBorrowJPY,
+    function getMarketInfo() external view returns (
+        uint256 totalSupply,
+        uint256 totalBorrow,
         uint256 supplyAPY,
         uint256 borrowAPR,
         uint256 utilizationRate,
         uint256 exchangeRate
     ) {
-        totalSupplyJPY = totalStablecoinSupplied;
-        totalBorrowJPY = totalStablecoinBorrowed;
+        totalSupply = totalStablecoinSupplied;
+        totalBorrow = totalStablecoinBorrowed;
         utilizationRate = getUtilizationRate();
         
         uint256 borrowRate = interestRateModel.getBorrowRate(utilizationRate);
