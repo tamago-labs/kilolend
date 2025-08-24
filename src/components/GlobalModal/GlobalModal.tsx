@@ -5,7 +5,10 @@ import { useModalStore } from '@/stores/modalStore';
 import { useMarketStore } from '@/stores/marketStore';
 import { useUserStore } from '@/stores/userStore';
 import { useAIDealsStore } from '@/stores/aiDealsStore';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import useTokenBalances from '@/hooks/useTokenBalances';
+import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import { MarketInfo } from './MarketInfo';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -210,6 +213,155 @@ const ExampleCard = styled.button`
   }
 `;
 
+const BalanceSection = styled.div`
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+`;
+
+const BalanceHeader = styled.div`
+  display: flex;
+  justify-content: between;
+  align-items: center;
+  margin-bottom: 8px;
+`;
+
+const BalanceTitle = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+`;
+
+const BalanceRefresh = styled.button`
+  background: none;
+  border: none;
+  color: #00C300;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #f0fdf4;
+  }
+`;
+
+const BalanceInfo = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const BalanceAmount = styled.span`
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e293b;
+`;
+
+const BalanceUSD = styled.span`
+  font-size: 12px;
+  color: #64748b;
+`;
+
+const WalletConnectPrompt = styled.div`
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  text-align: center;
+`;
+
+const ConnectText = styled.p`
+  font-size: 14px;
+  color: #92400e;
+  margin-bottom: 8px;
+`;
+
+const ConnectButton = styled.button`
+  background: #f59e0b;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #d97706;
+  }
+`;
+
+const ValidationMessage = styled.div<{ $error?: boolean }>`
+  font-size: 12px;
+  color: ${props => props.$error ? '#ef4444' : '#00C300'};
+  margin-top: 4px;
+  padding: 4px 0;
+`;
+
+const MaxButton = styled.button`
+  background: #e2e8f0;
+  color: #64748b;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+  transition: all 0.2s;
+  
+  &:hover {
+    background: #cbd5e1;
+    color: #475569;
+  }
+`;
+
+const TransactionDetails = styled.div`
+  background: #f8fafc;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 16px;
+  border-left: 3px solid #00C300;
+`;
+
+const DetailRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const DetailLabel = styled.span`
+  font-size: 12px;
+  color: #64748b;
+`;
+
+const DetailValue = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+`;
+
+const NetworkFee = styled.div`
+  background: #fef3c7;
+  border-radius: 6px;
+  padding: 8px;
+  margin-top: 12px;
+  font-size: 11px;
+  color: #92400e;
+  text-align: center;
+`;
+
 const ExampleText = styled.span`
   color: #475569;
   font-size: 14px;
@@ -224,26 +376,117 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
   const { isOpen, type, data, closeModal } = useModalStore();
   const { markets } = useMarketStore();
   const { addPosition, addTransaction } = useUserStore();
+  const { account } = useWalletAccountStore();
+  const { balances, refreshBalances, getBalanceBySymbol } = useTokenBalances();
+  
   const [amount, setAmount] = useState('');
   const [userQuery, setUserQuery] = useState(data?.userQuery || '');
+  const [validationError, setValidationError] = useState('');
+  const [isValidating, setIsValidating] = useState(false);
+
+  // Update userQuery when modal data changes
+  useEffect(() => {
+    if (data?.userQuery) {
+      setUserQuery(data.userQuery);
+    }
+  }, [data?.userQuery]);
 
   if (!isOpen || !type) return null;
 
   const currentMarket = data?.marketId ? markets.find(m => m.id === data.marketId) : null;
+  
+  // Get current token balance
+  const currentTokenBalance = currentMarket ? getBalanceBySymbol(currentMarket.symbol as any) : null;
+  const currentRate = currentMarket && data?.action ?
+    (data.action === 'supply' ? currentMarket.supplyAPY : currentMarket.borrowAPR) : 0;
 
-  const exampleQuestions = [
-    "I want safe returns around 4-5% APY with my stablecoins",
-    "안전한 스테이블코인으로 4-5% 수익률을 원해요",
-    "Help me borrow against my KAIA tokens with low risk",
-    "KAIA 토큰을 담보로 낮은 리스크로 대출받고 싶어요",
-    "What's the best lending strategy for $1000 USDT?",
-    "1000달러 USDT로 최적의 렌딩 전략이 뭔가요?",
-    "I need to borrow KRW with minimal collateral requirements",
-    "최소한의 담보로 KRW를 빌리고 싶습니다"
-  ];
+  // Validation function
+  const validateAmount = (inputAmount: string, balance: string | null) => {
+    setValidationError('');
+    
+    if (!inputAmount || parseFloat(inputAmount) <= 0) {
+      setValidationError('Amount must be greater than 0');
+      return false;
+    }
+    
+    if (type === 'supply' && balance) {
+      const numBalance = parseFloat(balance);
+      const numAmount = parseFloat(inputAmount);
+      
+      if (numAmount > numBalance) {
+        setValidationError('Insufficient balance');
+        return false;
+      }
+    }
+    
+    // Minimum amount validation (example: 0.01 for most tokens)
+    if (parseFloat(inputAmount) < 0.01) {
+      setValidationError('Amount too small (minimum 0.01)');
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Handle amount input change with validation
+  const handleAmountChange = (value: string) => {
+    setAmount(value);
+    
+    if (type === 'supply' || type === 'borrow') {
+      validateAmount(value, currentTokenBalance?.balance || null);
+    }
+  };
+
+  // Handle max button click
+  const handleMaxClick = () => {
+    if (type === 'supply' && currentTokenBalance?.balance) {
+      // Leave some for gas fees (0.001 for native, 5% for tokens)
+      const balance = parseFloat(currentTokenBalance.balance);
+      const maxAmount = currentMarket?.symbol === 'KAIA' 
+        ? Math.max(0, balance - 0.001)
+        : balance * 0.95;
+      
+      const maxAmountStr = maxAmount.toFixed(6);
+      setAmount(maxAmountStr);
+      validateAmount(maxAmountStr, currentTokenBalance.balance);
+    }
+  };
+
+  // Enhanced transaction estimates
+  const calculateTransactionFee = () => {
+    // Estimated gas fees on Kaia testnet
+    return 0.0001; // ~0.0001 KAIA for most transactions
+  };
+
+  const calculateMonthlyReturn = () => {
+    if (!amount || !currentRate) return 0;
+    return (parseFloat(amount) * currentRate / 100 / 12);
+  };
+
+  const calculateHealthImpact = () => {
+    // Simplified health factor calculation
+    // This would be more complex with real collateral data
+    if (type === 'borrow' && amount) {
+      return 'Health factor will decrease';
+    }
+    if (type === 'supply' && amount) {
+      return 'Increases lending power';
+    }
+    return '';
+  };
 
   const handleQuickActionSubmit = () => {
     if (!data || !currentMarket || !amount) return;
+    
+    // Validate before submission
+    if (!validateAmount(amount, currentTokenBalance?.balance || null)) {
+      return;
+    }
+    
+    if (!account) {
+      setValidationError('Please connect your wallet first');
+      return;
+    }
 
     const numAmount = parseFloat(amount);
     const rate = data.action === 'supply' ? currentMarket.supplyAPY : currentMarket.borrowAPR;
@@ -267,6 +510,13 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
 
     closeModal();
     setAmount('');
+    setValidationError('');
+    
+    // Refresh balances after transaction
+    setTimeout(() => {
+      refreshBalances();
+    }, 1000);
+    
     alert(`Successfully ${data.action === 'supply' ? 'supplied' : 'borrowed'} ${amount} ${currentMarket.symbol}!\n\nCheck your Portfolio to see the new position.`);
   };
 
@@ -281,9 +531,17 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
   const handleExampleClick = (example: string) => {
     setUserQuery(example);
   };
-
-  const currentRate = currentMarket && data?.action ?
-    (data.action === 'supply' ? currentMarket.supplyAPY : currentMarket.borrowAPR) : 0;
+  
+  const exampleQuestions = [
+    "I want safe returns around 4-5% APY with my stablecoins",
+    "안전한 스테이블코인으로 4-5% 수익률을 원해요",
+    "Help me borrow against my KAIA tokens with low risk",
+    "KAIA 토큰을 담보로 낮은 리스크로 대출받고 싶어요",
+    "What's the best lending strategy for $1000 USDT?",
+    "1000달러 USDT로 최적의 렌딩 전략이 뭔가요?",
+    "I need to borrow KRW with minimal collateral requirements",
+    "최소한의 담보로 KRW를 빌리고 싶습니다"
+  ];
 
   const renderModalContent = () => {
     switch (type) {
@@ -297,34 +555,91 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
               {currentMarket.icon} {type === 'supply' ? 'Supply' : 'Borrow'} {currentMarket.symbol}
             </ModalTitle>
 
+            {/* Market Information */}
+            <MarketInfo marketId={data.marketId!} actionType={data.action!} />
+
+            {/* Wallet Connection Check */}
+            {!account && (
+              <WalletConnectPrompt>
+                <ConnectText>Connect your wallet to continue</ConnectText>
+                <ConnectButton onClick={() => alert('Wallet connection handled by app')}>
+                  Connect Wallet
+                </ConnectButton>
+              </WalletConnectPrompt>
+            )}
+
+            {/* Token Balance Display */}
+            {account && currentTokenBalance && (
+              <BalanceSection>
+                <BalanceHeader>
+                  <BalanceTitle>Available Balance</BalanceTitle>
+                  <BalanceRefresh onClick={refreshBalances}>
+                    🔄 Refresh
+                  </BalanceRefresh>
+                </BalanceHeader>
+                <BalanceInfo>
+                  <div>
+                    <BalanceAmount>
+                      {currentTokenBalance.isLoading ? 'Loading...' : currentTokenBalance.formattedBalance} {currentMarket.symbol}
+                    </BalanceAmount>
+                    <br />
+                    <BalanceUSD>
+                      ≈ ${((parseFloat(currentTokenBalance.balance || '0')) * currentMarket.price).toFixed(2)} USD
+                    </BalanceUSD>
+                  </div>
+                </BalanceInfo>
+              </BalanceSection>
+            )}
+
             <ModalForm>
               <FormGroup>
-                <Label>Amount ({currentMarket.symbol})</Label>
+                <Label>
+                  Amount ({currentMarket.symbol})
+                  {type === 'supply' && currentTokenBalance && (
+                    <MaxButton onClick={handleMaxClick}>MAX</MaxButton>
+                  )}
+                </Label>
                 <Input
                   type="number"
                   placeholder="0.00"
                   value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
+                  onChange={(e) => handleAmountChange(e.target.value)}
                   min="0"
-                  step="0.01"
+                  step="0.000001"
+                  disabled={!account}
                 />
+                {validationError && (
+                  <ValidationMessage $error>
+                    {validationError}
+                  </ValidationMessage>
+                )}
               </FormGroup>
 
-              {amount && (
-                <InfoBox>
-                  <InfoRow>
-                    <InfoLabel>{type === 'supply' ? 'APY' : 'APR'}:</InfoLabel>
-                    <InfoValue>{currentRate.toFixed(2)}%</InfoValue>
-                  </InfoRow>
-                  <InfoRow>
-                    <InfoLabel>Est. Monthly {type === 'supply' ? 'Earnings' : 'Cost'}:</InfoLabel>
-                    <InfoValue>${((parseFloat(amount) || 0) * currentRate / 100 / 12).toFixed(2)}</InfoValue>
-                  </InfoRow>
-                  <InfoRow>
-                    <InfoLabel>USD Value:</InfoLabel>
-                    <InfoValue>${(parseFloat(amount) || 0).toFixed(2)}</InfoValue>
-                  </InfoRow>
-                </InfoBox>
+              {amount && parseFloat(amount) > 0 && !validationError && (
+                <TransactionDetails>
+                  <DetailRow>
+                    <DetailLabel>{type === 'supply' ? 'APY' : 'APR'}:</DetailLabel>
+                    <DetailValue>{currentRate.toFixed(2)}%</DetailValue>
+                  </DetailRow>
+                  <DetailRow>
+                    <DetailLabel>Est. Monthly {type === 'supply' ? 'Earnings' : 'Cost'}:</DetailLabel>
+                    <DetailValue>${calculateMonthlyReturn().toFixed(4)}</DetailValue>
+                  </DetailRow>
+                  <DetailRow>
+                    <DetailLabel>USD Value:</DetailLabel>
+                    <DetailValue>${((parseFloat(amount) || 0) * currentMarket.price).toFixed(2)}</DetailValue>
+                  </DetailRow>
+                  {calculateHealthImpact() && (
+                    <DetailRow>
+                      <DetailLabel>Impact:</DetailLabel>
+                      <DetailValue>{calculateHealthImpact()}</DetailValue>
+                    </DetailRow>
+                  )}
+                  
+                  <NetworkFee>
+                    Estimated network fee: ~{calculateTransactionFee().toFixed(4)} KAIA
+                  </NetworkFee>
+                </TransactionDetails>
               )}
             </ModalForm>
 
@@ -335,9 +650,11 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
               <ModalButton
                 $variant="primary"
                 onClick={handleQuickActionSubmit}
-                disabled={!amount || parseFloat(amount) <= 0}
+                disabled={!account || !amount || parseFloat(amount) <= 0 || !!validationError || currentTokenBalance?.isLoading}
               >
-                {type === 'supply' ? 'Supply' : 'Borrow'}
+                {!account ? 'Connect Wallet' : 
+                 currentTokenBalance?.isLoading ? 'Loading...' :
+                 type === 'supply' ? 'Supply' : 'Borrow'}
               </ModalButton>
             </ModalButtons>
           </>
