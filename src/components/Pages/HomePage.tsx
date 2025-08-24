@@ -92,26 +92,28 @@ const ChatDescription = styled.p`
 const InputContainer = styled.div`
   position: relative;
   margin-bottom: 16px;
+  cursor: pointer;
 `;
 
-const ChatInput = styled.textarea`
+const ChatInput = styled.div`
   width: 100%;
   padding: 12px 16px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   font-size: 16px;
   line-height: 1.5;
-  resize: none;
   min-height: 80px;
   outline: none;
   transition: border-color 0.2s;
+  background: #f8fafc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  color: #94a3b8;
 
-  &:focus {
+  &:hover {
     border-color: #00C300;
-  }
-
-  &::placeholder {
-    color: #94a3b8;
+    background: #f1f5f9;
   }
 `;
 
@@ -460,13 +462,59 @@ const ModalButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   `}
 `;
 
+// AI Chat Modal Styles
+const AIModalContent = styled.div`
+  background: white;
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+`;
+
+const AIModalInput = styled.textarea`
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 16px;
+  line-height: 1.5;
+  resize: none;
+  min-height: 100px;
+  outline: none;
+  transition: border-color 0.2s;
+  font-family: inherit;
+
+  &:focus {
+    border-color: #00C300;
+  }
+
+  &::placeholder {
+    color: #94a3b8;
+  }
+`;
+
+const AIModalExamples = styled.div`
+  margin-top: 16px;
+  max-height: 200px;
+  overflow-y: auto;
+`;
+
+const AIModalButtons = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+`;
+
 interface HomePageProps {
   onAIDealsGenerated?: (userQuery: string) => void;
 }
 
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
-  const [userQuery, setUserQuery] = useState('');
+  const [userQuery, setUserQuery] = useState('I want to earn 5% on my USDT with low risk');
   const [showQuickAction, setShowQuickAction] = useState(false);
+  const [showAIModal, setShowAIModal] = useState(false);
   const [quickActionData, setQuickActionData] = useState<{
     marketId: string;
     action: 'supply' | 'borrow';
@@ -496,14 +544,23 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
   const exampleQuestions = [
     "I want safe returns around 4-5% APY with my stablecoins",
+    "안전한 스테이블코인으로 4-5% 수익률을 원해요",
     "Help me borrow against my KAIA tokens with low risk",
+    "KAIA 토큰을 담보로 낮은 리스크로 대출받고 싶어요",
     "What's the best lending strategy for $1000 USDT?",
-    "I need to borrow KRW with minimal collateral requirements"
+    "1000달러 USDT로 최적의 렌딩 전략이 뭔가요?",
+    "I need to borrow KRW with minimal collateral requirements",
+    "최소한의 담보로 KRW를 빌리고 싶습니다"
   ];
+
+  const handleOpenAIModal = () => {
+    setShowAIModal(true);
+  };
 
   const handleAskAI = async () => {
     if (!userQuery.trim()) return;
     
+    setShowAIModal(false);
     onAIDealsGenerated?.(userQuery);
     setUserQuery('');
   };
@@ -594,62 +651,21 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           Describe your lending or borrowing needs in natural language. Our AI will analyze the markets and create personalized deals just for you.
         </ChatDescription>
 
-        <InputContainer>
-          <ChatInput
-            placeholder="e.g., I want to earn 5% on my USDT with low risk..."
-            value={userQuery}
-            onChange={(e) => setUserQuery(e.target.value)}
-            maxLength={500}
-          />
+        <InputContainer onClick={handleOpenAIModal}>
+          <ChatInput>
+            {userQuery}
+          </ChatInput>
         </InputContainer>
 
         <AskButton 
-          onClick={handleAskAI}
-          disabled={!userQuery.trim()}
+          onClick={handleOpenAIModal}
         >
           Ask AI for Deals 🤖
         </AskButton>
-
-        <ExampleQuestions>
-          <ExampleTitle>Try these examples:</ExampleTitle>
-          {exampleQuestions.map((example, index) => (
-            <ExampleCard key={index} onClick={() => handleExampleClick(example)}>
-              <ExampleText>"{example}"</ExampleText>
-            </ExampleCard>
-          ))}
-        </ExampleQuestions>
       </ChatContainer>
 
       <CardsSection>
-        {/* Market Summary Card */}
-        <Card>
-          <CardTitle>📊 Market Summary</CardTitle>
-          <CardDescription>
-            Live market data and current lending rates
-          </CardDescription>
-          <MarketGrid>
-            <MarketStat>
-              <StatValue>{formatTVL(totalTVL)}</StatValue>
-              <StatLabel>Total TVL</StatLabel>
-              <StatChange $positive={true}>+12.5%</StatChange>
-            </MarketStat>
-            <MarketStat>
-              <StatValue>{bestSupplyAPY.toFixed(1)}%</StatValue>
-              <StatLabel>Best Supply APY</StatLabel>
-              <StatChange $positive={true}>{bestSupplyMarket?.symbol}</StatChange>
-            </MarketStat>
-            <MarketStat>
-              <StatValue>{bestBorrowAPR.toFixed(1)}%</StatValue>
-              <StatLabel>Best Borrow APR</StatLabel>
-              <StatChange>{bestBorrowMarket?.symbol}</StatChange>
-            </MarketStat>
-            <MarketStat>
-              <StatValue>{avgUtilization.toFixed(0)}%</StatValue>
-              <StatLabel>Avg Utilization</StatLabel>
-              <StatChange>Healthy</StatChange>
-            </MarketStat>
-          </MarketGrid>
-        </Card>
+        
 
         {/* Quick Actions Card */}
         <Card>
@@ -658,8 +674,8 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             Start earning or borrowing with one tap
           </CardDescription>
           <ActionsGrid>
-            {activeMarkets.map((market) => (
-              <>
+            {activeMarkets.map((market, index) => (
+              <div key={index}>
                 <ActionButton 
                   key={`supply-${market.id}`}
                   onClick={() => handleQuickAction(market.id, 'supply')}
@@ -677,7 +693,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                   <ActionLabel>Borrow {market.symbol}</ActionLabel>
                   <ActionRate>{market.borrowAPR.toFixed(1)}% APR</ActionRate>
                 </ActionButton>
-              </>
+              </div>
             ))}
           </ActionsGrid>
         </Card>
@@ -700,6 +716,56 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           </EducationalContent>
         </Card>
       </CardsSection>
+
+      {/* AI Chat Modal */}
+      {showAIModal && (
+        <ModalOverlay onClick={() => setShowAIModal(false)}>
+          <AIModalContent onClick={(e) => e.stopPropagation()}>
+            <ModalTitle>
+              <BotIcon>AI</BotIcon>
+              Ask KiloBot Assistant
+            </ModalTitle>
+            
+            <ChatDescription>
+              Describe your lending or borrowing needs in natural language. Our AI will analyze the markets and create personalized deals just for you.
+            </ChatDescription>
+
+            <FormGroup>
+              <AIModalInput
+                placeholder="e.g., I want to earn 5% on my USDT with low risk..."
+                value={userQuery}
+                onChange={(e) => setUserQuery(e.target.value)}
+                maxLength={500}
+                autoFocus
+              />
+            </FormGroup>
+
+            <AIModalExamples>
+              <ExampleTitle>Try these examples:</ExampleTitle>
+              {exampleQuestions.map((example, index) => (
+                <ExampleCard key={index} onClick={() => {
+                  setUserQuery(example);
+                }}>  
+                  <ExampleText>"{example}"</ExampleText>
+                </ExampleCard>
+              ))}
+            </AIModalExamples>
+
+            <AIModalButtons>
+              <ModalButton $variant="secondary" onClick={() => setShowAIModal(false)}>
+                Cancel
+              </ModalButton>
+              <ModalButton 
+                $variant="primary" 
+                onClick={handleAskAI}
+                disabled={!userQuery.trim()}
+              >
+                Ask AI for Deals 🤖
+              </ModalButton>
+            </AIModalButtons>
+          </AIModalContent>
+        </ModalOverlay>
+      )}
 
       {/* Quick Action Modal */}
       {showQuickAction && quickActionData && currentMarket && (
