@@ -1,7 +1,6 @@
 'use client';
 
 import styled from 'styled-components';
-import { useState } from 'react';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 
 const PageContainer = styled.div`
@@ -37,67 +36,6 @@ const CardTitle = styled.h3`
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 16px;
-`;
-
-const WalletSection = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-`;
-
-const WalletIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #00C300, #00A000);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-`;
-
-const WalletInfo = styled.div`
-  flex: 1;
-`;
-
-const WalletStatus = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 4px;
-`;
-
-const WalletNetwork = styled.div`
-  font-size: 12px;
-  color: #64748b;
-`;
-
-const WalletAddress = styled.div`
-  font-family: monospace;
-  font-size: 14px;
-  color: #64748b;
-  word-break: break-all;
-  background: #f8fafc;
-  padding: 8px 12px;
-  border-radius: 6px;
-  margin-top: 8px;
-`;
-
-const CopyButton = styled.button`
-  font-size: 12px;
-  color: #00C300;
-  border: none;
-  background: none;
-  cursor: pointer;
-  margin-top: 4px;
-  
-  &:hover {
-    color: #00A000;
-    text-decoration: underline;
-  }
 `;
 
 const SettingsSection = styled.div``;
@@ -188,24 +126,6 @@ const HelpDescription = styled.div`
   color: #94a3b8;
 `;
 
-const DisconnectButton = styled.button`
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #ef4444;
-  border-radius: 8px;
-  background: white;
-  color: #ef4444;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  margin-top: 16px;
-  transition: all 0.2s;
-
-  &:hover {
-    background: #fef2f2;
-  }
-`;
-
 const ConnectPrompt = styled.div`
   text-align: center;
   padding: 40px 20px;
@@ -224,25 +144,25 @@ const ConnectIcon = styled.div`
   font-size: 24px;
 `;
 
+const WalletInfoNote = styled.div`
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 24px;
+`;
+
+const WalletInfoText = styled.p`
+  font-size: 14px;
+  color: #166534;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
 export const ProfilePage = () => {
   const { account } = useWalletAccountStore();
-  const [copySuccess, setCopySuccess] = useState(false);
-
-  const handleCopyAddress = () => {
-    if (account?.address) {
-      navigator.clipboard.writeText(account.address);
-      setCopySuccess(true);
-      setTimeout(() => setCopySuccess(false), 2000);
-    }
-  };
-
-  const handleDisconnect = () => {
-    const confirmed = confirm('Are you sure you want to disconnect your wallet?');
-    if (confirmed) {
-      // In a real app, this would call the wallet disconnect function
-      alert('Disconnect functionality coming in Phase 8!');
-    }
-  };
 
   const handleHelpClick = (section: string) => {
     alert(`${section} help coming soon!\n\nFor now, check our documentation or contact support.`);
@@ -269,32 +189,10 @@ export const ProfilePage = () => {
     <PageContainer>
       <PageTitle>Profile</PageTitle>
       <PageSubtitle>
-        Manage your wallet and app settings
+        Manage your app settings and preferences
       </PageSubtitle>
+       
       
-      {/* Wallet Information */}
-      <Card>
-        <CardTitle>💳 Wallet</CardTitle>
-        <WalletSection>
-          <WalletIcon>👤</WalletIcon>
-          <WalletInfo>
-            <WalletStatus>Connected</WalletStatus>
-            <WalletNetwork>KAIA Testnet</WalletNetwork>
-          </WalletInfo>
-        </WalletSection>
-        
-        <WalletAddress>
-          {account.address}
-          <CopyButton onClick={handleCopyAddress}>
-            {copySuccess ? 'Copied!' : 'Copy Address'}
-          </CopyButton>
-        </WalletAddress>
-
-        <DisconnectButton onClick={handleDisconnect}>
-          Disconnect Wallet
-        </DisconnectButton>
-      </Card>
-
       {/* App Settings */}
       <Card>
         <CardTitle>⚙️ Settings</CardTitle>
