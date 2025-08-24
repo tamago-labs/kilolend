@@ -1,6 +1,10 @@
 KAIA Kairos Testnet
 ================================================
 
+Main Contracts
+================================================
+
+PriceOracle: 0xe5209A4f622C6eD2C158dcCcdDB69B05f9D0E4E0
 
 
 Mock Tokens (KIP-7)
