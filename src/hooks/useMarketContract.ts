@@ -80,7 +80,7 @@ export const useMarketContract = (): MarketContractHook => {
 
       if (marketId === 'usdt' && 'getMarketInfo' in contract) {
         const marketInfo = await contract.getMarketInfo();
-        
+
         // Debug logging
         console.log(`USDT Market Debug:`, {
           rawSupplyAPY: marketInfo.supplyAPY.toString(),

@@ -3,6 +3,8 @@
 import styled from 'styled-components';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useUserStore } from '@/stores/userStore';
+import TokenIcon from "../Wallet/TokenIcon"
+
 
 const MarketInfoCard = styled.div`
   background: #f8fafc;
@@ -130,7 +132,14 @@ export const MarketInfo = ({ marketId, actionType }: MarketInfoProps) => {
   return (
     <MarketInfoCard>
       <MarketHeader>
-        <MarketIcon>{market.icon}</MarketIcon>
+        <MarketIcon>
+          <TokenIcon
+            icon={market.icon} 
+            iconType={market.iconType}
+            alt={market.name}
+            size={24}
+          />
+        </MarketIcon>
         <MarketTitleInfo>
           <MarketTitle>{market.name}</MarketTitle>
           <MarketSubtitle>{market.description}</MarketSubtitle>

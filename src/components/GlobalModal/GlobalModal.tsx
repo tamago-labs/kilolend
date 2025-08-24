@@ -587,7 +587,7 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
         return (
           <>
             <ModalTitle>
-              {currentMarket.icon} {type === 'supply' ? 'Supply' : 'Borrow'} {currentMarket.symbol}
+               {type === 'supply' ? 'Supply' : 'Borrow'} {currentMarket.symbol}
             </ModalTitle>
 
             {/* Market Information */}

@@ -8,6 +8,7 @@ export interface ContractMarket {
   name: string;
   symbol: string;
   icon: string;
+  iconType: any;
   description: string;
   
   // Contract addresses
@@ -59,7 +60,8 @@ const initialContractMarkets: ContractMarket[] = [
     id: 'usdt',
     name: 'Tether USD',
     symbol: 'USDT',
-    icon: '💰',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png',
+    iconType: 'image' as const,
     description: 'USD-pegged stablecoin for secure lending',
     marketAddress: '0xA657b300009802Be7c88617128545534aCA12dbe',
     tokenAddress: '0x16EE94e3C07B24EbA6067eb9394BA70178aAc4c0',
@@ -77,7 +79,8 @@ const initialContractMarkets: ContractMarket[] = [
     id: 'krw',
     name: 'Korean Won',
     symbol: 'KRW',
-    icon: '🏦',
+    icon: 'KR',
+    iconType: 'flag' as const,
     description: 'Korean Won stablecoin market',
     marketAddress: '0x4fd5Ae48A869c5ec0214CB050D2D713433515D8d',
     tokenAddress: '0xf2260B00250c772CB64606dBb88d9544F709308C',
@@ -95,7 +98,8 @@ const initialContractMarkets: ContractMarket[] = [
     id: 'jpy',
     name: 'Japanese Yen',
     symbol: 'JPY',
-    icon: '🏯',
+    icon: 'JP',
+    iconType: 'flag' as const,
     description: 'Japanese Yen market',
     marketAddress: '0x3c4151361e9718b45409B803B6a9Ee623DBF59FE',
     tokenAddress: '0xFa15adECD1CC94bd17cf48DD3b41F066FE2812a7',
@@ -113,7 +117,8 @@ const initialContractMarkets: ContractMarket[] = [
     id: 'thb',
     name: 'Thai Baht',
     symbol: 'THB',
-    icon: '🐘',
+    icon: 'TH',
+    iconType: 'flag' as const,
     description: 'Thai Baht market',
     marketAddress: '0xd91Fd5c773C24Cc27D39c86EfEb3bfF57eF36F99',
     tokenAddress: '0x576430Ecadbd9729B32a4cA9Fed9F38331273924',
@@ -127,44 +132,46 @@ const initialContractMarkets: ContractMarket[] = [
     priceChange24h: -0.05,
     isActive: true
   },
-  {
-    id: 'stkaia',
-    name: 'Staked KAIA',
-    symbol: 'stKAIA',
-    icon: '🔥',
-    description: 'Liquid staked KAIA tokens - collateral only',
-    marketAddress: null,
-    tokenAddress: '0x65e38111d8e2561aDC0E2EA1eeA856E6a43dC892',
-    decimals: 18,
-    supplyAPY: 0,
-    borrowAPR: 0,
-    totalSupply: 0,
-    totalBorrow: 0,
-    utilization: 0,
-    price: 0.12,
-    priceChange24h: 2.3,
-    isActive: true,
-    isCollateralOnly: true
-  },
-  {
-    id: 'wkaia',
-    name: 'Wrapped KAIA',
-    symbol: 'wKAIA',
-    icon: '⚡',
-    description: 'Wrapped KAIA for DeFi applications - collateral only',
-    marketAddress: null,
-    tokenAddress: '0x553588e084604a2677e10E46ea0a8A8e9D859146',
-    decimals: 18,
-    supplyAPY: 0,
-    borrowAPR: 0,
-    totalSupply: 0,
-    totalBorrow: 0,
-    utilization: 0,
-    price: 0.11,
-    priceChange24h: 1.8,
-    isActive: true,
-    isCollateralOnly: true
-  }
+  // {
+  //   id: 'stkaia',
+  //   name: 'Staked KAIA',
+  //   symbol: 'stKAIA',
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
+  //   iconType: 'image' as const,
+  //   description: 'Liquid staked KAIA tokens - collateral only',
+  //   marketAddress: null,
+  //   tokenAddress: '0x65e38111d8e2561aDC0E2EA1eeA856E6a43dC892',
+  //   decimals: 18,
+  //   supplyAPY: 0,
+  //   borrowAPR: 0,
+  //   totalSupply: 0,
+  //   totalBorrow: 0,
+  //   utilization: 0,
+  //   price: 0.12,
+  //   priceChange24h: 2.3,
+  //   isActive: true,
+  //   isCollateralOnly: true
+  // },
+  // {
+  //   id: 'wkaia',
+  //   name: 'Wrapped KAIA',
+  //   symbol: 'wKAIA',
+  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
+  //   iconType: 'image' as const,
+  //   description: 'Wrapped KAIA for DeFi applications - collateral only',
+  //   marketAddress: null,
+  //   tokenAddress: '0x553588e084604a2677e10E46ea0a8A8e9D859146',
+  //   decimals: 18,
+  //   supplyAPY: 0,
+  //   borrowAPR: 0,
+  //   totalSupply: 0,
+  //   totalBorrow: 0,
+  //   utilization: 0,
+  //   price: 0.11,
+  //   priceChange24h: 1.8,
+  //   isActive: true,
+  //   isCollateralOnly: true
+  // }
 ];
 
 export const useContractMarketStore = create<ContractMarketState>((set, get) => ({

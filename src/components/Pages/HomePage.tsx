@@ -7,6 +7,7 @@ import { useModalStore } from '@/stores/modalStore';
 import { useContractMarketData } from '@/hooks/useContractMarketData';
 import { AILoading } from '@/components/AIDeals/AILoading';
 import { useAIDealsStore } from '@/stores/aiDealsStore';
+import TokenIcon from "../Wallet/TokenIcon"
 
 const PageContainer = styled.div`
   flex: 1;
@@ -309,8 +310,9 @@ const MarketInfo = styled.div`
 `;
 
 const MarketIcon = styled.div`
-  width: 40px;
-  height: 40px;
+  width: 24px;
+  height: 24px;
+  overflow: hidden;
   border-radius: 50%;
   background: linear-gradient(135deg, #f0fdf4, #dcfce7);
   display: flex;
@@ -619,12 +621,12 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   // Use contract-based market data
   const {
     markets,
-    totalTVL,
-    bestSupplyAPY,
-    bestBorrowAPR,
-    avgUtilization,
-    getBestSupplyMarket,
-    getBestBorrowMarket,
+    // totalTVL,
+    // bestSupplyAPY,
+    // bestBorrowAPR,
+    // avgUtilization,
+    // getBestSupplyMarket,
+    // getBestBorrowMarket,
     isLoading: marketsLoading
   } = useContractMarketStore();
 
@@ -663,12 +665,12 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     <PageContainer>
 
       {/* Loading Indicator */}
-      {marketsLoading && (
+      {/* {marketsLoading && (
         <LoadingIndicator>
           🔄
           <LoadingText>Loading market data from contracts...</LoadingText>
         </LoadingIndicator>
-      )}
+      )} */}
 
       <HeroSection>
         <BrandLogo src="images/kilolend-logo.png" alt="KiloLend" />
@@ -723,13 +725,20 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
         <Card>
           <CardTitle>⚡ Quick Actions</CardTitle>
           <CardDescription>
-            Start earning or borrowing with one tap
+            Start earning or borrowing stablecoins with ease
           </CardDescription>
 
           {activeMarkets.map((market: any) => (
             <MarketRow key={market.id}>
               <MarketInfo>
-                <MarketIcon>{market.icon}</MarketIcon>
+                <MarketIcon>
+                <TokenIcon 
+                      icon={market.icon} 
+                      iconType={market.iconType}
+                      alt={market.name}
+                      size={24}
+                    />
+                </MarketIcon>
                 <MarketDetails>
                   <MarketName>{market.symbol}</MarketName>
                   <MarketRates>
