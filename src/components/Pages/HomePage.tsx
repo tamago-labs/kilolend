@@ -260,7 +260,7 @@ const ActionsGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 `;
- 
+
 const ActionIcon = styled.div`
   width: 32px;
   height: 32px;
@@ -600,19 +600,19 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     action: 'supply' | 'borrow';
   } | null>(null);
   const [amount, setAmount] = useState('');
-  
+
   const { isGenerating } = useAIDealsStore();
   const { addPosition, addTransaction } = useUserStore();
 
   // Get market data from store
-  const { 
-    markets, 
-    totalTVL, 
-    bestSupplyAPY, 
-    bestBorrowAPR, 
+  const {
+    markets,
+    totalTVL,
+    bestSupplyAPY,
+    bestBorrowAPR,
     avgUtilization,
     getBestSupplyMarket,
-    getBestBorrowMarket 
+    getBestBorrowMarket
   } = useMarketStore();
 
   // Set up live price updates
@@ -639,7 +639,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
   const handleAskAI = async () => {
     if (!userQuery.trim()) return;
-    
+
     setShowAIModal(false);
     onAIDealsGenerated?.(userQuery);
     setUserQuery('');
@@ -695,7 +695,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   };
 
   const currentMarket = quickActionData ? markets.find(m => m.id === quickActionData.marketId) : null;
-  const currentRate = currentMarket && quickActionData ? 
+  const currentRate = currentMarket && quickActionData ?
     (quickActionData.action === 'supply' ? currentMarket.supplyAPY : currentMarket.borrowAPR) : 0;
 
   // Show loading state if AI is generating
@@ -709,40 +709,40 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
   return (
     <PageContainer>
-     <HeroSection>
-  <BrandLogo src="images/kilolend-logo.png" alt="KiloLend" />
-  <HeroSubtitle>
-    🎉 Now Live on Kaia Kairos Testnet
-  </HeroSubtitle>
-</HeroSection>
+      <HeroSection>
+        <BrandLogo src="images/kilolend-logo.png" alt="KiloLend" />
+        <HeroSubtitle>
+          🎉 Now Live on Kaia Kairos Testnet
+        </HeroSubtitle>
+      </HeroSection>
 
- <Card>
-          <EducationalContent> 
-            <CardTitle>👋</CardTitle>
-            <EducationalText>
-              <CardTitle style={{ marginBottom: '8px' }}>Welcome to KiloLend</CardTitle>
-              <CardDescription style={{ marginBottom: '0' }}>
-                Lend and borrow a wide range of stablecoins on Kaia. AI guides you to earn yield or unlock crypto-backed loans in one click.
-              </CardDescription>
-              <LearnButton>
-                Video Tutorial
-              </LearnButton>
-            </EducationalText>
-          </EducationalContent>
-        </Card>
-        <br/>
+      <Card>
+        <EducationalContent>
+          <CardTitle>👋</CardTitle>
+          <EducationalText>
+            <CardTitle style={{ marginBottom: '8px' }}>Welcome to KiloLend</CardTitle>
+            <CardDescription style={{ marginBottom: '0' }}>
+              Lend and borrow a wide range of stablecoins on Kaia. AI guides you to earn yield or unlock crypto-backed loans in one click.
+            </CardDescription>
+            <LearnButton>
+              Video Tutorial
+            </LearnButton>
+          </EducationalText>
+        </EducationalContent>
+      </Card>
+      <br />
 
-     {/* <SectionTitle>AI Deal Finder</SectionTitle>
+      {/* <SectionTitle>AI Deal Finder</SectionTitle>
       <SectionSubtitle>
         Tell our AI what you're looking for, and we'll find the perfect lending deals for you
       </SectionSubtitle>*/}
-      
+
       <ChatContainer>
         <ChatTitle>
           <BotIcon>AI</BotIcon>
           KiloBot Assistant
         </ChatTitle>
-        
+
         <ChatDescription>
           Describe your lending or borrowing needs in natural language. Our AI will analyze the markets and create personalized deals just for you.
         </ChatDescription>
@@ -753,7 +753,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           </ChatInput>
         </InputContainer>
 
-        <AskButton 
+        <AskButton
           onClick={handleOpenAIModal}
         >
           Ask AI for Deals 🤖
@@ -761,39 +761,39 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
       </ChatContainer>
 
       <CardsSection>
-        
- 
+
+
         {/* Market Actions Card */}
-      <Card>
-        <CardTitle>⚡ Quick Actions</CardTitle>
-        <CardDescription>
-          Start earning or borrowing with one tap
-        </CardDescription>
+        <Card>
+          <CardTitle>⚡ Quick Actions</CardTitle>
+          <CardDescription>
+            Start earning or borrowing with one tap
+          </CardDescription>
 
-        {activeMarkets.map((market) => (
-          <MarketRow key={market.id}>
-            <MarketInfo>
-              <MarketIcon>{market.icon}</MarketIcon>
-              <MarketDetails>
-                <MarketName>{market.symbol}</MarketName>
-                <MarketRates>
-                  <RateLabel>Supply: {market.supplyAPY.toFixed(1)}% APY</RateLabel>
-                  <RateLabel>Borrow: {market.borrowAPR.toFixed(1)}% APR</RateLabel>
-                </MarketRates>
-              </MarketDetails>
-            </MarketInfo>
+          {activeMarkets.map((market) => (
+            <MarketRow key={market.id}>
+              <MarketInfo>
+                <MarketIcon>{market.icon}</MarketIcon>
+                <MarketDetails>
+                  <MarketName>{market.symbol}</MarketName>
+                  <MarketRates>
+                    <RateLabel>Supply: {market.supplyAPY.toFixed(1)}% APY</RateLabel>
+                    <RateLabel>Borrow: {market.borrowAPR.toFixed(1)}% APR</RateLabel>
+                  </MarketRates>
+                </MarketDetails>
+              </MarketInfo>
 
-            <ActionButtons>
-              <ActionButton onClick={() => handleQuickAction(market.id, 'supply')} supply>
-                Supply
-              </ActionButton>
-              <ActionButton onClick={() => handleQuickAction(market.id, 'borrow')} borrow>
-                Borrow
-              </ActionButton>
-            </ActionButtons>
-          </MarketRow>
-        ))}
-      </Card>
+              <ActionButtons>
+                <ActionButton onClick={() => handleQuickAction(market.id, 'supply')} supply>
+                  Supply
+                </ActionButton>
+                <ActionButton onClick={() => handleQuickAction(market.id, 'borrow')} borrow>
+                  Borrow
+                </ActionButton>
+              </ActionButtons>
+            </MarketRow>
+          ))}
+        </Card>
 
         {/* Educational Card */}
         <Card>
@@ -822,7 +822,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               <BotIcon>AI</BotIcon>
               Ask KiloBot Assistant
             </ModalTitle>
-            
+
             <ChatDescription>
               Describe your lending or borrowing needs in natural language. Our AI will analyze the markets and create personalized deals just for you.
             </ChatDescription>
@@ -842,7 +842,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               {exampleQuestions.map((example, index) => (
                 <ExampleCard key={index} onClick={() => {
                   setUserQuery(example);
-                }}>  
+                }}>
                   <ExampleText>"{example}"</ExampleText>
                 </ExampleCard>
               ))}
@@ -852,8 +852,8 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               <ModalButton $variant="secondary" onClick={() => setShowAIModal(false)}>
                 Cancel
               </ModalButton>
-              <ModalButton 
-                $variant="primary" 
+              <ModalButton
+                $variant="primary"
                 onClick={handleAskAI}
                 disabled={!userQuery.trim()}
               >
@@ -871,7 +871,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <ModalTitle>
               {currentMarket.icon} {quickActionData.action === 'supply' ? 'Supply' : 'Borrow'} {currentMarket.symbol}
             </ModalTitle>
-            
+
             <ModalForm>
               <FormGroup>
                 <Label>Amount ({currentMarket.symbol})</Label>
@@ -907,8 +907,8 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               <ModalButton $variant="secondary" onClick={() => setShowQuickAction(false)}>
                 Cancel
               </ModalButton>
-              <ModalButton 
-                $variant="primary" 
+              <ModalButton
+                $variant="primary"
                 onClick={handleQuickActionSubmit}
                 disabled={!amount || parseFloat(amount) <= 0}
               >
