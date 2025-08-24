@@ -1,11 +1,13 @@
 import { create } from 'zustand';
 
-export type ModalType = 'supply' | 'borrow' | 'withdraw' | 'repay' | 'ai-chat';
+export type ModalType = 'supply' | 'borrow' | 'withdraw' | 'repay' | 'ai-chat' | 'deposit-collateral' | 'withdraw-collateral';
 
 export interface ModalData {
   marketId?: string;
   action?: 'supply' | 'borrow';
   userQuery?: string;
+  collateralType?: 'wkaia' | 'stkaia';
+  collateralAction?: 'deposit' | 'withdraw';
 }
 
 export interface ModalState {

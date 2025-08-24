@@ -4,7 +4,6 @@ export {
   getSigner,
   getContract,
   parseTokenAmount,
-  formatTokenAmount,
   checkNetwork,
   switchToKaiaTestnet,
   estimateGas,
@@ -15,8 +14,13 @@ export {
   formatWei,
   TransactionStatus
 } from './contractUtils';
+import { ethers } from 'ethers';
 
 export type { TransactionResult } from './contractUtils';
+
+const formatTokenAmount = (amount: bigint, decimals: number): string => {
+  return ethers.formatUnits(amount, decimals);
+};
 
 // Contract addresses and config
 export {
@@ -54,15 +58,15 @@ export const COMMON_CONTRACT_ERRORS = {
 // Helper to parse contract error messages
 export const parseContractError = (error: any): string => {
   if (typeof error === 'string') return error;
-  
+
   const message = error?.message || error?.reason || 'Transaction failed';
-  
+
   // Check for common error patterns
   if (message.includes('insufficient balance')) return COMMON_CONTRACT_ERRORS.INSUFFICIENT_BALANCE;
   if (message.includes('insufficient allowance')) return COMMON_CONTRACT_ERRORS.INSUFFICIENT_ALLOWANCE;
   if (message.includes('user rejected')) return COMMON_CONTRACT_ERRORS.USER_REJECTED;
   if (message.includes('gas')) return COMMON_CONTRACT_ERRORS.GAS_ESTIMATION_FAILED;
-  
+
   // Return the original message if no pattern matches
   return message;
 };
@@ -86,19 +90,19 @@ export const validateTransactionParams = (
   minAmount?: string
 ): { isValid: boolean; error?: string } => {
   const numAmount = parseFloat(amount);
-  
+
   if (isNaN(numAmount) || numAmount <= 0) {
     return { isValid: false, error: 'Invalid amount' };
   }
-  
+
   if (minAmount && numAmount < parseFloat(minAmount)) {
     return { isValid: false, error: COMMON_CONTRACT_ERRORS.AMOUNT_TOO_SMALL };
   }
-  
+
   if (balance && numAmount > parseFloat(balance)) {
     return { isValid: false, error: COMMON_CONTRACT_ERRORS.INSUFFICIENT_BALANCE };
   }
-  
+
   return { isValid: true };
 };
 
@@ -112,39 +116,8 @@ export const calculateUSDValue = (amount: string, price: number): number => {
   return parseFloat(amount) * price;
 };
 
-// Helper to determine if a market supports lending/borrowing
-export const isLendingMarket = (marketId: string): boolean => {
-  const config = MARKET_CONFIG[marketId as MarketId];
-  return config ? config.marketAddress !== null : false;
-};
-
 // Helper to determine if a token can be used as collateral
 export const isCollateralToken = (tokenSymbol: string): boolean => {
   return ['wKAIA', 'stKAIA'].includes(tokenSymbol.toUpperCase());
 };
-
-// Gas limit estimates for different operations
-export const GAS_LIMITS = {
-  ERC20_APPROVE: 60000,
-  ERC20_TRANSFER: 65000,
-  SUPPLY: 150000,
-  WITHDRAW: 180000,
-  BORROW: 200000,
-  REPAY: 150000,
-  DEPOSIT_COLLATERAL: 120000,
-  WITHDRAW_COLLATERAL: 150000,
-  LIQUIDATE: 300000,
-} as const;
-
-// Network-specific constants
-export const NETWORK_CONFIG = {
-  KAIA_TESTNET: {
-    CONFIRMATION_BLOCKS: 1,
-    AVERAGE_BLOCK_TIME: 1000, // 1 second
-    MAX_GAS_PRICE: ethers.parseUnits('100', 'gwei'),
-    DEFAULT_GAS_PRICE: ethers.parseUnits('25', 'gwei'),
-  }
-} as const;
-
-// Import ethers for the constants
-import { ethers } from 'ethers';
+ 

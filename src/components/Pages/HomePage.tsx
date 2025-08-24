@@ -1,10 +1,13 @@
 'use client';
 
 import styled from 'styled-components';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
+import { useContractUserStore } from '@/stores/contractUserStore';
 import { useModalStore } from '@/stores/modalStore';
 import { useContractMarketData } from '@/hooks/useContractMarketData';
+import { useContractUserData } from '@/hooks/useContractUserData';
+import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { AILoading } from '@/components/AIDeals/AILoading';
 import { useAIDealsStore } from '@/stores/aiDealsStore';
 import TokenIcon from "../Wallet/TokenIcon"
@@ -21,7 +24,7 @@ const HeroSection = styled.div`
 `;
 
 const BrandLogo = styled.img`
-  width: 240px; /* larger for miniapp visibility */
+  width: 240px;
   height: auto;
   margin-bottom: 12px;
   animation: fadeInScale 0.8s ease-out;
@@ -45,19 +48,6 @@ const HeroSubtitle = styled.p`
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.4;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const SectionSubtitle = styled.p`
-  color: #64748b;
-  margin-bottom: 24px;
-  line-height: 1.6;
 `;
 
 const ChatContainer = styled.div`
@@ -155,51 +145,6 @@ const AskButton = styled.button`
   }
 `;
 
-const ExampleQuestions = styled.div`
-  margin-top: 20px;
-`;
-
-const ExampleTitle = styled.h4`
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 12px;
-`;
-
-const ExampleCard = styled.button`
-  width: 100%;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 12px 16px;
-  text-align: left;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 8px;
-
-  &:hover {
-    background: #f1f5f9;
-    border-color: #00C300;
-  }
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const ExampleText = styled.span`
-  color: #475569;
-  font-size: 14px;
-  line-height: 1.4;
-`;
-
-// Cards Section
-const CardsSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-`;
-
 const Card = styled.div`
   background: white;
   border-radius: 16px;
@@ -222,69 +167,10 @@ const CardDescription = styled.p`
   line-height: 1.5;
 `;
 
-// Market Summary Card
-const MarketGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-`;
-
-const MarketStat = styled.div`
-  text-align: center;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-`;
-
-const StatValue = styled.div`
-  font-size: 20px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 4px;
-`;
-
-const StatLabel = styled.div`
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 500;
-`;
-
-const StatChange = styled.span<{ $positive?: boolean }>`
-  font-size: 12px;
-  color: ${props => props.$positive ? '#00C300' : '#ef4444'};
-  font-weight: 500;
-`;
-
-// Quick Actions Card
-const ActionsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-`;
-
-const ActionIcon = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+const CardsSection = styled.div`
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 8px;
-  font-size: 16px;
-`;
-
-const ActionLabel = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 4px;
-`;
-
-const ActionRate = styled.div`
-  font-size: 12px;
-  color: #00C300;
-  font-weight: 500;
+  flex-direction: column;
+  gap: 16px;
 `;
 
 const MarketRow = styled.div`
@@ -375,7 +261,59 @@ const ActionButton = styled.button<{ $supply?: boolean; $borrow?: boolean }>`
   `}
 `;
 
-// Educational Card
+const CollateralCard = styled.div`
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 1px solid #e2e8f0;
+`;
+
+const CollateralHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+`;
+
+const CollateralTitle = styled.h4`
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0;
+`;
+
+const CollateralValue = styled.div`
+  font-size: 14px;
+  color: #64748b;
+`;
+
+const CollateralTypes = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+`;
+
+const CollateralType = styled.div`
+  background: white;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  border: 1px solid #e2e8f0;
+`;
+
+const CollateralName = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+`;
+
+const CollateralAmount = styled.div`
+  font-size: 12px;
+  color: #64748b;
+`;
+
 const EducationalContent = styled.div`
   display: flex;
   align-items: flex-start;
@@ -398,25 +336,6 @@ const EducationalText = styled.div`
   flex: 1;
 `;
 
-
-const LoadingIndicator = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 12px;
-  background: #f0fdf4;
-  border: 1px solid #00C300;
-  border-radius: 8px;
-  margin-bottom: 16px;
-`;
-
-const LoadingText = styled.span`
-  color: #166534;
-  font-size: 12px;
-  font-weight: 600;
-  margin-left: 8px;
-`;
-
 const LearnButton = styled.button`
   background: linear-gradient(135deg, #00C300, #00A000);
   color: white;
@@ -435,179 +354,6 @@ const LearnButton = styled.button`
   }
 `;
 
-// Quick Action Modal
-const ModalOverlay = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  padding: 20px;
-`;
-
-const ModalContent = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  max-width: 400px;
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-`;
-
-const ModalTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ModalForm = styled.div`
-  margin-bottom: 20px;
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 16px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 16px;
-  outline: none;
-  transition: border-color 0.2s;
-
-  &:focus {
-    border-color: #00C300;
-  }
-`;
-
-const InfoBox = styled.div`
-  background: #f8fafc;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 16px;
-`;
-
-const InfoRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const InfoLabel = styled.span`
-  font-size: 14px;
-  color: #64748b;
-`;
-
-const InfoValue = styled.span`
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-`;
-
-const ModalButtons = styled.div`
-  display: flex;
-  gap: 12px;
-`;
-
-const ModalButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
-  flex: 1;
-  padding: 12px 20px;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-  
-  ${props => props.$variant === 'primary' ? `
-    background: linear-gradient(135deg, #00C300, #00A000);
-    color: white;
-    
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
-    }
-  ` : `
-    background: white;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    
-    &:hover {
-      background: #f8fafc;
-    }
-  `}
-`;
-
-// AI Chat Modal Styles
-const AIModalContent = styled.div`
-  background: white;
-  border-radius: 16px;
-  padding: 24px;
-  max-width: 500px;
-  width: 100%;
-  max-height: 80vh;
-  overflow-y: auto;
-`;
-
-const AIModalInput = styled.textarea`
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 16px;
-  line-height: 1.5;
-  resize: none;
-  min-height: 100px;
-  outline: none;
-  transition: border-color 0.2s;
-  font-family: inherit;
-
-  &:focus {
-    border-color: #00C300;
-  }
-
-  &::placeholder {
-    color: #94a3b8;
-  }
-`;
-
-const AIModalExamples = styled.div`
-  margin-top: 16px;
-  max-height: 200px;
-  overflow-y: auto;
-`;
-
-const AIModalButtons = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-top: 20px;
-`;
-
 interface HomePageProps {
   onAIDealsGenerated?: (userQuery: string) => void;
 }
@@ -617,26 +363,40 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
   const { isGenerating } = useAIDealsStore();
   const { openModal } = useModalStore();
+  const { account } = useWalletAccountStore();
 
-  // Use contract-based market data
-  const {
-    markets,
-    // totalTVL,
-    // bestSupplyAPY,
-    // bestBorrowAPR,
-    // avgUtilization,
-    // getBestSupplyMarket,
-    // getBestBorrowMarket,
-    isLoading: marketsLoading
-  } = useContractMarketStore();
+  // Use contract stores
+  const { markets } = useContractMarketStore();
+  const { positions, totalCollateralValue } = useContractUserStore();
 
   // Initialize contract data fetching
   useContractMarketData();
+  useContractUserData();
 
-  // const bestSupplyMarket = getBestSupplyMarket();
-  // const bestBorrowMarket = getBestBorrowMarket();
   const activeMarkets = markets.filter(m => m.isActive && !m.isCollateralOnly);
 
+  // Calculate user's collateral breakdown
+  const userCollateral = useMemo(() => {
+    if (!account) return { wkaia: 0, stkaia: 0, total: 0 };
+    
+    const collateralPositions = positions.filter(p => 
+      p.marketId === 'wkaia' || p.marketId === 'stkaia'
+    );
+    
+    const wkaia = collateralPositions
+      .filter(p => p.marketId === 'wkaia')
+      .reduce((sum, p) => sum + parseFloat(p.wkaiaCollateral || '0'), 0);
+      
+    const stkaia = collateralPositions
+      .filter(p => p.marketId === 'stkaia') 
+      .reduce((sum, p) => sum + parseFloat(p.stkaiaCollateral || '0'), 0);
+    
+    return {
+      wkaia,
+      stkaia, 
+      total: totalCollateralValue
+    };
+  }, [account, positions, totalCollateralValue]);
 
   const handleOpenAIModal = () => {
     openModal('ai-chat', { userQuery });
@@ -644,12 +404,6 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
   const handleQuickAction = (marketId: string, action: 'supply' | 'borrow') => {
     openModal(action, { marketId, action });
-  };
-
-  const formatTVL = (value: number) => {
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
-    return `${value.toFixed(0)}`;
   };
 
   // Show loading state if AI is generating
@@ -663,15 +417,6 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
   return (
     <PageContainer>
-
-      {/* Loading Indicator */}
-      {/* {marketsLoading && (
-        <LoadingIndicator>
-          🔄
-          <LoadingText>Loading market data from contracts...</LoadingText>
-        </LoadingIndicator>
-      )} */}
-
       <HeroSection>
         <BrandLogo src="images/kilolend-logo.png" alt="KiloLend" />
         <HeroSubtitle>
@@ -711,17 +456,45 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           </ChatInput>
         </InputContainer>
 
-        <AskButton
-          onClick={handleOpenAIModal}
-        >
+        <AskButton onClick={handleOpenAIModal}>
           Ask AI for Deals 🤖
         </AskButton>
       </ChatContainer>
 
       <CardsSection>
+        {/* Collateral Overview - Only show if user has account */}
+        {account && (
+          <Card>
+            <CardTitle>🏦 Your Collateral Overview</CardTitle>
+            <CardDescription>
+              Total collateral value determines your borrowing power across all markets.
+            </CardDescription>
+            
+            <CollateralCard>
+              <CollateralHeader>
+                <CollateralTitle>Total Collateral Value</CollateralTitle>
+                <CollateralValue>${userCollateral.total.toFixed(2)}</CollateralValue>
+              </CollateralHeader>
+              
+              <CollateralTypes>
+                <CollateralType>
+                  <CollateralName>wKAIA</CollateralName>
+                  <CollateralAmount>{userCollateral.wkaia.toFixed(4)} wKAIA</CollateralAmount>
+                </CollateralType>
+                <CollateralType>
+                  <CollateralName>stKAIA</CollateralName>
+                  <CollateralAmount>{userCollateral.stkaia.toFixed(4)} stKAIA</CollateralAmount>
+                </CollateralType>
+              </CollateralTypes>
+            </CollateralCard>
+            
+            <CardDescription style={{ margin: 0, fontSize: '12px' }}>
+              💡 Collateral is managed per market when borrowing. Higher collateral = more borrowing power.
+            </CardDescription>
+          </Card>
+        )}
 
-
-        {/* Market Actions Card */}
+        {/* Quick Actions Card - Only Supply and Borrow */}
         <Card>
           <CardTitle>⚡ Quick Actions</CardTitle>
           <CardDescription>
@@ -732,12 +505,12 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <MarketRow key={market.id}>
               <MarketInfo>
                 <MarketIcon>
-                <TokenIcon 
-                      icon={market.icon} 
-                      iconType={market.iconType}
-                      alt={market.name}
-                      size={24}
-                    />
+                  <TokenIcon 
+                    icon={market.icon} 
+                    iconType={market.iconType}
+                    alt={market.name}
+                    size={24}
+                  />
                 </MarketIcon>
                 <MarketDetails>
                   <MarketName>{market.symbol}</MarketName>
