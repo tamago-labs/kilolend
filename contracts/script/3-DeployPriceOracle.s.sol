@@ -38,14 +38,6 @@ contract DeployPriceOracle is Script {
             deployerPrivateKey = vm.parseUint(string(abi.encodePacked("0x", privateKeyString)));
         }
 
-        // Get MockOracle address from environment
-        // string memory mockOracleString = vm.envString("MOCK_ORACLE_ADDRESS");
-        // if (bytes(mockOracleString)[0] == '0' && bytes(mockOracleString)[1] == 'x') {
-        //     MOCK_ORACLE_ADDRESS = vm.parseAddress(mockOracleString);
-        // } else {
-        //     MOCK_ORACLE_ADDRESS = vm.parseAddress(string(abi.encodePacked("0x", mockOracleString)));
-        // }
-
         address deployer = vm.addr(deployerPrivateKey);
 
         console.log("===========================================");

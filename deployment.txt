@@ -5,7 +5,11 @@ Main Contracts
 ================================================
 
 PriceOracle: 0xe5209A4f622C6eD2C158dcCcdDB69B05f9D0E4E0
-
+InterestRateModel: 0x0Ee774bF5793b51C9c52decde8C07b783c42Df96
+USDTMarket: 0xA657b300009802Be7c88617128545534aCA12dbe
+KRWMarket: 0x4fd5Ae48A869c5ec0214CB050D2D713433515D8d
+THBMarket: 0xd91Fd5c773C24Cc27D39c86EfEb3bfF57eF36F99
+JPYMarket: 0x3c4151361e9718b45409B803B6a9Ee623DBF59FE
 
 Mock Tokens (KIP-7)
 ================================================
