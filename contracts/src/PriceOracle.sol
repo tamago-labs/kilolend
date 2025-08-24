@@ -24,6 +24,8 @@ contract PriceOracle is Ownable, IPriceOracle {
     bytes32 public constant KAIA_USD_PRICE_ID = 0x452d40e01473f95aa9930911b4392197b3551b37ac92a049e87487b654b4ebbe;
     bytes32 public constant USDT_USD_PRICE_ID = 0x2b89b9dc8fdf9f34709a5b106b472f0f39bb6ca9ce04b0fd7f2e971688e2e53b;
     bytes32 public constant USD_KRW_PRICE_ID = 0xe539120487c29b4defdf9a53d337316ea022a2688978a468f9efd847201be7e3;
+    bytes32 public constant USD_JPY_PRICE_ID = 0xef2c98c804ba503c6a707e38be4dfbb16683775f195b091252bf24693042fd52;
+
     
     // Token mappings
     mapping(address => bytes32) public tokenToPythId;
@@ -31,9 +33,6 @@ contract PriceOracle is Ownable, IPriceOracle {
     
     // stKAIA exchange rate
     uint256 private stKaiaExchangeRate = 1.05e18; // 1 stKAIA = 1.05 KAIA
-    
-    // Price staleness threshold (5 minutes)
-    // uint256 public constant STALENESS_THRESHOLD = 300;
     
     event OracleModeChanged(OracleMode oldMode, OracleMode newMode);
     event TokenMappingSet(address indexed token, bytes32 priceId);
@@ -82,8 +81,7 @@ contract PriceOracle is Ownable, IPriceOracle {
      */
     function getKRWUSDRate() external view returns (uint256) {
         if (currentMode == OracleMode.MOCK) {
-            // Return mock rate: 1 USD = 1300 KRW (approximately)
-            return 1300e18;
+            return mockOracle.getKRWUSDRate();
         } else {
             // TODO: Avoid getPriceUnsafe in production
             PythStructs.Price memory price = pythOracle.getPriceUnsafe(USD_KRW_PRICE_ID);
@@ -94,6 +92,31 @@ contract PriceOracle is Ownable, IPriceOracle {
             uint256 adjustedPrice = _adjustPythPrice(price.price, price.expo);
             return adjustedPrice;
         }
+    }
+
+    /**
+     * @dev Get JPY/USD exchange rate for JPY stablecoin pricing
+     */
+    function getJPYUSDRate() external view returns (uint256) {
+        if (currentMode == OracleMode.MOCK) {
+            return mockOracle.getJPYUSDRate();
+        } else {
+            // TODO: Avoid getPriceUnsafe in production
+            PythStructs.Price memory price = pythOracle.getPriceUnsafe(USD_JPY_PRICE_ID);
+            require(price.price > 0, "Invalid price");
+            
+            // Convert Pyth price to 18 decimals
+            uint256 adjustedPrice = _adjustPythPrice(price.price, price.expo);
+            return adjustedPrice;
+        }
+    }
+
+    /**
+     * @dev Get THB/USD exchange rate for THB stablecoin pricing
+     */
+    function getTHBUSDRate() external view returns (uint256) {
+        // No Pyth feed so we use only Mock
+        return mockOracle.getTHBUSDRate();
     }
     
     /**

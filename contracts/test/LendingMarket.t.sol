@@ -5,7 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {USDTMarket} from "../src/USDTMarket.sol";
 import {KRWMarket} from "../src/KRWMarket.sol";
 import {PriceOracle} from "../src/PriceOracle.sol";
-import {MockPriceOracle} from "../src/mocks/MockOracle.sol";
+import {MockOracle} from "../src/mocks/MockOracle.sol";
 import {InterestRateModel} from "../src/InterestRateModel.sol";
 import {MockToken} from "../src/mocks/MockToken.sol";
 
@@ -15,7 +15,7 @@ contract LendingMarketTest is Test {
     USDTMarket public usdtMarket;
     KRWMarket public krwMarket;
     PriceOracle public priceOracle;
-    MockPriceOracle public mockOracle;
+    MockOracle public mockOracle;
     InterestRateModel public interestModel;
     
     // Tokens
@@ -49,7 +49,7 @@ contract LendingMarketTest is Test {
         krw = new MockToken("KRW Stablecoin", "KRW", 18, KRW_SUPPLY);
         
         // Deploy oracle system
-        mockOracle = new MockPriceOracle(
+        mockOracle = new MockOracle(
             address(wkaia),
             INITIAL_WKAIA_PRICE
         );

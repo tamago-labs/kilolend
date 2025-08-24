@@ -5,7 +5,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {InterestRateModel} from "../src/InterestRateModel.sol";
 import {USDTMarket} from "../src/USDTMarket.sol";
 import {PriceOracle} from "../src/PriceOracle.sol";
-import {MockPriceOracle} from "../src/mocks/MockOracle.sol";
+import {MockOracle} from "../src/mocks/MockOracle.sol";
 import {MockToken} from "../src/mocks/MockToken.sol";
 
 contract SlopeInterestRateTest is Test {
@@ -14,7 +14,7 @@ contract SlopeInterestRateTest is Test {
     InterestRateModel public interestModel;
     USDTMarket public usdtMarket;
     PriceOracle public priceOracle;
-    MockPriceOracle public mockOracle;
+    MockOracle public mockOracle;
     
     // Tokens
     MockToken public wkaia;
@@ -43,7 +43,7 @@ contract SlopeInterestRateTest is Test {
         usdt = new MockToken("USD Tether", "USDT", 6, 100000e6);
         
         // Deploy oracle system
-        mockOracle = new MockPriceOracle(address(wkaia), 0.15e18);
+        mockOracle = new MockOracle(address(wkaia), 0.15e18);
         priceOracle = new PriceOracle(
             address(0),
             address(mockOracle),
