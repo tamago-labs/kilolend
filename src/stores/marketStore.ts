@@ -88,13 +88,43 @@ const initialMarkets: Market[] = [
     priceChange24h: -0.05,
     isActive: false,
     description: 'Thai Baht market (Coming Soon)'
+  },
+  {
+    id: 'stkaia',
+    name: 'Staked KAIA',
+    symbol: 'stKAIA',
+    icon: '🔥',
+    supplyAPY: 8.5,
+    borrowAPR: 9.2,
+    totalSupply: 450000,
+    totalBorrow: 280000,
+    utilization: 62.2,
+    price: 0.12, // Example price
+    priceChange24h: 2.3,
+    isActive: true,
+    description: 'Liquid staked KAIA tokens with higher yields'
+  },
+  {
+    id: 'wkaia',
+    name: 'Wrapped KAIA',
+    symbol: 'wKAIA',
+    icon: '⚡',
+    supplyAPY: 7.2,
+    borrowAPR: 8.1,
+    totalSupply: 680000,
+    totalBorrow: 420000,
+    utilization: 61.8,
+    price: 0.11, // Example price
+    priceChange24h: 1.8,
+    isActive: true,
+    description: 'Wrapped KAIA for DeFi applications'
   }
 ];
 
 export const useMarketStore = create<MarketState>((set, get) => ({
   markets: initialMarkets,
-  totalTVL: 2400000,
-  bestSupplyAPY: 5.2,
+  totalTVL: 3530000,
+  bestSupplyAPY: 8.5,
   bestBorrowAPR: 3.8,
   avgUtilization: 76,
 

@@ -5,6 +5,7 @@ import { useState, useCallback } from 'react';
 import { WalletButton } from '@/components/Wallet/Button/WalletButton';
 import { useWalletAccountStore } from "@/components/Wallet/Account/auth.hooks";
 import { useKaiaWalletSdk } from "@/components/Wallet/Sdk/walletSdk.hooks";
+import Blockies from 'react-blockies';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -48,7 +49,8 @@ const ProfileIcon = styled.div`
   width: 32px;
   height: 32px;
   background: linear-gradient(135deg, #00C300, #00A000);
-  border-radius: 50%;
+  border-radius: 5px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -99,7 +101,7 @@ const DisconnectButton = styled.button`
 const DropdownMenu = styled.div<{ $isOpen: boolean }>`
   position: absolute;
   top: 100%;
-  right: 16px;
+  left: 16px;
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
@@ -184,7 +186,12 @@ export const Header = () => {
               style={{ display: 'none' }}
               className="hidden md:flex"
             >
-              <ProfileIcon>👤</ProfileIcon>
+              <ProfileIcon>
+                <Blockies
+                  seed={account}
+
+                />
+              </ProfileIcon>
               <ProfileInfo>
                 <ConnectedStatus>Connected</ConnectedStatus>
                 <WalletAddress>{formatAddress(account)}</WalletAddress>
@@ -193,7 +200,11 @@ export const Header = () => {
 
             {/* Mobile view */}
             <ProfileSection onClick={() => setShowDropdown(!showDropdown)}>
-              <ProfileIcon>👤</ProfileIcon>
+              <ProfileIcon>
+                <Blockies
+                  seed={account}
+                />
+              </ProfileIcon>
               <ProfileInfo>
                 <ConnectedStatus>Connected</ConnectedStatus>
                 <WalletAddress>{formatAddress(account)}</WalletAddress>

@@ -2,6 +2,9 @@
 
 import styled from 'styled-components';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import useTokenBalances from '@/hooks/useTokenBalances';
+import TokenFaucet from '@/components/Wallet/TokenFaucet';
+import TokenIcon from '@/components/Wallet/TokenIcon';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -143,29 +146,125 @@ const ConnectIcon = styled.div`
   margin: 0 auto 16px;
   font-size: 24px;
 `;
+ 
 
-const WalletInfoNote = styled.div`
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 24px;
+const BalanceGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
 `;
 
-const WalletInfoText = styled.p`
-  font-size: 14px;
-  color: #166534;
-  margin: 0;
+const BalanceItem = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+`;
+
+const BalanceInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
 `;
 
+const TokenIconContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const TokenDetails = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const TokenSymbol = styled.span`
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1;
+`;
+
+const TokenBalance = styled.span`
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1;
+  margin-top: 2px;
+`;
+
+const RefreshButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background: white;
+  color: #64748b;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-bottom: 16px;
+  
+  &:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const LastUpdate = styled.div`
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+  margin-bottom: 16px;
+`;
+
+const FaucetSection = styled.div`
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+`;
+
+const FaucetTitle = styled.h4`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const FaucetDescription = styled.p`
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 12px;
+  line-height: 1.4;
+`;
+
 export const ProfilePage = () => {
   const { account } = useWalletAccountStore();
+  const { balances, isLoading, lastUpdate, refreshBalances } = useTokenBalances();
 
   const handleHelpClick = (section: string) => {
     alert(`${section} help coming soon!\n\nFor now, check our documentation or contact support.`);
+  };
+
+  const handleRefreshBalances = () => {
+    refreshBalances();
+  };
+
+  const formatLastUpdate = (date: Date | null) => {
+    if (!date) return 'Never';
+    return date.toLocaleTimeString();
   };
 
   if (!account) {
@@ -173,13 +272,13 @@ export const ProfilePage = () => {
       <PageContainer>
         <PageTitle>Profile</PageTitle>
         <PageSubtitle>
-          Connect your wallet to manage settings
+          View and manage your account details
         </PageSubtitle>
-        
+
         <ConnectPrompt>
           <ConnectIcon>👤</ConnectIcon>
           <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>Wallet Not Connected</h3>
-          <p>Please connect your wallet to access profile settings</p>
+          <p>Please connect your wallet to access this section</p>
         </ConnectPrompt>
       </PageContainer>
     );
@@ -189,34 +288,55 @@ export const ProfilePage = () => {
     <PageContainer>
       <PageTitle>Profile</PageTitle>
       <PageSubtitle>
-        Manage your app settings and preferences
+        View and manage your account details
       </PageSubtitle>
-       
-      
-      {/* App Settings */}
+
+
+      {/* Token Balances */}
       <Card>
-        <CardTitle>⚙️ Settings</CardTitle>
-        <SettingsSection>
-          <SettingItem>
-            <SettingLabel>Network</SettingLabel>
-            <NetworkBadge>KAIA Testnet</NetworkBadge>
-          </SettingItem>
-          
-          <SettingItem>
-            <SettingLabel>Currency Display</SettingLabel>
-            <SettingValue>USD</SettingValue>
-          </SettingItem>
-          
-          <SettingItem>
-            <SettingLabel>Transaction Slippage</SettingLabel>
-            <SettingValue>0.5%</SettingValue>
-          </SettingItem>
-          
-          <SettingItem>
-            <SettingLabel>App Version</SettingLabel>
-            <SettingValue>v1.0.0-beta</SettingValue>
-          </SettingItem>
-        </SettingsSection>
+        <CardTitle>💰 Token Balances</CardTitle>
+
+        {/* <RefreshButton onClick={handleRefreshBalances} disabled={isLoading}>
+          {isLoading ? '⟳' : '🔄'} {isLoading ? 'Refreshing...' : 'Refresh Balances'}
+        </RefreshButton> */}
+
+        <BalanceGrid>
+          {balances.map((balance) => (
+            <BalanceItem key={balance.symbol}>
+              <BalanceInfo>
+                <TokenIconContainer>
+                  <TokenIcon
+                    icon={balance.icon}
+                    iconType={balance.iconType}
+                    alt={balance.name}
+                    size={20}
+                  />
+                </TokenIconContainer>
+                <TokenDetails>
+                  <TokenSymbol>{balance.symbol}</TokenSymbol>
+                  <TokenBalance>
+                    {balance.isLoading ? 'Loading...' : balance.formattedBalance}
+                  </TokenBalance>
+                </TokenDetails>
+              </BalanceInfo>
+            </BalanceItem>
+          ))}
+        </BalanceGrid>
+
+        <LastUpdate>
+          Last updated: {formatLastUpdate(lastUpdate)}
+        </LastUpdate>
+
+        <FaucetSection>
+          <FaucetTitle>
+            🚰 Test Token Faucet
+          </FaucetTitle>
+          <FaucetDescription>
+          We're on Testnet with mock tokens. Use this faucet to get tokens for evaluation.
+          </FaucetDescription>
+
+          <TokenFaucet onSuccess={handleRefreshBalances} />
+        </FaucetSection>
       </Card>
 
       {/* Help & Support */}
@@ -264,27 +384,7 @@ export const ProfilePage = () => {
           </HelpButton>
         </HelpSection>
       </Card>
-
-      {/* App Info */}
-      <Card>
-        <CardTitle>ℹ️ About</CardTitle>
-        <SettingsSection>
-          <SettingItem>
-            <SettingLabel>Built for</SettingLabel>
-            <SettingValue>KAIA Blockchain</SettingValue>
-          </SettingItem>
-          
-          <SettingItem>
-            <SettingLabel>Powered by</SettingLabel>
-            <SettingValue>AI + DeFi</SettingValue>
-          </SettingItem>
-          
-          <SettingItem>
-            <SettingLabel>License</SettingLabel>
-            <SettingValue>Open Source</SettingValue>
-          </SettingItem>
-        </SettingsSection>
-      </Card>
+ 
     </PageContainer>
   );
 };
