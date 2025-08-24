@@ -17,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KiloLend",
-  description: "Decentralized Lending Protocol on KAIA",
+  title: "KiloLend - AI-powered lending of a wide range of stablecoins on Kaia Blockchain",
+  description: "KiloLend is a Line Miniapp lending protocol on Kaia Blockchain. Borrow a wide range of stablecoins using any crypto as collateral, guided by AI for seamless one-click deal execution.",
 };
 
 export default function RootLayout({

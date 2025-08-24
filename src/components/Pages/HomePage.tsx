@@ -16,25 +16,34 @@ const PageContainer = styled.div`
 
 const HeroSection = styled.div`
   text-align: center;
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 `;
 
-const BrandLogo = styled.h1`
-  font-size: 36px;
-  font-weight: 800;
-  background: linear-gradient(135deg, #00C300, #00A000);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  margin-bottom: 8px;
-  letter-spacing: -0.5px;
+const BrandLogo = styled.img`
+  width: 240px; /* larger for miniapp visibility */
+  height: auto;
+  margin-bottom: 12px;
+  animation: fadeInScale 0.8s ease-out;
+
+  @keyframes fadeInScale {
+    0% {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
 `;
 
 const HeroSubtitle = styled.p`
-  color: #64748b;
-  font-size: 16px;
-  line-height: 1.5;
-  margin-bottom: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.4;
 `;
 
 const SectionTitle = styled.h2`
@@ -629,17 +638,35 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
   return (
     <PageContainer>
-      <HeroSection>
-        <BrandLogo>KiloLend</BrandLogo>
-        <HeroSubtitle>
-          AI-powered lending on KAIA blockchain
-        </HeroSubtitle>
-      </HeroSection>
+     <HeroSection>
+  <BrandLogo src="images/kilolend-logo.png" alt="KiloLend" />
+  <HeroSubtitle>
+    🎉 Now Live on Kaia Kairos Testnet
+  </HeroSubtitle>
+</HeroSection>
 
-      <SectionTitle>AI Deal Finder</SectionTitle>
+ <Card>
+          <EducationalContent>
+            <EducationalIcon>
+              👋
+            </EducationalIcon>
+            <EducationalText>
+              <CardTitle style={{ marginBottom: '8px' }}>Welcome to KiloLend</CardTitle>
+              <CardDescription style={{ marginBottom: '0' }}>
+                Lend and borrow a wide range of stablecoins on Kaia. AI guides you to earn yield or unlock crypto-backed loans in one click.
+              </CardDescription>
+              <LearnButton>
+                Video Tutorial
+              </LearnButton>
+            </EducationalText>
+          </EducationalContent>
+        </Card>
+        <br/>
+
+     {/* <SectionTitle>AI Deal Finder</SectionTitle>
       <SectionSubtitle>
         Tell our AI what you're looking for, and we'll find the perfect lending deals for you
-      </SectionSubtitle>
+      </SectionSubtitle>*/}
       
       <ChatContainer>
         <ChatTitle>
