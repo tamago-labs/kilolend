@@ -1,0 +1,224 @@
+import { ethers } from 'ethers';
+import { KAIA_TESTNET_CONFIG } from './contractConfig';
+
+/**
+ * Contract interaction utilities
+ */
+
+// Get ethers provider
+export const getProvider = () => {
+  return new ethers.JsonRpcProvider(KAIA_TESTNET_CONFIG.rpcUrl);
+};
+
+// Get signer from window.ethereum if available
+export const getSigner = async (): Promise<ethers.JsonRpcSigner | null> => {
+  if (typeof window !== 'undefined' && window.ethereum) {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      return signer;
+    } catch (error) {
+      console.error('Error getting signer:', error);
+      return null;
+    }
+  }
+  return null;
+};
+
+// Get contract instance
+export const getContract = async (
+  address: string, 
+  abi: any[], 
+  needsSigner: boolean = false
+): Promise<ethers.Contract | null> => {
+  try {
+    if (needsSigner) {
+      const signer = await getSigner();
+      if (!signer) {
+        throw new Error('No signer available');
+      }
+      return new ethers.Contract(address, abi, signer);
+    } else {
+      const provider = getProvider();
+      return new ethers.Contract(address, abi, provider);
+    }
+  } catch (error) {
+    console.error('Error creating contract instance:', error);
+    return null;
+  }
+};
+
+// Parse units based on decimals
+export const parseTokenAmount = (amount: string, decimals: number): bigint => {
+  return ethers.parseUnits(amount, decimals);
+};
+
+// Format units based on decimals
+export const formatTokenAmount = (amount: bigint, decimals: number): string => {
+  return ethers.formatUnits(amount, decimals);
+};
+
+// Check if user is connected to correct network
+export const checkNetwork = async (): Promise<boolean> => {
+  if (typeof window !== 'undefined' && window.ethereum) {
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const network = await provider.getNetwork();
+      return network.chainId === BigInt(KAIA_TESTNET_CONFIG.chainId);
+    } catch (error) {
+      console.error('Error checking network:', error);
+      return false;
+    }
+  }
+  return false;
+};
+
+// Switch to Kaia testnet
+export const switchToKaiaTestnet = async (): Promise<boolean> => {
+  if (typeof window !== 'undefined' && window.ethereum) {
+    try {
+      await window.ethereum.request({
+        method: 'wallet_switchEthereumChain',
+        params: [{ chainId: `0x${KAIA_TESTNET_CONFIG.chainId.toString(16)}` }],
+      });
+      return true;
+    } catch (switchError: any) {
+      // This error code indicates that the chain has not been added to MetaMask
+      if (switchError.code === 4902) {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [
+              {
+                chainId: `0x${KAIA_TESTNET_CONFIG.chainId.toString(16)}`,
+                chainName: KAIA_TESTNET_CONFIG.chainName,
+                rpcUrls: [KAIA_TESTNET_CONFIG.rpcUrl],
+                blockExplorerUrls: [KAIA_TESTNET_CONFIG.blockExplorer],
+                nativeCurrency: KAIA_TESTNET_CONFIG.nativeCurrency,
+              },
+            ],
+          });
+          return true;
+        } catch (addError) {
+          console.error('Error adding network:', addError);
+          return false;
+        }
+      }
+      console.error('Error switching network:', switchError);
+      return false;
+    }
+  }
+  return false;
+};
+
+// Estimate gas for a transaction
+export const estimateGas = async (
+  contract: ethers.Contract,
+  methodName: string,
+  params: any[],
+  options: any = {}
+): Promise<bigint> => {
+  try {
+    const gasEstimate = await contract[methodName].estimateGas(...params, options);
+    // Add 20% buffer
+    return gasEstimate * BigInt(120) / BigInt(100);
+  } catch (error) {
+    console.error('Error estimating gas:', error);
+    throw error;
+  }
+};
+
+// Get gas price
+export const getGasPrice = async (): Promise<bigint> => {
+  try {
+    const provider = getProvider();
+    const feeData = await provider.getFeeData();
+    return feeData.gasPrice || ethers.parseUnits('25', 'gwei');
+  } catch (error) {
+    console.error('Error getting gas price:', error);
+    return ethers.parseUnits('25', 'gwei'); // Default to 25 Gwei
+  }
+};
+
+// Wait for transaction confirmation
+export const waitForTransaction = async (
+  txHash: string,
+  confirmations: number = 1
+): Promise<ethers.TransactionReceipt | null> => {
+  try {
+    const provider = getProvider();
+    const receipt = await provider.waitForTransaction(txHash, confirmations);
+    return receipt;
+  } catch (error) {
+    console.error('Error waiting for transaction:', error);
+    return null;
+  }
+};
+
+// Format address for display
+export const formatAddress = (address: string, startLength: number = 6, endLength: number = 4): string => {
+  if (!address) return '';
+  if (address.length < startLength + endLength) return address;
+  return `${address.slice(0, startLength)}...${address.slice(-endLength)}`;
+};
+
+// Check if address is valid
+export const isValidAddress = (address: string): boolean => {
+  try {
+    ethers.getAddress(address);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+// Convert wei to human readable format
+export const formatWei = (wei: bigint, decimals: number = 18, precision: number = 4): string => {
+  const formatted = ethers.formatUnits(wei, decimals);
+  const num = parseFloat(formatted);
+  return num.toFixed(precision);
+};
+
+// Transaction status enum
+export enum TransactionStatus {
+  PENDING = 'pending',
+  CONFIRMED = 'confirmed',
+  FAILED = 'failed'
+}
+
+// Transaction result interface
+export interface TransactionResult {
+  hash: string;
+  status: TransactionStatus;
+  receipt?: ethers.TransactionReceipt;
+  error?: string;
+}
+
+// Send transaction with error handling
+export const sendTransaction = async (
+  contract: ethers.Contract,
+  methodName: string,
+  params: any[],
+  options: any = {}
+): Promise<TransactionResult> => {
+  try {
+    const tx = await contract[methodName](...params, options);
+    return {
+      hash: tx.hash,
+      status: TransactionStatus.PENDING
+    };
+  } catch (error: any) {
+    console.error(`Error sending ${methodName} transaction:`, error);
+    return {
+      hash: '',
+      status: TransactionStatus.FAILED,
+      error: error.message || 'Transaction failed'
+    };
+  }
+};
+
+declare global {
+  interface Window {
+    ethereum?: any;
+  }
+}
