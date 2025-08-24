@@ -289,7 +289,7 @@ export const PortfolioPage = () => {
           <p style={{ marginBottom: '16px' }}>Start lending or borrowing to see your positions here</p>
           <AIModalButton 
             userQuery="Help me start my first lending position with low risk"
-            buttonText="Start Lending with AI"
+            buttonText="Start Lending Now"
           />
         </EmptyState>
       ) : (

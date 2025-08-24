@@ -6,6 +6,8 @@ import { useModalStore } from '@/stores/modalStore';
 const AIButton = styled.button`
   display: flex;
   align-items: center;
+  margin-left: auto;
+  margin-right: auto;
   gap: 8px;
   padding: 12px 20px;
   background: linear-gradient(135deg, #00C300, #00A000);
@@ -61,7 +63,7 @@ export const AIModalButton = ({
       onClick={handleClick}
       style={{ width: fullWidth ? '100%' : 'auto' }}
     >
-      <BotIcon>AI</BotIcon>
+      {/* <BotIcon>AI</BotIcon> */}
       {buttonText}
     </AIButton>
   );
