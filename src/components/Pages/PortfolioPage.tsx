@@ -3,6 +3,8 @@
 import styled from 'styled-components';
 import { useUserStore } from '@/stores/userStore';
 import { useMarketStore } from '@/stores/marketStore';
+import { QuickActions } from '@/components/GlobalModal/QuickActions';
+import { AIModalButton } from '@/components/GlobalModal/AIModalButton';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -226,7 +228,8 @@ export const PortfolioPage = () => {
   };
 
   const handleStartLending = () => {
-    alert('Navigate to Home > AI Deal Finder to start lending!');
+    // Use AI modal to help start lending
+    // This is handled by the AIModalButton component
   };
 
   const handleWithdraw = (positionId: string) => {
@@ -284,9 +287,10 @@ export const PortfolioPage = () => {
           </EmptyIcon>
           <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>No positions yet</h3>
           <p style={{ marginBottom: '16px' }}>Start lending or borrowing to see your positions here</p>
-          <StartButton onClick={handleStartLending}>
-            Start Lending
-          </StartButton>
+          <AIModalButton 
+            userQuery="Help me start my first lending position with low risk"
+            buttonText="Start Lending with AI"
+          />
         </EmptyState>
       ) : (
         <>
@@ -318,9 +322,7 @@ export const PortfolioPage = () => {
                           </PositionAPY>
                         </PositionHeader>
                         <ActionButtons>
-                          <ActionButton $variant="primary" onClick={() => handleSupplyMore(position.marketId)}>
-                            Supply More
-                          </ActionButton>
+                          <QuickActions marketId={position.marketId} showBorrow={false} />
                           <ActionButton $variant="secondary" onClick={() => handleWithdraw(position.id)}>
                             Withdraw
                           </ActionButton>

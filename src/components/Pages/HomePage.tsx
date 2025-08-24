@@ -3,10 +3,10 @@
 import styled from 'styled-components';
 import { useState } from 'react';
 import { useMarketStore } from '@/stores/marketStore';
-import { useUserStore } from '@/stores/userStore';
-import { useAIDealsStore } from '@/stores/aiDealsStore';
+import { useModalStore } from '@/stores/modalStore';
 import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 import { AILoading } from '@/components/AIDeals/AILoading';
+import { useAIDealsStore } from '@/stores/aiDealsStore';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -593,16 +593,9 @@ interface HomePageProps {
 
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const [userQuery, setUserQuery] = useState('I want to earn 5% on my USDT with low risk');
-  const [showQuickAction, setShowQuickAction] = useState(false);
-  const [showAIModal, setShowAIModal] = useState(false);
-  const [quickActionData, setQuickActionData] = useState<{
-    marketId: string;
-    action: 'supply' | 'borrow';
-  } | null>(null);
-  const [amount, setAmount] = useState('');
-
+  
   const { isGenerating } = useAIDealsStore();
-  const { addPosition, addTransaction } = useUserStore();
+  const { openModal } = useModalStore();
 
   // Get market data from store
   const {
@@ -634,69 +627,18 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   ];
 
   const handleOpenAIModal = () => {
-    setShowAIModal(true);
-  };
-
-  const handleAskAI = async () => {
-    if (!userQuery.trim()) return;
-
-    setShowAIModal(false);
-    onAIDealsGenerated?.(userQuery);
-    setUserQuery('');
-  };
-
-  const handleExampleClick = (example: string) => {
-    setUserQuery(example);
+    openModal('ai-chat', { userQuery });
   };
 
   const handleQuickAction = (marketId: string, action: 'supply' | 'borrow') => {
-    setQuickActionData({ marketId, action });
-    setShowQuickAction(true);
-    setAmount('');
-  };
-
-  const handleQuickActionSubmit = () => {
-    if (!quickActionData || !amount) return;
-
-    const market = markets.find(m => m.id === quickActionData.marketId);
-    if (!market) return;
-
-    const numAmount = parseFloat(amount);
-    const rate = quickActionData.action === 'supply' ? market.supplyAPY : market.borrowAPR;
-
-    // Add position
-    addPosition({
-      marketId: quickActionData.marketId,
-      type: quickActionData.action,
-      amount: numAmount,
-      apy: rate,
-      usdValue: numAmount
-    });
-
-    // Add transaction
-    addTransaction({
-      type: quickActionData.action,
-      marketId: quickActionData.marketId,
-      amount: numAmount,
-      status: 'confirmed',
-      usdValue: numAmount,
-      txHash: `0x${Math.random().toString(16).substring(2, 64).padStart(64, '0')}`
-    });
-
-    // Close modal and show success
-    setShowQuickAction(false);
-    alert(`Successfully ${quickActionData.action === 'supply' ? 'supplied' : 'borrowed'} ${amount} ${market.symbol}!\n\nCheck your Portfolio to see the new position.`);
+    openModal(action, { marketId, action });
   };
 
   const formatTVL = (value: number) => {
-    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `$${(value / 1000).toFixed(0)}K`;
-    return `$${value.toFixed(0)}`;
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+    return `${value.toFixed(0)}`;
   };
-
-  const currentMarket = quickActionData ? markets.find(m => m.id === quickActionData.marketId) : null;
-  const currentRate = currentMarket && quickActionData ?
-    (quickActionData.action === 'supply' ? currentMarket.supplyAPY : currentMarket.borrowAPR) : 0;
 
   // Show loading state if AI is generating
   if (isGenerating) {
@@ -813,111 +755,6 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           </EducationalContent>
         </Card>
       </CardsSection>
-
-      {/* AI Chat Modal */}
-      {showAIModal && (
-        <ModalOverlay onClick={() => setShowAIModal(false)}>
-          <AIModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalTitle>
-              <BotIcon>AI</BotIcon>
-              Ask KiloBot Assistant
-            </ModalTitle>
-
-            <ChatDescription>
-              Describe your lending or borrowing needs in natural language. Our AI will analyze the markets and create personalized deals just for you.
-            </ChatDescription>
-
-            <FormGroup>
-              <AIModalInput
-                placeholder="e.g., I want to earn 5% on my USDT with low risk..."
-                value={userQuery}
-                onChange={(e) => setUserQuery(e.target.value)}
-                maxLength={500}
-                autoFocus
-              />
-            </FormGroup>
-
-            <AIModalExamples>
-              <ExampleTitle>Try these examples:</ExampleTitle>
-              {exampleQuestions.map((example, index) => (
-                <ExampleCard key={index} onClick={() => {
-                  setUserQuery(example);
-                }}>
-                  <ExampleText>"{example}"</ExampleText>
-                </ExampleCard>
-              ))}
-            </AIModalExamples>
-
-            <AIModalButtons>
-              <ModalButton $variant="secondary" onClick={() => setShowAIModal(false)}>
-                Cancel
-              </ModalButton>
-              <ModalButton
-                $variant="primary"
-                onClick={handleAskAI}
-                disabled={!userQuery.trim()}
-              >
-                Ask AI for Deals 🤖
-              </ModalButton>
-            </AIModalButtons>
-          </AIModalContent>
-        </ModalOverlay>
-      )}
-
-      {/* Quick Action Modal */}
-      {showQuickAction && quickActionData && currentMarket && (
-        <ModalOverlay onClick={() => setShowQuickAction(false)}>
-          <ModalContent onClick={(e) => e.stopPropagation()}>
-            <ModalTitle>
-              {currentMarket.icon} {quickActionData.action === 'supply' ? 'Supply' : 'Borrow'} {currentMarket.symbol}
-            </ModalTitle>
-
-            <ModalForm>
-              <FormGroup>
-                <Label>Amount ({currentMarket.symbol})</Label>
-                <Input
-                  type="number"
-                  placeholder="0.00"
-                  value={amount}
-                  onChange={(e) => setAmount(e.target.value)}
-                  min="0"
-                  step="0.01"
-                />
-              </FormGroup>
-
-              {amount && (
-                <InfoBox>
-                  <InfoRow>
-                    <InfoLabel>{quickActionData.action === 'supply' ? 'APY' : 'APR'}:</InfoLabel>
-                    <InfoValue>{currentRate.toFixed(2)}%</InfoValue>
-                  </InfoRow>
-                  <InfoRow>
-                    <InfoLabel>Est. Monthly {quickActionData.action === 'supply' ? 'Earnings' : 'Cost'}:</InfoLabel>
-                    <InfoValue>${((parseFloat(amount) || 0) * currentRate / 100 / 12).toFixed(2)}</InfoValue>
-                  </InfoRow>
-                  <InfoRow>
-                    <InfoLabel>USD Value:</InfoLabel>
-                    <InfoValue>${(parseFloat(amount) || 0).toFixed(2)}</InfoValue>
-                  </InfoRow>
-                </InfoBox>
-              )}
-            </ModalForm>
-
-            <ModalButtons>
-              <ModalButton $variant="secondary" onClick={() => setShowQuickAction(false)}>
-                Cancel
-              </ModalButton>
-              <ModalButton
-                $variant="primary"
-                onClick={handleQuickActionSubmit}
-                disabled={!amount || parseFloat(amount) <= 0}
-              >
-                {quickActionData.action === 'supply' ? 'Supply' : 'Borrow'}
-              </ModalButton>
-            </ModalButtons>
-          </ModalContent>
-        </ModalOverlay>
-      )}
     </PageContainer>
   );
 };

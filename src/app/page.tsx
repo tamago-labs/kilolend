@@ -10,6 +10,7 @@ import { PortfolioPage } from '@/components/Pages/PortfolioPage';
 import { ActivityPage } from '@/components/Pages/ActivityPage';
 import { ProfilePage } from '@/components/Pages/ProfilePage';
 import { SwipeDeals } from '@/components/AIDeals/SwipeDeals';
+import { GlobalModal } from '@/components/GlobalModal/GlobalModal';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -101,6 +102,9 @@ export default function Home() {
                     onTabChange={setActiveTab}
                 />
             )}
+            
+            {/* Global Modal */}
+            <GlobalModal onAIDealsGenerated={handleAIDealsGenerated} />
         </PageContainer>
     );
 }
