@@ -13,7 +13,6 @@ export {
   formatAddress,
   isValidAddress,
   formatWei,
-  sendTransaction,
   TransactionStatus
 } from './contractUtils';
 

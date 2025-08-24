@@ -6,7 +6,7 @@ import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { QuickActions } from '@/components/GlobalModal/QuickActions';
 import { AIModalButton } from '@/components/GlobalModal/AIModalButton';
 import { useContractUserData } from '@/hooks/useContractUserData';
-
+ 
 const PageContainer = styled.div`
   flex: 1;
   padding: 20px 16px;
@@ -381,6 +381,9 @@ export const PortfolioPage = () => {
           )}
         </>
       )}
+      
+      {/* Recent Transactions */}
+      {/* <TransactionHistory limit={5} /> */}
     </PageContainer>
   );
 };

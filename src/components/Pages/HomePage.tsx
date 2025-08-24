@@ -6,7 +6,7 @@ import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useModalStore } from '@/stores/modalStore';
 import { useContractMarketData } from '@/hooks/useContractMarketData';
 import { AILoading } from '@/components/AIDeals/AILoading';
-import { useAIDealsStore } from '@/stores/aiDealsStore'; 
+import { useAIDealsStore } from '@/stores/aiDealsStore';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -347,7 +347,7 @@ const ActionButtons = styled.div`
   gap: 8px;
 `;
 
-const ActionButton = styled.button<{ supply?: boolean; borrow?: boolean }>`
+const ActionButton = styled.button<{ $supply?: boolean; $borrow?: boolean }>`
   padding: 8px 16px;
   border-radius: 8px;
   font-weight: 600;
@@ -356,16 +356,16 @@ const ActionButton = styled.button<{ supply?: boolean; borrow?: boolean }>`
   border: none;
   transition: all 0.2s;
 
-  ${({ supply }) =>
-    supply &&
+  ${({ $supply }) =>
+    $supply &&
     `
     background: #00C300;
     color: white;
     &:hover { background: #00a000; }
   `}
 
-  ${({ borrow }) =>
-    borrow &&
+  ${({ $borrow }) =>
+    $borrow &&
     `
     background: #f3f4f6;
     color: #1e293b;
@@ -395,7 +395,7 @@ const EducationalIcon = styled.div`
 const EducationalText = styled.div`
   flex: 1;
 `;
- 
+
 
 const LoadingIndicator = styled.div`
   display: flex;
@@ -612,10 +612,10 @@ interface HomePageProps {
 
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const [userQuery, setUserQuery] = useState('I want to earn 5% on my USDT with low risk');
-  
+
   const { isGenerating } = useAIDealsStore();
-  const { openModal } = useModalStore(); 
-  
+  const { openModal } = useModalStore();
+
   // Use contract-based market data
   const {
     markets,
@@ -627,14 +627,14 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     getBestBorrowMarket,
     isLoading: marketsLoading
   } = useContractMarketStore();
-  
+
   // Initialize contract data fetching
   useContractMarketData();
 
   // const bestSupplyMarket = getBestSupplyMarket();
   // const bestBorrowMarket = getBestBorrowMarket();
   const activeMarkets = markets.filter(m => m.isActive && !m.isCollateralOnly);
-  
+
 
   const handleOpenAIModal = () => {
     openModal('ai-chat', { userQuery });
@@ -643,7 +643,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const handleQuickAction = (marketId: string, action: 'supply' | 'borrow') => {
     openModal(action, { marketId, action });
   };
- 
+
   const formatTVL = (value: number) => {
     if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
     if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
@@ -660,8 +660,8 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   }
 
   return (
-    <PageContainer> 
-      
+    <PageContainer>
+
       {/* Loading Indicator */}
       {marketsLoading && (
         <LoadingIndicator>
@@ -692,7 +692,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
         </EducationalContent>
       </Card>
       <br />
- 
+
       <ChatContainer>
         <ChatTitle>
           <BotIcon>AI</BotIcon>
@@ -740,10 +740,10 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               </MarketInfo>
 
               <ActionButtons>
-                <ActionButton onClick={() => handleQuickAction(market.id, 'supply')} supply>
+                <ActionButton onClick={() => handleQuickAction(market.id, 'supply')} $supply>
                   Supply
                 </ActionButton>
-                <ActionButton onClick={() => handleQuickAction(market.id, 'borrow')} borrow>
+                <ActionButton onClick={() => handleQuickAction(market.id, 'borrow')} $borrow>
                   Borrow
                 </ActionButton>
               </ActionButtons>

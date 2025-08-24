@@ -1,543 +1,182 @@
 import { useCallback, useState } from 'react';
 import { useTokenContract } from './useTokenContract';
 import { useMarketContract } from './useMarketContract';
+import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { MARKET_CONFIG, MarketId } from '@/utils/contractConfig';
-import { TransactionResult, TransactionStatus, waitForTransaction } from '@/utils/contractUtils';
 
-export interface TransactionProgress {
-  step: 'approval' | 'transaction' | 'confirmation' | 'completed';
-  status: TransactionStatus;
+export interface TransactionExecutionResult {
+  success: boolean;
   hash?: string;
-  message: string;
   error?: string;
 }
 
-interface TransactionHook {
-  executeSupply: (
-    marketId: MarketId,
-    amount: string,
-    userAddress: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ) => Promise<boolean>;
-  
-  executeBorrow: (
-    marketId: MarketId,
-    amount: string,
-    userAddress: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ) => Promise<boolean>;
-  
-  executeWithdraw: (
-    marketId: MarketId,
-    amount: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ) => Promise<boolean>;
-  
-  executeRepay: (
-    marketId: MarketId,
-    amount: string,
-    userAddress: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ) => Promise<boolean>;
-  
-  executeCollateralDeposit: (
-    marketId: MarketId,
-    collateralType: 'wkaia' | 'stkaia',
-    amount: string,
-    userAddress: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ) => Promise<boolean>;
-  
+interface SimpleTransactionHook {
+  executeSupply: (marketId: MarketId, amount: string) => Promise<TransactionExecutionResult>;
+  executeBorrow: (marketId: MarketId, amount: string) => Promise<TransactionExecutionResult>;
+  executeWithdraw: (marketId: MarketId, amount: string) => Promise<TransactionExecutionResult>;
+  executeRepay: (marketId: MarketId, amount: string) => Promise<TransactionExecutionResult>;
   isProcessing: boolean;
 }
 
-export const useTransactions = (): TransactionHook => {
+export const useTransactions = (): SimpleTransactionHook => {
   const [isProcessing, setIsProcessing] = useState(false);
-  
+  const { account } = useWalletAccountStore();
+
   const tokenContract = useTokenContract();
   const marketContract = useMarketContract();
-  
-  const checkAndApproveToken = async (
-    tokenAddress: string,
-    spenderAddress: string,
-    amount: string,
-    decimals: number,
-    userAddress: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ): Promise<boolean> => {
-    try {
-      // Check current allowance
-      const currentAllowance = await tokenContract.getAllowance(
-        tokenAddress,
-        userAddress,
-        spenderAddress
-      );
-      
-      const requiredAmount = parseFloat(amount);
-      const currentAllowanceNum = parseFloat(currentAllowance);
-      
-      if (currentAllowanceNum >= requiredAmount) {
-        // Sufficient allowance already exists
-        return true;
+
+  const checkAndApproveToken = useCallback(
+    async (tokenAddress: string, spenderAddress: string, amount: string, decimals: number) => {
+      if (!account) return { success: false, error: 'No wallet connected' };
+
+      if (!tokenAddress || tokenAddress === 'null' || !spenderAddress || spenderAddress === 'null') {
+        console.error('Invalid addresses:', { tokenAddress, spenderAddress });
+        return { success: false, error: 'Invalid contract addresses' };
       }
-      
-      // Need to approve
-      onProgress?.({
-        step: 'approval',
-        status: TransactionStatus.PENDING,
-        message: 'Requesting token approval...'
-      });
-      
-      const approveResult = await tokenContract.approve(
-        tokenAddress,
-        spenderAddress,
-        amount,
-        decimals
-      );
-      
-      if (approveResult.status === TransactionStatus.FAILED) {
-        onProgress?.({
-          step: 'approval',
-          status: TransactionStatus.FAILED,
-          message: 'Token approval failed',
-          error: approveResult.error
-        });
-        return false;
+
+      try {
+        console.log('Checking allowance:', { tokenAddress, account, spenderAddress, amount });
+        const currentAllowance = await tokenContract.getAllowance(tokenAddress, account, spenderAddress);
+        const requiredAmount = parseFloat(amount);
+        const currentAllowanceNum = parseFloat(currentAllowance || '0');
+
+        if (currentAllowanceNum >= requiredAmount) return { success: true };
+
+        const approvalAmount = Math.max(requiredAmount, 1000).toString();
+
+        const approvalResult = await tokenContract.approve(tokenAddress, spenderAddress, approvalAmount, decimals);
+
+        if (approvalResult.status === 'failed') {
+          console.error('Approval failed:', approvalResult.error);
+          return { success: false, error: approvalResult.error || 'Approval failed' };
+        }
+
+        console.log('Approval transaction submitted:', approvalResult.hash);
+        return { success: true };
+      } catch (error: any) {
+        console.error('Approval error details:', error);
+        return { success: false, error: error.message || 'Token approval failed' };
       }
-      
-      // Wait for approval confirmation
-      onProgress?.({
-        step: 'approval',
-        status: TransactionStatus.PENDING,
-        hash: approveResult.hash,
-        message: 'Confirming token approval...'
-      });
-      
-      const receipt = await waitForTransaction(approveResult.hash, 1);
-      if (!receipt) {
-        onProgress?.({
-          step: 'approval',
-          status: TransactionStatus.FAILED,
-          message: 'Token approval confirmation failed'
-        });
-        return false;
+    },
+    [account, tokenContract]
+  );
+
+  const executeSupply = useCallback(
+    async (marketId: MarketId, amount: string): Promise<TransactionExecutionResult> => {
+      if (!account) return { success: false, error: 'Wallet not connected' };
+      setIsProcessing(true);
+
+      try {
+        const marketConfig = MARKET_CONFIG[marketId];
+        if (!marketConfig?.marketAddress) return { success: false, error: `Market ${marketId} not available` };
+
+        const approvalResult = await checkAndApproveToken(
+          marketConfig.tokenAddress,
+          marketConfig.marketAddress,
+          amount,
+          marketConfig.decimals
+        );
+
+        if (!approvalResult.success) return { success: false, error: approvalResult.error };
+
+        const supplyResult = await marketContract.supply(marketId, amount);
+        if (supplyResult.status === 'failed') {
+          return { success: false, error: supplyResult.error || 'Supply transaction failed' };
+        }
+
+        return { success: true, hash: supplyResult.hash };
+      } catch (error: any) {
+        console.error('Supply execution error:', error);
+        return { success: false, error: error.message || 'Supply transaction failed' };
+      } finally {
+        setIsProcessing(false);
       }
-      
-      return true;
-    } catch (error: any) {
-      onProgress?.({
-        step: 'approval',
-        status: TransactionStatus.FAILED,
-        message: 'Token approval failed',
-        error: error.message
-      });
-      return false;
-    }
-  };
-  
-  const executeSupply = useCallback(async (
-    marketId: MarketId,
-    amount: string,
-    userAddress: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ): Promise<boolean> => {
-    setIsProcessing(true);
-    
-    try {
-      const marketConfig = MARKET_CONFIG[marketId];
-      if (!marketConfig.marketAddress) {
-        throw new Error('Market not available for supply');
+    },
+    [account, marketContract, checkAndApproveToken]
+  );
+
+  const executeBorrow = useCallback(
+    async (marketId: MarketId, amount: string): Promise<TransactionExecutionResult> => {
+      if (!account) return { success: false, error: 'Wallet not connected' };
+      setIsProcessing(true);
+
+      try {
+        const marketConfig = MARKET_CONFIG[marketId];
+        if (!marketConfig?.marketAddress) return { success: false, error: `Market ${marketId} not available` };
+
+        const borrowResult = await marketContract.borrow(marketId, amount);
+        if (borrowResult.status === 'failed') {
+          return { success: false, error: borrowResult.error || 'Borrow transaction failed' };
+        }
+
+        return { success: true, hash: borrowResult.hash };
+      } catch (error: any) {
+        console.error('Borrow execution error:', error);
+        return { success: false, error: error.message || 'Borrow transaction failed' };
+      } finally {
+        setIsProcessing(false);
       }
-      
-      // Step 1: Check and approve token
-      const approved = await checkAndApproveToken(
-        marketConfig.tokenAddress,
-        marketConfig.marketAddress,
-        amount,
-        marketConfig.decimals,
-        userAddress,
-        onProgress
-      );
-      
-      if (!approved) return false;
-      
-      // Step 2: Execute supply transaction
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.PENDING,
-        message: 'Executing supply transaction...'
-      });
-      
-      const supplyResult = await marketContract.supply(marketId, amount);
-      
-      if (supplyResult.status === TransactionStatus.FAILED) {
-        onProgress?.({
-          step: 'transaction',
-          status: TransactionStatus.FAILED,
-          message: 'Supply transaction failed',
-          error: supplyResult.error
-        });
-        return false;
+    },
+    [account, marketContract]
+  );
+
+  const executeWithdraw = useCallback(
+    async (marketId: MarketId, amount: string): Promise<TransactionExecutionResult> => {
+      if (!account) return { success: false, error: 'Wallet not connected' };
+      setIsProcessing(true);
+
+      try {
+        const marketConfig = MARKET_CONFIG[marketId];
+        if (!marketConfig?.marketAddress) return { success: false, error: `Market ${marketId} not available` };
+
+        const withdrawResult = await marketContract.withdraw(marketId, amount);
+        if (withdrawResult.status === 'failed') {
+          return { success: false, error: withdrawResult.error || 'Withdraw transaction failed' };
+        }
+
+        return { success: true, hash: withdrawResult.hash };
+      } catch (error: any) {
+        console.error('Withdraw execution error:', error);
+        return { success: false, error: error.message || 'Withdraw transaction failed' };
+      } finally {
+        setIsProcessing(false);
       }
-      
-      // Step 3: Wait for confirmation
-      onProgress?.({
-        step: 'confirmation',
-        status: TransactionStatus.PENDING,
-        hash: supplyResult.hash,
-        message: 'Confirming supply transaction...'
-      });
-      
-      const receipt = await waitForTransaction(supplyResult.hash, 1);
-      if (!receipt) {
-        onProgress?.({
-          step: 'confirmation',
-          status: TransactionStatus.FAILED,
-          message: 'Supply confirmation failed'
-        });
-        return false;
+    },
+    [account, marketContract]
+  );
+
+  const executeRepay = useCallback(
+    async (marketId: MarketId, amount: string): Promise<TransactionExecutionResult> => {
+      if (!account) return { success: false, error: 'Wallet not connected' };
+      setIsProcessing(true);
+
+      try {
+        const marketConfig = MARKET_CONFIG[marketId];
+        if (!marketConfig?.marketAddress) return { success: false, error: `Market ${marketId} not available` };
+
+        const approvalResult = await checkAndApproveToken(
+          marketConfig.tokenAddress,
+          marketConfig.marketAddress,
+          amount,
+          marketConfig.decimals
+        );
+        if (!approvalResult.success) return { success: false, error: approvalResult.error };
+
+        const repayResult = await marketContract.repay(marketId, amount);
+        if (repayResult.status === 'failed') {
+          return { success: false, error: repayResult.error || 'Repay transaction failed' };
+        }
+
+        return { success: true, hash: repayResult.hash };
+      } catch (error: any) {
+        console.error('Repay execution error:', error);
+        return { success: false, error: error.message || 'Repay transaction failed' };
+      } finally {
+        setIsProcessing(false);
       }
-      
-      onProgress?.({
-        step: 'completed',
-        status: TransactionStatus.CONFIRMED,
-        hash: supplyResult.hash,
-        message: 'Supply completed successfully!'
-      });
-      
-      return true;
-    } catch (error: any) {
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.FAILED,
-        message: 'Supply failed',
-        error: error.message
-      });
-      return false;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [tokenContract, marketContract]);
-  
-  const executeBorrow = useCallback(async (
-    marketId: MarketId,
-    amount: string,
-    userAddress: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ): Promise<boolean> => {
-    setIsProcessing(true);
-    
-    try {
-      const marketConfig = MARKET_CONFIG[marketId];
-      if (!marketConfig.marketAddress) {
-        throw new Error('Market not available for borrowing');
-      }
-      
-      // Borrowing doesn't require token approval (we're receiving tokens)
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.PENDING,
-        message: 'Executing borrow transaction...'
-      });
-      
-      const borrowResult = await marketContract.borrow(marketId, amount);
-      
-      if (borrowResult.status === TransactionStatus.FAILED) {
-        onProgress?.({
-          step: 'transaction',
-          status: TransactionStatus.FAILED,
-          message: 'Borrow transaction failed',
-          error: borrowResult.error
-        });
-        return false;
-      }
-      
-      onProgress?.({
-        step: 'confirmation',
-        status: TransactionStatus.PENDING,
-        hash: borrowResult.hash,
-        message: 'Confirming borrow transaction...'
-      });
-      
-      const receipt = await waitForTransaction(borrowResult.hash, 1);
-      if (!receipt) {
-        onProgress?.({
-          step: 'confirmation',
-          status: TransactionStatus.FAILED,
-          message: 'Borrow confirmation failed'
-        });
-        return false;
-      }
-      
-      onProgress?.({
-        step: 'completed',
-        status: TransactionStatus.CONFIRMED,
-        hash: borrowResult.hash,
-        message: 'Borrow completed successfully!'
-      });
-      
-      return true;
-    } catch (error: any) {
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.FAILED,
-        message: 'Borrow failed',
-        error: error.message
-      });
-      return false;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [marketContract]);
-  
-  const executeWithdraw = useCallback(async (
-    marketId: MarketId,
-    amount: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ): Promise<boolean> => {
-    setIsProcessing(true);
-    
-    try {
-      const marketConfig = MARKET_CONFIG[marketId];
-      if (!marketConfig.marketAddress) {
-        throw new Error('Market not available for withdrawal');
-      }
-      
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.PENDING,
-        message: 'Executing withdraw transaction...'
-      });
-      
-      const withdrawResult = await marketContract.withdraw(marketId, amount);
-      
-      if (withdrawResult.status === TransactionStatus.FAILED) {
-        onProgress?.({
-          step: 'transaction',
-          status: TransactionStatus.FAILED,
-          message: 'Withdraw transaction failed',
-          error: withdrawResult.error
-        });
-        return false;
-      }
-      
-      onProgress?.({
-        step: 'confirmation',
-        status: TransactionStatus.PENDING,
-        hash: withdrawResult.hash,
-        message: 'Confirming withdraw transaction...'
-      });
-      
-      const receipt = await waitForTransaction(withdrawResult.hash, 1);
-      if (!receipt) {
-        onProgress?.({
-          step: 'confirmation',
-          status: TransactionStatus.FAILED,
-          message: 'Withdraw confirmation failed'
-        });
-        return false;
-      }
-      
-      onProgress?.({
-        step: 'completed',
-        status: TransactionStatus.CONFIRMED,
-        hash: withdrawResult.hash,
-        message: 'Withdraw completed successfully!'
-      });
-      
-      return true;
-    } catch (error: any) {
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.FAILED,
-        message: 'Withdraw failed',
-        error: error.message
-      });
-      return false;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [marketContract]);
-  
-  const executeRepay = useCallback(async (
-    marketId: MarketId,
-    amount: string,
-    userAddress: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ): Promise<boolean> => {
-    setIsProcessing(true);
-    
-    try {
-      const marketConfig = MARKET_CONFIG[marketId];
-      if (!marketConfig.marketAddress) {
-        throw new Error('Market not available for repayment');
-      }
-      
-      // Step 1: Check and approve token for repayment
-      const approved = await checkAndApproveToken(
-        marketConfig.tokenAddress,
-        marketConfig.marketAddress,
-        amount,
-        marketConfig.decimals,
-        userAddress,
-        onProgress
-      );
-      
-      if (!approved) return false;
-      
-      // Step 2: Execute repay transaction
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.PENDING,
-        message: 'Executing repay transaction...'
-      });
-      
-      const repayResult = await marketContract.repay(marketId, amount);
-      
-      if (repayResult.status === TransactionStatus.FAILED) {
-        onProgress?.({
-          step: 'transaction',
-          status: TransactionStatus.FAILED,
-          message: 'Repay transaction failed',
-          error: repayResult.error
-        });
-        return false;
-      }
-      
-      onProgress?.({
-        step: 'confirmation',
-        status: TransactionStatus.PENDING,
-        hash: repayResult.hash,
-        message: 'Confirming repay transaction...'
-      });
-      
-      const receipt = await waitForTransaction(repayResult.hash, 1);
-      if (!receipt) {
-        onProgress?.({
-          step: 'confirmation',
-          status: TransactionStatus.FAILED,
-          message: 'Repay confirmation failed'
-        });
-        return false;
-      }
-      
-      onProgress?.({
-        step: 'completed',
-        status: TransactionStatus.CONFIRMED,
-        hash: repayResult.hash,
-        message: 'Repay completed successfully!'
-      });
-      
-      return true;
-    } catch (error: any) {
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.FAILED,
-        message: 'Repay failed',
-        error: error.message
-      });
-      return false;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [tokenContract, marketContract]);
-  
-  const executeCollateralDeposit = useCallback(async (
-    marketId: MarketId,
-    collateralType: 'wkaia' | 'stkaia',
-    amount: string,
-    userAddress: string,
-    onProgress?: (progress: TransactionProgress) => void
-  ): Promise<boolean> => {
-    setIsProcessing(true);
-    
-    try {
-      const marketConfig = MARKET_CONFIG[marketId];
-      const collateralConfig = MARKET_CONFIG[collateralType];
-      
-      if (!marketConfig.marketAddress) {
-        throw new Error('Market not available');
-      }
-      
-      // Step 1: Check and approve collateral token
-      const approved = await checkAndApproveToken(
-        collateralConfig.tokenAddress,
-        marketConfig.marketAddress,
-        amount,
-        18, // Collateral tokens have 18 decimals
-        userAddress,
-        onProgress
-      );
-      
-      if (!approved) return false;
-      
-      // Step 2: Deposit collateral
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.PENDING,
-        message: 'Depositing collateral...'
-      });
-      
-      const depositResult = await marketContract.depositCollateral(
-        marketId,
-        collateralType,
-        amount
-      );
-      
-      if (depositResult.status === TransactionStatus.FAILED) {
-        onProgress?.({
-          step: 'transaction',
-          status: TransactionStatus.FAILED,
-          message: 'Collateral deposit failed',
-          error: depositResult.error
-        });
-        return false;
-      }
-      
-      onProgress?.({
-        step: 'confirmation',
-        status: TransactionStatus.PENDING,
-        hash: depositResult.hash,
-        message: 'Confirming collateral deposit...'
-      });
-      
-      const receipt = await waitForTransaction(depositResult.hash, 1);
-      if (!receipt) {
-        onProgress?.({
-          step: 'confirmation',
-          status: TransactionStatus.FAILED,
-          message: 'Collateral deposit confirmation failed'
-        });
-        return false;
-      }
-      
-      onProgress?.({
-        step: 'completed',
-        status: TransactionStatus.CONFIRMED,
-        hash: depositResult.hash,
-        message: 'Collateral deposited successfully!'
-      });
-      
-      return true;
-    } catch (error: any) {
-      onProgress?.({
-        step: 'transaction',
-        status: TransactionStatus.FAILED,
-        message: 'Collateral deposit failed',
-        error: error.message
-      });
-      return false;
-    } finally {
-      setIsProcessing(false);
-    }
-  }, [tokenContract, marketContract]);
-  
-  return {
-    executeSupply,
-    executeBorrow,
-    executeWithdraw,
-    executeRepay,
-    executeCollateralDeposit,
-    isProcessing
-  };
+    },
+    [account, marketContract, checkAndApproveToken]
+  );
+
+  return { executeSupply, executeBorrow, executeWithdraw, executeRepay, isProcessing };
 };

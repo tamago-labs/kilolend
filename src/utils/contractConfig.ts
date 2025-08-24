@@ -23,13 +23,15 @@ export const CONTRACT_ADDRESSES = {
   THBMarket: '0xd91Fd5c773C24Cc27D39c86EfEb3bfF57eF36F99',
   JPYMarket: '0x3c4151361e9718b45409B803B6a9Ee623DBF59FE',
   
-  // Mock Token Contracts (KIP-7)
-  USDT: '0x16EE94e3C07B24EbA6067eb9394BA70178aAc4c0',
-  KRW: '0xf2260B00250c772CB64606dBb88d9544F709308C',
-  JPY: '0xFa15adECD1CC94bd17cf48DD3b41F066FE2812a7',
-  THB: '0x576430Ecadbd9729B32a4cA9Fed9F38331273924',
-  stKAIA: '0x65e38111d8e2561aDC0E2EA1eeA856E6a43dC892',
-  wKAIA: '0x553588e084604a2677e10E46ea0a8A8e9D859146',
+  // Token Contracts - Fixed order based on deployment
+  USDT: '0x16EE94e3C07B24EbA6067eb9394BA70178aAc4c0', // 6 decimals
+  KRW: '0xf2260B00250c772CB64606dBb88d9544F709308C',  // 0 decimals
+  JPY: '0xFa15adECD1CC94bd17cf48DD3b41F066FE2812a7',  // 0 decimals  
+  THB: '0x576430Ecadbd9729B32a4cA9Fed9F38331273924',  // 2 decimals
+  
+  // Collateral Tokens
+  stKAIA: '0x65e38111d8e2561aDC0E2EA1eeA856E6a43dC892', // 18 decimals
+  wKAIA: '0x553588e084604a2677e10E46ea0a8A8e9D859146',  // 18 decimals
 };
 
 // Market Configuration
@@ -52,7 +54,7 @@ export const MARKET_CONFIG = {
     icon: '🏦',
     marketAddress: CONTRACT_ADDRESSES.KRWMarket,
     tokenAddress: CONTRACT_ADDRESSES.KRW,
-    decimals: 18,
+    decimals: 0, // Fixed: KRW has 0 decimals
     isActive: true,
     description: 'Korean Won stablecoin market'
   },
@@ -63,7 +65,7 @@ export const MARKET_CONFIG = {
     icon: '🏯',
     marketAddress: CONTRACT_ADDRESSES.JPYMarket,
     tokenAddress: CONTRACT_ADDRESSES.JPY,
-    decimals: 18,
+    decimals: 0, // Fixed: JPY has 0 decimals
     isActive: true,
     description: 'Japanese Yen market'
   },
@@ -74,7 +76,7 @@ export const MARKET_CONFIG = {
     icon: '🐘',
     marketAddress: CONTRACT_ADDRESSES.THBMarket,
     tokenAddress: CONTRACT_ADDRESSES.THB,
-    decimals: 18,
+    decimals: 2, // Fixed: THB has 2 decimals
     isActive: true,
     description: 'Thai Baht market'
   },
@@ -136,10 +138,12 @@ export const PROTOCOL_CONFIG = {
   // Protocol fee
   PROTOCOL_FEE: 500,      // 5%
   
-  // Minimum amounts
-  MIN_COLLATERAL: '1000000000000000000', // 1 KAIA/stKAIA in wei
-  MIN_BORROW_USDT: '1000000', // 1 USDT (6 decimals)
-  MIN_BORROW_OTHER: '1000000000000000000', // 1 token for other markets
+  // Minimum amounts per token (adjusted for decimals)
+  MIN_COLLATERAL: '1000000000000000000', // 1 KAIA/stKAIA in wei (18 decimals)
+  MIN_BORROW_USDT: '1000000',             // 1 USDT (6 decimals)
+  MIN_BORROW_KRW: '1000',                    // 1000 KRW (0 decimals)
+  MIN_BORROW_JPY: '1000',                    // 1000 JPY (0 decimals)
+  MIN_BORROW_THB: '10000',                  // 100 THB (2 decimals)
 };
 
 export type MarketId = keyof typeof MARKET_CONFIG;

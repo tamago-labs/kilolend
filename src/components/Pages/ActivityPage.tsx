@@ -190,7 +190,7 @@ export const ActivityPage = () => {
   const { transactions } = useUserStore();
   const { markets } = useMarketStore();
   const [filter, setFilter] = useState<FilterType>('all');
-
+ 
   const formatValue = (value: number) => {
     if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
     if (value >= 1000) return `$${(value / 1000).toFixed(2)}K`;

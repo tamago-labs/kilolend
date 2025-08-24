@@ -193,29 +193,7 @@ export interface TransactionResult {
   receipt?: ethers.TransactionReceipt;
   error?: string;
 }
-
-// Send transaction with error handling
-export const sendTransaction = async (
-  contract: ethers.Contract,
-  methodName: string,
-  params: any[],
-  options: any = {}
-): Promise<TransactionResult> => {
-  try {
-    const tx = await contract[methodName](...params, options);
-    return {
-      hash: tx.hash,
-      status: TransactionStatus.PENDING
-    };
-  } catch (error: any) {
-    console.error(`Error sending ${methodName} transaction:`, error);
-    return {
-      hash: '',
-      status: TransactionStatus.FAILED,
-      error: error.message || 'Transaction failed'
-    };
-  }
-};
+ 
 
 declare global {
   interface Window {

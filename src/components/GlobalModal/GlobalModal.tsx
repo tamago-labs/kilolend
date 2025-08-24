@@ -9,7 +9,8 @@ import { useState, useEffect } from 'react';
 import useTokenBalances from '@/hooks/useTokenBalances';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { MarketInfo } from './MarketInfo';
-import { useTransactions } from '@/hooks/useTransactions';
+import { useTransactions } from '@/hooks/useTransactions'; 
+import { validateMinimumAmount, validateDecimalPlaces, getInputStep, formatTokenAmount } from '@/utils/tokenUtils';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -385,6 +386,8 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
   const [userQuery, setUserQuery] = useState(data?.userQuery || '');
   const [validationError, setValidationError] = useState('');
   const [isValidating, setIsValidating] = useState(false);
+  const [showProgressModal, setShowProgressModal] = useState(false);
+  const [transactionHash, setTransactionHash] = useState('');
 
   // Update userQuery when modal data changes
   useEffect(() => {
@@ -411,6 +414,26 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
       return false;
     }
     
+    if (!currentMarket) {
+      setValidationError('Market not found');
+      return false;
+    }
+    
+    // Validate decimal places
+    const decimalValidation = validateDecimalPlaces(inputAmount, currentMarket.id as any);
+    if (!decimalValidation.isValid) {
+      setValidationError(decimalValidation.error!);
+      return false;
+    }
+    
+    // Validate minimum amount
+    const minValidation = validateMinimumAmount(currentMarket.id as any, inputAmount);
+    if (!minValidation.isValid) {
+      setValidationError(minValidation.error!);
+      return false;
+    }
+    
+    // Balance check for supply operations
     if (type === 'supply' && balance) {
       const numBalance = parseFloat(balance);
       const numAmount = parseFloat(inputAmount);
@@ -419,12 +442,6 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
         setValidationError('Insufficient balance');
         return false;
       }
-    }
-    
-    // Minimum amount validation (example: 0.01 for most tokens)
-    if (parseFloat(inputAmount) < 0.01) {
-      setValidationError('Amount too small (minimum 0.01)');
-      return false;
     }
     
     return true;
@@ -477,7 +494,7 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
     return '';
   };
 
-  const handleQuickActionSubmit = () => {
+  const handleQuickActionSubmit = async () => {
     if (!data || !currentMarket || !amount) return;
     
     // Validate before submission
@@ -490,36 +507,42 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
       return;
     }
 
-    const numAmount = parseFloat(amount);
-    const rate = data.action === 'supply' ? currentMarket.supplyAPY : currentMarket.borrowAPR;
-
-    addPosition({
-      marketId: data.marketId!,
-      type: data.action!,
-      amount: numAmount,
-      apy: rate,
-      usdValue: numAmount
-    });
-
-    addTransaction({
-      type: data.action!,
-      marketId: data.marketId!,
-      amount: numAmount,
-      status: 'confirmed',
-      usdValue: numAmount,
-      txHash: `0x${Math.random().toString(16).substring(2, 64).padStart(64, '0')}`
-    });
-
-    closeModal();
-    setAmount('');
-    setValidationError('');
-    
-    // Refresh balances after transaction
-    setTimeout(() => {
-      refreshBalances();
-    }, 1000);
-    
-    alert(`Successfully ${data.action === 'supply' ? 'supplied' : 'borrowed'} ${amount} ${currentMarket.symbol}!\n\nCheck your Portfolio to see the new position.`);
+    try {
+      setValidationError('');
+      
+      let result: any;
+      if (data.action === 'supply') {
+        result = await executeSupply(currentMarket.id as any, amount);
+      } else {
+        result = await executeBorrow(currentMarket.id as any, amount);
+      }
+      
+      if (result.success) {
+        // Show progress modal
+        setTransactionHash(result.hash!);
+        setShowProgressModal(true);
+        
+        // Add transaction to user store
+        addTransaction({
+          type: data.action!,
+          marketId: data.marketId!,
+          amount: parseFloat(amount),
+          status: 'pending',
+          usdValue: parseFloat(amount) * currentMarket.price,
+          txHash: result.hash!
+        });
+        
+        // Close main modal
+        closeModal();
+        setAmount('');
+        setValidationError('');
+      } else {
+        setValidationError(result.error || 'Transaction failed');
+      }
+    } catch (error: any) {
+      console.error('Transaction error:', error);
+      setValidationError(error.message || 'Transaction failed');
+    }
   };
 
   const handleAISubmit = () => {
@@ -544,6 +567,16 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
     "I need to borrow KRW with minimal collateral requirements",
     "최소한의 담보로 KRW를 빌리고 싶습니다"
   ];
+
+  const handleTransactionSuccess = () => {
+    // Update transaction status and refresh balances
+    setTimeout(() => {
+      refreshBalances();
+    }, 2000);
+    
+    setShowProgressModal(false);
+    setTransactionHash('');
+  };
 
   const renderModalContent = () => {
     switch (type) {
@@ -607,7 +640,7 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
                   value={amount}
                   onChange={(e) => handleAmountChange(e.target.value)}
                   min="0"
-                  step="0.000001"
+                  step={currentMarket ? getInputStep(currentMarket.id as any) : "0.000001"}
                   disabled={!account}
                 />
                 {validationError && (
@@ -652,10 +685,11 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
               <ModalButton
                 $variant="primary"
                 onClick={handleQuickActionSubmit}
-                disabled={!account || !amount || parseFloat(amount) <= 0 || !!validationError || currentTokenBalance?.isLoading}
+                disabled={!account || !amount || parseFloat(amount) <= 0 || !!validationError || currentTokenBalance?.isLoading || isProcessing}
               >
                 {!account ? 'Connect Wallet' : 
                  currentTokenBalance?.isLoading ? 'Loading...' :
+                 isProcessing ? 'Processing...' :
                  type === 'supply' ? 'Supply' : 'Borrow'}
               </ModalButton>
             </ModalButtons>
@@ -714,10 +748,12 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
   };
 
   return (
-    <ModalOverlay onClick={closeModal}>
-      <ModalContent onClick={(e) => e.stopPropagation()}>
-        {renderModalContent()}
-      </ModalContent>
-    </ModalOverlay>
+    <>
+      <ModalOverlay onClick={closeModal}>
+        <ModalContent onClick={(e) => e.stopPropagation()}>
+          {renderModalContent()}
+        </ModalContent>
+      </ModalOverlay> 
+    </>
   );
 };
