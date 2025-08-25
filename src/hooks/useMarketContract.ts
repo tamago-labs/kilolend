@@ -75,76 +75,17 @@ export const useMarketContract = (): MarketContractHook => {
       const abi: any = getAbi(marketId);
       const contract = await getContract(marketConfig.marketAddress, abi, false);
       if (!contract) throw new Error('Failed to create contract instance');
-
-      await contract.accrueInterest.staticCall();
-
-      if (marketId === 'usdt' && 'getMarketInfo' in contract) {
-        const marketInfo = await contract.getMarketInfo();
-
-        // Debug logging
-        console.log(`USDT Market Debug:`, {
-          rawSupplyAPY: marketInfo.supplyAPY.toString(),
-          rawBorrowAPR: marketInfo.borrowAPR.toString(),
-          rawUtilization: marketInfo.utilizationRate.toString(),
-          totalSupply: marketInfo.totalSupply.toString(),
-          totalBorrow: marketInfo.totalBorrow.toString()
-        });
-        
-        // Try different conversion approaches based on the raw values
-        const rawSupplyAPY = Number(marketInfo.supplyAPY);
-        const rawBorrowAPR = Number(marketInfo.borrowAPR);
-        
-        // If the raw values are extremely large, they're likely in wei
-        // If they're reasonable numbers, they might be in basis points
-        let supplyAPY: number;
-        let borrowAPR: number;
-        
-        // Handle edge case: if no supply or borrow, set reasonable defaults
-        if (Number(marketInfo.totalSupply) === 0 || Number(marketInfo.totalBorrow) === 0) {
-          supplyAPY = 0;
-          borrowAPR = 5; // Default 5% APR when market is empty
-        } else if (rawSupplyAPY > 1e18) {
-          // Values are in wei (18 decimals)
-          supplyAPY = rawSupplyAPY / 1e18;
-          borrowAPR = rawBorrowAPR / 1e18;
-        } else if (rawSupplyAPY > 10000) {
-          // Values might be in basis points * 1e14 or similar
-          supplyAPY = rawSupplyAPY / 1e16;
-          borrowAPR = rawBorrowAPR / 1e16;
-        } else if (rawSupplyAPY > 100) {
-          // Values are in basis points (10000 = 100%)
-          supplyAPY = rawSupplyAPY / 100;
-          borrowAPR = rawBorrowAPR / 100;
-        } else {
-          // Values are already in percentage
-          supplyAPY = rawSupplyAPY;
-          borrowAPR = rawBorrowAPR;
-        }
-        
-        // Cap rates at reasonable maximums to prevent UI issues
-        supplyAPY = Math.min(supplyAPY, 1000); // Max 1000% APY
-        borrowAPR = Math.min(borrowAPR, 1000); // Max 1000% APR
-        
-        console.log(`USDT Market Converted:`, {
-          supplyAPY,
-          borrowAPR
-        });
-        
-        return {
-          totalSupply: formatTokenAmount(marketInfo.totalSupply, marketConfig.decimals),
-          totalBorrow: formatTokenAmount(marketInfo.totalBorrow, marketConfig.decimals),
-          supplyAPY,
-          borrowAPR,
-          utilizationRate: (Number(marketInfo.utilizationRate) / 1e18) * 100,
-          exchangeRate: formatTokenAmount(marketInfo.exchangeRate, marketConfig.decimals),
-        };
-      }
-
+ 
       const [totalSupply, totalBorrow, utilizationRate] = await Promise.all([
         contract.totalStablecoinSupplied(),
         contract.totalStablecoinBorrowed(),
         contract.getUtilizationRate(),
       ]);
+
+      console.log("marketConfig:", marketConfig)
+      console.log("totalSupply :", totalSupply)
+      console.log("totalBorrow :", totalBorrow)
+      console.log("utilizationRate :", utilizationRate)
 
       const utilization = Number(utilizationRate) / 1e18;
       const baseRate = 0.02;
@@ -158,6 +99,9 @@ export const useMarketContract = (): MarketContractHook => {
           : baseRate + slope1 + ((utilization - optimal) / (1 - optimal)) * slope2;
 
       const supplyRate = borrowRate * utilization * 0.95;
+
+      console.log("supplyAPY : ", supplyRate)
+      console.log("borrowAPR : ", borrowRate)
 
       return {
         totalSupply: formatTokenAmount(totalSupply, marketConfig.decimals),
