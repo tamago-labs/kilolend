@@ -236,6 +236,7 @@ export const useMarketContract = (): MarketContractHook => {
   const borrow = useCallback(
     async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
       const parsedAmount = parseTokenAmount(amount, MARKET_CONFIG[marketId].decimals);
+
       return sendContractTransaction(marketId, 'borrowStablecoin', [parsedAmount]);
     },
     [sendContractTransaction]

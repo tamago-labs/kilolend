@@ -100,8 +100,8 @@ const MINT_AMOUNTS = {
   KRW: '1000000',   // 1,000,000 KRW  
   JPY: '100000',    // 100,000 JPY
   THB: '10000',     // 10,000 THB
-  stKAIA: '100',    // 100 stKAIA
-  wKAIA: '100'      // 100 wKAIA
+  stKAIA: '1000',    // 1000 stKAIA
+  wKAIA: '1000'      // 1000 wKAIA
 } as const;
 
 export const TokenFaucet = ({ onSuccess }: TokenFaucetProps) => {

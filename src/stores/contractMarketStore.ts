@@ -82,7 +82,7 @@ const initialContractMarkets: ContractMarket[] = [
     icon: 'KR',
     iconType: 'flag' as const,
     description: 'Korean Won stablecoin market',
-    marketAddress: '0x4fd5Ae48A869c5ec0214CB050D2D713433515D8d',
+    marketAddress: '0xE53048D2D19338A294395D8A7f780E44A9379925',
     tokenAddress: '0xf2260B00250c772CB64606dBb88d9544F709308C',
     decimals: 18,
     supplyAPY: 4.8,

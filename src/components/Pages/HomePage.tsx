@@ -491,21 +491,13 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                   onClick={() => handleQuickAction(market.id, 'borrow')}
                   $borrow={canBorrow(market.id)}
                   $collateral={!canBorrow(market.id)}
-                >
-                  {/* {canBorrow(market.id) ? 'Borrow' : 'Add Collateral'} */}
+                > 
                   Borrow
                 </ActionButton>
               </ActionButtons>
             </MarketRow>
           ))}
-
-          {/* Small Collateral Summary at Bottom */}
-          {account && userCollateral.total > 0 && (
-            <CollateralSummary>
-              <CollateralLabel>Your Total Collateral</CollateralLabel>
-              <CollateralValue>${userCollateral.total.toFixed(2)}</CollateralValue>
-            </CollateralSummary>
-          )}
+ 
         </Card>
 
         {/* Educational Card */}

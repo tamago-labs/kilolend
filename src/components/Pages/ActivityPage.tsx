@@ -304,7 +304,7 @@ export const ActivityPage = () => {
               <TransactionHeader>
                 <TransactionInfo>
                   <TransactionTitle>
-                    {getTransactionIcon(transaction.type)}
+                    {/* {getTransactionIcon(transaction.type)} */}
                     {getTransactionAction(transaction.type)} {market?.symbol || transaction.marketId.toUpperCase()}
                   </TransactionTitle>
                   <TransactionAmount>
