@@ -160,7 +160,7 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
           type: data.action!,
           marketId: data.marketId!,
           amount: parseFloat(amount),
-          status: 'pending',
+          status: 'confirmed',
           usdValue: parseFloat(amount) * currentMarket.price,
           txHash: result.hash!
         });
@@ -194,7 +194,7 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
           type: data?.collateralAction === 'deposit' ? 'supply' : 'withdraw',
           marketId: selectedCollateralType,
           amount: parseFloat(amount),
-          status: 'pending',
+          status: 'confirmed',
           usdValue: parseFloat(amount) * (selectedCollateralType === 'wkaia' ? 0.11 : 0.12),
           txHash: result.hash
         });

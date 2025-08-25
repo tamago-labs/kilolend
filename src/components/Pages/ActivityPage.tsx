@@ -187,10 +187,12 @@ const StartButton = styled.button`
 type FilterType = 'all' | 'supply' | 'borrow';
 
 export const ActivityPage = () => {
-  const { transactions } = useUserStore();
+  const { transactions, removePosition } = useUserStore();
   const { markets } = useMarketStore();
   const [filter, setFilter] = useState<FilterType>('all');
- 
+
+  console.log("transactions:", transactions)
+
   const formatValue = (value: number) => {
     if (value >= 1000000) return `$${(value / 1000000).toFixed(2)}M`;
     if (value >= 1000) return `$${(value / 1000).toFixed(2)}K`;
@@ -201,7 +203,7 @@ export const ActivityPage = () => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor(diffInHours * 60);
       return `${diffInMinutes} min ago`;
@@ -215,16 +217,6 @@ export const ActivityPage = () => {
 
   const getMarketInfo = (marketId: string) => {
     return markets.find(m => m.id === marketId);
-  };
-
-  const getTransactionIcon = (type: string) => {
-    switch (type) {
-      case 'supply': return '💰';
-      case 'withdraw': return '💸';
-      case 'borrow': return '📈';
-      case 'repay': return '💳';
-      default: return '📄';
-    }
   };
 
   const getTransactionAction = (type: string) => {
@@ -260,11 +252,11 @@ export const ActivityPage = () => {
         <PageSubtitle>
           View your transaction history
         </PageSubtitle>
-        
+
         <EmptyState>
           <EmptyIcon>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+              <polyline points="22,12 18,12 15,21 9,3 6,12 2,12" />
             </svg>
           </EmptyIcon>
           <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>No activity yet</h3>
@@ -283,7 +275,7 @@ export const ActivityPage = () => {
       <PageSubtitle>
         View your transaction history ({transactions.length} transaction{transactions.length !== 1 ? 's' : ''})
       </PageSubtitle>
-      
+
       <FilterTabs>
         <FilterTab $active={filter === 'all'} onClick={() => setFilter('all')}>
           All
@@ -304,7 +296,6 @@ export const ActivityPage = () => {
               <TransactionHeader>
                 <TransactionInfo>
                   <TransactionTitle>
-                    {/* {getTransactionIcon(transaction.type)} */}
                     {getTransactionAction(transaction.type)} {market?.symbol || transaction.marketId.toUpperCase()}
                   </TransactionTitle>
                   <TransactionAmount>
@@ -318,7 +309,7 @@ export const ActivityPage = () => {
                   {transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
                 </TransactionStatus>
               </TransactionHeader>
-              
+
               {transaction.txHash && (
                 <TransactionHash>
                   TX: {transaction.txHash}

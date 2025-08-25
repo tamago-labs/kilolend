@@ -102,7 +102,7 @@ export const useTokenContract = (): TokenContractHook => {
         
         return {
           hash: '', // Hash not immediately available in LINE MiniDapp
-          status: 'pending'
+          status: 'confirmed'
         };
 
       } catch (error: any) {
