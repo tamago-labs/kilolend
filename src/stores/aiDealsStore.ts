@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { LendingAIService, PoolRecommendation } from '@/utils/aiService';
+import { PoolDataCollector } from '@/utils/poolDataCollector';
 
 export interface AIDeal {
   id: string;
@@ -107,6 +109,9 @@ const dealTemplates = {
   ]
 };
 
+// Create AI service instance
+const aiService = new LendingAIService();
+
 export const useAIDealsStore = create<AIDealsState>((set, get) => ({
   currentDeals: [],
   currentDealIndex: 0,
@@ -118,89 +123,105 @@ export const useAIDealsStore = create<AIDealsState>((set, get) => ({
   generateDeals: async (userQuery: string) => {
     set({ isGenerating: true, lastQuery: userQuery });
 
-    // Simulate AI processing delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // Collect real pool data
+      const poolData = PoolDataCollector.collectPoolData();
+      
+      // Validate pool data
+      // const validation = PoolDataCollector.validatePoolData();
+      // if (!validation.isValid) {
+      //   console.warn('Pool data validation issues:', validation.issues);
+      // }
 
-    // Analyze query and select appropriate templates
-    const query = userQuery.toLowerCase();
-    let selectedTemplates: any[] = [];
+      // Initialize AI service
+      const aiService = new LendingAIService();
+      
+      // Get AI recommendations based on real pool data
+      const recommendations = await aiService.getPoolRecommendations(
+        userQuery, 
+        poolData.pools
+      );
 
-    if (query.includes('safe') || query.includes('4-5%') || query.includes('low risk')) {
-      selectedTemplates = dealTemplates.safe_returns;
-    } else if (query.includes('kaia') || query.includes('borrow')) {
-      selectedTemplates = dealTemplates.borrow_kaia;
-    } else if (query.includes('high') || query.includes('yield')) {
-      selectedTemplates = dealTemplates.high_yield;
-    } else if (query.includes('1000') || query.includes('$1000')) {
-      selectedTemplates = dealTemplates.strategy_1000;
-    } else {
-      // Default to safe returns for unknown queries
-      selectedTemplates = dealTemplates.safe_returns;
+      // Convert recommendations to AIDeal format
+      const deals: AIDeal[] = recommendations.map((rec, index) => ({
+        id: rec.id || `ai_deal_${Date.now()}_${index}`,
+        type: rec.type,
+        marketId: rec.poolId,
+        amount: rec.suggestedAmount || 1000,
+        apy: rec.apy,
+        duration: rec.duration || '30 days',
+        riskLevel: poolData.pools.find(p => p.id === rec.poolId)?.riskLevel || 'medium',
+        title: rec.name,
+        description: rec.reason,
+        benefits: rec.benefits,
+        risks: rec.riskWarnings,
+        estimatedEarnings: rec.estimatedEarnings,
+        estimatedCost: rec.estimatedCosts,
+        collateralRequired: rec.collateralRequired,
+        liquidationPrice: rec.liquidationPrice,
+        recommendation: rec.reason,
+        confidence: rec.score
+      }));
+
+      set({ 
+        currentDeals: deals, 
+        currentDealIndex: 0, 
+        isGenerating: false,
+        swipedDeals: []
+      });
+    } catch (error) {
+      console.error('Failed to generate AI deals:', error);
+      
+      // Fallback to template-based deals if AI fails
+      const query = userQuery.toLowerCase();
+      let selectedTemplates: any[] = [];
+
+      if (query.includes('safe') || query.includes('4-5%') || query.includes('low risk')) {
+        selectedTemplates = dealTemplates.safe_returns;
+      } else if (query.includes('kaia') || query.includes('borrow')) {
+        selectedTemplates = dealTemplates.borrow_kaia;
+      } else if (query.includes('high') || query.includes('yield')) {
+        selectedTemplates = dealTemplates.high_yield;
+      } else if (query.includes('1000') || query.includes('$1000')) {
+        selectedTemplates = dealTemplates.strategy_1000;
+      } else {
+        selectedTemplates = dealTemplates.safe_returns;
+      }
+
+      const fallbackDeals: AIDeal[] = selectedTemplates.map((template, index) => {
+        const baseAmount = query.includes('1000') ? 1000 : Math.floor(Math.random() * 5000) + 500;
+        const rateVariation = (Math.random() - 0.5) * 1;
+        const baseRate = template.type === 'supply' ? 5.2 : 3.8;
+        const apy = Math.max(0.1, baseRate + rateVariation);
+        
+        return {
+          id: `fallback_deal_${Date.now()}_${index}`,
+          type: template.type,
+          marketId: template.marketId,
+          amount: baseAmount,
+          apy: apy,
+          duration: ['30 days', '90 days', '180 days', '1 year'][Math.floor(Math.random() * 4)],
+          riskLevel: template.riskLevel,
+          title: `[Fallback] ${template.title}`,
+          description: template.description,
+          benefits: template.benefits,
+          risks: template.risks,
+          estimatedEarnings: template.type === 'supply' ? (baseAmount * apy) / 100 / 12 : undefined,
+          estimatedCost: template.type === 'borrow' ? (baseAmount * apy) / 100 / 12 : undefined,
+          collateralRequired: template.type === 'borrow' ? baseAmount * 1.5 : undefined,
+          liquidationPrice: template.type === 'borrow' ? Math.random() * 0.2 + 0.6 : undefined,
+          recommendation: template.recommendation,
+          confidence: Math.floor(Math.random() * 20) + 60
+        };
+      });
+
+      set({ 
+        currentDeals: fallbackDeals.slice(0, 3), 
+        currentDealIndex: 0, 
+        isGenerating: false,
+        swipedDeals: []
+      });
     }
-
-    // Generate deals from templates with randomized values
-    const deals: AIDeal[] = selectedTemplates.map((template, index) => {
-      const baseAmount = query.includes('1000') ? 1000 : Math.floor(Math.random() * 5000) + 500;
-      const rateVariation = (Math.random() - 0.5) * 1; // ±0.5%
-      const baseRate = template.type === 'supply' ? 5.2 : 3.8;
-      const apy = Math.max(0.1, baseRate + rateVariation);
-      
-      return {
-        id: `ai_deal_${Date.now()}_${index}`,
-        type: template.type,
-        marketId: template.marketId,
-        amount: baseAmount,
-        apy: apy,
-        duration: ['30 days', '90 days', '180 days', '1 year'][Math.floor(Math.random() * 4)],
-        riskLevel: template.riskLevel,
-        title: template.title,
-        description: template.description,
-        benefits: template.benefits,
-        risks: template.risks,
-        estimatedEarnings: template.type === 'supply' ? (baseAmount * apy) / 100 / 12 : undefined,
-        estimatedCost: template.type === 'borrow' ? (baseAmount * apy) / 100 / 12 : undefined,
-        collateralRequired: template.type === 'borrow' ? baseAmount * 1.5 : undefined,
-        liquidationPrice: template.type === 'borrow' ? Math.random() * 0.2 + 0.6 : undefined,
-        recommendation: template.recommendation,
-        confidence: Math.floor(Math.random() * 20) + 80 // 80-100%
-      };
-    });
-
-    // Add some variety with additional deals
-    const additionalDeals = [...selectedTemplates].map((template, index) => {
-      const altMarket = template.marketId === 'usdt' ? 'krw' : 'usdt';
-      const baseAmount = Math.floor(Math.random() * 3000) + 1000;
-      const apy = Math.max(0.1, (template.type === 'supply' ? 4.8 : 4.2) + (Math.random() - 0.5) * 1);
-      
-      return {
-        id: `ai_deal_alt_${Date.now()}_${index}`,
-        type: template.type,
-        marketId: altMarket,
-        amount: baseAmount,
-        apy: apy,
-        duration: ['60 days', '120 days', '6 months'][Math.floor(Math.random() * 3)],
-        riskLevel: template.riskLevel,
-        title: template.title.replace('USDT', altMarket.toUpperCase()).replace('KRW', altMarket.toUpperCase()),
-        description: template.description.replace('USDT', altMarket.toUpperCase()).replace('KRW', altMarket.toUpperCase()),
-        benefits: template.benefits,
-        risks: template.risks,
-        estimatedEarnings: template.type === 'supply' ? (baseAmount * apy) / 100 / 12 : undefined,
-        estimatedCost: template.type === 'borrow' ? (baseAmount * apy) / 100 / 12 : undefined,
-        collateralRequired: template.type === 'borrow' ? baseAmount * 1.4 : undefined,
-        liquidationPrice: template.type === 'borrow' ? Math.random() * 0.15 + 0.65 : undefined,
-        recommendation: template.recommendation,
-        confidence: Math.floor(Math.random() * 15) + 75 // 75-90%
-      };
-    });
-
-    const allDeals = [...deals, ...additionalDeals].slice(0, 5); // Limit to 5 deals
-
-    set({ 
-      currentDeals: allDeals, 
-      currentDealIndex: 0, 
-      isGenerating: false,
-      swipedDeals: []
-    });
   },
 
   swipeDeal: (dealId: string, action: 'accept' | 'reject') => {

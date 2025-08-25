@@ -322,19 +322,28 @@ const KeyboardHint = styled.div`
 
 interface DealCardProps {
   deal: AIDeal;
-  onSwipe: (action: 'accept' | 'reject') => void;
+  onPass: () => void;
+  onExecute: (deal: AIDeal) => void;
 }
 
-export const DealCard = ({ deal, onSwipe }: DealCardProps) => {
+export const DealCard = ({ deal, onPass, onExecute }: DealCardProps) => {
   const [swiping, setSwiping] = useState<'left' | 'right' | null>(null);
   const { markets } = useMarketStore();
 
   const market = markets.find(m => m.id === deal.marketId);
 
-  const handleSwipe = (action: 'accept' | 'reject') => {
-    setSwiping(action === 'accept' ? 'right' : 'left');
+  const handlePass = () => {
+    setSwiping('left');
     setTimeout(() => {
-      onSwipe(action);
+      onPass();
+      setSwiping(null);
+    }, 300);
+  };
+
+  const handleExecute = () => {
+    setSwiping('right');
+    setTimeout(() => {
+      onExecute(deal);
       setSwiping(null);
     }, 300);
   };
@@ -347,8 +356,8 @@ export const DealCard = ({ deal, onSwipe }: DealCardProps) => {
 
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') handleSwipe('reject');
-      if (e.key === 'ArrowRight') handleSwipe('accept');
+      if (e.key === 'ArrowLeft') handlePass();
+      if (e.key === 'ArrowRight') handleExecute();
     };
 
     window.addEventListener('keydown', handleKeyPress);
@@ -420,11 +429,11 @@ export const DealCard = ({ deal, onSwipe }: DealCardProps) => {
         </DetailsSection>
 
         <SwipeButtons>
-          <SwipeButton $type="reject" onClick={() => handleSwipe('reject')}>
+          <SwipeButton $type="reject" onClick={handlePass}>
             👈 Pass
           </SwipeButton>
-          <SwipeButton $type="accept" onClick={() => handleSwipe('accept')}>
-            Accept 👉
+          <SwipeButton $type="accept" onClick={handleExecute}>
+            {deal.type === 'supply' ? '💰 Supply' : '📈 Borrow'}
           </SwipeButton>
         </SwipeButtons>
       </Card>

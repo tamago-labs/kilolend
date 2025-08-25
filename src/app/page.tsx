@@ -44,24 +44,12 @@ export default function Home() {
         setShowSwipeDeals(false);
     };
 
-    const handleExecuteDeals = (dealIds: string[]) => {
-        console.log('Executing deals:', dealIds);
-        
-        // Show success message
-        alert(`Successfully executed ${dealIds.length} deal${dealIds.length !== 1 ? 's' : ''}!\n\nCheck your Portfolio for new positions.`);
-        
-        // Navigate to portfolio to show new positions
-        setActiveTab('portfolio');
-        setShowSwipeDeals(false);
-    };
-
     const renderContent = () => {
         // Show swipe deals interface if deals are generated
         if (showSwipeDeals && currentDeals.length > 0) {
             return (
                 <SwipeDeals 
                     onBack={handleBackToHome}
-                    onExecuteDeals={handleExecuteDeals}
                 />
             );
         }

@@ -2,8 +2,9 @@
 
 import styled from 'styled-components';
 import { useAIDealsStore } from '@/stores/aiDealsStore';
-import { useUserStore } from '@/stores/userStore';
+import { useModalStore } from '@/stores/modalStore';
 import { DealCard } from './DealCard';
+import { AIDeal } from '@/stores/aiDealsStore';
 
 const Container = styled.div`
   padding: 20px 16px;
@@ -67,66 +68,6 @@ const CardArea = styled.div`
   position: relative;
 `;
 
-const CompletionScreen = styled.div`
-  text-align: center;
-  padding: 40px 20px;
-`;
-
-const CompletionIcon = styled.div`
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #00C300, #00A000);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 20px;
-  font-size: 32px;
-`;
-
-const CompletionTitle = styled.h3`
-  font-size: 24px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 12px;
-`;
-
-const CompletionText = styled.p`
-  color: #64748b;
-  margin-bottom: 24px;
-  line-height: 1.6;
-`;
-
-const AcceptedDealsCount = styled.div`
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 24px;
-`;
-
-const CountText = styled.div`
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-`;
-
-const ActionButton = styled.button`
-  background: linear-gradient(135deg, #00C300, #00A000);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 16px 32px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 195, 0, 0.3);
-  }
-`;
-
 const BackButton = styled.button`
   background: white;
   color: #64748b;
@@ -153,62 +94,43 @@ const EmptyState = styled.div`
 
 interface SwipeDealsProps {
   onBack: () => void;
-  onExecuteDeals: (dealIds: string[]) => void;
 }
 
-export const SwipeDeals = ({ onBack, onExecuteDeals }: SwipeDealsProps) => {
+export const SwipeDeals = ({ onBack }: SwipeDealsProps) => {
   const { 
     currentDeals, 
     currentDealIndex, 
-    swipedDeals,
-    acceptedDeals,
-    swipeDeal,
     getCurrentDeal,
+    nextDeal,
     resetDeals
   } = useAIDealsStore();
 
-  const addTransaction = useUserStore(state => state.addTransaction);
-  const addPosition = useUserStore(state => state.addPosition);
+  const { openModal } = useModalStore();
 
   const currentDeal = getCurrentDeal();
-  const isComplete = currentDealIndex >= currentDeals.length;
+  const totalDeals = currentDeals.length;
 
-  const handleSwipe = (action: 'accept' | 'reject') => {
-    if (!currentDeal) return;
-    swipeDeal(currentDeal.id, action);
+  const handlePass = () => {
+    // Move to next deal, or cycle back to first if at end
+    if (currentDealIndex >= totalDeals - 1) {
+      // Reset index to 0 to show first deal again (cycle)
+      useAIDealsStore.setState({ currentDealIndex: 0 });
+    } else {
+      nextDeal();
+    }
   };
 
-  const handleExecuteDeals = () => {
-    // Add accepted deals to user's portfolio and transactions
-    acceptedDeals.forEach(deal => {
-      // Add position
-      addPosition({
-        marketId: deal.marketId,
-        type: deal.type,
-        amount: deal.amount,
-        apy: deal.apy,
-        usdValue: deal.amount
-      });
-
-      // Add transaction
-      addTransaction({
-        type: deal.type,
-        marketId: deal.marketId,
-        amount: deal.amount,
-        status: 'confirmed',
-        usdValue: deal.amount,
-        txHash: `0x${Math.random().toString(16).substring(2, 64).padStart(64, '0')}`
-      });
-    });
-
-    onExecuteDeals(acceptedDeals.map(d => d.id));
-    resetDeals();
-    onBack();
-  };
-
-  const handleStartOver = () => {
-    resetDeals();
-    onBack();
+  const handleExecute = (deal: AIDeal) => {
+    // Open the appropriate modal based on deal type
+    const modalType = deal.type === 'supply' ? 'supply' : 'borrow';
+    
+    openModal(modalType, {
+      marketId: deal.marketId,
+      action: deal.type,
+      suggestedAmount: deal.amount,
+      aiRecommendation: true,
+      dealData: deal
+    } as any);
   };
 
   if (currentDeals.length === 0) {
@@ -223,50 +145,11 @@ export const SwipeDeals = ({ onBack, onExecuteDeals }: SwipeDealsProps) => {
     );
   }
 
-  if (isComplete) {
-    return (
-      <Container>
-        <CompletionScreen>
-          <CompletionIcon>🎉</CompletionIcon>
-          <CompletionTitle>All Done!</CompletionTitle>
-          <CompletionText>
-            You've reviewed all the AI-generated deals. Here's what you selected:
-          </CompletionText>
-
-          <AcceptedDealsCount>
-            <CountText>
-              {acceptedDeals.length} deal{acceptedDeals.length !== 1 ? 's' : ''} accepted
-            </CountText>
-          </AcceptedDealsCount>
-
-          {acceptedDeals.length > 0 ? (
-            <>
-              <ActionButton onClick={handleExecuteDeals}>
-                Execute Deals 🚀
-              </ActionButton>
-              <CompletionText style={{ marginTop: '16px', fontSize: '12px' }}>
-                This will add positions to your portfolio
-              </CompletionText>
-            </>
-          ) : (
-            <ActionButton onClick={handleStartOver}>
-              Try Again
-            </ActionButton>
-          )}
-
-          <BackButton onClick={onBack}>
-            Back to Home
-          </BackButton>
-        </CompletionScreen>
-      </Container>
-    );
-  }
-
   return (
     <Container>
       <Header>
         <Title>AI Deal Recommendations</Title>
-        <Subtitle>Swipe right to accept, left to pass</Subtitle>
+        <Subtitle>Pass to see next deal • Execute to open modal</Subtitle>
       </Header>
 
       <ProgressIndicator>
@@ -274,11 +157,11 @@ export const SwipeDeals = ({ onBack, onExecuteDeals }: SwipeDealsProps) => {
           <ProgressDot
             key={index}
             $active={index === currentDealIndex}
-            $completed={index < currentDealIndex}
+            $completed={false}
           />
         ))}
         <ProgressText>
-          {currentDealIndex + 1} of {currentDeals.length}
+          {currentDealIndex + 1} of {totalDeals}
         </ProgressText>
       </ProgressIndicator>
 
@@ -286,7 +169,8 @@ export const SwipeDeals = ({ onBack, onExecuteDeals }: SwipeDealsProps) => {
         {currentDeal && (
           <DealCard 
             deal={currentDeal} 
-            onSwipe={handleSwipe}
+            onPass={handlePass}
+            onExecute={handleExecute}
           />
         )}
       </CardArea>
