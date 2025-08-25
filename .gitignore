@@ -4,3 +4,5 @@ old/
 .env
 .next/
 cert/
+# Local Netlify folder
+.netlify
