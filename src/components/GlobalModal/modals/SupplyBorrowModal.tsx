@@ -89,9 +89,9 @@ export const SupplyBorrowModal: React.FC<SupplyBorrowModalProps> = ({
         <BalanceSection>
           <BalanceHeader>
             <BalanceTitle>Available Balance</BalanceTitle>
-            <BalanceRefresh onClick={refreshBalances}>
+            {/* <BalanceRefresh onClick={refreshBalances}>
               🔄 Refresh
-            </BalanceRefresh>
+            </BalanceRefresh> */}
           </BalanceHeader>
           <BalanceInfo>
             <div>

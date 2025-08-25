@@ -39,7 +39,7 @@ export const useContractMarketData = () => {
   const fetchPriceData = useCallback(
     async () => {
       try {
-        const prices = await priceOracle.getAllPrices();
+        const prices = await priceOracle.getAllPrices(); 
         if (prices) {
           updatePriceData(prices);
         }

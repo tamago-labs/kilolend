@@ -31,7 +31,7 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
   const { refreshBalances, getBalanceBySymbol } = useTokenBalances();
   const { executeSupply, executeBorrow, isProcessing } = useTransactions();
   const marketContract = useMarketContract();
-  
+
   const [amount, setAmount] = useState('');
   const [userQuery, setUserQuery] = useState(data?.userQuery || '');
   const [validationError, setValidationError] = useState('');
@@ -53,65 +53,64 @@ export const GlobalModal = ({ onAIDealsGenerated }: GlobalModalProps) => {
 
   let userCollateral = { wkaia: 0, stkaia: 0, total: 0 };
 
-if (account) {
-  const collateralPositions = positions.filter(
-    (p) => p.marketId === 'wkaia' || p.marketId === 'stkaia'
-  );
+  if (account && currentMarket) {
+ 
+    const collateralPositions = positions.filter(
+      (p) => p.marketId === currentMarket.id
+    );
+ 
+    const wkaia = collateralPositions
+      .reduce((sum, p) => sum + parseFloat(p.wkaiaCollateral || '0'), 0);
 
-  const wkaia = collateralPositions
-    .filter((p) => p.marketId === 'wkaia')
-    .reduce((sum, p) => sum + parseFloat(p.wkaiaCollateral || '0'), 0);
+    const stkaia = collateralPositions
+      .reduce((sum, p) => sum + parseFloat(p.stkaiaCollateral || '0'), 0);
 
-  const stkaia = collateralPositions
-    .filter((p) => p.marketId === 'stkaia')
-    .reduce((sum, p) => sum + parseFloat(p.stkaiaCollateral || '0'), 0);
-
-  userCollateral = {
-    wkaia,
-    stkaia,
-    total: totalCollateralValue
-  };
-}
+    userCollateral = {
+      wkaia,
+      stkaia,
+      total: totalCollateralValue
+    };
+  }
 
 
   const validateAmount = (inputAmount: string, balance: string | null) => {
     setValidationError('');
-    
+
     if (!inputAmount || parseFloat(inputAmount) <= 0) {
       setValidationError('Amount must be greater than 0');
       return false;
     }
-    
+
     if (currentMarket && type !== 'deposit-collateral' && type !== 'withdraw-collateral') {
       const decimalValidation = validateDecimalPlaces(inputAmount, currentMarket.id as any);
       if (!decimalValidation.isValid) {
         setValidationError(decimalValidation.error!);
         return false;
       }
-      
+
       const minValidation = validateMinimumAmount(currentMarket.id as any, inputAmount);
       if (!minValidation.isValid) {
         setValidationError(minValidation.error!);
         return false;
       }
     }
-    
+
     if (type === 'supply' && balance) {
       const numBalance = parseFloat(balance);
       const numAmount = parseFloat(inputAmount);
-      
+
       if (numAmount > numBalance) {
         setValidationError('Insufficient balance');
         return false;
       }
     }
-    
+
     return true;
   };
 
   const handleAmountChange = (value: string) => {
     setAmount(value);
-    
+
     if (type === 'supply' || type === 'borrow') {
       validateAmount(value, currentTokenBalance?.balance || null);
     }
@@ -120,10 +119,10 @@ if (account) {
   const handleMaxClick = () => {
     if (type === 'supply' && currentTokenBalance?.balance) {
       const balance = parseFloat(currentTokenBalance.balance);
-      const maxAmount = currentMarket?.symbol === 'KAIA' 
+      const maxAmount = currentMarket?.symbol === 'KAIA'
         ? Math.max(0, balance - 0.001)
         : balance * 0.95;
-      
+
       const maxAmountStr = maxAmount.toFixed(6);
       setAmount(maxAmountStr);
       validateAmount(maxAmountStr, currentTokenBalance.balance);
@@ -138,9 +137,9 @@ if (account) {
 
   const handleQuickActionSubmit = async () => {
     if (!data || !currentMarket || !amount) return;
-    
+
     if (!validateAmount(amount, currentTokenBalance?.balance || null)) return;
-    
+
     if (!account) {
       setValidationError('Please connect your wallet first');
       return;
@@ -148,14 +147,14 @@ if (account) {
 
     try {
       setValidationError('');
-      
+
       let result: any;
       if (data.action === 'supply') {
         result = await executeSupply(currentMarket.id as any, amount);
       } else {
         result = await executeBorrow(currentMarket.id as any, amount);
       }
-      
+
       if (result.success) {
         addTransaction({
           type: data.action!,
@@ -165,7 +164,7 @@ if (account) {
           usdValue: parseFloat(amount) * currentMarket.price,
           txHash: result.hash!
         });
-        
+
         closeModal();
         setAmount('');
         setValidationError('');
@@ -179,17 +178,17 @@ if (account) {
 
   const handleCollateralSubmit = async () => {
     if (!amount || !account) return;
-    
+
     try {
       setValidationError('');
-      
+
       let result: any;
       if (data?.collateralAction === 'deposit') {
         result = await marketContract.depositCollateral('usdt', selectedCollateralType, amount);
       } else {
         result = await marketContract.withdrawCollateral('usdt', selectedCollateralType, amount);
       }
-      
+
       if (result.status !== 'failed') {
         addTransaction({
           type: data?.collateralAction === 'deposit' ? 'supply' : 'withdraw',
@@ -199,7 +198,7 @@ if (account) {
           usdValue: parseFloat(amount) * (selectedCollateralType === 'wkaia' ? 0.11 : 0.12),
           txHash: result.hash
         });
-        
+
         closeModal();
         setAmount('');
         setValidationError('');
@@ -213,7 +212,7 @@ if (account) {
 
   const handleAISubmit = () => {
     if (!userQuery.trim()) return;
-    
+
     closeModal();
     onAIDealsGenerated?.(userQuery);
     setUserQuery('');

@@ -263,9 +263,9 @@ const ActionButton = styled.button<{ $supply?: boolean; $borrow?: boolean; $coll
   ${({ $collateral }) =>
     $collateral &&
     `
-    background: #fbbf24;
-    color: white;
-    &:hover { background: #f59e0b; }
+    background: #f3f4f6;
+    color: 1e293b;
+    &:hover { background: #e2e8f0; }
   `}
 `;
 
@@ -354,22 +354,22 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   // Calculate user's collateral status
   const userCollateral = useMemo(() => {
     if (!account) return { wkaia: 0, stkaia: 0, total: 0 };
-    
-    const collateralPositions = positions.filter(p => 
+
+    const collateralPositions = positions.filter(p =>
       p.marketId === 'wkaia' || p.marketId === 'stkaia'
     );
-    
+
     const wkaia = collateralPositions
       .filter(p => p.marketId === 'wkaia')
       .reduce((sum, p) => sum + parseFloat(p.wkaiaCollateral || '0'), 0);
-      
+
     const stkaia = collateralPositions
-      .filter(p => p.marketId === 'stkaia') 
+      .filter(p => p.marketId === 'stkaia')
       .reduce((sum, p) => sum + parseFloat(p.stkaiaCollateral || '0'), 0);
-    
+
     return {
       wkaia,
-      stkaia, 
+      stkaia,
       total: totalCollateralValue
     };
   }, [account, positions, totalCollateralValue]);
@@ -377,7 +377,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   // Check if user has sufficient collateral to borrow
   const canBorrow = (marketId: string) => {
     if (!account) return false;
-    
+
     // Need at least $10 worth of collateral to borrow
     const minCollateralUSD = 10;
     return userCollateral.total >= minCollateralUSD;
@@ -390,10 +390,10 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const handleQuickAction = (marketId: string, action: 'supply' | 'borrow') => {
     if (action === 'borrow' && !canBorrow(marketId)) {
       // Guide user to deposit collateral first
-      openModal('deposit-collateral', { 
-        marketId, 
+      openModal('deposit-collateral', {
+        marketId,
         collateralType: 'wkaia',
-        collateralAction: 'deposit' 
+        collateralAction: 'deposit'
       });
     } else {
       openModal(action, { marketId, action });
@@ -467,8 +467,8 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <MarketRow key={market.id}>
               <MarketInfo>
                 <MarketIcon>
-                  <TokenIcon 
-                    icon={market.icon} 
+                  <TokenIcon
+                    icon={market.icon}
                     iconType={market.iconType}
                     alt={market.name}
                     size={24}
@@ -487,12 +487,13 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                 <ActionButton onClick={() => handleQuickAction(market.id, 'supply')} $supply>
                   Supply
                 </ActionButton>
-                <ActionButton 
-                  onClick={() => handleQuickAction(market.id, 'borrow')} 
+                <ActionButton
+                  onClick={() => handleQuickAction(market.id, 'borrow')}
                   $borrow={canBorrow(market.id)}
                   $collateral={!canBorrow(market.id)}
                 >
-                  {canBorrow(market.id) ? 'Borrow' : 'Add Collateral'}
+                  {/* {canBorrow(market.id) ? 'Borrow' : 'Add Collateral'} */}
+                  Borrow
                 </ActionButton>
               </ActionButtons>
             </MarketRow>

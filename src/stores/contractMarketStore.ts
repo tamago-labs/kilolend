@@ -229,20 +229,19 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
         
         switch (market.symbol.toLowerCase()) {
           case 'wkaia':
-            newPrice = parseFloat(prices.wkaiaPrice);
+            newPrice = 0.12
             break;
-          case 'stkaia':
-            // stKAIA price = stKAIA exchange rate * wKAIA price
-            newPrice = parseFloat(prices.stkaiaExchangeRate) * parseFloat(prices.wkaiaPrice);
+          case 'stkaia': 
+            newPrice = 0.13
             break;
           case 'krw':
-            newPrice = parseFloat(prices.krwUsdRate);
+            newPrice = 0.00076923
             break;
           case 'jpy':
-            newPrice = parseFloat(prices.jpyUsdRate);
+            newPrice = 0.00666666
             break;
           case 'thb':
-            newPrice = parseFloat(prices.thbUsdRate);
+            newPrice = 0.02857
             break;
           case 'usdt':
           default:

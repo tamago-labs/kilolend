@@ -59,8 +59,8 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
   const { depositCollateral } = useMarketContract();
 
   // Get token and market addresses
-  const tokenAddress = collateralType === 'wkaia' 
-    ? MARKET_CONFIG.wkaia.tokenAddress 
+  const tokenAddress = collateralType === 'wkaia'
+    ? MARKET_CONFIG.wkaia.tokenAddress
     : MARKET_CONFIG.stkaia.tokenAddress;
   const marketAddress = MARKET_CONFIG[marketId as keyof typeof MARKET_CONFIG].marketAddress;
 
@@ -75,7 +75,7 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
       const currentAllowance = await getAllowance(tokenAddress, account, marketAddress!);
       const requiredAmount = parseFloat(amount);
       const allowanceAmount = parseFloat(currentAllowance || '0');
-      
+
       setNeedsApproval(allowanceAmount < requiredAmount);
     } catch (error) {
       console.error('Error checking allowance:', error);
@@ -87,36 +87,36 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
 
   const validateAmount = (inputAmount: string) => {
     setValidationError('');
-    
+
     if (!inputAmount || parseFloat(inputAmount) <= 0) {
       setValidationError('Amount must be greater than 0');
       return false;
     }
-    
+
     if (collateralTokenBalance?.balance) {
       const numBalance = parseFloat(collateralTokenBalance.balance);
       const numAmount = parseFloat(inputAmount);
-      
+
       if (numAmount > numBalance) {
         setValidationError('Insufficient balance');
         return false;
       }
     }
-    
+
     return true;
   };
 
   const handleAmountChange = (value: string) => {
     setAmount(value);
     validateAmount(value);
-    
+
     // Check allowance after a short delay
     const timeoutId = setTimeout(() => {
       if (value && parseFloat(value) > 0) {
         checkAllowance();
       }
     }, 500);
-    
+
     return () => clearTimeout(timeoutId);
   };
 
@@ -124,7 +124,7 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
     if (collateralTokenBalance?.balance) {
       const balance = parseFloat(collateralTokenBalance.balance);
       const maxAmount = balance * 0.95; // Leave 5% for gas
-      
+
       const maxAmountStr = maxAmount.toFixed(6);
       setAmount(maxAmountStr);
       validateAmount(maxAmountStr);
@@ -139,9 +139,9 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
     try {
       // Approve a bit more than needed to avoid future approvals
       const approvalAmount = (parseFloat(amount) * 1.1).toString();
-      
+
       const result = await approve(tokenAddress, marketAddress!, approvalAmount, 18);
-      
+
       if (result.status === 'failed') {
         setValidationError(result.error || 'Approval failed');
         return;
@@ -151,7 +151,7 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
       setTimeout(() => {
         checkAllowance();
       }, 2000);
-      
+
     } catch (error: any) {
       setValidationError(error.message || 'Approval failed');
     } finally {
@@ -165,7 +165,7 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
     setIsProcessing(true);
     try {
       const result = await depositCollateral(marketId as any, collateralType, amount);
-      
+
       if (result.status === 'failed') {
         setValidationError(result.error || 'Deposit failed');
         return;
@@ -174,7 +174,7 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
       // Success
       onSuccess();
       closeModal();
-      
+
     } catch (error: any) {
       setValidationError(error.message || 'Deposit failed');
     } finally {
@@ -185,12 +185,12 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
   return (
     <>
       <ModalTitle>
-        🏦 Deposit {collateralType.toUpperCase()} Collateral
+        Deposit Collateral
       </ModalTitle>
 
       <ChatDescription>
-        Deposit {collateralType.toUpperCase()} as collateral to enable borrowing in this market.
-        {collateralType === 'wkaia' ? ' LTV: 60%' : ' LTV: 65% + Staking rewards'}
+        Deposit collateral assets to enable borrowing in this market.
+        {/* {collateralType === 'wkaia' ? ' LTV: 60%' : ' LTV: 65% + Staking rewards'} */}
       </ChatDescription>
 
       {!account && (
@@ -275,7 +275,7 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
             <DetailRow>
               <DetailLabel>Borrowing Power Added:</DetailLabel>
               <DetailValue>${((parseFloat(amount) || 0) * (collateralType === 'wkaia' ? 0.11 : 0.12) * 0.6).toFixed(2)}</DetailValue>
-            </DetailRow> 
+            </DetailRow>
           </TransactionDetails>
         )}
       </ModalForm>
@@ -298,9 +298,9 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
             onClick={handleDeposit}
             disabled={!account || !amount || parseFloat(amount) <= 0 || !!validationError || isProcessing || needsApproval}
           >
-            {!account ? 'Connect Wallet' : 
-             isProcessing ? 'Depositing...' :
-             'Deposit Collateral'}
+            {!account ? 'Connect Wallet' :
+              isProcessing ? 'Depositing...' :
+                'Deposit Collateral'}
           </ModalButton>
         )}
       </ModalButtons>

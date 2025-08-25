@@ -226,17 +226,16 @@ const LoadingCard = styled.div`
 export const PortfolioPage = () => {
   const { account } = useWalletAccountStore();
   const { openModal } = useModalStore();
-  
-  // Use CONTRACT user store instead of regular user store
+   
   const { 
     positions, 
     totalSupplied, 
     totalBorrowed, 
-    totalCollateralValue,
-    netAPY, 
+    totalCollateralValue, 
     healthFactor,
     isLoading 
   } = useContractUserStore();
+ 
   
   const { markets } = useContractMarketStore();
   
@@ -270,14 +269,7 @@ export const PortfolioPage = () => {
     // For Phase 3 implementation
     alert(`${type} functionality coming in Phase 3!\nPosition ID: ${positionId}`);
   };
-
-  const handleManageCollateral = (type: 'deposit' | 'withdraw', collateralType: 'wkaia' | 'stkaia') => {
-    openModal(`${type}-collateral` as any, { 
-      collateralType,
-      collateralAction: type
-    });
-  };
-
+ 
   const isHealthy = healthFactor > 1.5;
 
   // Filter positions by type
@@ -368,7 +360,7 @@ export const PortfolioPage = () => {
           {/* Supply Positions */}
           {supplyPositions.length > 0 && (
             <Card>
-              <CardTitle>💰 Supply Positions</CardTitle>
+              <CardTitle>Supply Positions</CardTitle>
               <PositionsList>
                 {supplyPositions.map(position => {
                   const market = getMarketInfo(position.marketId);
@@ -410,61 +402,12 @@ export const PortfolioPage = () => {
               </PositionsList>
             </Card>
           )}
-
-          {/* Collateral Positions */}
-          {collateralPositions.length > 0 && (
-            <Card>
-              <CardTitle>🏦 Collateral Positions</CardTitle>
-              <PositionsList>
-                {collateralPositions.map(position => {
-                  const market = getMarketInfo(position.marketId);
-                  const collateralAmount = position.marketId === 'wkaia' 
-                    ? parseFloat(position.wkaiaCollateral || '0')
-                    : parseFloat(position.stkaiaCollateral || '0');
-                  
-                  return (
-                    <PositionCard key={position.id} $type="collateral">
-                      <PositionHeader>
-                        <PositionInfo>
-                          <PositionTitle>
-                            <TokenIcon 
-                              icon={market?.icon || '🏦'} 
-                              iconType={market?.iconType || 'emoji'}
-                              alt={market?.name || position.marketId}
-                              size={20}
-                            />
-                            {market?.symbol || position.marketId.toUpperCase()} Collateral
-                          </PositionTitle>
-                          <PositionAmount>
-                            {collateralAmount.toFixed(4)} {market?.symbol} ({formatValue(collateralAmount * (market?.price || 0.11))})
-                          </PositionAmount>
-                          <PositionDetails>
-                            LTV: {position.marketId === 'wkaia' ? '60%' : '65%'} | Health: {isHealthy ? 'Good' : 'At Risk'}
-                          </PositionDetails>
-                        </PositionInfo>
-                        <PositionAPY $type="collateral">
-                          {position.marketId === 'stkaia' ? '~4% Staking' : 'Collateral'}
-                        </PositionAPY>
-                      </PositionHeader>
-                      <ActionButtons>
-                        <ActionButton $variant="primary" onClick={() => handleManageCollateral('deposit', position.marketId as any)}>
-                          Add More
-                        </ActionButton>
-                        <ActionButton $variant="secondary" onClick={() => handleManageCollateral('withdraw', position.marketId as any)}>
-                          Withdraw
-                        </ActionButton>
-                      </ActionButtons>
-                    </PositionCard>
-                  );
-                })}
-              </PositionsList>
-            </Card>
-          )}
+ 
 
           {/* Borrow Positions */}
           {borrowPositions.length > 0 && (
             <Card>
-              <CardTitle>📈 Borrow Positions</CardTitle>
+              <CardTitle>Borrow Positions</CardTitle>
               <PositionsList>
                 {borrowPositions.map(position => {
                   const market = getMarketInfo(position.marketId);

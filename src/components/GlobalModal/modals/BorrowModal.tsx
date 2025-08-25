@@ -100,37 +100,43 @@ const RefreshButton = styled.button`
 `;
 
 const CollateralGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
-  margin-bottom: 16px;
 `;
 
 const CollateralCard = styled.div`
   background: white;
   border-radius: 8px;
-  padding: 12px;
-  text-align: center;
+  padding: 16px;
   border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const CollateralHeader2 = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 `;
 
 const CollateralName = styled.div`
   font-size: 14px;
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 4px;
 `;
 
 const CollateralAmount = styled.div`
   font-size: 12px;
   color: #64748b;
-  margin-bottom: 2px;
 `;
 
 const CollateralValue = styled.div`
   font-size: 12px;
   color: #00C300;
   font-weight: 600;
+  text-align: right;
 `;
 
 const CollateralActions = styled.div`
@@ -147,23 +153,23 @@ const CollateralButton = styled.button<{ $variant?: 'deposit' | 'withdraw' }>`
   cursor: pointer;
   border: none;
   transition: all 0.2s;
-  
+
   ${props => props.$variant === 'deposit' ? `
     background: #00C300;
     color: white;
-    
     &:hover {
       background: #00A000;
     }
   ` : `
     background: #f3f4f6;
     color: #64748b;
-    
     &:hover {
       background: #e2e8f0;
     }
   `}
 `;
+
+
 
 const BorrowingPowerCard = styled.div`
   background: #eff6ff;
@@ -230,7 +236,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
 
   // Calculate available borrowing power
   const maxLTV = 0.6; // Conservative 60% LTV
-  const availableToBorrow = userCollateral.total * maxLTV;
+  const availableToBorrow = ((userCollateral.wkaia + userCollateral.stkaia) * 0.11) * maxLTV;
   const currentlyBorrowed = 0; // TODO: Get from user positions
   const remainingBorrowPower = Math.max(0, availableToBorrow - currentlyBorrowed);
 
@@ -256,7 +262,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
           <BorrowingPowerLabel>Available Borrowing Power</BorrowingPowerLabel>
           <BorrowingPowerValue>${remainingBorrowPower.toFixed(2)}</BorrowingPowerValue>
           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-            Based on ${userCollateral.total.toFixed(2)} collateral at 60% LTV
+            Based on ${(((userCollateral.wkaia + userCollateral.stkaia) * 0.11)).toFixed(2)} collateral at 60% LTV
           </div>
         </BorrowingPowerCard>
       )}
@@ -303,7 +309,7 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
               <DetailLabel>Remaining Borrow Power:</DetailLabel>
               <DetailValue>${(remainingBorrowPower - (parseFloat(amount) * currentMarket.price)).toFixed(2)}</DetailValue>
             </DetailRow>
-             
+
           </TransactionDetails>
         )}
       </ModalForm>
@@ -312,24 +318,20 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
 
   const renderCollateralTab = () => (
     <>
-      <ChatDescription>
-        Manage your collateral to increase borrowing power. Higher collateral = more borrowing capacity.
-      </ChatDescription>
 
       <CollateralSection>
         <CollateralHeader>
           <CollateralTitle>Your Collateral</CollateralTitle>
-          <RefreshButton onClick={refreshBalances}>
-            🔄 Refresh
-          </RefreshButton>
         </CollateralHeader>
-        
+
         <CollateralGrid>
           <CollateralCard>
-            <CollateralName>wKAIA</CollateralName>
-            <CollateralAmount>{userCollateral.wkaia.toFixed(4)} wKAIA</CollateralAmount>
-            <CollateralValue>${(userCollateral.wkaia * 0.11).toFixed(2)} (60% LTV)</CollateralValue>
-            <CollateralActions style={{ marginTop: '8px' }}>
+            <CollateralHeader2>
+              <CollateralName>wKAIA</CollateralName>
+              <CollateralAmount>{userCollateral.wkaia.toFixed(4)} wKAIA</CollateralAmount>
+              <CollateralValue>${(userCollateral.wkaia * 0.11).toFixed(2)} (60% LTV)</CollateralValue>
+            </CollateralHeader2>
+            <CollateralActions>
               <CollateralButton $variant="deposit" onClick={() => onDepositCollateral('wkaia')}>
                 Deposit
               </CollateralButton>
@@ -338,12 +340,14 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
               </CollateralButton>
             </CollateralActions>
           </CollateralCard>
-          
+
           <CollateralCard>
-            <CollateralName>stKAIA</CollateralName>
-            <CollateralAmount>{userCollateral.stkaia.toFixed(4)} stKAIA</CollateralAmount>
-            <CollateralValue>${(userCollateral.stkaia * 0.12).toFixed(2)} (65% LTV)</CollateralValue>
-            <CollateralActions style={{ marginTop: '8px' }}>
+            <CollateralHeader2>
+              <CollateralName>stKAIA</CollateralName>
+              <CollateralAmount>{userCollateral.stkaia.toFixed(4)} stKAIA</CollateralAmount>
+              <CollateralValue>${(userCollateral.stkaia * 0.12).toFixed(2)} (65% LTV)</CollateralValue>
+            </CollateralHeader2>
+            <CollateralActions>
               <CollateralButton $variant="deposit" onClick={() => onDepositCollateral('stkaia')}>
                 Deposit
               </CollateralButton>
@@ -358,9 +362,11 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
           <BorrowingPowerLabel>Total Borrowing Power</BorrowingPowerLabel>
           <BorrowingPowerValue>${availableToBorrow.toFixed(2)}</BorrowingPowerValue>
           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-            Based on ${userCollateral.total.toFixed(2)} total collateral value
+            Based on ${((((userCollateral.wkaia + userCollateral.stkaia) * 0.11))).toFixed(2)} total collateral value
           </div>
         </BorrowingPowerCard>
+
+
       </CollateralSection>
     </>
   );
@@ -372,14 +378,14 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
       </ModalTitle>
 
       <TabContainer>
-        <Tab 
-          $active={activeTab === 'borrow'} 
+        <Tab
+          $active={activeTab === 'borrow'}
           onClick={() => setActiveTab('borrow')}
         >
           Borrow
         </Tab>
-        <Tab 
-          $active={activeTab === 'collateral'} 
+        <Tab
+          $active={activeTab === 'collateral'}
           onClick={() => setActiveTab('collateral')}
         >
           Manage Collateral
@@ -398,10 +404,10 @@ export const BorrowModal: React.FC<BorrowModalProps> = ({
             onClick={handleQuickActionSubmit}
             disabled={!account || !amount || parseFloat(amount) <= 0 || !!validationError || !canBorrowAmount || isProcessing}
           >
-            {!account ? 'Connect Wallet' : 
-             remainingBorrowPower === 0 ? 'Add Collateral First' :
-             isProcessing ? 'Processing...' :
-             'Borrow'}
+            {!account ? 'Connect Wallet' :
+              remainingBorrowPower === 0 ? 'Add Collateral First' :
+                isProcessing ? 'Processing...' :
+                  'Borrow'}
           </ModalButton>
         ) : (
           <ModalButton
