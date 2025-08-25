@@ -250,16 +250,16 @@ export const RepayModal: React.FC<RepayModalProps> = ({
   const { markets } = useContractMarketStore();
   const { balances, refreshBalances } = useTokenBalances();
   
-  const market = markets.find(m => m.id === position.marketId);
-  const tokenBalance = balances[position.marketId];
-  const maxRepay = parseFloat(position.amount || '0');
+  const market = position && markets.find(m => m.id === position.marketId);
+  const tokenBalance = position && balances[position.marketId];
+  const maxRepay = position && parseFloat(position.amount || '0');
   const availableBalance = parseFloat(tokenBalance?.balance || '0');
 
   useEffect(() => {
     if (isOpen && account) {
       refreshBalances();
     }
-  }, [isOpen, account, refreshBalances]);
+  }, [isOpen, account]);
 
   const handleAmountChange = (value: string) => {
     setAmount(value);

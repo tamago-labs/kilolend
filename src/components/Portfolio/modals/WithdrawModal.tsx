@@ -229,8 +229,8 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
   const { withdraw } = useMarketContract();
   const { markets } = useContractMarketStore();
   
-  const market = markets.find(m => m.id === position.marketId);
-  const maxWithdraw = parseFloat(position.amount || '0');
+  const market = position && markets.find(m => m.id === position.marketId);
+  const maxWithdraw = position && parseFloat(position.amount || '0');
 
   const handleAmountChange = (value: string) => {
     setAmount(value);

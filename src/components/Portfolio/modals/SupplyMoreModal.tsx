@@ -250,16 +250,16 @@ export const SupplyMoreModal: React.FC<SupplyMoreModalProps> = ({
   const { markets } = useContractMarketStore();
   const { balances, refreshBalances } = useTokenBalances();
   
-  const market = markets.find(m => m.id === position.marketId);
-  const tokenBalance = balances[position.marketId];
-  const availableBalance = parseFloat(tokenBalance?.balance || '0');
-  const currentSupply = parseFloat(position.amount || '0');
+  const market = position && markets.find(m => m.id === position.marketId);
+  const tokenBalance = position &&  balances[position.marketId];
+  const availableBalance = position && parseFloat(tokenBalance?.balance || '0');
+  const currentSupply = position && parseFloat(position.amount || '0');
 
   useEffect(() => {
     if (isOpen && account) {
       refreshBalances();
     }
-  }, [isOpen, account, refreshBalances]);
+  }, [isOpen, account]);
 
   const handleAmountChange = (value: string) => {
     setAmount(value);

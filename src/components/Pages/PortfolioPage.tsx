@@ -1,5 +1,11 @@
 'use client';
 
+import { WithdrawModal } from '../Portfolio/modals/WithdrawModal';
+import { RepayModal } from '../Portfolio/modals/RepayModal';
+import { SupplyMoreModal } from '../Portfolio/modals/SupplyMoreModal';
+
+import React, { useState } from 'react';
+
 import styled from 'styled-components';
 import { useContractUserStore } from '@/stores/contractUserStore';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
@@ -7,7 +13,7 @@ import { useContractUserData } from '@/hooks/useContractUserData';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useModalStore } from '@/stores/modalStore';
 import TokenIcon from '../Wallet/TokenIcon';
- 
+
 const PageContainer = styled.div`
   flex: 1;
   padding: 20px 16px;
@@ -77,15 +83,15 @@ const PositionsList = styled.div`
 `;
 
 const PositionCard = styled.div<{ $type: 'supply' | 'borrow' | 'collateral' }>`
-  background: ${props => 
-    props.$type === 'supply' ? '#f0fdf4' : 
-    props.$type === 'borrow' ? '#fef2f2' : 
-    '#fff7ed'
+  background: ${props =>
+    props.$type === 'supply' ? '#f0fdf4' :
+      props.$type === 'borrow' ? '#fef2f2' :
+        '#fff7ed'
   };
-  border: 1px solid ${props => 
-    props.$type === 'supply' ? '#00C300' : 
-    props.$type === 'borrow' ? '#ef4444' : 
-    '#f59e0b'
+  border: 1px solid ${props =>
+    props.$type === 'supply' ? '#00C300' :
+      props.$type === 'borrow' ? '#ef4444' :
+        '#f59e0b'
   };
   border-radius: 12px;
   padding: 16px;
@@ -126,10 +132,10 @@ const PositionDetails = styled.div`
 const PositionAPY = styled.div<{ $type: 'supply' | 'borrow' | 'collateral' }>`
   font-size: 16px;
   font-weight: 600;
-  color: ${props => 
-    props.$type === 'supply' ? '#00C300' : 
-    props.$type === 'borrow' ? '#ef4444' : 
-    '#f59e0b'
+  color: ${props =>
+    props.$type === 'supply' ? '#00C300' :
+      props.$type === 'borrow' ? '#ef4444' :
+        '#f59e0b'
   };
   text-align: right;
 `;
@@ -226,19 +232,22 @@ const LoadingCard = styled.div`
 export const PortfolioPage = () => {
   const { account } = useWalletAccountStore();
   const { openModal } = useModalStore();
-   
-  const { 
-    positions, 
-    totalSupplied, 
-    totalBorrowed, 
-    totalCollateralValue, 
+
+  const [modal, setModal] = useState<'withdraw' | 'repay' | 'supply-more' | undefined>(undefined)
+  const [selected, setSelected] = useState<any>()
+
+  const {
+    positions,
+    totalSupplied,
+    totalBorrowed,
+    totalCollateralValue,
     healthFactor,
-    isLoading 
+    isLoading
   } = useContractUserStore();
- 
-  
+
+
   const { markets } = useContractMarketStore();
-  
+
   // Initialize contract user data fetching
   useContractUserData();
 
@@ -250,8 +259,8 @@ export const PortfolioPage = () => {
 
   const formatTime = (timestamp: number) => {
     const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
@@ -265,18 +274,17 @@ export const PortfolioPage = () => {
     openModal('ai-chat', { userQuery: 'Help me start my first lending position with low risk' });
   };
 
-  const handleManagePosition = (positionId: string, type: 'withdraw' | 'repay' | 'supply-more') => {
-    // For Phase 3 implementation
-    alert(`${type} functionality coming in Phase 3!\nPosition ID: ${positionId}`);
+  const handleManagePosition = (position: any, type: 'withdraw' | 'repay' | 'supply-more') => {
+
+    setSelected(position)
+    setModal(type)
   };
- 
+
   const isHealthy = healthFactor > 1.5;
 
   // Filter positions by type
   const supplyPositions = positions.filter(p => p.type === 'supply' && !['wkaia', 'stkaia'].includes(p.marketId));
   const borrowPositions = positions.filter(p => p.type === 'borrow');
-  const collateralPositions = positions.filter(p => ['wkaia', 'stkaia'].includes(p.marketId) && 
-    (parseFloat(p.wkaiaCollateral || '0') > 0 || parseFloat(p.stkaiaCollateral || '0') > 0));
 
   if (!account) {
     return (
@@ -285,7 +293,7 @@ export const PortfolioPage = () => {
         <PageSubtitle>
           Connect your wallet to view your lending positions
         </PageSubtitle>
-        
+
         <EmptyState>
           <EmptyIcon>💼</EmptyIcon>
           <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>Connect Wallet</h3>
@@ -302,7 +310,7 @@ export const PortfolioPage = () => {
         <PageSubtitle>
           Loading your positions from the blockchain...
         </PageSubtitle>
-        
+
         <LoadingCard>
           🔄 Fetching your positions from smart contracts...
         </LoadingCard>
@@ -312,6 +320,28 @@ export const PortfolioPage = () => {
 
   return (
     <PageContainer>
+
+      <RepayModal
+        position={selected}
+        isOpen={modal === "repay"}
+        onClose={() => setModal(undefined)}
+        onSuccess={() => setModal(undefined)}
+      />
+      <SupplyMoreModal
+        position={selected}
+        isOpen={modal === "supply-more"}
+        onClose={() => setModal(undefined)}
+        onSuccess={() => setModal(undefined)}
+      />
+
+      <WithdrawModal
+        position={selected}
+        isOpen={modal === "withdraw"}
+        onClose={() => setModal(undefined)}
+        onSuccess={() => setModal(undefined)}
+      />
+
+
       <PageTitle>Portfolio</PageTitle>
       <PageSubtitle>
         Track your lending, borrowing, and collateral positions
@@ -344,9 +374,9 @@ export const PortfolioPage = () => {
         <EmptyState>
           <EmptyIcon>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect width="20" height="14" x="2" y="3" rx="2"/>
-              <line x1="8" x2="16" y1="21" y2="21"/>
-              <line x1="12" x2="12" y1="17" y2="21"/>
+              <rect width="20" height="14" x="2" y="3" rx="2" />
+              <line x1="8" x2="16" y1="21" y2="21" />
+              <line x1="12" x2="12" y1="17" y2="21" />
             </svg>
           </EmptyIcon>
           <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>No positions yet</h3>
@@ -369,8 +399,8 @@ export const PortfolioPage = () => {
                       <PositionHeader>
                         <PositionInfo>
                           <PositionTitle>
-                            <TokenIcon 
-                              icon={market?.icon || '💰'} 
+                            <TokenIcon
+                              icon={market?.icon || '💰'}
                               iconType={market?.iconType || 'emoji'}
                               alt={market?.name || position.marketId}
                               size={20}
@@ -389,10 +419,10 @@ export const PortfolioPage = () => {
                         </PositionAPY>
                       </PositionHeader>
                       <ActionButtons>
-                        <ActionButton $variant="primary" onClick={() => handleManagePosition(position.id, 'supply-more')}>
+                        <ActionButton $variant="primary" onClick={() => handleManagePosition(position, 'supply-more')}>
                           Supply More
                         </ActionButton>
-                        <ActionButton $variant="secondary" onClick={() => handleManagePosition(position.id, 'withdraw')}>
+                        <ActionButton $variant="secondary" onClick={() => handleManagePosition(position, 'withdraw')}>
                           Withdraw
                         </ActionButton>
                       </ActionButtons>
@@ -402,7 +432,7 @@ export const PortfolioPage = () => {
               </PositionsList>
             </Card>
           )}
- 
+
 
           {/* Borrow Positions */}
           {borrowPositions.length > 0 && (
@@ -416,8 +446,8 @@ export const PortfolioPage = () => {
                       <PositionHeader>
                         <PositionInfo>
                           <PositionTitle>
-                            <TokenIcon 
-                              icon={market?.icon || '📈'} 
+                            <TokenIcon
+                              icon={market?.icon || '📈'}
                               iconType={market?.iconType || 'emoji'}
                               alt={market?.name || position.marketId}
                               size={20}
@@ -436,10 +466,10 @@ export const PortfolioPage = () => {
                         </PositionAPY>
                       </PositionHeader>
                       <ActionButtons>
-                        <ActionButton $variant="primary" onClick={() => handleManagePosition(position.id, 'repay')}>
+                        <ActionButton $variant="primary" onClick={() => handleManagePosition(position, 'repay')}>
                           Repay
                         </ActionButton>
-                        <ActionButton $variant="secondary" onClick={() => handleManagePosition(position.id, 'repay')}>
+                        <ActionButton $variant="secondary" onClick={() => handleManagePosition(position, 'repay')}>
                           Partial Repay
                         </ActionButton>
                       </ActionButtons>
