@@ -1,11 +1,12 @@
 'use client';
 
 import styled from 'styled-components';
-import { useUserStore } from '@/stores/userStore';
+import { useContractUserStore } from '@/stores/contractUserStore';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { QuickActions } from '@/components/GlobalModal/QuickActions';
-import { AIModalButton } from '@/components/GlobalModal/AIModalButton';
 import { useContractUserData } from '@/hooks/useContractUserData';
+import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import { useModalStore } from '@/stores/modalStore';
+import TokenIcon from '../Wallet/TokenIcon';
  
 const PageContainer = styled.div`
   flex: 1;
@@ -75,9 +76,17 @@ const PositionsList = styled.div`
   gap: 12px;
 `;
 
-const PositionCard = styled.div<{ $type: 'supply' | 'borrow' }>`
-  background: ${props => props.$type === 'supply' ? '#f0fdf4' : '#fef2f2'};
-  border: 1px solid ${props => props.$type === 'supply' ? '#00C300' : '#ef4444'};
+const PositionCard = styled.div<{ $type: 'supply' | 'borrow' | 'collateral' }>`
+  background: ${props => 
+    props.$type === 'supply' ? '#f0fdf4' : 
+    props.$type === 'borrow' ? '#fef2f2' : 
+    '#fff7ed'
+  };
+  border: 1px solid ${props => 
+    props.$type === 'supply' ? '#00C300' : 
+    props.$type === 'borrow' ? '#ef4444' : 
+    '#f59e0b'
+  };
   border-radius: 12px;
   padding: 16px;
 `;
@@ -98,6 +107,9 @@ const PositionTitle = styled.div`
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const PositionAmount = styled.div`
@@ -111,10 +123,14 @@ const PositionDetails = styled.div`
   color: #94a3b8;
 `;
 
-const PositionAPY = styled.div<{ $type: 'supply' | 'borrow' }>`
+const PositionAPY = styled.div<{ $type: 'supply' | 'borrow' | 'collateral' }>`
   font-size: 16px;
   font-weight: 600;
-  color: ${props => props.$type === 'supply' ? '#00C300' : '#ef4444'};
+  color: ${props => 
+    props.$type === 'supply' ? '#00C300' : 
+    props.$type === 'borrow' ? '#ef4444' : 
+    '#f59e0b'
+  };
   text-align: right;
 `;
 
@@ -175,7 +191,7 @@ const StartButton = styled.button`
   color: white;
   border: none;
   border-radius: 8px;
-  padding: 8px 16px;
+  padding: 12px 24px;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -198,14 +214,29 @@ const HealthFactorBadge = styled.div<{ $healthy: boolean }>`
   margin-top: 8px;
 `;
 
+const LoadingCard = styled.div`
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  color: #64748b;
+`;
+
 export const PortfolioPage = () => {
+  const { account } = useWalletAccountStore();
+  const { openModal } = useModalStore();
+  
+  // Use CONTRACT user store instead of regular user store
   const { 
     positions, 
     totalSupplied, 
     totalBorrowed, 
+    totalCollateralValue,
     netAPY, 
-    healthFactor 
-  } = useUserStore();
+    healthFactor,
+    isLoading 
+  } = useContractUserStore();
   
   const { markets } = useContractMarketStore();
   
@@ -232,29 +263,66 @@ export const PortfolioPage = () => {
   };
 
   const handleStartLending = () => {
-    // Use AI modal to help start lending
-    // This is handled by the AIModalButton component
+    openModal('ai-chat', { userQuery: 'Help me start my first lending position with low risk' });
   };
 
-  const handleWithdraw = (positionId: string) => {
-    alert(`Withdraw functionality coming in Phase 8!\nPosition ID: ${positionId}`);
+  const handleManagePosition = (positionId: string, type: 'withdraw' | 'repay' | 'supply-more') => {
+    // For Phase 3 implementation
+    alert(`${type} functionality coming in Phase 3!\nPosition ID: ${positionId}`);
   };
 
-  const handleRepay = (positionId: string) => {
-    alert(`Repay functionality coming in Phase 8!\nPosition ID: ${positionId}`);
-  };
-
-  const handleSupplyMore = (marketId: string) => {
-    alert(`Supply more to ${marketId.toUpperCase()} coming in Phase 8!`);
+  const handleManageCollateral = (type: 'deposit' | 'withdraw', collateralType: 'wkaia' | 'stkaia') => {
+    openModal(`${type}-collateral` as any, { 
+      collateralType,
+      collateralAction: type
+    });
   };
 
   const isHealthy = healthFactor > 1.5;
+
+  // Filter positions by type
+  const supplyPositions = positions.filter(p => p.type === 'supply' && !['wkaia', 'stkaia'].includes(p.marketId));
+  const borrowPositions = positions.filter(p => p.type === 'borrow');
+  const collateralPositions = positions.filter(p => ['wkaia', 'stkaia'].includes(p.marketId) && 
+    (parseFloat(p.wkaiaCollateral || '0') > 0 || parseFloat(p.stkaiaCollateral || '0') > 0));
+
+  if (!account) {
+    return (
+      <PageContainer>
+        <PageTitle>Portfolio</PageTitle>
+        <PageSubtitle>
+          Connect your wallet to view your lending positions
+        </PageSubtitle>
+        
+        <EmptyState>
+          <EmptyIcon>💼</EmptyIcon>
+          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>Connect Wallet</h3>
+          <p style={{ marginBottom: '16px' }}>Connect your wallet to view your DeFi positions</p>
+        </EmptyState>
+      </PageContainer>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <PageTitle>Portfolio</PageTitle>
+        <PageSubtitle>
+          Loading your positions from the blockchain...
+        </PageSubtitle>
+        
+        <LoadingCard>
+          🔄 Fetching your positions from smart contracts...
+        </LoadingCard>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
       <PageTitle>Portfolio</PageTitle>
       <PageSubtitle>
-        Track your lending and borrowing positions
+        Track your lending, borrowing, and collateral positions
       </PageSubtitle>
 
       {/* Portfolio Stats */}
@@ -268,8 +336,8 @@ export const PortfolioPage = () => {
           <StatLabel>Total Borrowed</StatLabel>
         </StatCard>
         <StatCard>
-          <StatValue>{netAPY.toFixed(2)}%</StatValue>
-          <StatLabel>Net APY</StatLabel>
+          <StatValue>{formatValue(totalCollateralValue)}</StatValue>
+          <StatLabel>Collateral Value</StatLabel>
         </StatCard>
         <StatCard>
           <StatValue>{healthFactor > 999 ? '∞' : healthFactor.toFixed(2)}</StatValue>
@@ -291,99 +359,155 @@ export const PortfolioPage = () => {
           </EmptyIcon>
           <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>No positions yet</h3>
           <p style={{ marginBottom: '16px' }}>Start lending or borrowing to see your positions here</p>
-          <AIModalButton 
-            userQuery="Help me start my first lending position with low risk"
-            buttonText="Start Lending Now"
-          />
+          <StartButton onClick={handleStartLending}>
+            Start Lending Now
+          </StartButton>
         </EmptyState>
       ) : (
         <>
           {/* Supply Positions */}
-          {positions.filter(p => p.type === 'supply').length > 0 && (
+          {supplyPositions.length > 0 && (
             <Card>
               <CardTitle>💰 Supply Positions</CardTitle>
               <PositionsList>
-                {positions
-                  .filter(p => p.type === 'supply')
-                  .map(position => {
-                    const market = getMarketInfo(position.marketId);
-                    return (
-                      <PositionCard key={position.id} $type="supply">
-                        <PositionHeader>
-                          <PositionInfo>
-                            <PositionTitle>
-                              {market?.icon} {market?.symbol || position.marketId.toUpperCase()}
-                            </PositionTitle>
-                            <PositionAmount>
-                              {position.amount.toFixed(2)} {market?.symbol} ({formatValue(position.usdValue)})
-                            </PositionAmount>
-                            <PositionDetails>
-                              Started: {formatTime(position.timestamp)}
-                            </PositionDetails>
-                          </PositionInfo>
-                          <PositionAPY $type="supply">
-                            {position.apy.toFixed(2)}% APY
-                          </PositionAPY>
-                        </PositionHeader>
-                        <ActionButtons>
-                          <QuickActions marketId={position.marketId} showBorrow={false} />
-                          <ActionButton $variant="secondary" onClick={() => handleWithdraw(position.id)}>
-                            Withdraw
-                          </ActionButton>
-                        </ActionButtons>
-                      </PositionCard>
-                    );
-                  })}
+                {supplyPositions.map(position => {
+                  const market = getMarketInfo(position.marketId);
+                  return (
+                    <PositionCard key={position.id} $type="supply">
+                      <PositionHeader>
+                        <PositionInfo>
+                          <PositionTitle>
+                            <TokenIcon 
+                              icon={market?.icon || '💰'} 
+                              iconType={market?.iconType || 'emoji'}
+                              alt={market?.name || position.marketId}
+                              size={20}
+                            />
+                            {market?.symbol || position.marketId.toUpperCase()}
+                          </PositionTitle>
+                          <PositionAmount>
+                            {parseFloat(position.amount).toFixed(4)} {market?.symbol} ({formatValue(position.usdValue)})
+                          </PositionAmount>
+                          <PositionDetails>
+                            Started: {formatTime(position.timestamp || Date.now())}
+                          </PositionDetails>
+                        </PositionInfo>
+                        <PositionAPY $type="supply">
+                          {position.apy.toFixed(2)}% APY
+                        </PositionAPY>
+                      </PositionHeader>
+                      <ActionButtons>
+                        <ActionButton $variant="primary" onClick={() => handleManagePosition(position.id, 'supply-more')}>
+                          Supply More
+                        </ActionButton>
+                        <ActionButton $variant="secondary" onClick={() => handleManagePosition(position.id, 'withdraw')}>
+                          Withdraw
+                        </ActionButton>
+                      </ActionButtons>
+                    </PositionCard>
+                  );
+                })}
+              </PositionsList>
+            </Card>
+          )}
+
+          {/* Collateral Positions */}
+          {collateralPositions.length > 0 && (
+            <Card>
+              <CardTitle>🏦 Collateral Positions</CardTitle>
+              <PositionsList>
+                {collateralPositions.map(position => {
+                  const market = getMarketInfo(position.marketId);
+                  const collateralAmount = position.marketId === 'wkaia' 
+                    ? parseFloat(position.wkaiaCollateral || '0')
+                    : parseFloat(position.stkaiaCollateral || '0');
+                  
+                  return (
+                    <PositionCard key={position.id} $type="collateral">
+                      <PositionHeader>
+                        <PositionInfo>
+                          <PositionTitle>
+                            <TokenIcon 
+                              icon={market?.icon || '🏦'} 
+                              iconType={market?.iconType || 'emoji'}
+                              alt={market?.name || position.marketId}
+                              size={20}
+                            />
+                            {market?.symbol || position.marketId.toUpperCase()} Collateral
+                          </PositionTitle>
+                          <PositionAmount>
+                            {collateralAmount.toFixed(4)} {market?.symbol} ({formatValue(collateralAmount * (market?.price || 0.11))})
+                          </PositionAmount>
+                          <PositionDetails>
+                            LTV: {position.marketId === 'wkaia' ? '60%' : '65%'} | Health: {isHealthy ? 'Good' : 'At Risk'}
+                          </PositionDetails>
+                        </PositionInfo>
+                        <PositionAPY $type="collateral">
+                          {position.marketId === 'stkaia' ? '~4% Staking' : 'Collateral'}
+                        </PositionAPY>
+                      </PositionHeader>
+                      <ActionButtons>
+                        <ActionButton $variant="primary" onClick={() => handleManageCollateral('deposit', position.marketId as any)}>
+                          Add More
+                        </ActionButton>
+                        <ActionButton $variant="secondary" onClick={() => handleManageCollateral('withdraw', position.marketId as any)}>
+                          Withdraw
+                        </ActionButton>
+                      </ActionButtons>
+                    </PositionCard>
+                  );
+                })}
               </PositionsList>
             </Card>
           )}
 
           {/* Borrow Positions */}
-          {positions.filter(p => p.type === 'borrow').length > 0 && (
+          {borrowPositions.length > 0 && (
             <Card>
               <CardTitle>📈 Borrow Positions</CardTitle>
               <PositionsList>
-                {positions
-                  .filter(p => p.type === 'borrow')
-                  .map(position => {
-                    const market = getMarketInfo(position.marketId);
-                    return (
-                      <PositionCard key={position.id} $type="borrow">
-                        <PositionHeader>
-                          <PositionInfo>
-                            <PositionTitle>
-                              {market?.icon} {market?.symbol || position.marketId.toUpperCase()}
-                            </PositionTitle>
-                            <PositionAmount>
-                              {position.amount.toFixed(2)} {market?.symbol} ({formatValue(position.usdValue)})
-                            </PositionAmount>
-                            <PositionDetails>
-                              Started: {formatTime(position.timestamp)}
-                            </PositionDetails>
-                          </PositionInfo>
-                          <PositionAPY $type="borrow">
-                            {position.apy.toFixed(2)}% APR
-                          </PositionAPY>
-                        </PositionHeader>
-                        <ActionButtons>
-                          <ActionButton $variant="primary" onClick={() => handleRepay(position.id)}>
-                            Repay
-                          </ActionButton>
-                          <ActionButton $variant="secondary" onClick={() => handleWithdraw(position.id)}>
-                            Partial Repay
-                          </ActionButton>
-                        </ActionButtons>
-                      </PositionCard>
-                    );
-                  })}
+                {borrowPositions.map(position => {
+                  const market = getMarketInfo(position.marketId);
+                  return (
+                    <PositionCard key={position.id} $type="borrow">
+                      <PositionHeader>
+                        <PositionInfo>
+                          <PositionTitle>
+                            <TokenIcon 
+                              icon={market?.icon || '📈'} 
+                              iconType={market?.iconType || 'emoji'}
+                              alt={market?.name || position.marketId}
+                              size={20}
+                            />
+                            {market?.symbol || position.marketId.toUpperCase()}
+                          </PositionTitle>
+                          <PositionAmount>
+                            {parseFloat(position.amount).toFixed(4)} {market?.symbol} ({formatValue(position.usdValue)})
+                          </PositionAmount>
+                          <PositionDetails>
+                            Started: {formatTime(position.timestamp || Date.now())} | Health: {isHealthy ? 'Safe' : 'At Risk'}
+                          </PositionDetails>
+                        </PositionInfo>
+                        <PositionAPY $type="borrow">
+                          {position.apy.toFixed(2)}% APR
+                        </PositionAPY>
+                      </PositionHeader>
+                      <ActionButtons>
+                        <ActionButton $variant="primary" onClick={() => handleManagePosition(position.id, 'repay')}>
+                          Repay
+                        </ActionButton>
+                        <ActionButton $variant="secondary" onClick={() => handleManagePosition(position.id, 'repay')}>
+                          Partial Repay
+                        </ActionButton>
+                      </ActionButtons>
+                    </PositionCard>
+                  );
+                })}
               </PositionsList>
             </Card>
           )}
         </>
       )}
-      
-      {/* Recent Transactions */}
-      {/* <TransactionHistory limit={5} /> */}
     </PageContainer>
   );
 };

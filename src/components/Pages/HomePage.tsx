@@ -235,7 +235,7 @@ const ActionButtons = styled.div`
   gap: 8px;
 `;
 
-const ActionButton = styled.button<{ $supply?: boolean; $borrow?: boolean }>`
+const ActionButton = styled.button<{ $supply?: boolean; $borrow?: boolean; $collateral?: boolean }>`
   padding: 8px 16px;
   border-radius: 8px;
   font-weight: 600;
@@ -259,59 +259,35 @@ const ActionButton = styled.button<{ $supply?: boolean; $borrow?: boolean }>`
     color: #1e293b;
     &:hover { background: #e2e8f0; }
   `}
+
+  ${({ $collateral }) =>
+    $collateral &&
+    `
+    background: #fbbf24;
+    color: white;
+    &:hover { background: #f59e0b; }
+  `}
 `;
 
-const CollateralCard = styled.div`
+const CollateralSummary = styled.div`
   background: #f8fafc;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
   border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  margin-top: 16px;
+  text-align: center;
 `;
 
-const CollateralHeader = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-`;
-
-const CollateralTitle = styled.h4`
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
+const CollateralLabel = styled.div`
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 4px;
 `;
 
 const CollateralValue = styled.div`
   font-size: 14px;
-  color: #64748b;
-`;
-
-const CollateralTypes = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-`;
-
-const CollateralType = styled.div`
-  background: white;
-  border-radius: 8px;
-  padding: 12px;
-  text-align: center;
-  border: 1px solid #e2e8f0;
-`;
-
-const CollateralName = styled.div`
-  font-size: 14px;
   font-weight: 600;
   color: #1e293b;
-  margin-bottom: 4px;
-`;
-
-const CollateralAmount = styled.div`
-  font-size: 12px;
-  color: #64748b;
 `;
 
 const EducationalContent = styled.div`
@@ -375,7 +351,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
   const activeMarkets = markets.filter(m => m.isActive && !m.isCollateralOnly);
 
-  // Calculate user's collateral breakdown
+  // Calculate user's collateral status
   const userCollateral = useMemo(() => {
     if (!account) return { wkaia: 0, stkaia: 0, total: 0 };
     
@@ -398,12 +374,30 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     };
   }, [account, positions, totalCollateralValue]);
 
+  // Check if user has sufficient collateral to borrow
+  const canBorrow = (marketId: string) => {
+    if (!account) return false;
+    
+    // Need at least $10 worth of collateral to borrow
+    const minCollateralUSD = 10;
+    return userCollateral.total >= minCollateralUSD;
+  };
+
   const handleOpenAIModal = () => {
     openModal('ai-chat', { userQuery });
   };
 
   const handleQuickAction = (marketId: string, action: 'supply' | 'borrow') => {
-    openModal(action, { marketId, action });
+    if (action === 'borrow' && !canBorrow(marketId)) {
+      // Guide user to deposit collateral first
+      openModal('deposit-collateral', { 
+        marketId, 
+        collateralType: 'wkaia',
+        collateralAction: 'deposit' 
+      });
+    } else {
+      openModal(action, { marketId, action });
+    }
   };
 
   // Show loading state if AI is generating
@@ -462,39 +456,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
       </ChatContainer>
 
       <CardsSection>
-        {/* Collateral Overview - Only show if user has account */}
-        {account && (
-          <Card>
-            <CardTitle>🏦 Your Collateral Overview</CardTitle>
-            <CardDescription>
-              Total collateral value determines your borrowing power across all markets.
-            </CardDescription>
-            
-            <CollateralCard>
-              <CollateralHeader>
-                <CollateralTitle>Total Collateral Value</CollateralTitle>
-                <CollateralValue>${userCollateral.total.toFixed(2)}</CollateralValue>
-              </CollateralHeader>
-              
-              <CollateralTypes>
-                <CollateralType>
-                  <CollateralName>wKAIA</CollateralName>
-                  <CollateralAmount>{userCollateral.wkaia.toFixed(4)} wKAIA</CollateralAmount>
-                </CollateralType>
-                <CollateralType>
-                  <CollateralName>stKAIA</CollateralName>
-                  <CollateralAmount>{userCollateral.stkaia.toFixed(4)} stKAIA</CollateralAmount>
-                </CollateralType>
-              </CollateralTypes>
-            </CollateralCard>
-            
-            <CardDescription style={{ margin: 0, fontSize: '12px' }}>
-              💡 Collateral is managed per market when borrowing. Higher collateral = more borrowing power.
-            </CardDescription>
-          </Card>
-        )}
-
-        {/* Quick Actions Card - Only Supply and Borrow */}
+        {/* Market Actions Card */}
         <Card>
           <CardTitle>⚡ Quick Actions</CardTitle>
           <CardDescription>
@@ -525,12 +487,24 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                 <ActionButton onClick={() => handleQuickAction(market.id, 'supply')} $supply>
                   Supply
                 </ActionButton>
-                <ActionButton onClick={() => handleQuickAction(market.id, 'borrow')} $borrow>
-                  Borrow
+                <ActionButton 
+                  onClick={() => handleQuickAction(market.id, 'borrow')} 
+                  $borrow={canBorrow(market.id)}
+                  $collateral={!canBorrow(market.id)}
+                >
+                  {canBorrow(market.id) ? 'Borrow' : 'Add Collateral'}
                 </ActionButton>
               </ActionButtons>
             </MarketRow>
           ))}
+
+          {/* Small Collateral Summary at Bottom */}
+          {account && userCollateral.total > 0 && (
+            <CollateralSummary>
+              <CollateralLabel>Your Total Collateral</CollateralLabel>
+              <CollateralValue>${userCollateral.total.toFixed(2)}</CollateralValue>
+            </CollateralSummary>
+          )}
         </Card>
 
         {/* Educational Card */}
