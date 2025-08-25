@@ -337,7 +337,7 @@ interface HomePageProps {
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const [userQuery, setUserQuery] = useState('I want to earn 5% on my USDT with low risk');
 
-  const { isGenerating } = useAIDealsStore();
+  const { isGenerating, lastQuery } = useAIDealsStore();
   const { openModal } = useModalStore();
   const { account } = useWalletAccountStore();
 
@@ -404,7 +404,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   if (isGenerating) {
     return (
       <PageContainer>
-        <AILoading query={userQuery} />
+        <AILoading query={lastQuery} />
       </PageContainer>
     );
   }
