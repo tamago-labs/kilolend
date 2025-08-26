@@ -8,7 +8,6 @@ For example, a user can input 'I want to earn 5% on my USDT with low risk' or 'ì
 - YouTube Demo: https://youtu.be/Lq4lOqcQn8Q
 - Dapp: https://kilolend.netlify.app/
 
-*The above Dapp URL is in the process of whitelisting. If it is not approved, we cannot connect the wallet using the LINE Dapp Kit yet.*
 
 ## Highlighted Features
 
