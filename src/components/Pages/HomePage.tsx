@@ -426,9 +426,12 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <CardDescription style={{ marginBottom: '0' }}>
               Lend and borrow a wide range of stablecoins on Kaia. AI guides you to earn yield or unlock crypto-backed loans in one click.
             </CardDescription>
-            <LearnButton>
-              Video Tutorial
-            </LearnButton>
+            <a href="https://youtu.be/Lq4lOqcQn8Q" target="_blank">
+              <LearnButton>
+                Video Tutorial
+              </LearnButton>
+            </a>
+
           </EducationalText>
         </EducationalContent>
       </Card>
@@ -491,13 +494,13 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                   onClick={() => handleQuickAction(market.id, 'borrow')}
                   $borrow={canBorrow(market.id)}
                   $collateral={!canBorrow(market.id)}
-                > 
+                >
                   Borrow
                 </ActionButton>
               </ActionButtons>
             </MarketRow>
           ))}
- 
+
         </Card>
 
         {/* Educational Card */}
@@ -511,9 +514,11 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               <CardDescription style={{ marginBottom: '0' }}>
                 Learn how decentralized lending works and start earning passive income with your crypto assets safely.
               </CardDescription>
-              <LearnButton>
-                Learn the Basics
-              </LearnButton>
+              <a href="https://github.com/tamago-labs/kilolend" target="_blank">
+                <LearnButton>
+                  Learn the Basics
+                </LearnButton>
+              </a> 
             </EducationalText>
           </EducationalContent>
         </Card>
