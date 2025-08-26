@@ -1,27 +1,64 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactCountryFlag from 'react-country-flag';
 import styled from 'styled-components';
 
-const IconContainer = styled.div`
+const IconContainer = styled.div<{ $size: number }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  position: relative;
+  border-radius: 50%;
+  overflow: hidden;
 `;
 
-const TokenImage = styled.img`
-  width: 24px;
-  height: 24px;
+const TokenImage = styled.img<{ $size: number }>`
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
   border-radius: 50%;
   object-fit: cover;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  transition: transform 0.2s ease;
+
+  &:hover {
+    transform: scale(1.05);
+  }
 `;
 
-const EmojiIcon = styled.span`
-  font-size: 20px;
+const EmojiIcon = styled.span<{ $size: number }>`
+  font-size: ${props => props.$size * 0.75}px;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+`;
+
+const FallbackIcon = styled.div<{ $size: number }>`
+  font-size: ${props => props.$size * 0.75}px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border-radius: 50%;
+`;
+
+const FlagContainer = styled.div<{ $size: number }>`
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
 `;
 
 interface TokenIconProps {
@@ -29,70 +66,90 @@ interface TokenIconProps {
   iconType: 'image' | 'flag' | 'emoji';
   alt?: string;
   size?: number;
+  fallbackEmoji?: string;
 }
 
 export const TokenIcon: React.FC<TokenIconProps> = ({
   icon,
   iconType,
   alt = 'Token icon',
-  size = 24
+  size = 24,
+  fallbackEmoji = '💰'
 }) => {
-  const containerStyle = {
-    width: `${size}px`,
-    height: `${size}px`
+  const [imageError, setImageError] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Reset image error when icon changes
+  useEffect(() => {
+    setImageError(false);
+  }, [icon]);
+
+  const handleImageError = () => {
+    setImageError(true);
   };
 
-  const imageStyle = {
-    width: `${size}px`,
-    height: `${size}px`
-  };
-
-  const emojiStyle = {
-    fontSize: `${size * 0.8}px`
-  };
+  // Don't render on server to avoid hydration issues
+  if (!isClient) {
+    return (
+      <IconContainer $size={size}>
+        <FallbackIcon $size={size}>
+          {fallbackEmoji}
+        </FallbackIcon>
+      </IconContainer>
+    );
+  }
 
   switch (iconType) {
     case 'image':
+      if (imageError) {
+        return (
+          <IconContainer $size={size}>
+            <FallbackIcon $size={size}>
+              {fallbackEmoji}
+            </FallbackIcon>
+          </IconContainer>
+        );
+      }
+      
       return (
-        <IconContainer style={containerStyle}>
+        <IconContainer $size={size}>
           <TokenImage
             src={icon}
             alt={alt}
-            style={imageStyle}
-            onError={(e) => {
-              // Fallback to emoji if image fails to load
-              const target = e.target as HTMLImageElement;
-              target.style.display = 'none';
-              const parent = target.parentElement;
-              if (parent) {
-                parent.innerHTML = '💰';
-              }
-            }}
+            $size={size}
+            onError={handleImageError}
+            loading="lazy"
           />
         </IconContainer>
       );
 
     case 'flag':
       return (
-        <IconContainer style={containerStyle}>
-          <ReactCountryFlag
-            countryCode={icon}
-            svg
-            style={{
-              width: `${size}px`,
-              height: `${size * 0.75}px`,
-              borderRadius: '2px'
-            }}
-            title={icon}
-          />
+        <IconContainer $size={size}>
+          <FlagContainer $size={size}>
+            <ReactCountryFlag
+              countryCode={icon}
+              svg
+              style={{
+                width: `${size * 0.8}px`,
+                height: `${size * 0.6}px`,
+                borderRadius: '2px'
+              }}
+              title={icon}
+            />
+          </FlagContainer>
         </IconContainer>
       );
 
     case 'emoji':
     default:
       return (
-        <IconContainer style={containerStyle}>
-          <EmojiIcon style={emojiStyle}>{icon}</EmojiIcon>
+        <IconContainer $size={size}>
+          <EmojiIcon $size={size}>{icon}</EmojiIcon>
         </IconContainer>
       );
   }

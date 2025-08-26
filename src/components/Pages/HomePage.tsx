@@ -16,6 +16,11 @@ const PageContainer = styled.div`
   flex: 1;
   padding: 20px 16px;
   padding-bottom: 80px;
+
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+    padding-bottom: 80px;
+  }
 `;
 
 const HeroSection = styled.div`
@@ -28,6 +33,7 @@ const BrandLogo = styled.img`
   height: auto;
   margin-bottom: 12px;
   animation: fadeInScale 0.8s ease-out;
+  max-width: 90vw;
 
   @keyframes fadeInScale {
     0% {
@@ -39,6 +45,10 @@ const BrandLogo = styled.img`
       transform: scale(1);
     }
   }
+
+  @media (max-width: 480px) {
+    width: 200px;
+  }
 `;
 
 const HeroSubtitle = styled.p`
@@ -48,6 +58,11 @@ const HeroSubtitle = styled.p`
   max-width: 600px;
   margin: 0 auto;
   line-height: 1.4;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    padding: 0 8px;
+  }
 `;
 
 const ChatContainer = styled.div`
@@ -57,6 +72,12 @@ const ChatContainer = styled.div`
   border: 1px solid #e2e8f0;
   margin-bottom: 24px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+  }
 `;
 
 const ChatTitle = styled.h3`
@@ -67,6 +88,10 @@ const ChatTitle = styled.h3`
   display: flex;
   align-items: center;
   gap: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const BotIcon = styled.div`
@@ -80,6 +105,7 @@ const BotIcon = styled.div`
   color: white;
   font-size: 12px;
   font-weight: bold;
+  flex-shrink: 0;
 `;
 
 const ChatDescription = styled.p`
@@ -87,6 +113,10 @@ const ChatDescription = styled.p`
   font-size: 14px;
   margin-bottom: 16px;
   line-height: 1.5;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const InputContainer = styled.div`
@@ -114,6 +144,12 @@ const ChatInput = styled.div`
   &:hover {
     border-color: #00C300;
     background: #f1f5f9;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+    padding: 10px 14px;
+    min-height: 70px;
   }
 `;
 
@@ -143,6 +179,11 @@ const AskButton = styled.button`
     cursor: not-allowed;
     transform: none;
   }
+
+  @media (max-width: 480px) {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
 `;
 
 const Card = styled.div`
@@ -151,6 +192,11 @@ const Card = styled.div`
   padding: 20px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    border-radius: 12px;
+  }
 `;
 
 const CardTitle = styled.h3`
@@ -158,6 +204,10 @@ const CardTitle = styled.h3`
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 12px;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
 `;
 
 const CardDescription = styled.p`
@@ -165,19 +215,28 @@ const CardDescription = styled.p`
   font-size: 14px;
   margin-bottom: 16px;
   line-height: 1.5;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
 `;
 
 const CardsSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
+
+  @media (max-width: 480px) {
+    gap: 14px;
+  }
 `;
 
 const MarketRow = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 16px;
   margin-bottom: 12px;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
@@ -188,61 +247,123 @@ const MarketRow = styled.div`
     border-color: #00C300;
     box-shadow: 0 4px 12px rgba(0, 195, 0, 0.1);
   }
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    border-radius: 10px;
+    gap: 10px;
+  }
+
+  &:last-child {
+    margin-bottom: 0;
+  }
 `;
 
 const MarketInfo = styled.div`
   display: flex;
   align-items: center;
+  min-width: 0; /* Allows flex items to shrink */
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const MarketIcon = styled.div`
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
   overflow: hidden;
   border-radius: 50%;
   background: linear-gradient(135deg, #f0fdf4, #dcfce7);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 12px;
-  font-size: 18px;
+  margin-right: 14px;
+  flex-shrink: 0;
+  border: 2px solid #e2e8f0;
+
+  @media (max-width: 480px) {
+    width: 32px;
+    height: 32px;
+    margin-right: 12px;
+  }
 `;
 
 const MarketDetails = styled.div`
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  flex: 1;
 `;
 
 const MarketName = styled.div`
   font-size: 16px;
   font-weight: 700;
   color: #1e293b;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+    margin-bottom: 4px;
+  }
 `;
 
 const MarketRates = styled.div`
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    flex-direction: column;
+  }
 `;
 
 const RateLabel = styled.div`
   font-size: 12px;
-  color: #475569;
+  color: #475569; 
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+    padding: 1px 4px;
+  }
 `;
 
 const ActionButtons = styled.div`
   display: flex;
   gap: 8px;
+  flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  @media (max-width: 480px) {
+    gap: 6px;
+  }
 `;
 
 const ActionButton = styled.button<{ $supply?: boolean; $borrow?: boolean; $collateral?: boolean }>`
-  padding: 8px 16px;
+  padding: 10px 18px;
   border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   border: none;
   transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 80px;
 
   ${({ $supply }) =>
     $supply &&
@@ -267,6 +388,17 @@ const ActionButton = styled.button<{ $supply?: boolean; $borrow?: boolean; $coll
     color: 1e293b;
     &:hover { background: #e2e8f0; }
   `}
+
+  @media (max-width: 768px) {
+    flex: 1;
+    min-width: unset;
+  }
+
+  @media (max-width: 480px) {
+    padding: 8px 12px;
+    font-size: 13px;
+    min-width: 70px;
+  }
 `;
 
 const CollateralSummary = styled.div`
@@ -276,24 +408,41 @@ const CollateralSummary = styled.div`
   padding: 12px;
   margin-top: 16px;
   text-align: center;
+
+  @media (max-width: 480px) {
+    padding: 10px;
+    margin-top: 14px;
+  }
 `;
 
 const CollateralLabel = styled.div`
   font-size: 12px;
   color: #64748b;
   margin-bottom: 4px;
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+  }
 `;
 
 const CollateralValue = styled.div`
   font-size: 14px;
   font-weight: 600;
   color: #1e293b;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
 
 const EducationalContent = styled.div`
   display: flex;
   align-items: flex-start;
   gap: 12px;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+  }
 `;
 
 const EducationalIcon = styled.div`
@@ -306,10 +455,16 @@ const EducationalIcon = styled.div`
   justify-content: center;
   flex-shrink: 0;
   margin-top: 4px;
+
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+  }
 `;
 
 const EducationalText = styled.div`
   flex: 1;
+  min-width: 0;
 `;
 
 const LearnButton = styled.button`
@@ -327,6 +482,12 @@ const LearnButton = styled.button`
   &:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
+  }
+
+  @media (max-width: 480px) {
+    padding: 7px 14px;
+    font-size: 13px;
+    margin-top: 10px;
   }
 `;
 
@@ -431,7 +592,6 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                 Video Tutorial
               </LearnButton>
             </a>
-
           </EducationalText>
         </EducationalContent>
       </Card>
@@ -474,7 +634,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                     icon={market.icon}
                     iconType={market.iconType}
                     alt={market.name}
-                    size={24}
+                    size={32}
                   />
                 </MarketIcon>
                 <MarketDetails>
@@ -495,7 +655,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                   $borrow={canBorrow(market.id)}
                   $collateral={!canBorrow(market.id)}
                 >
-                  Borrow
+                  {!canBorrow(market.id) ? 'Add Collateral' : 'Borrow'}
                 </ActionButton>
               </ActionButtons>
             </MarketRow>

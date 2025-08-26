@@ -196,7 +196,7 @@ export const CollateralDepositModal: React.FC<CollateralDepositModalProps> = ({
       {!account && (
         <WalletConnectPrompt>
           <ConnectText>Connect your wallet to continue</ConnectText>
-          <ConnectButton onClick={() => alert('Wallet connection handled by app')}>
+          <ConnectButton onClick={() => alert('Use connect button on the top')}>
             Connect Wallet
           </ConnectButton>
         </WalletConnectPrompt>

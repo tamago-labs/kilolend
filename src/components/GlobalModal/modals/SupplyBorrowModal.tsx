@@ -79,7 +79,7 @@ export const SupplyBorrowModal: React.FC<SupplyBorrowModalProps> = ({
       {!account && (
         <WalletConnectPrompt>
           <ConnectText>Connect your wallet to continue</ConnectText>
-          <ConnectButton onClick={() => alert('Wallet connection handled by app')}>
+          <ConnectButton onClick={() => alert('Use connect button on the top')}>
             Connect Wallet
           </ConnectButton>
         </WalletConnectPrompt>
