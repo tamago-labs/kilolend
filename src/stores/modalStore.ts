@@ -9,6 +9,10 @@ export type ModalType =
   | 'analytics' 
   | 'ai-chat' 
   | 'settings'
+  | 'learn'
+  | 'invite'
+  | 'kilo'
+  | 'contacts'
   | null;
 
 interface ModalData {

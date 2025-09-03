@@ -79,6 +79,53 @@ export const GlobalModalManager = () => {
             placeholderText="Configure your preferences, notifications, and account settings. This feature will be available soon."
           />
         );
+          case 'learn':
+      return (
+        <BlankModal
+          isOpen={isOpen}
+          onClose={closeModal}
+          title="Learn"
+          icon="📚"
+          placeholderTitle="Learn the Platform"
+          placeholderText="Understand how Kaia works, its features, and how to earn KILO Points."
+        />
+      );
+
+    case 'invite':
+      return (
+        <BlankModal
+          isOpen={isOpen}
+          onClose={closeModal}
+          title="Invite"
+          icon="✉️"
+          placeholderTitle="Invite Friends"
+          placeholderText="Invite your friends on LINE Messenger and earn KILO Points when they join."
+        />
+      );
+
+    case 'kilo':
+      return (
+        <BlankModal
+          isOpen={isOpen}
+          onClose={closeModal}
+          title="KILO Points"
+          icon="💎"
+          placeholderTitle="Your KILO Points"
+          placeholderText="Check your current KILO Points balance and learn how to earn more."
+        />
+      );
+
+    case 'contacts':
+      return (
+        <BlankModal
+          isOpen={isOpen}
+          onClose={closeModal}
+          title="Contacts"
+          icon="📇"
+          placeholderTitle="Contact Us"
+          placeholderText="Get in touch with support or the Kaia team for help and inquiries."
+        />
+      );
 
       default:
         return null;

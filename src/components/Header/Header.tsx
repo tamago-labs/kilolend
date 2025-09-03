@@ -6,6 +6,8 @@ import { WalletButton } from '@/components/Wallet/Button/WalletButton';
 import { useWalletAccountStore } from "@/components/Wallet/Account/auth.hooks";
 import { useKaiaWalletSdk } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import Blockies from 'react-blockies';
+import { Settings } from "react-feather"
+import { useModalStore } from '@/stores/modalStore';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -97,6 +99,21 @@ const DisconnectButton = styled.button`
   }
 `;
 
+const Icon = styled.div<{ $white?: boolean }>`
+  width: 40px;
+  height: 40px; 
+  background: #f1f5f9;
+  cursor: pointer;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: black;
+  font-size: 14px;
+  font-weight: bold;
+`;
+
 // Dropdown menu for mobile
 const DropdownMenu = styled.div<{ $isOpen: boolean }>`
   position: absolute;
@@ -153,6 +170,9 @@ const DisconnectRow = styled.div`
 `;
 
 export const Header = () => {
+
+  const { openModal } = useModalStore();
+
   const { account, setAccount } = useWalletAccountStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const { disconnectWallet } = useKaiaWalletSdk();
@@ -164,6 +184,9 @@ export const Header = () => {
     });
   }, [disconnectWallet])
 
+  const handleSettings = () => {
+    openModal('settings');
+  };
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -171,12 +194,8 @@ export const Header = () => {
 
   return (
     <HeaderContainer>
-      {/* <LeftSection>
-       
-      </LeftSection> */}
-
-      <RightSection>
-        {!account ? (
+       <LeftSection>
+         {!account ? (
           <WalletButton />
         ) : (
           <>
@@ -233,6 +252,11 @@ export const Header = () => {
             </DropdownMenu>
           </>
         )}
+      </LeftSection>  
+      <RightSection>
+       <Icon onClick={handleSettings}>
+          <Settings size={22}/>
+        </Icon>
       </RightSection>
     </HeaderContainer>
   );

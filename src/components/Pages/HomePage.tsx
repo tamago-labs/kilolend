@@ -31,7 +31,7 @@ const TopCardsContainer = styled.div`
 
 const Card = styled.div<{ $gradient?: boolean }>`
   border-radius: 8px;
-  min-height: 180px;
+  
   padding: 20px;
   border: 1px solid #e2e8f0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
@@ -45,6 +45,7 @@ const Card = styled.div<{ $gradient?: boolean }>`
       ? `
     background: linear-gradient(135deg, #1e293b, #06C755);
     color: white; 
+    min-height: 180px;
     
     &::before {
       content: '';
@@ -134,6 +135,17 @@ const CardSubtext = styled.div<{ $white?: boolean }>`
   }
 `;
 
+const IconImage = styled.img`
+  width: 80%;
+  height: 80%;
+  object-fit: contain;
+  
+  @media (max-width: 480px) {
+    width: 65%;
+    height: 65%;
+  }
+`;
+
 const ActionsSection = styled.div`
   margin-bottom: 32px;
 `;
@@ -176,6 +188,17 @@ const IconButton = styled.div<{ $primary?: boolean; $secondary?: boolean; $accen
   }
 `;
 
+const gradients = [
+  "linear-gradient(135deg, #06C755, #04A94A)", // green
+  "linear-gradient(135deg, #3b82f6, #1d4ed8)", // blue
+  "linear-gradient(135deg, #8b5cf6, #7c3aed)", // purple
+  "linear-gradient(135deg, #f59e0b, #d97706)", // orange
+  "linear-gradient(135deg, #06b6d4, #0891b2)", // cyan
+  "linear-gradient(135deg, #ec4899, #db2777)", // pink
+  "linear-gradient(135deg, #9ca3af, #6b7280)", // gray
+  "linear-gradient(135deg, #1f2937, #111827)", // black/dark 
+];
+
 const IconCircle = styled.div<{ $primary?: boolean; $secondary?: boolean; $accent?: boolean; $warning?: boolean; $info?: boolean }>`
   width: 100%;
   aspect-ratio: 1 / 1; /* keep perfect square */
@@ -188,55 +211,8 @@ const IconCircle = styled.div<{ $primary?: boolean; $secondary?: boolean; $accen
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
-  ${({ $primary }) =>
-    $primary &&
-    `
-    background: linear-gradient(135deg, #06C755, #04A94A);
-    ${IconButton}:hover & {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(6, 199, 85, 0.3);
-    }
-  `}
-
-  ${({ $secondary }) =>
-    $secondary &&
-    `
-    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
-    ${IconButton}:hover & {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-    }
-  `}
-
-  ${({ $accent }) =>
-    $accent &&
-    `
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    ${IconButton}:hover & {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
-    }
-  `}
-
-  ${({ $warning }) =>
-    $warning &&
-    `
-    background: linear-gradient(135deg, #f59e0b, #d97706);
-    ${IconButton}:hover & {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.3);
-    }
-  `}
-
-  ${({ $info }) =>
-    $info &&
-    `
-    background: linear-gradient(135deg, #06b6d4, #0891b2);
-    ${IconButton}:hover & {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 16px rgba(6, 182, 212, 0.3);
-    }
-  `}
+  background: ${({ $index }) => gradients[Number($index)! % gradients.length]};
+ 
 
   @media (max-width: 480px) {
     font-size: clamp(18px, 6vw, 28px);
@@ -246,14 +222,90 @@ const IconCircle = styled.div<{ $primary?: boolean; $secondary?: boolean; $accen
 `;
 
 const IconLabel = styled.span`
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   color: #1e293b;
   text-align: center;
   line-height: 1.2;
+  margin-top: 4px;
+  min-height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   @media (max-width: 480px) {
-    font-size: 10px;
+    font-size: 13px;
+    min-height: 14px;
+  }
+`;
+
+
+const EducationalContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+
+  @media (max-width: 480px) {
+    gap: 10px;
+  }
+`;
+
+const EducationalIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #00C300, #00A000);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 4px;
+
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+  }
+`;
+
+const CardDescription = styled.p`
+  color: #64748b;
+  font-size: 14px;
+  margin-bottom: 16px;
+  line-height: 1.5;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    margin-bottom: 14px;
+  }
+`;
+
+const EducationalText = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const LearnButton = styled.button`
+  background: linear-gradient(135deg, #00C300, #00A000);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.2s;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
+  }
+
+  @media (max-width: 480px) {
+    padding: 7px 14px;
+    font-size: 13px;
+    margin-top: 10px;
   }
 `;
 
@@ -300,6 +352,22 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     openModal('analytics');
   };
 
+  const handleLearn = () => {
+    openModal('learn');
+  };
+
+  const handleInvite = () => {
+    openModal('invite');
+  };
+
+  const handleKilo = () => {
+    openModal('kilo');
+  };
+
+  const handleContacts = () => {
+    openModal('contacts');
+  }; 
+
   return (
     <PageContainer>
       {/* Top Cards Section */}
@@ -307,10 +375,20 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
         {/* AI Assistant Card */}
         <Card $gradient onClick={handleAskAI}>
           <CardContent>
-            <CardTitle $white>AI Assistant</CardTitle>
+            <CardIcon>
+              <b>K</b> 
+            </CardIcon>
+            <CardTitle $white>
+              KiloLend
+            </CardTitle>
             <CardSubtext $white>
-              Get personalized lending recommendations powered by AI
+              The first stablecoin-focused decentralized lending with AI on LINE Mini Dapp
             </CardSubtext>
+           {/* <a href="https://youtu.be/Lq4lOqcQn8Q" target="_blank">
+              <LearnButton>
+                Video Tutorial
+              </LearnButton>
+            </a>*/}
           </CardContent>
         </Card>
 
@@ -321,7 +399,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               <img
                 src="https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png"
                 alt="KAIA Logo"
-                style={{ width: "40px", height: "40px" }}
+                style={{ width: "100%", height: "100%" }}
               />
             </CardIcon>
             <CardTitle>KAIA price</CardTitle>
@@ -333,28 +411,90 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
       {/* Actions Section */}
       <ActionsSection>
+        <SectionTitle>Quick Actions</SectionTitle>
         <IconGrid>
           <IconButton onClick={handleAskAI}>
-            <IconCircle $accent>🤖</IconCircle>
-            <IconLabel>Ask AI</IconLabel>
+            <IconCircle $index="1">
+              <IconImage 
+    src="./images/icon-ai.png"
+    alt="ASK-AI"
+  />
+            </IconCircle>
+            <IconLabel>AI Advisor</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleSupply}>
-            <IconCircle $primary>📈</IconCircle>
+            <IconCircle $index="3">
+              <IconImage 
+    src="./images/icon-supply.png"
+    alt="SUPPLY"
+  />
+            </IconCircle>
             <IconLabel>Supply</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleBorrow}>
-            <IconCircle $secondary>💰</IconCircle>
+            <IconCircle $index="2">
+              <IconImage 
+    src="./images/icon-borrow.png"
+    alt="BORROW"
+  />
+            </IconCircle>
             <IconLabel>Borrow</IconLabel>
-          </IconButton>
-
-          <IconButton onClick={handlePortfolio}>
-            <IconCircle $info>📊</IconCircle>
+          </IconButton> 
+          <IconButton onClick={handleLearn}>
+            <IconCircle $index="6">
+              <IconImage 
+    src="./images/icon-learn.png"
+    alt="LEARN"
+  />
+            </IconCircle>
             <IconLabel>Learn</IconLabel>
+          </IconButton>
+          <IconButton onClick={handleInvite}>
+            <IconCircle $index="0"><IconImage 
+   src="./images/icon-invites.png"
+    alt="INVITE"
+  /></IconCircle>
+            <IconLabel>Invite</IconLabel>
+          </IconButton>
+          <IconButton onClick={handleKilo}>
+            <IconCircle $index="7"><IconImage 
+    src="./images/icon-kilo.png"
+    alt="KILO"
+  /></IconCircle>
+            <IconLabel>KILO</IconLabel>
+          </IconButton>
+          <IconButton onClick={handleContacts}>
+            <IconCircle $index="4">
+              <IconImage 
+    src="./images/icon-contact.png" 
+    alt="CONTACT"
+  />
+            </IconCircle>
+            <IconLabel>Contacts</IconLabel>
           </IconButton>
         </IconGrid>
       </ActionsSection>
+      {/* Educational Card */}
+        <Card>
+          <EducationalContent>
+            <EducationalIcon>
+              🎓
+            </EducationalIcon>
+            <EducationalText>
+              <CardTitle style={{ marginBottom: '8px' }}>New to DeFi?</CardTitle>
+              <CardDescription style={{ marginBottom: '0' }}>
+                Learn how decentralized lending works and start earning passive income with your crypto assets safely.
+              </CardDescription>
+              <a href="https://github.com/tamago-labs/kilolend" target="_blank">
+                <LearnButton>
+                  Learn the Basics
+                </LearnButton>
+              </a> 
+            </EducationalText>
+          </EducationalContent>
+        </Card>
     </PageContainer>
   );
 };
