@@ -11,6 +11,8 @@ import { ActivityPage } from '@/components/Pages/ActivityPage';
 import { ProfilePage } from '@/components/Pages/ProfilePage';
 import { SwipeDeals } from '@/components/AIDeals/SwipeDeals';
 import { GlobalModal } from '@/components/GlobalModal/GlobalModal';
+import { SplashScreen } from '@/components/SplashScreen/SplashScreen';
+import { GlobalModalManager } from '@/components/Modal/GlobalModalManager';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -29,6 +31,11 @@ export default function Home() {
     const { activeTab, setActiveTab } = useAppStore();
     const { generateDeals, currentDeals } = useAIDealsStore();
     const [showSwipeDeals, setShowSwipeDeals] = useState(false);
+    const [showSplash, setShowSplash] = useState(true);
+
+    const handleSplashFinish = () => {
+        setShowSplash(false);
+    };
 
     const handleAIDealsGenerated = async (userQuery: string) => {
         console.log('AI Query:', userQuery);
@@ -77,6 +84,11 @@ export default function Home() {
         }
     };
 
+    // Show splash screen on first load
+    if (showSplash) {
+        return <SplashScreen onFinish={handleSplashFinish} />;
+    }
+
     return (
         <PageContainer>
             <ContentArea>
@@ -93,6 +105,9 @@ export default function Home() {
             
             {/* Global Modal */}
             <GlobalModal onAIDealsGenerated={handleAIDealsGenerated} />
+            
+            {/* Global Modal Manager */}
+            <GlobalModalManager />
         </PageContainer>
     );
 }

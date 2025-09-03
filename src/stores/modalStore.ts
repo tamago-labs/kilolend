@@ -1,43 +1,56 @@
+'use client';
+
 import { create } from 'zustand';
 
-export type ModalType = 'supply' | 'borrow' | 'withdraw' | 'repay' | 'ai-chat' | 'deposit-collateral' | 'withdraw-collateral';
+export type ModalType = 
+  | 'supply' 
+  | 'borrow' 
+  | 'portfolio' 
+  | 'analytics' 
+  | 'ai-chat' 
+  | 'settings'
+  | null;
 
-export interface ModalData {
-  marketId?: string;
-  action?: 'supply' | 'borrow';
-  userQuery?: string;
-  collateralType?: 'wkaia' | 'stkaia';
-  collateralAction?: 'deposit' | 'withdraw';
+interface ModalData {
+  [key: string]: any;
 }
 
-export interface ModalState {
+interface ModalState {
+  activeModal: ModalType;
+  modalData: ModalData;
   isOpen: boolean;
-  type: ModalType | null;
-  data: ModalData | null;
-  
+}
+
+interface ModalActions {
   openModal: (type: ModalType, data?: ModalData) => void;
   closeModal: () => void;
-  updateData: (data: Partial<ModalData>) => void;
+  setModalData: (data: ModalData) => void;
 }
 
-export const useModalStore = create<ModalState>((set) => ({
+export const useModalStore = create<ModalState & ModalActions>((set) => ({
+  activeModal: null,
+  modalData: {},
   isOpen: false,
-  type: null,
-  data: null,
 
-  openModal: (type, data = {}) => set({
-    isOpen: true,
-    type,
-    data
-  }),
+  openModal: (type: ModalType, data: ModalData = {}) => {
+    set({
+      activeModal: type,
+      modalData: data,
+      isOpen: true,
+    });
+  },
 
-  closeModal: () => set({
-    isOpen: false,
-    type: null,
-    data: null
-  }),
+  closeModal: () => {
+    set({
+      activeModal: null,
+      modalData: {},
+      isOpen: false,
+    });
+  },
 
-  updateData: (newData) => set((state) => ({
-    data: { ...state.data, ...newData }
-  }))
+  setModalData: (data: ModalData) => {
+    set((state) => ({
+      modalData: { ...state.modalData, ...data },
+    }));
+  },
 }));
