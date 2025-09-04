@@ -70,8 +70,7 @@ contract SingleMarketTest is Test {
 
     function configureSystem() internal {
         // Set oracle prices
-        // oracle.setDirectPrice(address(usdt), 1e18); // $1 
-        oracle.setDirectPrice(address(usdt), 1e30);
+        oracle.setDirectPrice(address(usdt), 1e18); // $1  
         oracle.setDirectPrice(address(wKAIA), 0.15e18); // $0.15
         
         // Configure comptroller
@@ -152,7 +151,7 @@ contract SingleMarketTest is Test {
         // Bob supplies stKAIA and borrows USDT
         vm.startPrank(bob);
         comptroller.enterMarkets(markets);
-        wKAIA.mint(  bob, 10000e18);
+        wKAIA.mint( bob, 10000e18);
         wKAIA.approve(address(cwKAIA), 10000e18);
         cwKAIA.mint(10000e18);
         cUSDT.borrow(300e6);

@@ -75,7 +75,7 @@ contract ComptrollerTest is Test {
         assertTrue(comptroller.checkMembership(user1, CToken(address(cToken))) == false);
         
         // Check oracle price
-        assertEq(oracle.getUnderlyingPrice(CToken(address(cToken))), 1e18);
+        assertEq(oracle.getUnderlyingPrice(CToken(address(cToken))), 1e30);
         
         // Check market is listed
         (bool isListed,) = comptroller.markets(address(cToken));

@@ -15,10 +15,10 @@ import "./tokens/CErc20.sol";
  *         - Pyth mode: fetches real-time prices from the Pyth oracle network, 
  *           including staleness checks and decimal adjustments.
  *
- * @dev Designed to simplify integration and testing:
- *      - Starts in mock mode by default for easier local development and unit tests.
- *      - Supports switching to Pyth mode in production.
- *      - Includes admin functions for managing feeds, toggling modes, and updating prices.
+ * @dev Prices are normalized to account for underlying token decimals:
+ *      - For 18-decimal tokens: price = USD_price * 1e18
+ *      - For 6-decimal tokens:  price = USD_price * 1e30 (1e18 * 1e12 decimal adjustment)
+ *      - For 8-decimal tokens:  price = USD_price * 1e28 (1e18 * 1e10 decimal adjustment)
  */
 
 contract KiloPriceOracle is Ownable, PriceOracle {
@@ -36,14 +36,23 @@ contract KiloPriceOracle is Ownable, PriceOracle {
 
     uint256 public stalenessThreshold;
 
+    mapping(address => bool) public whitelist;
+
     event PricePosted(address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);
     event PriceFeedSet(address token, bytes32 priceId);
     event MockModeToggled(address token, bool enabled);
     event StalenessThresholdUpdated(uint256 newThreshold);
 
+    modifier isWhitelisted() {
+        require(whitelist[msg.sender], "Not whitelisted");
+        _;
+    }
+
     constructor() {
         stalenessThreshold = 3600; // 1 hour default
+        whitelist[msg.sender] = true;
     }
+ 
 
     function _getUnderlyingAddress(CToken cToken) private view returns (address) {
         address asset;
@@ -57,24 +66,33 @@ contract KiloPriceOracle is Ownable, PriceOracle {
 
     function getUnderlyingPrice(CToken cToken) public override view returns (uint) {
         address underlying = _getUnderlyingAddress(cToken);
+        uint8 underlyingDecimals = _getUnderlyingDecimals(underlying);
 
-        uint256 price;
+        uint256 basePrice;
 
         // Default to mock unless explicitly turned off
         if (mockMode[underlying] || priceFeeds[underlying] == bytes32(0)) {
-            price = mockPrices[underlying];
+            basePrice = mockPrices[underlying];
         } else {
-            price = _getPythPrice(underlying);
+            basePrice = _getPythPrice(underlying);
         }
 
         // Apply inversion if enabled
         if (invertMode[underlying]) {
-            require(price > 0, "Price must be positive for inversion");
+            require(basePrice > 0, "Price must be positive for inversion");
             // keep scale to 18 decimals
-            return 1e36 / price; 
+            return 1e36 / basePrice; 
         }
 
-        return price;
+        // Apply decimal adjustment for Compound V2 compatibility
+        uint256 decimalAdjustment = _getDecimalAdjustment(underlyingDecimals);
+        
+        // Avoid overflow by checking if we need to divide instead of multiply
+        if (decimalAdjustment > 1e18) {
+            return basePrice * (decimalAdjustment / 1e18);
+        } else {
+            return basePrice * decimalAdjustment / 1e18;
+        }
     }
 
     function _getPythPrice(address token) internal view returns (uint256) {
@@ -104,7 +122,28 @@ contract KiloPriceOracle is Ownable, PriceOracle {
         return adjustedPrice * 1e18 / 1e8;
     }
 
-    function setDirectPrice(address asset, uint price) public { 
+    function _getUnderlyingDecimals(address underlying) private view returns (uint8) {
+        // Handle native token (KAIA/ETH)
+        if (underlying == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE) {
+            return 18;
+        }
+        
+        // Get decimals from ERC20 contract
+        return EIP20Interface(underlying).decimals();
+    }
+
+    function _getDecimalAdjustment(uint8 tokenDecimals) private pure returns (uint256) {
+        if (tokenDecimals >= 18) {
+            return 1e18;
+        }
+        
+        // For tokens with < 18 decimals, multiply by additional factor
+        // This ensures borrowBalance * price calculation works correctly
+        uint8 decimalDifference = 18 - tokenDecimals;
+        return 1e18 * (10 ** decimalDifference);
+    }
+
+    function setDirectPrice(address asset, uint price) public isWhitelisted { 
         // automatically enable mock mode if not set
         if (mockPrices[asset] == 0) {
             mockMode[asset] = true;
@@ -112,6 +151,26 @@ contract KiloPriceOracle is Ownable, PriceOracle {
         require(mockMode[asset] == true , "only mock mode"); 
         emit PricePosted(asset, mockPrices[asset], price, price);
         mockPrices[asset] = price;
+    }
+
+    function getPriceInfo(CToken cToken) external view returns (
+        address underlying,
+        uint8 decimals,
+        uint256 basePrice,
+        uint256 finalPrice,
+        uint256 decimalAdjustment
+    ) {
+        underlying = _getUnderlyingAddress(cToken);
+        decimals = _getUnderlyingDecimals(underlying);
+        
+        if (mockMode[underlying] || priceFeeds[underlying] == bytes32(0)) {
+            basePrice = mockPrices[underlying];
+        } else {
+            basePrice = _getPythPrice(underlying);
+        }
+        
+        decimalAdjustment = _getDecimalAdjustment(decimals);
+        finalPrice = getUnderlyingPrice(cToken);
     }
 
     function compareStrings(string memory a, string memory b) internal pure returns (bool) {
@@ -159,6 +218,25 @@ contract KiloPriceOracle is Ownable, PriceOracle {
 
     function getUpdateFee(bytes[] calldata updateData) external view returns (uint256) {
         return pyth.getUpdateFee(updateData);
+    }
+
+    // Whitelist management functions
+
+    /**
+     * @notice Add address to whitelist for setDirectPrice function
+     * @param user The address to add to whitelist
+     */
+    function addToWhitelist(address user) external onlyOwner {
+        require(user != address(0), "Cannot whitelist zero address");
+        whitelist[user] = true; 
+    }
+
+    /**
+     * @notice Remove address from whitelist
+     * @param user The address to remove from whitelist
+     */
+    function removeFromWhitelist(address user) external onlyOwner {
+        whitelist[user] = false; 
     }
 
 }
