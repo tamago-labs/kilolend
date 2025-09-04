@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "forge-std/Test.sol";
-import "../src/mocks/MockToken.sol";
+import "../../src/mocks/MockToken.sol";
 
 contract MockTokenTest is Test {
     MockToken public usdt;
@@ -30,7 +30,7 @@ contract MockTokenTest is Test {
         wKAIA = new MockToken("Wrapped KAIA", "wKAIA", 18, 1000000e18);
     }
     
-    function testTokenDeployment() public {
+    function testTokenDeployment() view public {
         // Test USDT
         assertEq(usdt.name(), "Tether USD");
         assertEq(usdt.symbol(), "USDT");
