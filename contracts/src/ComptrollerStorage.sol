@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.10;
 
-import "./CToken.sol";
-import "./PriceOracle.sol";
+import "./tokens/CToken.sol";
+import "./interfaces/PriceOracle.sol";
 
 contract UnitrollerAdminStorage {
     /**
@@ -67,9 +67,6 @@ contract ComptrollerV2Storage is ComptrollerV1Storage {
 
         // Per-market mapping of "accounts in this asset"
         mapping(address => bool) accountMembership;
-
-        // Whether or not this market receives COMP
-        bool isComped;
     }
 
     /**
@@ -77,7 +74,6 @@ contract ComptrollerV2Storage is ComptrollerV1Storage {
      * @dev Used e.g. to determine if a market is supported
      */
     mapping(address => Market) public markets;
-
 
     /**
      * @notice The Pause Guardian can pause certain actions as a safety mechanism.
@@ -94,38 +90,10 @@ contract ComptrollerV2Storage is ComptrollerV1Storage {
 }
 
 contract ComptrollerV3Storage is ComptrollerV2Storage {
-    struct CompMarketState {
-        // The market's last updated compBorrowIndex or compSupplyIndex
-        uint224 index;
-
-        // The block number the index was last updated at
-        uint32 block;
-    }
-
     /// @notice A list of all markets
     CToken[] public allMarkets;
-
-    /// @notice The rate at which the flywheel distributes COMP, per block
-    uint public compRate;
-
-    /// @notice The portion of compRate that each market currently receives
-    mapping(address => uint) public compSpeeds;
-
-    /// @notice The COMP market supply state for each market
-    mapping(address => CompMarketState) public compSupplyState;
-
-    /// @notice The COMP market borrow state for each market
-    mapping(address => CompMarketState) public compBorrowState;
-
-    /// @notice The COMP borrow index for each market for each supplier as of the last time they accrued COMP
-    mapping(address => mapping(address => uint)) public compSupplierIndex;
-
-    /// @notice The COMP borrow index for each market for each borrower as of the last time they accrued COMP
-    mapping(address => mapping(address => uint)) public compBorrowerIndex;
-
-    /// @notice The COMP accrued but not yet transferred to each user
-    mapping(address => uint) public compAccrued;
 }
+
 
 contract ComptrollerV4Storage is ComptrollerV3Storage {
     // @notice The borrowCapGuardian can set borrowCaps to any number for any market. Lowering the borrow cap could disable borrowing on the given market.

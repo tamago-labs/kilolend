@@ -1,14 +1,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.10;
 
-import "../CToken.sol";
+import "./CToken.sol";
 
 /**
- * @title Compound's CEther Contract (forked for KAIA)
+ * @title Compound's CEther Contract
  * @notice CToken which wraps Ether
  * @author Compound
  */
-contract CKaia is CToken {
+contract CEther is CToken {
     /**
      * @notice Construct a new CEther money market
      * @param comptroller_ The address of the Comptroller

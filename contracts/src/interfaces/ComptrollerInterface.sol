@@ -26,7 +26,7 @@ abstract contract ComptrollerInterface {
         address payer,
         address borrower,
         uint repayAmount) virtual external returns (uint);
-    
+
     function repayBorrowVerify(
         address cToken,
         address payer,
@@ -40,7 +40,7 @@ abstract contract ComptrollerInterface {
         address liquidator,
         address borrower,
         uint repayAmount) virtual external returns (uint);
-    
+
     function liquidateBorrowVerify(
         address cTokenBorrowed,
         address cTokenCollateral,
@@ -55,7 +55,7 @@ abstract contract ComptrollerInterface {
         address liquidator,
         address borrower,
         uint seizeTokens) virtual external returns (uint);
-    
+        
     function seizeVerify(
         address cTokenCollateral,
         address cTokenBorrowed,

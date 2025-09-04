@@ -1,22 +1,19 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.10;
 
-
-import "forge-std/Test.sol";
-import "./interfaces/ComptrollerInterface.sol";
-import "./interfaces/CTokenInterfaces.sol";
-import "./ErrorReporter.sol";
-import "./InterestRateModel.sol";
-import "./utils/ExponentialNoError.sol";
+import "./CTokenInterfaces.sol";
+import "../utils/ErrorReporter.sol";
+import "../utils/ExponentialNoError.sol";
+import "../interfaces/EIP20Interface.sol";
+import "../interfaces/InterestRateModel.sol";
 
 /**
  * @title Compound's CToken Contract
  * @notice Abstract base for CTokens
  * @author Compound
  */
-
 abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorReporter {
-
+    
     /**
      * @notice Initialize the money market
      * @param comptroller_ The address of the Comptroller
@@ -50,7 +47,6 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
         name = name_;
         symbol = symbol_;
         decimals = decimals_;
-
         _notEntered = true;
     }
 
@@ -63,6 +59,7 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
      * @param tokens The number of tokens to transfer
      * @return 0 if the transfer succeeded, else revert
      */
+
     function transferTokens(address spender, address src, address dst, uint tokens) internal returns (uint) {
         uint allowed = comptroller.transferAllowed(address(this), src, dst, tokens);
         if (allowed != 0) {
@@ -87,7 +84,6 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
         /////////////////////////
         // EFFECTS & INTERACTIONS
         // (No safe failures beyond this point)
-
         accountTokens[src] = srcTokensNew;
         accountTokens[dst] = dstTokensNew;
 
@@ -116,9 +112,11 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
      * @param amount The number of tokens to transfer
      * @return Whether or not the transfer succeeded
      */
+
     function transferFrom(address src, address dst, uint256 amount) override external nonReentrant returns (bool) {
         return transferTokens(msg.sender, src, dst, amount) == NO_ERROR;
     }
+
 
     /**
      * @notice Approve `spender` to transfer up to `amount` from `src`
@@ -183,7 +181,7 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
     /**
      * @dev Function to simply retrieve block number
      *  This exists mainly for inheriting test contracts to stub this result.
-     */
+     */ 
     function getBlockNumber() virtual internal view returns (uint) {
         return block.number;
     }
@@ -326,7 +324,6 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
         totalReserves = totalReservesNew;
 
         emit AccrueInterest(cashPrior, interestAccumulated, borrowIndexNew, totalBorrowsNew);
-
         return NO_ERROR;
     }
 
@@ -357,7 +354,6 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
         }
 
         Exp memory exchangeRate = Exp({mantissa: exchangeRateStoredInternal()});
-
         uint actualMintAmount = doTransferIn(minter, mintAmount);
         uint mintTokens = div_(actualMintAmount, exchangeRate);
 
@@ -398,10 +394,11 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
     function redeemFresh(address payable redeemer, uint redeemTokensIn, uint redeemAmountIn) internal {
         require(redeemTokensIn == 0 || redeemAmountIn == 0, "one of redeemTokensIn or redeemAmountIn must be zero");
 
-        Exp memory exchangeRate = Exp({mantissa: exchangeRateStoredInternal() });
+        Exp memory exchangeRate = Exp({mantissa: exchangeRateStoredInternal()});
 
         uint redeemTokens;
         uint redeemAmount;
+        
         if (redeemTokensIn > 0) {
             redeemTokens = redeemTokensIn;
             redeemAmount = mul_ScalarTruncate(exchangeRate, redeemTokensIn);
@@ -512,7 +509,6 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
 
         uint accountBorrowsPrev = borrowBalanceStoredInternal(borrower);
         uint repayAmountFinal = repayAmount == type(uint).max ? accountBorrowsPrev : repayAmount;
-
         uint actualRepayAmount = doTransferIn(payer, repayAmountFinal);
 
         uint accountBorrowsNew = accountBorrowsPrev - actualRepayAmount;
@@ -523,7 +519,6 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
         totalBorrows = totalBorrowsNew;
 
         emit RepayBorrow(payer, borrower, actualRepayAmount, accountBorrowsNew, totalBorrowsNew);
-
         return actualRepayAmount;
     }
 
@@ -554,9 +549,7 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
      * @param repayAmount The amount of the underlying borrowed asset to repay
      */
     function liquidateBorrowFresh(address liquidator, address borrower, uint repayAmount, CTokenInterface cTokenCollateral) internal {
-
         uint allowed = comptroller.liquidateBorrowAllowed(address(this), address(cTokenCollateral), liquidator, borrower, repayAmount);
-
         if (allowed != 0) {
             revert LiquidateComptrollerRejection(allowed);
         }
@@ -657,7 +650,6 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
         pendingAdmin = newPendingAdmin;
 
         emit NewPendingAdmin(oldPendingAdmin, newPendingAdmin);
-
         return NO_ERROR;
     }
 
@@ -685,8 +677,8 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
 
         ComptrollerInterface oldComptroller = comptroller;
         require(newComptroller.isComptroller(), "marker method returned false");
-        comptroller = newComptroller;
 
+        comptroller = newComptroller;
         emit NewComptroller(oldComptroller, newComptroller);
 
         return NO_ERROR;
@@ -714,20 +706,29 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
         reserveFactorMantissa = newReserveFactorMantissa;
 
         emit NewReserveFactor(oldReserveFactorMantissa, newReserveFactorMantissa);
-
         return NO_ERROR;
     }
 
     function _addReservesInternal(uint addAmount) internal nonReentrant returns (uint) {
         accrueInterest();
+        _addReservesFresh(addAmount);
+        return NO_ERROR;
+    }
 
-        uint actualAddAmount = doTransferIn(msg.sender, addAmount);
-        uint totalReservesNew = totalReserves + actualAddAmount;
+    function _addReservesFresh(uint addAmount) internal returns (uint, uint) {
+        uint totalReservesNew;
+        uint actualAddAmount;
+
+        if (accrualBlockNumber != getBlockNumber()) {
+            revert AddReservesFactorFreshCheck(actualAddAmount);
+        }
+
+        actualAddAmount = doTransferIn(msg.sender, addAmount);
+        totalReservesNew = totalReserves + actualAddAmount;
         totalReserves = totalReservesNew;
 
         emit ReservesAdded(msg.sender, actualAddAmount, totalReservesNew);
-
-        return actualAddAmount;
+        return (NO_ERROR, actualAddAmount);
     }
 
     function _reduceReserves(uint reduceAmount) override external nonReentrant returns (uint) {
@@ -736,6 +737,8 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
     }
 
     function _reduceReservesFresh(uint reduceAmount) internal returns (uint) {
+        uint totalReservesNew;
+
         if (msg.sender != admin) {
             revert ReduceReservesAdminCheck();
         }
@@ -752,13 +755,12 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
             revert ReduceReservesCashValidation();
         }
 
-        uint totalReservesNew = totalReserves - reduceAmount;
+        totalReservesNew = totalReserves - reduceAmount;
         totalReserves = totalReservesNew;
 
         doTransferOut(admin, reduceAmount);
 
         emit ReservesReduced(admin, reduceAmount, totalReservesNew);
-
         return NO_ERROR;
     }
 
@@ -780,8 +782,8 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
 
         oldInterestRateModel = interestRateModel;
         require(newInterestRateModel.isInterestRateModel(), "marker method returned false");
-        interestRateModel = newInterestRateModel;
 
+        interestRateModel = newInterestRateModel;
         emit NewMarketInterestRateModel(oldInterestRateModel, newInterestRateModel);
 
         return NO_ERROR;
@@ -790,21 +792,13 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
     /*** Safe Token ***/
 
     function getCashPrior() virtual internal view returns (uint);
-
     function doTransferIn(address from, uint amount) virtual internal returns (uint);
-
     function doTransferOut(address payable to, uint amount) virtual internal;
 
-
-    /*** Reentrancy Guard ***/
-
-    /**
-     * @dev Prevents a contract from calling itself, directly or indirectly.
-     */
     modifier nonReentrant() {
         require(_notEntered, "re-entered");
         _notEntered = false;
         _;
-        _notEntered = true; // get a gas-refund post-Istanbul
+        _notEntered = true;
     }
 }

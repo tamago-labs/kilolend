@@ -48,8 +48,8 @@ contract ComptrollerErrorReporter {
 
     /**
       * @dev `error` corresponds to enum Error; `info` corresponds to enum FailureInfo, and `detail` is an arbitrary
-      * uint which gives additional information about the failure.
-      */
+      * contract-specific code that enables us to report opaque error codes from upgradeable contracts.
+      **/
     event Failure(uint error, uint info, uint detail);
 
     /**
@@ -96,10 +96,13 @@ contract TokenErrorReporter {
     error LiquidateComptrollerRejection(uint256 errorCode);
     error LiquidateFreshnessCheck();
     error LiquidateCollateralFreshnessCheck();
+    error LiquidateAccrueBorrowInterestFailed(uint256 errorCode);
     error LiquidateAccrueCollateralInterestFailed(uint256 errorCode);
     error LiquidateLiquidatorIsBorrower();
     error LiquidateCloseAmountIsZero();
     error LiquidateCloseAmountIsUintMax();
+    error LiquidateRepayBorrowFreshFailed(uint256 errorCode);
+
     error LiquidateSeizeComptrollerRejection(uint256 errorCode);
     error LiquidateSeizeLiquidatorIsBorrower();
 
