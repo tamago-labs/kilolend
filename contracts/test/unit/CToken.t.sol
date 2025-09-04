@@ -307,9 +307,11 @@ contract CTokenTest is Test {
         vm.stopPrank();
         
         uint256 borrowBalanceBefore = cToken.borrowBalanceStored(user1);
+         
+        uint initialBlock = block.number;
         
-        // Advance time to accrue interest
-        vm.warp(block.timestamp + 365 days);
+        // Simulate blocks passing
+        vm.roll(initialBlock + 100);
         
         uint256 result = cToken.accrueInterest();
         assertEq(result, 0); // Success
