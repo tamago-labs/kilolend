@@ -42,9 +42,9 @@ contract DeployMockTokens is Script {
         // Start broadcasting transactions to KAIA testnet
         vm.startBroadcast(deployerPrivateKey);
         
-        // Deploy mock stablecoins and KAIA tokens
+        // Deploy mock stablecoins and volatile tokens
         MockToken usdt = new MockToken("Tether USD", "USDT", 6, 1000000e6); // 1M USDT
-        MockToken stKAIA = new MockToken("Staked KAIA", "stKAIA", 18, 1000000e18); // 1M stKAIA
+        MockToken six = new MockToken("SIX Token", "SIX", 18, 1000000e18); // 1M SIX
         MockToken bora = new MockToken("BORA Token", "BORA", 18, 1000000e18); // 1M BORA
         MockToken mbx = new MockToken("MARBLEX Token", "MBX", 18, 1000000e18); // 1M MBX
         
@@ -55,9 +55,9 @@ contract DeployMockTokens is Script {
         console.log("Mock Tokens deployed successfully!");
         console.log("===========================================");
         console.log("USDT:", address(usdt)); 
-        console.log("stKAIA:", address(stKAIA));
-        console.log("bora:", address(bora));
-        console.log("mbx:", address(mbx));
+        console.log("SIX:", address(six));
+        console.log("BORA:", address(bora));
+        console.log("MBX:", address(mbx));
           
     }
      
