@@ -1,7 +1,7 @@
 // Token configuration for KAIA Testnet
 export const KAIA_TESTNET_TOKENS = {
   USDT: {
-    address: '0x16EE94e3C07B24EbA6067eb9394BA70178aAc4c0',
+    address: '0x5F7392Ec616F829Ab54092e7F167F518835Ac740',
     name: 'Tether USD',
     symbol: 'USDT',
     decimals: 6,
@@ -48,28 +48,28 @@ export const KAIA_TESTNET_TOKENS = {
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
     iconType: 'image' as const
   },
-  MARBLEX: {
-    address: '0x0000000000000000000000000000000000000000',
-    name: 'MARBLEX',
-    symbol: 'MARBLEX',
+  SIX: {
+    address: '0xe438E6157Ad6e38A8528fd68eBf5d8C4F57420eC',
+    name: 'SIX Protocol',
+    symbol: 'SIX',
     decimals: 18,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3327.png',
     iconType: 'image' as const
   },
   BORA: {
-    address: '0x0000000000000000000000000000000000000000',
+    address: '0xFdB35092c0cf5e1A5175308CB312613972C3DF3D',
     name: 'BORA',
     symbol: 'BORA',
     decimals: 18,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3801.png',
     iconType: 'image' as const
   },
-  SIX: {
-    address: '0x0000000000000000000000000000000000000000',
-    name: 'SIX Protocol',
-    symbol: 'SIX',
+  MBX: {
+    address: '0xCeB75a9a4Af613afd42BD000893eD16fB1F0F057',
+    name: 'MARBLEX',
+    symbol: 'MBX',
     decimals: 18,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3327.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png',
     iconType: 'image' as const
   }
 } as const;
@@ -84,11 +84,27 @@ export const getTokenByAddress = (address: string) => {
   return TOKEN_LIST.find(token => token.address.toLowerCase() === address.toLowerCase());
 };
 
+// Faucet configuration - tokens available for testnet faucet
+export const FAUCET_TOKENS = ['USDT', 'SIX', 'BORA', 'MBX'] as const;
+export type FaucetTokenSymbol = typeof FAUCET_TOKENS[number];
+
+export const FAUCET_CONFIG = {
+  amounts: {
+    USDT: '1000', // 1000 USDT
+    SIX: '10000', // 10000 SIX
+    BORA: '5000', // 5000 BORA
+    MBX: '2000'   // 2000 MBX
+  }
+};
+
 // Price API configuration
 export const PRICE_API_CONFIG = {
   endpoint: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices',
-  updateInterval: 7200000, // 2 hours in milliseconds
-  supportedTokens: ['KAIA', 'USDT', 'MARBLEX', 'BORA', 'SIX'] as const
+  supportedTokens: ['KAIA', 'USDT', 'MARBLEX', 'BORA', 'SIX'] as const,
+  // Map API symbols to our token symbols
+  symbolMapping: {
+    'MARBLEX': 'MBX' // API uses MARBLEX, we use MBX
+  }
 };
 
 // ERC20 ABI for token interactions
@@ -102,7 +118,7 @@ export const ERC20_ABI = [
   "function transferFrom(address from, address to, uint256 amount) returns (bool)",
   "function approve(address spender, uint256 amount) returns (bool)",
   "function allowance(address owner, address spender) view returns (uint256)",
-  // Mock token specific function
+  // Mock token specific function for faucet
   "function mint(address to, uint256 amount) returns (bool)"
 ];
 

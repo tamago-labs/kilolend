@@ -1,16 +1,28 @@
 'use client';
 
 import styled from 'styled-components';
+import { useState, useEffect } from 'react';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import useTokenBalances from '@/hooks/useTokenBalances';
-import TokenFaucet from '@/components/Wallet/TokenFaucet';
-import TokenIcon from '@/components/Wallet/TokenIcon';
+import { useTokenBalances } from '@/hooks/useTokenBalances';
+import { usePriceUpdates } from '@/hooks/usePriceUpdates';
+import { useModalStore } from '@/stores/modalStore';
+import { PRICE_API_CONFIG, KAIA_TESTNET_TOKENS } from '@/utils/tokenConfig';
+import Blockies from 'react-blockies';
+import { RefreshCw, HelpCircle, MessageCircle } from 'react-feather';
 
 const PageContainer = styled.div`
   flex: 1;
   padding: 20px 16px;
   padding-bottom: 80px;
+  background: #f8fafc;
+  min-height: 100vh;
+
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+    padding-bottom: 80px;
+  }
 `;
+
 
 const PageTitle = styled.h1`
   font-size: 28px;
@@ -25,109 +37,212 @@ const PageSubtitle = styled.p`
   line-height: 1.6;
 `;
 
-const Card = styled.div`
+const ProfileSection = styled.div`
   background: white;
   border-radius: 12px;
-  padding: 20px;
+  padding: 24px; 
+  margin-bottom: 24px;
+  margin-top: -8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid #e2e8f0;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-`;
 
-const CardTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 16px;
-`;
-
-const SettingsSection = styled.div``;
-
-const SettingItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 0;
-  border-bottom: 1px solid #f1f5f9;
-
-  &:last-child {
-    border-bottom: none;
+  @media (max-width: 480px) {
+    padding: 20px;
+    margin-bottom: 20px;
   }
 `;
 
-const SettingLabel = styled.div`
-  font-size: 16px;
-  font-weight: 500;
-  color: #1e293b;
-`;
-
-const SettingValue = styled.div`
-  font-size: 14px;
-  color: #64748b;
-`;
-
-const NetworkBadge = styled.div`
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  background: #fef3c7;
-  color: #92400e;
-`;
-
-const HelpSection = styled.div`
-  margin-top: 16px;
-`;
-
-const HelpButton = styled.button`
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  background: white;
-  color: #64748b;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  margin-bottom: 8px;
-  transition: all 0.2s;
-  text-align: left;
+const ProfileHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+  margin-bottom: 20px;
 
-  &:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
+  @media (max-width: 480px) {
+    gap: 12px;
+    margin-bottom: 16px;
   }
 `;
 
-const HelpIcon = styled.div`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #f1f5f9;
+const ProfileAvatar = styled.div`
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  background: linear-gradient(135deg, #00C300, #00A000);
+
+  @media (max-width: 480px) {
+    width: 56px;
+    height: 56px;
+  }
 `;
 
-const HelpText = styled.div`
+const LineProfilePicture = styled.img`
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+`;
+
+const ProfileInfo = styled.div`
   flex: 1;
 `;
 
-const HelpTitle = styled.div`
-  font-weight: 600;
+const ProfileName = styled.h2`
+  font-size: 20px;
+  font-weight: 700;
   color: #1e293b;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
 `;
 
-const HelpDescription = styled.div`
-  font-size: 12px;
-  color: #94a3b8;
+const WalletAddress = styled.div`
+  font-family: monospace;
+  font-size: 14px;
+  color: #64748b;
+  word-break: break-all;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
 `;
+
+const TotalBalanceSection = styled.div`
+  text-align: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #f1f5f9;
+`;
+
+const TotalBalanceLabel = styled.div`
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 8px;
+`;
+
+const TotalBalanceValue = styled.div`
+  font-size: 32px;
+  font-weight: 700;
+  color: #1e293b;
+
+  @media (max-width: 480px) {
+    font-size: 28px;
+  }
+`;
+
+const TokensSection = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+
+  @media (max-width: 480px) {
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+`;
+
+const SectionTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+  }
+`;
+
+const HeaderActions = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+const RefreshButton = styled.button<{ $loading?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+  }
+
+  svg {
+    animation: ${({ $loading }) => $loading ? 'spin 1s linear infinite' : 'none'};
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+
+const FaucetButton = styled.button`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 14px;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-weight: 600;
+ 
+`;
+
+const TokenList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const TokenRow = styled.div<{ $hasBalance?: boolean }>`
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: ${({ $hasBalance }) => $hasBalance ? '#f8fafc' : '#fafbfc'};
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid ${({ $hasBalance }) => $hasBalance ? 'transparent' : '#f1f5f9'};
+  opacity: ${({ $hasBalance }) => $hasBalance ? 1 : 0.7};
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    transform: translateY(-1px);
+    opacity: 1;
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px;
+  }
+`;
+
 
 const ConnectPrompt = styled.div`
   text-align: center;
@@ -146,125 +261,288 @@ const ConnectIcon = styled.div`
   margin: 0 auto 16px;
   font-size: 24px;
 `;
- 
 
-const BalanceGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-`;
-
-const BalanceItem = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-`;
-
-const BalanceInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const TokenIconContainer = styled.div`
+const TokenIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-right: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    margin-right: 10px;
+  }
 `;
 
-const TokenDetails = styled.div`
-  display: flex;
-  flex-direction: column;
+const TokenIconImage = styled.img`
+  width: 75%;
+  height: 75%;
+  object-fit: contain;
 `;
 
-const TokenSymbol = styled.span`
-  font-size: 12px;
+const TokenInfo = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const TokenName = styled.div`
   font-weight: 600;
   color: #1e293b;
-  line-height: 1;
+  font-size: 16px;
+  margin-bottom: 2px;
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+  }
 `;
 
-const TokenBalance = styled.span`
-  font-size: 11px;
-  color: #64748b;
-  line-height: 1;
-  margin-top: 2px;
-`;
-
-const RefreshButton = styled.button`
+const TokenPrice = styled.div<{ $positive?: boolean }>`
+  font-size: 13px;
+  color: ${({ $positive }) => $positive ? '#06C755' : '#ef4444'};
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: white;
-  color: #64748b;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  margin-bottom: 16px;
-  
-  &:hover {
-    background: #f8fafc;
-    border-color: #cbd5e1;
-  }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
+  gap: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 12px;
   }
 `;
 
-const LastUpdate = styled.div`
-  font-size: 11px;
-  color: #94a3b8;
+const TokenBalance = styled.div`
+  text-align: right;
+`;
+
+const TokenBalanceAmount = styled.div<{ $hasBalance?: boolean }>`
+  font-weight: 600;
+  color: ${({ $hasBalance }) => $hasBalance ? '#1e293b' : '#94a3b8'};
+  font-size: 16px;
+  margin-bottom: 2px;
+
+  @media (max-width: 480px) {
+    font-size: 15px;
+  }
+`;
+
+const TokenBalanceValue = styled.div<{ $hasBalance?: boolean }>`
+  font-size: 13px;
+  color: ${({ $hasBalance }) => $hasBalance ? '#64748b' : '#cbd5e1'};
+
+  @media (max-width: 480px) {
+    font-size: 12px;
+  }
+`;
+
+const EmptyState = styled.div`
   text-align: center;
-  margin-bottom: 16px;
+  padding: 40px 20px;
+  color: #64748b;
 `;
 
-const FaucetSection = styled.div`
-  border-top: 1px solid #f1f5f9;
-  padding-top: 16px;
+const SupportSection = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
 `;
 
-const FaucetTitle = styled.h4`
+const SupportButtons = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 16px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+`;
+
+const SupportButton = styled.button<{ $primary?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 8px;
   font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid;
+
+  ${({ $primary }) => $primary 
+    ? `
+      background: linear-gradient(135deg, #00C300, #00A000);
+      color: white;
+      border-color: transparent;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(0, 195, 0, 0.3);
+      }
+    `
+    : `
+      background: white;
+      color: #64748b;
+      border-color: #e2e8f0;
+      
+      &:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+      }
+    `
+  }
 `;
 
-const FaucetDescription = styled.p`
-  font-size: 12px;
+const LoadingSpinner = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
   color: #64748b;
-  margin-bottom: 12px;
-  line-height: 1.4;
 `;
+
+const ZeroBalanceText = styled.span`
+  color: #94a3b8;
+  font-style: italic;
+`;
+
+interface LineProfile {
+  displayName: string;
+  pictureUrl: string;
+  userId: string;
+}
 
 export const ProfilePage = () => {
   const { account } = useWalletAccountStore();
-  const { balances, isLoading, lastUpdate, refreshBalances } = useTokenBalances();
+  const { balances, isLoading, refreshBalances } = useTokenBalances();
+  const { openModal } = useModalStore();
+  
+  const [lineProfile, setLineProfile] = useState<LineProfile | null>(null);
+  const [totalUSDValue, setTotalUSDValue] = useState<number>(0);
 
-  const handleHelpClick = (section: string) => {
-    alert(`${section} help coming soon!\n\nFor now, check our documentation or contact support.`);
+  // Get prices for tokens we have API data for
+  const apiTokens = PRICE_API_CONFIG.supportedTokens;
+  const { prices, getFormattedPrice, getFormattedChange, isLoading: pricesLoading } = usePriceUpdates({
+    symbols: ["MBX",...apiTokens]
+  });
+
+
+  // Mock LINE profile for development (replace with actual LINE integration)
+  useEffect(() => {
+    // TODO: Replace with actual LINE LIFF integration
+    const mockLineProfile = null; // Set to null to use blockie for now
+    
+    if (mockLineProfile) {
+      setLineProfile(mockLineProfile);
+    }
+  }, []);
+
+  // Calculate total USD value using only real price data
+  useEffect(() => {
+    let total = 0;
+    
+    balances.forEach(balance => {
+      // Handle MBX -> MARBLEX mapping for price lookup
+      const priceKey = balance.symbol === 'MBX' ? 'MBX' : balance.symbol;
+      const price = prices[priceKey];
+      
+      if (price && parseFloat(balance.balance) > 0) {
+        total += parseFloat(balance.balance) * price.price;
+      }
+    });
+    
+    setTotalUSDValue(total);
+  }, [balances, prices]);
+
+  // Create a comprehensive list of all supported tokens (with and without balances)
+  const getAllSupportedTokens = () => {
+    const supportedTokenSymbols = ['KAIA', 'USDT', 'MBX', 'BORA', 'SIX'];
+    const tokensList: any = [];
+
+    supportedTokenSymbols.forEach(symbol => {
+      // Find existing balance
+      const existingBalance = balances.find(b => b.symbol === symbol);
+      
+      if (existingBalance) {
+        // Use existing balance data
+        tokensList.push(existingBalance);
+      } else {
+        // Create placeholder for tokens with zero balance
+        const tokenConfig = symbol === 'KAIA' ? 
+          {
+            symbol: 'KAIA',
+            name: 'KAIA',
+            balance: '0',
+            formattedBalance: '0',
+            decimals: 18,
+            icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
+            iconType: 'image' as const,
+            isLoading: false,
+            error: null
+          } :
+          KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS] ? 
+          {
+            symbol,
+            name: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].name,
+            balance: '0',
+            formattedBalance: '0',
+            decimals: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].decimals,
+            icon: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].icon,
+            iconType: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].iconType,
+            isLoading: false,
+            error: null
+          } : null;
+
+        if (tokenConfig) {
+          tokensList.push(tokenConfig);
+        }
+      }
+    });
+
+    return tokensList;
   };
 
-  const handleRefreshBalances = () => {
+  const displayTokens = getAllSupportedTokens();
+
+  const handleTokenClick = (tokenSymbol: string) => {
+    // Handle MBX -> MARBLEX mapping for price lookup
+    const priceKey = tokenSymbol === 'MBX' ? 'MBX' : tokenSymbol;
+    
+    const tokenData = {
+      symbol: tokenSymbol,
+      balance: balances.find(b => b.symbol === tokenSymbol) || {
+        symbol: tokenSymbol,
+        balance: '0',
+        formattedBalance: '0'
+      },
+      price: prices[priceKey]
+    };
+    
+    openModal('token-details', tokenData);
+  };
+
+  const handleRefresh = () => {
     refreshBalances();
   };
 
-  const formatLastUpdate = (date: Date | null) => {
-    if (!date) return 'Never';
-    return date.toLocaleTimeString();
+  const handleOpenFaucet = () => {
+    openModal('faucet');
+  };
+
+  const formatAddress = (address: string) => {
+    return `${address.slice(0, 8)}...${address.slice(-6)}`;
   };
 
   if (!account) {
@@ -287,104 +565,135 @@ export const ProfilePage = () => {
   return (
     <PageContainer>
       <PageTitle>Profile</PageTitle>
-      <PageSubtitle>
-        View and manage your account details
-      </PageSubtitle>
+        <PageSubtitle>
+          View and manage your account details
+        </PageSubtitle>
 
 
-      {/* Token Balances */}
-      <Card>
-        <CardTitle>💰 Token Balances</CardTitle>
 
-        {/* <RefreshButton onClick={handleRefreshBalances} disabled={isLoading}>
-          {isLoading ? '⟳' : '🔄'} {isLoading ? 'Refreshing...' : 'Refresh Balances'}
-        </RefreshButton> */}
+      {/* Profile Section */}
+      <ProfileSection>
+        <ProfileHeader>
+          <ProfileAvatar>
+            {lineProfile?.pictureUrl ? (
+              <LineProfilePicture src={lineProfile.pictureUrl} alt="Profile" />
+            ) : (
+              <Blockies seed={account} size={8} scale={8} />
+            )}
+          </ProfileAvatar>
+          <ProfileInfo>
+            <ProfileName>
+              {lineProfile?.displayName || 'Wallet User'}
+            </ProfileName>
+            <WalletAddress>
+              {formatAddress(account)}
+            </WalletAddress>
+          </ProfileInfo>
+        </ProfileHeader>
+        
+        <TotalBalanceSection>
+          <TotalBalanceLabel>Total Portfolio Value</TotalBalanceLabel>
+          <TotalBalanceValue>
+            ${totalUSDValue.toFixed(2)}
+          </TotalBalanceValue>
+        </TotalBalanceSection>
+      </ProfileSection>
 
-        <BalanceGrid>
-          {balances.map((balance) => (
-            <BalanceItem key={balance.symbol}>
-              <BalanceInfo>
-                <TokenIconContainer>
-                  <TokenIcon
-                    icon={balance.icon}
-                    iconType={balance.iconType}
-                    alt={balance.name}
-                    size={20}
-                  />
-                </TokenIconContainer>
-                <TokenDetails>
-                  <TokenSymbol>{balance.symbol}</TokenSymbol>
-                  <TokenBalance>
-                    {balance.isLoading ? 'Loading...' : balance.formattedBalance}
-                  </TokenBalance>
-                </TokenDetails>
-              </BalanceInfo>
-            </BalanceItem>
-          ))}
-        </BalanceGrid>
+      {/* Tokens Section */}
+      <TokensSection>
+        <SectionHeader>
+          <SectionTitle>Available Tokens</SectionTitle>
+          <HeaderActions>
+            <FaucetButton onClick={handleOpenFaucet}> 
+              Get Test Tokens
+            </FaucetButton>
+            <RefreshButton onClick={handleRefresh} $loading={isLoading}>
+              <RefreshCw size={16} />
+              Refresh
+            </RefreshButton>
+          </HeaderActions>
+        </SectionHeader>
 
-        <LastUpdate>
-          Last updated: {formatLastUpdate(lastUpdate)}
-        </LastUpdate>
-
-        <FaucetSection>
-          <FaucetTitle>
-            🚰 Test Token Faucet
-          </FaucetTitle>
-          <FaucetDescription>
-          We're on Testnet with mock tokens. Use this faucet to get tokens for evaluation.
-          </FaucetDescription>
-
-          <TokenFaucet onSuccess={handleRefreshBalances} />
-        </FaucetSection>
-      </Card>
-
-      {/* Help & Support */}
-      <Card>
-        <CardTitle>🆘 Help & Support</CardTitle>
-        <HelpSection>
-          <HelpButton onClick={() => handleHelpClick('How to Use KiloLend')}>
-            <HelpIcon>📖</HelpIcon>
-            <HelpText>
-              <HelpTitle>How to Use KiloLend</HelpTitle>
-              <HelpDescription>Learn the basics of AI-powered lending</HelpDescription>
-            </HelpText>
-          </HelpButton>
-
-          <HelpButton onClick={() => handleHelpClick('Understanding Risks')}>
-            <HelpIcon>⚠️</HelpIcon>
-            <HelpText>
-              <HelpTitle>Understanding Risks</HelpTitle>
-              <HelpDescription>Learn about DeFi lending risks and safety</HelpDescription>
-            </HelpText>
-          </HelpButton>
-
-          <HelpButton onClick={() => handleHelpClick('FAQ')}>
-            <HelpIcon>❓</HelpIcon>
-            <HelpText>
-              <HelpTitle>Frequently Asked Questions</HelpTitle>
-              <HelpDescription>Common questions and answers</HelpDescription>
-            </HelpText>
-          </HelpButton>
-
-          <HelpButton onClick={() => handleHelpClick('Contact Support')}>
-            <HelpIcon>💬</HelpIcon>
-            <HelpText>
-              <HelpTitle>Contact Support</HelpTitle>
-              <HelpDescription>Get help from our support team</HelpDescription>
-            </HelpText>
-          </HelpButton>
-
-          <HelpButton onClick={() => handleHelpClick('Smart Contract')}>
-            <HelpIcon>🔗</HelpIcon>
-            <HelpText>
-              <HelpTitle>Smart Contract Info</HelpTitle>
-              <HelpDescription>View contract addresses and verification</HelpDescription>
-            </HelpText>
-          </HelpButton>
-        </HelpSection>
-      </Card>
+        {isLoading && balances.length === 0 ? (
+          <LoadingSpinner>Loading balances...</LoadingSpinner>
+        ) : (
+          <TokenList>
+            {displayTokens.map((token: any) => {
+              // Handle MBX -> MARBLEX mapping for price lookup
+              const priceKey = token.symbol === 'MBX' ? 'MBX' : token.symbol;
  
+              const priceData = prices[priceKey];
+              const change = getFormattedChange(priceKey);
+              const currentPrice = getFormattedPrice(priceKey);
+              const hasBalance = parseFloat(token.balance) > 0;
+              const usdValue = priceData && hasBalance ? parseFloat(token.balance) * priceData.price : 0;
+
+              return (
+                <TokenRow 
+                  key={token.symbol} 
+                  $hasBalance={hasBalance}
+                  onClick={() => handleTokenClick(token.symbol)}
+                >
+                  <TokenIcon>
+                    <TokenIconImage 
+                      src={token.icon} 
+                      alt={token.symbol}
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.style.display = 'none';
+                        if (img.parentElement) {
+                          img.parentElement.innerHTML = `<b>${token.symbol.charAt(0)}</b>`;
+                        }
+                      }}
+                    />
+                  </TokenIcon>
+                  
+                  <TokenInfo>
+                    <TokenName>{token.name}</TokenName>
+                    {priceData ? (
+                      <TokenPrice $positive={change.isPositive}>
+                        {currentPrice}
+                        <span>{change.text}</span>
+                      </TokenPrice>
+                    ) : (
+                      <TokenPrice $positive={true}>
+                        {pricesLoading ? 'Loading...' : 'Price unavailable'}
+                      </TokenPrice>
+                    )}
+                  </TokenInfo>
+                  
+                  <TokenBalance>
+                    <TokenBalanceAmount $hasBalance={hasBalance}>
+                      {hasBalance ? 
+                        `${parseFloat(token.formattedBalance).toFixed(4)} ${token.symbol}` :
+                        <ZeroBalanceText>0 {token.symbol}</ZeroBalanceText>
+                      }
+                    </TokenBalanceAmount>
+                    <TokenBalanceValue $hasBalance={hasBalance}>
+                      {hasBalance ? `$${usdValue.toFixed(2)}` : <ZeroBalanceText>$0.00</ZeroBalanceText>}
+                    </TokenBalanceValue>
+                  </TokenBalance>
+                </TokenRow>
+              );
+            })}
+          </TokenList>
+        )}
+      </TokensSection>
+
+      {/* Support Section */}
+      <SupportSection>
+        <SectionTitle>Need Help?</SectionTitle>
+        <SupportButtons>
+          <SupportButton $primary onClick={() => openModal('support')}>
+            <HelpCircle size={16} />
+            Get Support
+          </SupportButton>
+          <SupportButton onClick={() => openModal('feedback')}>
+            <MessageCircle size={16} />
+            Send Feedback
+          </SupportButton>
+        </SupportButtons>
+      </SupportSection>
     </PageContainer>
   );
 };

@@ -2,9 +2,15 @@
 
 import { useModalStore } from '@/stores/modalStore';
 import { BlankModal } from './BlankModal';
+import { TokenDetailsModal } from './TokenDetailsModal';
+import { FaucetModal } from './FaucetModal';
 
 export const GlobalModalManager = () => {
-  const { activeModal, isOpen, closeModal } = useModalStore();
+  const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
+
+  const handleOpenFaucet = () => {
+    openModal('faucet');
+  };
 
   const renderModal = () => {
     switch (activeModal) {
@@ -79,53 +85,96 @@ export const GlobalModalManager = () => {
             placeholderText="Configure your preferences, notifications, and account settings. This feature will be available soon."
           />
         );
-          case 'learn':
-      return (
-        <BlankModal
-          isOpen={isOpen}
-          onClose={closeModal}
-          title="Learn"
-          icon="📚"
-          placeholderTitle="Learn the Platform"
-          placeholderText="Understand how Kaia works, its features, and how to earn KILO Points."
-        />
-      );
 
-    case 'invite':
-      return (
-        <BlankModal
-          isOpen={isOpen}
-          onClose={closeModal}
-          title="Invite"
-          icon="✉️"
-          placeholderTitle="Invite Friends"
-          placeholderText="Invite your friends on LINE Messenger and earn KILO Points when they join."
-        />
-      );
+      case 'learn':
+        return (
+          <BlankModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            title="Learn"
+            icon="📚"
+            placeholderTitle="Learn the Platform"
+            placeholderText="Understand how Kaia works, its features, and how to earn KILO Points."
+          />
+        );
 
-    case 'kilo':
-      return (
-        <BlankModal
-          isOpen={isOpen}
-          onClose={closeModal}
-          title="KILO Points"
-          icon="💎"
-          placeholderTitle="Your KILO Points"
-          placeholderText="Check your current KILO Points balance and learn how to earn more."
-        />
-      );
+      case 'invite':
+        return (
+          <BlankModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            title="Invite"
+            icon="✉️"
+            placeholderTitle="Invite Friends"
+            placeholderText="Invite your friends on LINE Messenger and earn KILO Points when they join."
+          />
+        );
 
-    case 'contacts':
-      return (
-        <BlankModal
-          isOpen={isOpen}
-          onClose={closeModal}
-          title="Contacts"
-          icon="📇"
-          placeholderTitle="Contact Us"
-          placeholderText="Get in touch with support or the Kaia team for help and inquiries."
-        />
-      );
+      case 'kilo':
+        return (
+          <BlankModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            title="KILO Points"
+            icon="💎"
+            placeholderTitle="Your KILO Points"
+            placeholderText="Check your current KILO Points balance and learn how to earn more."
+          />
+        );
+
+      case 'contacts':
+        return (
+          <BlankModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            title="Contacts"
+            icon="📇"
+            placeholderTitle="Contact Us"
+            placeholderText="Get in touch with support or the Kaia team for help and inquiries."
+          />
+        );
+
+      case 'token-details':
+        return (
+          <TokenDetailsModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            onOpenFaucet={handleOpenFaucet}
+            tokenData={modalData}
+          />
+        );
+
+      case 'support':
+        return (
+          <BlankModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            title="Support"
+            icon="🆘"
+            placeholderTitle="Get Support"
+            placeholderText="Need help? Contact our support team for assistance with KiloLend features and troubleshooting."
+          />
+        );
+
+      case 'feedback':
+        return (
+          <BlankModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            title="Feedback"
+            icon="💬"
+            placeholderTitle="Send Feedback"
+            placeholderText="We value your feedback! Let us know how we can improve KiloLend for you."
+          />
+        );
+
+      case 'faucet':
+        return (
+          <FaucetModal
+            isOpen={isOpen}
+            onClose={closeModal}
+          />
+        );
 
       default:
         return null;

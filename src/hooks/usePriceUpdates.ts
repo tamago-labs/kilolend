@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PRICE_API_CONFIG } from '@/utils/tokenConfig';
 
 interface TokenPriceData {
   symbol: string;
@@ -20,15 +21,18 @@ interface TokenPrice {
   symbol: string;
   price: number;
   change24h: number;
+  market_cap: number;
+  volume_24h: number;
   lastUpdated: Date;
 }
 
 interface UsePriceUpdatesOptions {
   symbols: string[];
+  updateInterval?: number; // in milliseconds
   enableRealTimeUpdates?: boolean;
 }
 
-const API_ENDPOINT = 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices';
+const API_ENDPOINT = PRICE_API_CONFIG.endpoint;
 
 export const usePriceUpdates = ({ 
   symbols
@@ -37,52 +41,7 @@ export const usePriceUpdates = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock price data for fallback
-  const getMockPrices = (): Record<string, TokenPrice> => {
-    const mockData: Record<string, TokenPrice> = {
-      'KAIA': {
-        symbol: 'KAIA',
-        price: 0.0494479673135033,
-        change24h: -10.7519334,
-        lastUpdated: new Date()
-      },
-      'USDT': {
-        symbol: 'USDT',
-        price: 1.0001,
-        change24h: 0.01,
-        lastUpdated: new Date()
-      },
-      'MARBLEX': {
-        symbol: 'MARBLEX',
-        price: 0.15985057816369172,
-        change24h: -0.34935448,
-        lastUpdated: new Date()
-      },
-      'BORA': {
-        symbol: 'BORA',
-        price: 0.08699730881786927,
-        change24h: 0.30747119,
-        lastUpdated: new Date()
-      },
-      'SIX': {
-        symbol: 'SIX',
-        price: 0.021396823206553284,
-        change24h: -0.00221476,
-        lastUpdated: new Date()
-      }
-    };
-
-    return Object.fromEntries(
-      symbols.map(symbol => [symbol, mockData[symbol] || {
-        symbol,
-        price: Math.random() * 10,
-        change24h: (Math.random() - 0.5) * 20,
-        lastUpdated: new Date()
-      }])
-    );
-  };
-
-  // Fetch prices from backend API
+  // Fetch real prices from your backend API
   const fetchRealPrices = async (): Promise<Record<string, TokenPrice>> => {
     try {
       const response = await fetch(API_ENDPOINT);
@@ -99,35 +58,41 @@ export const usePriceUpdates = ({
 
       // Convert API data to our format
       const priceMap: Record<string, TokenPrice> = {};
-      
-      // Add USDT as stable coin (not in API)
-      priceMap['USDT'] = {
-        symbol: 'USDT',
-        price: 1.0001,
-        change24h: 0.01,
-        lastUpdated: new Date()
-      };
 
-      // Process API data
+      // Process API data and map symbols
       apiData.data.forEach((tokenData: TokenPriceData) => {
-        if (symbols.includes(tokenData.symbol)) {
-          priceMap[tokenData.symbol] = {
-            symbol: tokenData.symbol,
+        let mappedSymbol = tokenData.symbol;
+        
+        // Handle symbol mapping (e.g., MARBLEX -> MBX)
+        if (PRICE_API_CONFIG.symbolMapping[tokenData.symbol as keyof typeof PRICE_API_CONFIG.symbolMapping]) {
+          mappedSymbol = PRICE_API_CONFIG.symbolMapping[tokenData.symbol as keyof typeof PRICE_API_CONFIG.symbolMapping];
+        }
+        
+        if (symbols.includes(mappedSymbol)) {
+          priceMap[mappedSymbol] = {
+            symbol: mappedSymbol,
             price: tokenData.price,
             change24h: tokenData.percent_change_24h,
+            market_cap: tokenData.market_cap,
+            volume_24h: tokenData.volume_24h,
             lastUpdated: new Date(tokenData.last_updated)
           };
         }
       });
 
-      // Fill in any missing symbols with mock data
-      symbols.forEach(symbol => {
-        if (!priceMap[symbol]) {
-          const mockData = getMockPrices();
-          priceMap[symbol] = mockData[symbol];
-        }
-      });
+      // Add USDT as stable coin if not in API (always $1.00)
+      if (symbols.includes('USDT') && !priceMap['USDT']) {
+        priceMap['USDT'] = {
+          symbol: 'USDT',
+          price: 1.0001,
+          change24h: 0.01,
+          market_cap: 0,
+          volume_24h: 0,
+          lastUpdated: new Date()
+        };
+      }
 
+      console.log('Fetched prices:', priceMap); // Debug log
       return priceMap;
     } catch (err) {
       console.error('Error fetching prices from API:', err);
@@ -145,8 +110,6 @@ export const usePriceUpdates = ({
       setPrices(newPrices);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch prices');
-      // Fallback to mock data on error
-      setPrices(getMockPrices());
     } finally {
       setIsLoading(false);
     }
@@ -186,6 +149,21 @@ export const usePriceUpdates = ({
     return price ? price.lastUpdated : null;
   };
 
+  const getMarketData = (symbol: string) => {
+    const price = prices[symbol];
+    if (!price) return null;
+    
+    return {
+      marketCap: price.market_cap,
+      volume24h: price.volume_24h,
+      lastUpdated: price.lastUpdated
+    };
+  };
+
+  const refetch = async () => {
+    await updatePrices();
+  };
+
   return {
     prices,
     isLoading,
@@ -193,7 +171,8 @@ export const usePriceUpdates = ({
     getFormattedPrice,
     getFormattedChange,
     getLastUpdated,
-    refetch: updatePrices
+    getMarketData,
+    refetch
   };
 };
 

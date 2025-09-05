@@ -13,6 +13,10 @@ export type ModalType =
   | 'invite'
   | 'kilo'
   | 'contacts'
+  | 'token-details'
+  | 'support'
+  | 'feedback'
+  | 'faucet'
   | null;
 
 interface ModalData {

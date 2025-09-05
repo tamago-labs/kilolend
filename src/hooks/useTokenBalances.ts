@@ -208,7 +208,6 @@ export const useTokenBalances = () => {
 
     return () => clearInterval(interval);
   }, [account]);
-
   return {
     balances,
     isLoading,

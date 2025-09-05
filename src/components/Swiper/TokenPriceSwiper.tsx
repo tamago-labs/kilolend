@@ -82,8 +82,6 @@ const LoadingText = styled.div`
   text-align: center;
 `;
 
- 
-
 const LastUpdatedText = styled.div`
   font-size: 10px;
   color: #94a3b8;
@@ -94,7 +92,7 @@ const LastUpdatedText = styled.div`
   }
 `;
 
-// Updated token configuration with new order: KAIA -> USDT -> MARBLEX -> BORA -> SIX
+// Updated token configuration with new order: KAIA -> USDT -> MBX -> BORA -> SIX
 const tokenConfig = [
   {
     symbol: 'KAIA',
@@ -107,7 +105,7 @@ const tokenConfig = [
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png'
   },
   {
-    symbol: 'MARBLEX',
+    symbol: 'MBX',
     name: 'MARBLEX price',
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png'
   },
@@ -176,7 +174,8 @@ export const TokenPriceSwiper = () => {
     const lastUpdated = getLastUpdated(token.symbol);
     
     return (
-      <CardContent key={`${token.symbol}-${index}`}> 
+      <CardContent key={`${token.symbol}-${index}`}>
+        
         <CardIcon>
           <IconImage
             src={token.icon}
