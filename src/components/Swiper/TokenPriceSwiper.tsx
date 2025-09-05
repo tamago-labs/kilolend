@@ -1,8 +1,8 @@
 'use client';
 
 import styled from 'styled-components';
-import { useState, useEffect } from 'react';
 import { CardSwiper } from './CardSwiper';
+import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 
 const CardContent = styled.div`
   position: relative;
@@ -82,121 +82,126 @@ const LoadingText = styled.div`
   text-align: center;
 `;
 
-interface TokenData {
-  symbol: string;
-  name: string;
-  price: string;
-  change: string;
-  isPositive: boolean;
-  icon: string;
-}
+ 
 
-// Initial token data that matches your requirements: KAIA -> USDT -> stKAIA -> MARBLEX -> BORA
-const initialTokenData: TokenData[] = [
+const LastUpdatedText = styled.div`
+  font-size: 10px;
+  color: #94a3b8;
+  margin-top: 2px;
+  
+  @media (max-width: 480px) {
+    font-size: 9px;
+  }
+`;
+
+// Updated token configuration with new order: KAIA -> USDT -> MARBLEX -> BORA -> SIX
+const tokenConfig = [
   {
     symbol: 'KAIA',
     name: 'KAIA price',
-    price: '$0.1245',
-    change: '+2.34%',
-    isPositive: true,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png'
   },
   {
     symbol: 'USDT',
     name: 'USDT price',
-    price: '$1.0001',
-    change: '+0.01%',
-    isPositive: true,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png'
-  },
-  {
-    symbol: 'stKAIA',
-    name: 'stKAIA price',
-    price: '$0.1289',
-    change: '+3.54%',
-    isPositive: true,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png'
   },
   {
     symbol: 'MARBLEX',
     name: 'MARBLEX price',
-    price: '$0.0245',
-    change: '-1.23%',
-    isPositive: false,
-    icon: 'https://assets.coingecko.com/coins/images/17982/large/mbx.png'
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png'
   },
   {
     symbol: 'BORA',
     name: 'BORA price',
-    price: '$0.1156',
-    change: '+5.67%',
-    isPositive: true,
-    icon: 'https://assets.coingecko.com/coins/images/7646/large/bora.png'
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3801.png'
+  },
+  {
+    symbol: 'SIX',
+    name: 'SIX price',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3327.png'
   }
 ];
 
+const formatLastUpdated = (date: Date | null): string => {
+  if (!date) return '';
+  
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffMins = Math.floor(diffMs / (1000 * 60));
+  
+  if (diffHours > 0) {
+    return `${diffHours}h ago`;
+  } else if (diffMins > 0) {
+    return `${diffMins}m ago`;
+  } else {
+    return 'Just now';
+  }
+};
+
 export const TokenPriceSwiper = () => {
-  const [tokenData, setTokenData] = useState<TokenData[]>(initialTokenData);
-  const [isLoading, setIsLoading] = useState(false);
+  const symbols = tokenConfig.map(token => token.symbol);
+  
+  const { 
+    prices, 
+    isLoading, 
+    error, 
+    getFormattedPrice, 
+    getFormattedChange,
+    getLastUpdated
+  } = usePriceUpdates({ 
+    symbols
+  });
 
-  // Simulate price updates with realistic variations
-  useEffect(() => {
-    const updatePrices = () => {
-      setTokenData(prevData => 
-        prevData.map(token => {
-          // Generate small random price movements
-          const basePrice = parseFloat(token.price.replace('$', ''));
-          const variation = (Math.random() - 0.5) * 0.02; // ±1% variation
-          const newPrice = basePrice * (1 + variation);
-          
-          // Generate realistic change percentage
-          const changeNum = (Math.random() - 0.4) * 10; // Slight bullish bias
-          const isPositive = changeNum >= 0;
-          
-          return {
-            ...token,
-            price: `$${newPrice.toFixed(token.symbol === 'USDT' ? 4 : 4)}`,
-            change: `${isPositive ? '+' : ''}${changeNum.toFixed(2)}%`,
-            isPositive
-          };
-        })
-      );
-    };
-
-    // Update prices every 8 seconds
-    const interval = setInterval(updatePrices, 8000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const slides = tokenData.map((token, index) => (
-    <CardContent key={`${token.symbol}-${index}`}>
-      <CardIcon>
-        <IconImage
-          src={token.icon}
-          alt={`${token.symbol} Logo`}
-          onError={(e) => {
-            // Fallback to text if image fails to load
-            const img = e.target as HTMLImageElement;
-            img.style.display = 'none';
-            if (img.parentElement) {
-              img.parentElement.innerHTML = `<b>${token.symbol.charAt(0)}</b>`;
-            }
-          }}
-        />
-      </CardIcon>
-      <CardTitle>{token.name}</CardTitle>
-      <CardValue>{token.price}</CardValue>
-      <CardSubtext $positive={token.isPositive}>{token.change}</CardSubtext>
-    </CardContent>
-  ));
-
-  if (isLoading) {
+  if (isLoading && Object.keys(prices).length === 0) {
     return (
       <CardContent>
         <LoadingText>Loading prices...</LoadingText>
       </CardContent>
     );
   }
+
+  if (error && Object.keys(prices).length === 0) {
+    return (
+      <CardContent>
+        <LoadingText>Price data unavailable</LoadingText>
+      </CardContent>
+    );
+  }
+
+  const slides = tokenConfig.map((token, index) => {
+    const price = getFormattedPrice(token.symbol);
+    const change = getFormattedChange(token.symbol);
+    const lastUpdated = getLastUpdated(token.symbol);
+    
+    return (
+      <CardContent key={`${token.symbol}-${index}`}> 
+        <CardIcon>
+          <IconImage
+            src={token.icon}
+            alt={`${token.symbol} Logo`}
+            onError={(e) => {
+              // Fallback to text if image fails to load
+              const img = e.target as HTMLImageElement;
+              img.style.display = 'none';
+              if (img.parentElement) {
+                img.parentElement.innerHTML = `<b>${token.symbol.charAt(0)}</b>`;
+              }
+            }}
+          />
+        </CardIcon>
+        <CardTitle>{token.name}</CardTitle>
+        <CardValue>{price}</CardValue>
+        <CardSubtext $positive={change.isPositive}>
+          {change.text}
+        </CardSubtext>
+        <LastUpdatedText>
+          {lastUpdated ? formatLastUpdated(lastUpdated) : ''}
+        </LastUpdatedText>
+      </CardContent>
+    );
+  });
 
   return (
     <CardSwiper 

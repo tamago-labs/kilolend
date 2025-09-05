@@ -1,5 +1,21 @@
 import { useState, useEffect } from 'react';
 
+interface TokenPriceData {
+  symbol: string;
+  price: number;
+  percent_change_24h: number;
+  market_cap: number;
+  volume_24h: number;
+  last_updated: string;
+  timestamp: string;
+}
+
+interface ApiResponse {
+  success: boolean;
+  data: TokenPriceData[];
+  count: number;
+}
+
 interface TokenPrice {
   symbol: string;
   price: number;
@@ -9,50 +25,49 @@ interface TokenPrice {
 
 interface UsePriceUpdatesOptions {
   symbols: string[];
-  updateInterval?: number; // in milliseconds
   enableRealTimeUpdates?: boolean;
 }
 
+const API_ENDPOINT = 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices';
+
 export const usePriceUpdates = ({ 
-  symbols, 
-  updateInterval = 30000, // 30 seconds default
-  enableRealTimeUpdates = false 
+  symbols
 }: UsePriceUpdatesOptions) => {
   const [prices, setPrices] = useState<Record<string, TokenPrice>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock price data for development
+  // Mock price data for fallback
   const getMockPrices = (): Record<string, TokenPrice> => {
     const mockData: Record<string, TokenPrice> = {
       'KAIA': {
         symbol: 'KAIA',
-        price: 0.1245 + (Math.random() - 0.5) * 0.01,
-        change24h: 2.34 + (Math.random() - 0.5) * 2,
+        price: 0.0494479673135033,
+        change24h: -10.7519334,
         lastUpdated: new Date()
       },
       'USDT': {
         symbol: 'USDT',
-        price: 1.0001 + (Math.random() - 0.5) * 0.001,
-        change24h: 0.01 + (Math.random() - 0.5) * 0.1,
-        lastUpdated: new Date()
-      },
-      'stKAIA': {
-        symbol: 'stKAIA',
-        price: 0.1289 + (Math.random() - 0.5) * 0.015,
-        change24h: 3.54 + (Math.random() - 0.5) * 3,
+        price: 1.0001,
+        change24h: 0.01,
         lastUpdated: new Date()
       },
       'MARBLEX': {
         symbol: 'MARBLEX',
-        price: 0.0245 + (Math.random() - 0.5) * 0.005,
-        change24h: -1.23 + (Math.random() - 0.5) * 4,
+        price: 0.15985057816369172,
+        change24h: -0.34935448,
         lastUpdated: new Date()
       },
       'BORA': {
         symbol: 'BORA',
-        price: 0.1156 + (Math.random() - 0.5) * 0.02,
-        change24h: 5.67 + (Math.random() - 0.5) * 3,
+        price: 0.08699730881786927,
+        change24h: 0.30747119,
+        lastUpdated: new Date()
+      },
+      'SIX': {
+        symbol: 'SIX',
+        price: 0.021396823206553284,
+        change24h: -0.00221476,
         lastUpdated: new Date()
       }
     };
@@ -67,11 +82,57 @@ export const usePriceUpdates = ({
     );
   };
 
-  // Future: Implement real API calls
+  // Fetch prices from backend API
   const fetchRealPrices = async (): Promise<Record<string, TokenPrice>> => {
-    // This would be replaced with actual API calls to CoinGecko, CoinMarketCap, etc.
-    // For now, return mock data
-    return getMockPrices();
+    try {
+      const response = await fetch(API_ENDPOINT);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const apiData: ApiResponse = await response.json();
+      
+      if (!apiData.success || !apiData.data) {
+        throw new Error('Invalid API response format');
+      }
+
+      // Convert API data to our format
+      const priceMap: Record<string, TokenPrice> = {};
+      
+      // Add USDT as stable coin (not in API)
+      priceMap['USDT'] = {
+        symbol: 'USDT',
+        price: 1.0001,
+        change24h: 0.01,
+        lastUpdated: new Date()
+      };
+
+      // Process API data
+      apiData.data.forEach((tokenData: TokenPriceData) => {
+        if (symbols.includes(tokenData.symbol)) {
+          priceMap[tokenData.symbol] = {
+            symbol: tokenData.symbol,
+            price: tokenData.price,
+            change24h: tokenData.percent_change_24h,
+            lastUpdated: new Date(tokenData.last_updated)
+          };
+        }
+      });
+
+      // Fill in any missing symbols with mock data
+      symbols.forEach(symbol => {
+        if (!priceMap[symbol]) {
+          const mockData = getMockPrices();
+          priceMap[symbol] = mockData[symbol];
+        }
+      });
+
+      return priceMap;
+    } catch (err) {
+      console.error('Error fetching prices from API:', err);
+      throw err;
+    }
   };
 
   const updatePrices = async () => {
@@ -79,33 +140,34 @@ export const usePriceUpdates = ({
       setIsLoading(true);
       setError(null);
       
-      const newPrices = enableRealTimeUpdates 
-        ? await fetchRealPrices()
-        : getMockPrices();
+      const newPrices = await fetchRealPrices()
       
       setPrices(newPrices);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch prices');
+      // Fallback to mock data on error
+      setPrices(getMockPrices());
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    // Initial fetch
     updatePrices();
-
-    // Set up interval for updates
-    const interval = setInterval(updatePrices, updateInterval);
-
-    return () => clearInterval(interval);
-  }, [symbols.join(','), updateInterval, enableRealTimeUpdates]);
+  }, [symbols.join(',')]);
 
   const getFormattedPrice = (symbol: string): string => {
     const price = prices[symbol];
     if (!price) return '$0.00';
     
-    return `$${price.price.toFixed(4)}`;
+    // Format based on price range for better readability
+    if (price.price >= 1) {
+      return `$${price.price.toFixed(4)}`;
+    } else if (price.price >= 0.1) {
+      return `$${price.price.toFixed(4)}`;
+    } else {
+      return `$${price.price.toFixed(6)}`;
+    }
   };
 
   const getFormattedChange = (symbol: string): { text: string; isPositive: boolean } => {
@@ -119,14 +181,20 @@ export const usePriceUpdates = ({
     };
   };
 
+  const getLastUpdated = (symbol: string): Date | null => {
+    const price = prices[symbol];
+    return price ? price.lastUpdated : null;
+  };
+
   return {
     prices,
     isLoading,
     error,
     getFormattedPrice,
     getFormattedChange,
+    getLastUpdated,
     refetch: updatePrices
   };
 };
 
-export type { TokenPrice, UsePriceUpdatesOptions };
+export type { TokenPrice, UsePriceUpdatesOptions, TokenPriceData, ApiResponse };

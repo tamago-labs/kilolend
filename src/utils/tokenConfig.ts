@@ -53,7 +53,7 @@ export const KAIA_TESTNET_TOKENS = {
     name: 'MARBLEX',
     symbol: 'MARBLEX',
     decimals: 18,
-    icon: 'https://assets.coingecko.com/coins/images/17982/large/mbx.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png',
     iconType: 'image' as const
   },
   BORA: {
@@ -61,7 +61,15 @@ export const KAIA_TESTNET_TOKENS = {
     name: 'BORA',
     symbol: 'BORA',
     decimals: 18,
-    icon: 'https://assets.coingecko.com/coins/images/7646/large/bora.png',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3801.png',
+    iconType: 'image' as const
+  },
+  SIX: {
+    address: '0x0000000000000000000000000000000000000000',
+    name: 'SIX Protocol',
+    symbol: 'SIX',
+    decimals: 18,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3327.png',
     iconType: 'image' as const
   }
 } as const;
@@ -74,6 +82,13 @@ export const getTokenBySymbol = (symbol: TokenSymbol) => KAIA_TESTNET_TOKENS[sym
 
 export const getTokenByAddress = (address: string) => {
   return TOKEN_LIST.find(token => token.address.toLowerCase() === address.toLowerCase());
+};
+
+// Price API configuration
+export const PRICE_API_CONFIG = {
+  endpoint: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices',
+  updateInterval: 7200000, // 2 hours in milliseconds
+  supportedTokens: ['KAIA', 'USDT', 'MARBLEX', 'BORA', 'SIX'] as const
 };
 
 // ERC20 ABI for token interactions

@@ -101,7 +101,9 @@ const MINT_AMOUNTS = {
   JPY: '100000',    // 100,000 JPY
   THB: '10000',     // 10,000 THB
   stKAIA: '1000',    // 1000 stKAIA
-  wKAIA: '1000'      // 1000 wKAIA
+  wKAIA: '1000',      // 1000 wKAIA
+  MARBLEX: '1000',
+  BORA: '1000'
 } as const;
 
 export const TokenFaucet = ({ onSuccess }: TokenFaucetProps) => {
