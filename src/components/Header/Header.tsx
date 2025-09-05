@@ -82,22 +82,21 @@ const WalletAddress = styled.div`
   margin-top: 2px;
 `;
 
+ 
+
 const DisconnectButton = styled.button`
-  font-size: 12px;
-  padding: 4px 8px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  background: white;
-  color: #64748b;
+  background: linear-gradient(135deg, #00C300, #00A000);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  
-  &:hover {
-    background: #fef2f2;
-    border-color: #ef4444;
-    color: #ef4444;
-  }
+ 
 `;
+
 
 const Icon = styled.div<{ $white?: boolean }>`
   width: 40px;
@@ -218,7 +217,7 @@ export const Header = () => {
             </ProfileSection>
 
             {/* Mobile view */}
-            <ProfileSection onClick={() => setShowDropdown(!showDropdown)}>
+            {/* <ProfileSection onClick={() => setShowDropdown(!showDropdown)}>
               <ProfileIcon>
                 <Blockies
                   seed={account}
@@ -228,7 +227,7 @@ export const Header = () => {
                 <ConnectedStatus>Connected</ConnectedStatus>
                 <WalletAddress>{formatAddress(account)}</WalletAddress>
               </ProfileInfo>
-            </ProfileSection>
+            </ProfileSection> */}
 
             <DisconnectButton onClick={handleDisconnect}>
               Disconnect
