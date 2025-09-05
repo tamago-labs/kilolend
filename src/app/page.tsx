@@ -104,9 +104,9 @@ export default function Home() {
             )}
             
             {/* Global Modal */}
-            <GlobalModal onAIDealsGenerated={handleAIDealsGenerated} />
+            {/* <GlobalModal onAIDealsGenerated={handleAIDealsGenerated} /> */}
             
-            {/* Global Modal Manager */}
+            {/* New Modal Manager */}
             <GlobalModalManager />
         </PageContainer>
     );

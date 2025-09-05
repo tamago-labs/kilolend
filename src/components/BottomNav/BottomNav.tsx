@@ -52,16 +52,13 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
       <NavContent>
         <NavButton $active={activeTab === 'home'} onClick={() => onTabChange('home')}>
           HOME
-        </NavButton>
-
+        </NavButton> 
         <NavButton $active={activeTab === 'portfolio'} onClick={() => onTabChange('portfolio')}>
           PORTFOLIO
-        </NavButton>
-
+        </NavButton> 
         <NavButton $active={activeTab === 'activity'} onClick={() => onTabChange('activity')}>
           ACTIVITY
-        </NavButton>
-
+        </NavButton> 
         <NavButton $active={activeTab === 'profile'} onClick={() => onTabChange('profile')}>
           PROFILE
         </NavButton>

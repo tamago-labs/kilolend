@@ -47,6 +47,22 @@ export const KAIA_TESTNET_TOKENS = {
     decimals: 18,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
     iconType: 'image' as const
+  },
+  MARBLEX: {
+    address: '0x0000000000000000000000000000000000000000',
+    name: 'MARBLEX',
+    symbol: 'MARBLEX',
+    decimals: 18,
+    icon: 'https://assets.coingecko.com/coins/images/17982/large/mbx.png',
+    iconType: 'image' as const
+  },
+  BORA: {
+    address: '0x0000000000000000000000000000000000000000',
+    name: 'BORA',
+    symbol: 'BORA',
+    decimals: 18,
+    icon: 'https://assets.coingecko.com/coins/images/7646/large/bora.png',
+    iconType: 'image' as const
   }
 } as const;
 
