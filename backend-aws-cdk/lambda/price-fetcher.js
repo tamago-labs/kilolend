@@ -6,7 +6,7 @@ const dynamoClient = new DynamoDBClient({});
 const TOKENS = [
   { symbol: "BTC", id: 1 },
   { symbol: "ETH", id: 1027 },
-  { symbol: "KAIA", id: 26 },
+  { symbol: "KAIA", id: 32880 },
   { symbol: "SOMNIA", id: 37637 },
   { symbol: "BORA", id: 3801 },
   { symbol: "MARBLEX", id: 18895 },
