@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {Script, console} from "forge-std/Script.sol";
-import "../src/mocks/MockToken.sol";
+import "../../src/mocks/MockToken.sol";
 
 /**
  * @title DeployMockTokens
@@ -44,11 +44,9 @@ contract DeployMockTokens is Script {
         
         // Deploy mock stablecoins and KAIA tokens
         MockToken usdt = new MockToken("Tether USD", "USDT", 6, 1000000e6); // 1M USDT
-        MockToken krw = new MockToken("Korean Won", "KRW", 0, 1000000000); // 1B KRW (no decimals)
-        MockToken jpy = new MockToken("Japanese Yen", "JPY", 0, 1000000000); // 1B JPY (no decimals)  
-        MockToken thb = new MockToken("Thai Baht", "THB", 2, 1000000e2); // 1M THB (2 decimals)
         MockToken stKAIA = new MockToken("Staked KAIA", "stKAIA", 18, 1000000e18); // 1M stKAIA
-        MockToken wKAIA = new MockToken("Wrapped KAIA", "wKAIA", 18, 1000000e18); // 1M wKAIA
+        MockToken bora = new MockToken("BORA Token", "BORA", 18, 1000000e18); // 1M BORA
+        MockToken mbx = new MockToken("MARBLEX Token", "MBX", 18, 1000000e18); // 1M MBX
         
         // Stop broadcasting
         vm.stopBroadcast();
@@ -57,54 +55,10 @@ contract DeployMockTokens is Script {
         console.log("Mock Tokens deployed successfully!");
         console.log("===========================================");
         console.log("USDT:", address(usdt)); 
-        console.log("KRW:", address(krw));
-        console.log("JPY:", address(jpy));
-        console.log("THB:", address(thb));
         console.log("stKAIA:", address(stKAIA));
-        console.log("wKAIA:", address(wKAIA));
-         
-        // Print environment variables for KAIA testnet
-        _printEnvironmentVariables(
-            address(usdt), 
-            address(krw), 
-            address(jpy),
-            address(thb),
-            address(stKAIA),
-            address(wKAIA)
-        );
+        console.log("bora:", address(bora));
+        console.log("mbx:", address(mbx));
+          
     }
-    
-    function _printEnvironmentVariables(
-        address usdt,  
-        address krw,
-        address jpy,
-        address thb,
-        address stKAIA,
-        address wKAIA
-    ) internal pure {
-        console.log("\n=== Environment Variables for KAIA Testnet ===");
-        console.log("KAIA_TESTNET_USDT=", usdt); 
-        console.log("KAIA_TESTNET_KRW=", krw);
-        console.log("KAIA_TESTNET_JPY=", jpy);
-        console.log("KAIA_TESTNET_THB=", thb);
-        console.log("KAIA_TESTNET_STKAIA=", stKAIA);
-        console.log("KAIA_TESTNET_WKAIA=", wKAIA);
-        
-        console.log("\n=== Token Details ===");
-        console.log("USDT: Tether USD (6 decimals)");
-        console.log("KRW: Korean Won (0 decimals)");
-        console.log("JPY: Japanese Yen (0 decimals)"); 
-        console.log("THB: Thai Baht (2 decimals)");
-        console.log("stKAIA: Staked KAIA (18 decimals)");
-        console.log("wKAIA: Wrapped KAIA (18 decimals)");
-        
-        console.log("\n=== Mint More Tokens (if needed) ===");
-        console.log("Use MockToken.mint(address to, uint256 amount) function");
-        console.log("All tokens have public mint function for testing");
-        console.log("Remember to use proper decimals when minting:");
-        console.log("- USDT: amount * 1e6");
-        console.log("- KRW/JPY: amount (no decimals)");
-        console.log("- THB: amount * 1e2");
-        console.log("- stKAIA/wKAIA: amount * 1e18");
-    }
+     
 }
