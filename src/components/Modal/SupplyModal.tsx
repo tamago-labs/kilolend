@@ -8,7 +8,7 @@ import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract, MarketInfo, TransactionResult } from '@/hooks/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
-import { useMarketData } from '@/hooks/useMarketData';
+import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
 import { useTokenApproval } from '@/hooks/useTokenApproval';
 import { 
   SupplyAssetSelection,
@@ -131,7 +131,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const { account } = useWalletAccountStore();
   const { supply } = useMarketContract();
   const { balances: tokenBalances, isLoading: balancesLoading } = useMarketTokenBalances();
-  const { isLoading: marketDataLoading } = useMarketData();
+  const { isLoading: marketDataLoading } = useMarketDataWithPrices();
   const { checkAllowance, ensureApproval } = useTokenApproval();
 
   const totalSteps = 4;

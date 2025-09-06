@@ -2,6 +2,7 @@
 
 import styled from 'styled-components';
 import { ContractMarket } from '@/stores/contractMarketStore';
+import { formatUSD } from '@/utils/formatters';
 
 const Container = styled.div`
   padding: 20px 0;
@@ -199,7 +200,7 @@ export const BorrowAssetSelection = ({
                 <AssetName>{market.symbol}</AssetName>
                 <AssetDetails>
                   <span>Borrow APR: {market.borrowAPR.toFixed(2)}%</span>
-                  <span>Liquidity: ${market.totalSupply}</span>
+                  <span>Liquidity: {formatUSD(market.totalSupply)}</span>
                 </AssetDetails>
               </AssetInfo>
               <AssetBalance>

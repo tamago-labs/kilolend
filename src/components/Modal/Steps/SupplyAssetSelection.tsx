@@ -3,6 +3,7 @@
 import styled from 'styled-components';
 import { Info } from 'react-feather';
 import { ContractMarket } from '@/stores/contractMarketStore';
+import { formatUSD } from '@/utils/formatters';
 
 const OverviewTitle = styled.h3`
   font-size: 16px;
@@ -163,7 +164,7 @@ export const SupplyAssetSelection = ({
               <AssetDetails>
                 {/* {market.isCollateralOnly ? 'Collateral Only' : `Utilization: ${market.utilization.toFixed(1)}%`} */}
                 {market.isCollateralOnly && 'Collateral Only • '}
-                Liquidity: ${market.totalSupply}
+                Liquidity: {formatUSD(market.totalSupply)}
               </AssetDetails>
             </AssetInfo>
             <AssetMetrics>

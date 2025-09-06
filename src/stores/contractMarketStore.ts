@@ -207,34 +207,21 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
   updatePriceData: (prices: any) => {
     set((state) => {
       const updatedMarkets = state.markets.map(market => {
-        let newPrice = market.price;
+        const symbolToCheck = market.symbol.toUpperCase();
         
-        switch (market.symbol.toLowerCase()) {
-          case 'kaia':
-            newPrice = 0.15;
-            break;
-          case 'six':
-            newPrice = 0.05;
-            break;
-          case 'bora':
-            newPrice = 0.10;
-            break;
-          case 'mbx':
-            newPrice = 0.25;
-            break;
-          case 'usdt':
-          default:
-            newPrice = 1.0; // USDT pegged to USD
-            break;
+        // Get real price from the prices data
+        let newPrice = market.price; // Keep existing as fallback
+        let priceChange24h = market.priceChange24h;
+        
+        if (prices && prices[symbolToCheck]) {
+          newPrice = prices[symbolToCheck].price;
+          priceChange24h = prices[symbolToCheck].change24h || 0;
         }
-        
-        // Calculate 24h price change (simplified)
-        const priceChange24h = ((newPrice - market.price) / market.price) * 100;
         
         return {
           ...market,
           price: newPrice,
-          priceChange24h: isFinite(priceChange24h) ? priceChange24h : 0
+          priceChange24h
         };
       });
       

@@ -2,6 +2,7 @@
 
 import styled from 'styled-components';
 import { useModalStore } from '@/stores/modalStore';
+import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
 import { TokenPriceSwiper, WelcomeSwiper } from '@/components/Swiper';
 
 const PageContainer = styled.div`
@@ -181,6 +182,9 @@ interface HomePageProps {
 
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const { openModal } = useModalStore();
+  
+  // Initialize market data and real-time prices
+  useMarketDataWithPrices();
 
   const handleAskAI = () => {
     openModal('ai-chat');

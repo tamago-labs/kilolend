@@ -8,7 +8,7 @@ import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract, TransactionResult } from '@/hooks/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
-import { useMarketData } from '@/hooks/useMarketData';
+import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
 import { useBorrowingPower } from '@/hooks/useBorrowingPower';
 import {
   BorrowAssetSelection,
@@ -138,7 +138,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   const { borrow } = useMarketContract();
   const { balances: tokenBalances, isLoading: balancesLoading } =
     useMarketTokenBalances();
-  const { isLoading: marketDataLoading } = useMarketData();
+  const { isLoading: marketDataLoading } = useMarketDataWithPrices();
   const { calculateBorrowingPower, calculateMaxBorrowAmount } =
     useBorrowingPower();
 
