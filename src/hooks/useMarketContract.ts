@@ -2,14 +2,9 @@ import { useCallback } from 'react';
 import { ethers } from 'ethers';
 import { CTOKEN_ABI } from '@/utils/contractABIs';
 import { MARKET_CONFIG, MarketId } from '@/utils/contractConfig';
-import {
-  getContract,
-  parseTokenAmount,
-  formatTokenAmount,
-} from '@/utils/contractUtils';
+import { getContract, parseTokenAmount } from '@/utils/contractUtils';
 import { useKaiaWalletSdk } from '@/components/Wallet/Sdk/walletSdk.hooks';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import BigNumber from "bignumber.js";
 
 export interface MarketInfo {
   totalSupply: string;
@@ -85,43 +80,40 @@ export const useMarketContract = (): MarketContractHook => {
         borrowRatePerBlock: borrowRatePerBlock.toString(),
       });
 
-      // Calculate utilization rate using BigNumber for precision
-      const totalLiquidityBN = new BigNumber(getCash.toString()).plus(totalBorrows.toString());
-      const utilizationBN = totalLiquidityBN.isGreaterThan(0) 
-        ? new BigNumber(totalBorrows.toString()).dividedBy(totalLiquidityBN).multipliedBy(100)
-        : new BigNumber(0);
+      // Utilization = borrows / (cash + borrows)
+      const totalLiquidity = getCash + totalBorrows;
+      const utilizationRate =
+        totalLiquidity > BigInt(0)
+          ? Number((totalBorrows * BigInt(10000)) / totalLiquidity) / 100
+          : 0;
 
-      // Convert per-block rates to APY using BigNumber (assuming ~2 seconds per block on Kaia)
-      const blocksPerYear = new BigNumber(365).multipliedBy(24).multipliedBy(60).multipliedBy(60).dividedBy(2);
-      const supplyAPYBN = new BigNumber(supplyRatePerBlock.toString())
-        .multipliedBy(blocksPerYear)
-        .dividedBy(new BigNumber(10).pow(18))
-        .multipliedBy(100);
-      const borrowAPRBN = new BigNumber(borrowRatePerBlock.toString())
-        .multipliedBy(blocksPerYear)
-        .dividedBy(new BigNumber(10).pow(18))
-        .multipliedBy(100);
+      // Blocks per year (~2s block time on Kaia)
+      const blocksPerYear = BigInt(365 * 24 * 60 * 60 / 2);
 
-      console.log(`Real rates for ${marketId}:`, {
-        utilization: utilizationBN.toString(),
-        supplyAPY: supplyAPYBN.toString(),
-        borrowAPR: borrowAPRBN.toString(),
-        totalLiquidity: totalLiquidityBN.toString()
-      });
+      // APY calculations
+      const scale = BigInt(10) ** BigInt(18);
+
+      // Calculate supply APY
+      const supplyAPY = Number(
+        (supplyRatePerBlock * blocksPerYear * BigInt(10000)) / scale
+      ) / 100;
+
+      // Calculate borrow APR
+      const borrowAPR = Number(
+        (borrowRatePerBlock * blocksPerYear * BigInt(10000)) / scale
+      ) / 100;
 
       return {
-        totalSupply: ethers.formatUnits(totalSupply, 8), // cTokens have 8 decimals
-        totalBorrow: formatTokenAmount(totalBorrows, marketConfig.decimals),
-        supplyAPY: supplyAPYBN.toNumber(),
-        borrowAPR: borrowAPRBN.toNumber(),
-        utilizationRate: utilizationBN.toNumber(),
+        totalSupply: ethers.formatUnits(totalSupply, 8), // cTokens = 8 decimals
+        totalBorrow: ethers.formatUnits(totalBorrows, marketConfig.decimals),
+        supplyAPY,
+        borrowAPR,
+        utilizationRate,
         exchangeRate: ethers.formatUnits(exchangeRate, 18),
       };
     } catch (error) {
-    console.error(`Error getting market info for ${marketId}:`, error);
-    
-    // Return null if contract calls fail
-    return null;
+      console.error(`Error getting market info for ${marketId}:`, error);
+      return null;
     }
   }, []);
 
@@ -139,26 +131,25 @@ export const useMarketContract = (): MarketContractHook => {
           contract.getAccountSnapshot(userAddress),
           contract.balanceOf(userAddress),
         ]);
-
-        // accountSnapshot returns: [error, cTokenBalance, borrowBalance, exchangeRateMantissa]
+ 
+        // accountSnapshot = [error, cTokenBal, borrowBal, exchangeRateMantissa]
         const [error, , borrowBalance, exchangeRateMantissa] = accountSnapshot;
 
         if (Number(error) !== 0) {
           console.error('Error getting account snapshot:', error);
           return null;
         }
-  
-        // Calculate supply balance from cToken balance and exchange rate using BigNumber
-        const supplyBalanceBN = new BigNumber(cTokenBalance.toString())
-          .multipliedBy(new BigNumber(exchangeRateMantissa.toString()))
-          .dividedBy(new BigNumber(10).pow(18));
+
+        // supplyBalance = cTokenBalance * exchangeRate / 1e18
+        const supplyBalance = (BigInt(cTokenBalance) * BigInt(exchangeRateMantissa)) / (BigInt(10) ** BigInt(18));
+
 
         return {
-          supplyBalance: formatTokenAmount(BigInt(supplyBalanceBN.toString()), marketConfig.decimals),
-          borrowBalance: formatTokenAmount(borrowBalance, marketConfig.decimals),
-          collateralValue: '0', // This would come from comptroller
-          maxBorrowAmount: '0', // This would come from comptroller
-          isHealthy: true, // This would come from comptroller
+          supplyBalance: ethers.formatUnits(supplyBalance, marketConfig.decimals),
+          borrowBalance: ethers.formatUnits(borrowBalance, marketConfig.decimals),
+          collateralValue: '0', // TODO: from comptroller
+          maxBorrowAmount: '0', // TODO: from comptroller
+          isHealthy: true, // TODO: from comptroller
           cTokenBalance: ethers.formatUnits(cTokenBalance, 8),
         };
       } catch (error) {
@@ -172,26 +163,22 @@ export const useMarketContract = (): MarketContractHook => {
   const sendContractTransaction = useCallback(
     async (marketId: MarketId, methodName: string, args: any[]): Promise<TransactionResult> => {
       try {
-        if (!account) {
-          throw new Error('Wallet not connected');
-        }
+        if (!account) throw new Error('Wallet not connected');
 
         const marketConfig = MARKET_CONFIG[marketId];
         if (!marketConfig.marketAddress) {
           throw new Error(`Market not available for ${methodName}`);
         }
 
-        // Create contract interface for encoding transaction data
         const iface = new ethers.Interface(CTOKEN_ABI);
         const data = iface.encodeFunctionData(methodName, args);
 
-        // Prepare transaction for LINE MiniDapp
         const transaction = {
           from: account,
           to: marketConfig.marketAddress,
-          value: '0x0', // No ETH value for most market operations
-          gas: '0x927C0', // 600000 gas limit - adjust as needed
-          data: data
+          value: '0x0',
+          gas: '0x927C0',
+          data
         };
 
         console.log(`Sending ${methodName} transaction for ${marketId}:`, {
@@ -201,21 +188,12 @@ export const useMarketContract = (): MarketContractHook => {
           data
         });
 
-        // Send transaction through Kaia Wallet SDK
         await sendTransaction([transaction]);
 
-        return {
-          hash: '', // Hash not immediately available in LINE MiniDapp
-          status: 'confirmed'
-        };
-
+        return { hash: '', status: 'confirmed' };
       } catch (error: any) {
         console.error(`Error during ${methodName} on ${marketId}:`, error);
-        return {
-          hash: '',
-          status: 'failed',
-          error: error.message || `${methodName} failed`
-        };
+        return { hash: '', status: 'failed', error: error.message || `${methodName} failed` };
       }
     },
     [account, sendTransaction]
