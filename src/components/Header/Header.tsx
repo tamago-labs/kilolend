@@ -6,8 +6,9 @@ import { WalletButton } from '@/components/Wallet/Button/WalletButton';
 import { useWalletAccountStore } from "@/components/Wallet/Account/auth.hooks";
 import { useKaiaWalletSdk } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import Blockies from 'react-blockies';
-import { Settings } from "react-feather"
+import { Settings, Clock } from "react-feather"
 import { useModalStore } from '@/stores/modalStore';
+import { useAppStore } from '@/stores/appStore';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -82,7 +83,7 @@ const WalletAddress = styled.div`
   margin-top: 2px;
 `;
 
- 
+
 
 const DisconnectButton = styled.button`
   background: linear-gradient(135deg, #00C300, #00A000);
@@ -170,6 +171,7 @@ const DisconnectRow = styled.div`
 
 export const Header = () => {
 
+  const { activeTab } = useAppStore();
   const { openModal } = useModalStore();
 
   const { account, setAccount } = useWalletAccountStore();
@@ -187,14 +189,18 @@ export const Header = () => {
     openModal('settings');
   };
 
+  const handleActivities = () => {
+    openModal("activities")
+  }
+
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
   return (
     <HeaderContainer>
-       <LeftSection>
-         {!account ? (
+      <LeftSection>
+        {!account ? (
           <WalletButton />
         ) : (
           <>
@@ -251,11 +257,18 @@ export const Header = () => {
             </DropdownMenu>
           </>
         )}
-      </LeftSection>  
+      </LeftSection>
       <RightSection>
-       <Icon onClick={handleSettings}>
-          <Settings size={22}/>
-        </Icon>
+        {activeTab !== "portfolio" && (
+          <Icon onClick={handleSettings}>
+            <Settings size={22} />
+          </Icon>
+        )}
+        {activeTab === "portfolio" && (
+          <Icon onClick={handleActivities}>
+            <Clock size={22} />
+          </Icon>
+        )} 
       </RightSection>
     </HeaderContainer>
   );

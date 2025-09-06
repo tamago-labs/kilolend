@@ -9,6 +9,7 @@ export type ModalType =
   | 'analytics' 
   | 'ai-chat' 
   | 'settings'
+  | 'activities'
   | 'learn'
   | 'invite'
   | 'kilo'

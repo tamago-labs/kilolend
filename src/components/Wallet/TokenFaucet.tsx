@@ -9,6 +9,8 @@ import { KAIA_TESTNET_TOKENS, TokenSymbol, ERC20_ABI } from '@/utils/tokenConfig
 import { getKaiaProvider, parseTokenAmount, getTransactionErrorMessage } from '@/utils/ethersConfig';
 import TokenIcon from './TokenIcon';
 
+// NOT USED
+
 const FaucetContainer = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -103,7 +105,9 @@ const MINT_AMOUNTS = {
   stKAIA: '1000',    // 1000 stKAIA
   wKAIA: '1000',      // 1000 wKAIA
   MARBLEX: '1000',
-  BORA: '1000'
+  BORA: '1000',
+  MBX: "100",
+  SIX: "1000"
 } as const;
 
 export const TokenFaucet = ({ onSuccess }: TokenFaucetProps) => {

@@ -1,6 +1,5 @@
 import { create } from 'zustand';
-import { MarketInfo } from '@/hooks/useMarketContract';
-import { PriceData } from '@/hooks/usePriceOracle';
+// import { MarketInfo } from '@/hooks/useMarketContract';
 
 // Enhanced market interface with contract data
 export interface ContractMarket {
@@ -30,13 +29,13 @@ export interface ContractMarket {
   isCollateralOnly?: boolean;
   
   // Contract-specific data
-  contractData?: MarketInfo;
+  contractData?: any;
   lastUpdated?: number;
 }
 
 export interface ContractMarketState {
   markets: ContractMarket[];
-  priceData: PriceData | null;
+  priceData: any;
   totalTVL: number;
   bestSupplyAPY: number;
   bestBorrowAPR: number;
@@ -45,8 +44,8 @@ export interface ContractMarketState {
   lastUpdate: number;
   
   // Actions
-  updateMarketData: (marketId: string, data: MarketInfo) => void;
-  updatePriceData: (prices: PriceData) => void;
+  updateMarketData: (marketId: string, data: any) => void;
+  updatePriceData: (prices: any) => void;
   setLoading: (loading: boolean) => void;
   refreshAllData: () => void;
   getMarketById: (id: string) => ContractMarket | undefined;
@@ -131,47 +130,7 @@ const initialContractMarkets: ContractMarket[] = [
     price: 0.029,
     priceChange24h: -0.05,
     isActive: true
-  },
-  // {
-  //   id: 'stkaia',
-  //   name: 'Staked KAIA',
-  //   symbol: 'stKAIA',
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
-  //   iconType: 'image' as const,
-  //   description: 'Liquid staked KAIA tokens - collateral only',
-  //   marketAddress: null,
-  //   tokenAddress: '0x65e38111d8e2561aDC0E2EA1eeA856E6a43dC892',
-  //   decimals: 18,
-  //   supplyAPY: 0,
-  //   borrowAPR: 0,
-  //   totalSupply: 0,
-  //   totalBorrow: 0,
-  //   utilization: 0,
-  //   price: 0.12,
-  //   priceChange24h: 2.3,
-  //   isActive: true,
-  //   isCollateralOnly: true
-  // },
-  // {
-  //   id: 'wkaia',
-  //   name: 'Wrapped KAIA',
-  //   symbol: 'wKAIA',
-  //   icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
-  //   iconType: 'image' as const,
-  //   description: 'Wrapped KAIA for DeFi applications - collateral only',
-  //   marketAddress: null,
-  //   tokenAddress: '0x553588e084604a2677e10E46ea0a8A8e9D859146',
-  //   decimals: 18,
-  //   supplyAPY: 0,
-  //   borrowAPR: 0,
-  //   totalSupply: 0,
-  //   totalBorrow: 0,
-  //   utilization: 0,
-  //   price: 0.11,
-  //   priceChange24h: 1.8,
-  //   isActive: true,
-  //   isCollateralOnly: true
-  // }
+  } 
 ];
 
 export const useContractMarketStore = create<ContractMarketState>((set, get) => ({
@@ -184,7 +143,7 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
   isLoading: false,
   lastUpdate: 0,
 
-  updateMarketData: (marketId: string, data: MarketInfo) => {
+  updateMarketData: (marketId: string, data: any) => {
     set((state) => {
       const updatedMarkets = state.markets.map(market => {
         if (market.id === marketId && market.marketAddress) {
@@ -222,7 +181,7 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
     });
   },
 
-  updatePriceData: (prices: PriceData) => {
+  updatePriceData: (prices: any) => {
     set((state) => {
       const updatedMarkets = state.markets.map(market => {
         let newPrice = market.price;

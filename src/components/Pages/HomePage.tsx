@@ -282,7 +282,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           <IconButton onClick={handleKilo}>
             <IconCircle $index="7">
               <IconImage
-                src="./images/icon-kilo.png"
+                src="./images/icon-gift.png"
                 alt="KILO"
               />
             </IconCircle>

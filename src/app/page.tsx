@@ -10,7 +10,7 @@ import { PortfolioPage } from '@/components/Pages/PortfolioPage';
 import { ActivityPage } from '@/components/Pages/ActivityPage';
 import { ProfilePage } from '@/components/Pages/ProfilePage';
 import { SwipeDeals } from '@/components/AIDeals/SwipeDeals';
-import { GlobalModal } from '@/components/GlobalModal/GlobalModal';
+// import { GlobalModal } from '@/components/GlobalModal/GlobalModal';
 import { SplashScreen } from '@/components/SplashScreen/SplashScreen';
 import { GlobalModalManager } from '@/components/Modal/GlobalModalManager';
 
@@ -28,6 +28,7 @@ const ContentArea = styled.div`
 `;
 
 export default function Home() {
+
     const { activeTab, setActiveTab } = useAppStore();
     const { generateDeals, currentDeals } = useAIDealsStore();
     const [showSwipeDeals, setShowSwipeDeals] = useState(false);

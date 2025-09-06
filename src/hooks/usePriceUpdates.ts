@@ -41,7 +41,7 @@ export const usePriceUpdates = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch real prices from your backend API
+  // Fetch prices from backend API
   const fetchRealPrices = async (): Promise<Record<string, TokenPrice>> => {
     try {
       const response = await fetch(API_ENDPOINT);
@@ -91,8 +91,7 @@ export const usePriceUpdates = ({
           lastUpdated: new Date()
         };
       }
-
-      console.log('Fetched prices:', priceMap); // Debug log
+ 
       return priceMap;
     } catch (err) {
       console.error('Error fetching prices from API:', err);

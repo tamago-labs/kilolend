@@ -56,9 +56,9 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
         <NavButton $active={activeTab === 'portfolio'} onClick={() => onTabChange('portfolio')}>
           PORTFOLIO
         </NavButton> 
-        <NavButton $active={activeTab === 'activity'} onClick={() => onTabChange('activity')}>
+        {/* <NavButton $active={activeTab === 'activity'} onClick={() => onTabChange('activity')}>
           ACTIVITY
-        </NavButton> 
+        </NavButton>  */}
         <NavButton $active={activeTab === 'profile'} onClick={() => onTabChange('profile')}>
           PROFILE
         </NavButton>

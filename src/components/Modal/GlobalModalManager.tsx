@@ -85,6 +85,17 @@ export const GlobalModalManager = () => {
             placeholderText="Configure your preferences, notifications, and account settings. This feature will be available soon."
           />
         );
+      case 'activities':
+          return (
+            <BlankModal
+              isOpen={isOpen}
+              onClose={closeModal}
+              title="Activity"
+              icon="⚙️"
+              placeholderTitle="Activity"
+              placeholderText="View your transaction history."
+            />
+          );
 
       case 'learn':
         return (

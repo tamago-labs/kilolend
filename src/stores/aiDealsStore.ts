@@ -127,12 +127,6 @@ export const useAIDealsStore = create<AIDealsState>((set, get) => ({
       // Collect real pool data
       const poolData = PoolDataCollector.collectPoolData();
       
-      // Validate pool data
-      // const validation = PoolDataCollector.validatePoolData();
-      // if (!validation.isValid) {
-      //   console.warn('Pool data validation issues:', validation.issues);
-      // }
-
       // Initialize AI service
       const aiService = new LendingAIService();
       
