@@ -4,6 +4,7 @@ import {ReactNode, useEffect} from "react";
 import {useKaiaWalletSecurity} from "@/components/Wallet/Sdk/walletSdk.hooks";
 import styled from 'styled-components';
 import { Header } from '@/components/Header/Header';
+import { MarketDataProvider } from '@/components/MarketDataProvider';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -49,12 +50,12 @@ export const Bootstrap = ({className, children}: BootstrapProps) => {
     return (
         <AppContainer className={className}>
             {isSuccess && (
-                <>
+                <MarketDataProvider>
                     <Header />
                     <MainContent>
                         {children}
                     </MainContent>
-                </>
+                </MarketDataProvider>
             )}
         </AppContainer>
     )

@@ -18,9 +18,7 @@ import { ethers } from 'ethers';
 
 export type { TransactionResult } from './contractUtils';
 
-const formatTokenAmount = (amount: bigint, decimals: number): string => {
-  return ethers.formatUnits(amount, decimals);
-};
+export { formatTokenAmount } from './contractUtils';
 
 // Contract addresses and config
 export {

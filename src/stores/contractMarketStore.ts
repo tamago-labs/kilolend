@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-// import { MarketInfo } from '@/hooks/useMarketContract';
 
 // Enhanced market interface with contract data
 export interface ContractMarket {
@@ -53,7 +52,7 @@ export interface ContractMarketState {
   getBestBorrowMarket: () => ContractMarket | undefined;
 }
 
-// Initial markets based on contract configuration
+// Initial markets based on deployed contract configuration
 const initialContractMarkets: ContractMarket[] = [
   {
     id: 'usdt',
@@ -62,8 +61,8 @@ const initialContractMarkets: ContractMarket[] = [
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png',
     iconType: 'image' as const,
     description: 'USD-pegged stablecoin for secure lending',
-    marketAddress: '0xA657b300009802Be7c88617128545534aCA12dbe',
-    tokenAddress: '0x16EE94e3C07B24EbA6067eb9394BA70178aAc4c0',
+    marketAddress: '0x3466441C38D2F76405085b730268240E4F2d0D25',
+    tokenAddress: '0x5F7392Ec616F829Ab54092e7F167F518835Ac740',
     decimals: 6,
     supplyAPY: 5.2,
     borrowAPR: 6.1,
@@ -72,65 +71,89 @@ const initialContractMarkets: ContractMarket[] = [
     utilization: 0,
     price: 1.0,
     priceChange24h: 0.02,
-    isActive: true
+    isActive: true,
+    isCollateralOnly: false
   },
   {
-    id: 'krw',
-    name: 'Korean Won',
-    symbol: 'KRW',
-    icon: 'KR',
-    iconType: 'flag' as const,
-    description: 'Korean Won stablecoin market',
-    marketAddress: '0xE53048D2D19338A294395D8A7f780E44A9379925',
-    tokenAddress: '0xf2260B00250c772CB64606dBb88d9544F709308C',
+    id: 'six',
+    name: 'SIX Token',
+    symbol: 'SIX',
+    icon: 'https://cryptologos.cc/logos/six-six-logo.png',
+    iconType: 'image' as const,
+    description: 'SIX Network utility token',
+    marketAddress: '0x772195938d86fcf500dF18563876d7Cefcf47e4D',
+    tokenAddress: '0xe438E6157Ad6e38A8528fd68eBf5d8C4F57420eC',
     decimals: 18,
-    supplyAPY: 4.8,
-    borrowAPR: 3.8,
+    supplyAPY: 8.1,
+    borrowAPR: 9.2,
     totalSupply: 0,
     totalBorrow: 0,
     utilization: 0,
-    price: 0.00075,
-    priceChange24h: -0.15,
-    isActive: true
+    price: 0.05,
+    priceChange24h: 1.2,
+    isActive: true,
+    isCollateralOnly: false
   },
   {
-    id: 'jpy',
-    name: 'Japanese Yen',
-    symbol: 'JPY',
-    icon: 'JP',
-    iconType: 'flag' as const,
-    description: 'Japanese Yen market',
-    marketAddress: '0x3c4151361e9718b45409B803B6a9Ee623DBF59FE',
-    tokenAddress: '0xFa15adECD1CC94bd17cf48DD3b41F066FE2812a7',
+    id: 'bora',
+    name: 'BORA Token',
+    symbol: 'BORA',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/5222.png',
+    iconType: 'image' as const,
+    description: 'BORA gaming ecosystem token',
+    marketAddress: '0x260fC7251fAe677B6254773d347121862336fb9f',
+    tokenAddress: '0xFdB35092c0cf5e1A5175308CB312613972C3DF3D',
     decimals: 18,
-    supplyAPY: 3.5,
-    borrowAPR: 4.2,
+    supplyAPY: 7.8,
+    borrowAPR: 8.8,
     totalSupply: 0,
     totalBorrow: 0,
     utilization: 0,
-    price: 0.0067,
-    priceChange24h: 0.08,
-    isActive: true
+    price: 0.10,
+    priceChange24h: -0.5,
+    isActive: true,
+    isCollateralOnly: false
   },
   {
-    id: 'thb',
-    name: 'Thai Baht',
-    symbol: 'THB',
-    icon: 'TH',
-    iconType: 'flag' as const,
-    description: 'Thai Baht market',
-    marketAddress: '0xd91Fd5c773C24Cc27D39c86EfEb3bfF57eF36F99',
-    tokenAddress: '0x576430Ecadbd9729B32a4cA9Fed9F38331273924',
+    id: 'mbx',
+    name: 'MARBLEX Token',
+    symbol: 'MBX',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/9170.png',
+    iconType: 'image' as const,
+    description: 'MARBLEX gaming platform token',
+    marketAddress: '0x10bB22532eC21Fd25719565f440b0322c010bDF3',
+    tokenAddress: '0xCeB75a9a4Af613afd42BD000893eD16fB1F0F057',
     decimals: 18,
-    supplyAPY: 4.1,
-    borrowAPR: 5.0,
+    supplyAPY: 6.9,
+    borrowAPR: 7.9,
     totalSupply: 0,
     totalBorrow: 0,
     utilization: 0,
-    price: 0.029,
-    priceChange24h: -0.05,
-    isActive: true
-  } 
+    price: 0.25,
+    priceChange24h: 0.8,
+    isActive: true,
+    isCollateralOnly: false
+  },
+  {
+    id: 'kaia',
+    name: 'KAIA',
+    symbol: 'KAIA',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/28007.png',
+    iconType: 'image' as const,
+    description: 'Native KAIA token - collateral only',
+    marketAddress: '0xf13D09eD3cbdD1C930d4de74808de1f33B6b3D4f',
+    tokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
+    decimals: 18,
+    supplyAPY: 0.1,
+    borrowAPR: 0,
+    totalSupply: 0,
+    totalBorrow: 0,
+    utilization: 0,
+    price: 0.15,
+    priceChange24h: -1.2,
+    isActive: true,
+    isCollateralOnly: true
+  }
 ];
 
 export const useContractMarketStore = create<ContractMarketState>((set, get) => ({
@@ -149,11 +172,11 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
         if (market.id === marketId && market.marketAddress) {
           return {
             ...market,
-            supplyAPY: data.supplyAPY,
-            borrowAPR: data.borrowAPR,
-            totalSupply: parseFloat(data.totalSupply),
-            totalBorrow: parseFloat(data.totalBorrow),
-            utilization: data.utilizationRate,
+            supplyAPY: data.supplyAPY || 0,
+            borrowAPR: data.borrowAPR || 0,
+            totalSupply: parseFloat(data.totalSupply || '0'),
+            totalBorrow: parseFloat(data.totalBorrow || '0'),
+            utilization: data.utilizationRate || market.utilization,
             contractData: data,
             lastUpdated: Date.now()
           };
@@ -187,20 +210,17 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
         let newPrice = market.price;
         
         switch (market.symbol.toLowerCase()) {
-          case 'wkaia':
-            newPrice = 0.12
+          case 'kaia':
+            newPrice = 0.15;
             break;
-          case 'stkaia': 
-            newPrice = 0.13
+          case 'six':
+            newPrice = 0.05;
             break;
-          case 'krw':
-            newPrice = 0.00076923
+          case 'bora':
+            newPrice = 0.10;
             break;
-          case 'jpy':
-            newPrice = 0.00666666
-            break;
-          case 'thb':
-            newPrice = 0.02857
+          case 'mbx':
+            newPrice = 0.25;
             break;
           case 'usdt':
           default:
