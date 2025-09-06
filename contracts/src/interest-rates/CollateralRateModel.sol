@@ -1,18 +1,16 @@
 // SPDX-License-Identifier: BSD-3-Clause
 pragma solidity ^0.8.10;
 
-import "../interfaces/InterestRateModel.sol";
+import "./JumpRateModelV2.sol";
 
-contract CollateralRateModel is InterestRateModel {
+contract CollateralRateModel is JumpRateModelV2 {
     
-    function getBorrowRate(uint cash, uint borrows, uint reserves) override external pure returns (uint) {
-        cash; borrows; reserves;
-        return 0;
-    }
-    
-    function getSupplyRate(uint cash, uint borrows, uint reserves, uint reserveFactorMantissa) override external pure returns (uint) {
-        cash; borrows; reserves; reserveFactorMantissa;
-        return 0.001e18; // 0.1% APY for suppliers
-    }
+    constructor() JumpRateModelV2(
+         0.001e18,   // baseRatePerYear: 0.1% fixed APY
+         0,          // multiplierPerYear: 0 (no utilization sensitivity)
+         0,          // jumpMultiplierPerYear: 0 (no jump)
+         0.80e18,    // kink: irrelevant but kept for compatibility
+         msg.sender  // owner
+    ) {}
      
 }
