@@ -1,7 +1,7 @@
 "use client";
 
 import styled from 'styled-components';
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAppStore } from '@/stores/appStore';
 import { useAIDealsStore } from '@/stores/aiDealsStore';
 import { BottomNav, TabType } from '@/components/BottomNav/BottomNav';
@@ -37,6 +37,10 @@ export default function Home() {
     const handleSplashFinish = () => {
         setShowSplash(false);
     };
+
+    useEffect(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, [activeTab]);
 
     const handleAIDealsGenerated = async (userQuery: string) => {
         console.log('AI Query:', userQuery);

@@ -5,6 +5,8 @@ import { create } from 'zustand';
 export type ModalType = 
   | 'supply' 
   | 'borrow' 
+  | 'withdraw'
+  | 'repay'
   | 'portfolio' 
   | 'analytics' 
   | 'ai-chat' 

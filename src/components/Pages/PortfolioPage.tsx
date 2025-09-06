@@ -1,14 +1,27 @@
+
 'use client';
 
-
-import React, { useState } from 'react';
-
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
+import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
+import { useMarketContract } from '@/hooks/useMarketContract';
+import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
+import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+import { useModalStore } from '@/stores/modalStore';
 
 const PageContainer = styled.div`
   flex: 1;
   padding: 20px 16px;
   padding-bottom: 80px;
+  background: #f8fafc;
+  min-height: 100vh;
+
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+    padding-bottom: 80px;
+  }
+
 `;
 
 const PageTitle = styled.h1`
@@ -137,7 +150,7 @@ const ActionButtons = styled.div`
   margin-top: 12px;
 `;
 
-const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
+const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' | 'danger' }>`
   padding: 8px 16px;
   border-radius: 8px;
   font-size: 14px;
@@ -146,24 +159,34 @@ const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
   transition: all 0.2s;
   border: none;
   
-  ${props => props.$variant === 'primary' ? `
-    background: linear-gradient(135deg, #00C300, #00A000);
-    color: white;
-    
-    &:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
-    }
-  ` : `
-    background: white;
-    color: #64748b;
-    border: 1px solid #e2e8f0;
-    
-    &:hover {
-      background: #f8fafc;
-      border-color: #cbd5e1;
-    }
-  `}
+  ${props =>
+    props.$variant === 'primary' ? `
+      background: linear-gradient(135deg, #00C300, #00A000);
+      color: white;
+      
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
+      }
+    ` : props.$variant === 'danger' ? `
+      background: #ef4444;
+      color: white;
+      
+      &:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+      }
+    ` : `
+      background: white;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      
+      &:hover {
+        background: #f8fafc;
+        border-color: #cbd5e1;
+      }
+    `
+  }
 `;
 
 const EmptyState = styled.div`
@@ -181,6 +204,7 @@ const EmptyIcon = styled.div`
   align-items: center;
   justify-content: center;
   margin: 0 auto 16px;
+  font-size: 24px;
 `;
 
 const StartButton = styled.button`
@@ -220,15 +244,301 @@ const LoadingCard = styled.div`
   color: #64748b;
 `;
 
+const TokenIcon = styled.img`
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+`;
+
+interface Position {
+  marketId: string;
+  symbol: string;
+  type: 'supply' | 'borrow';
+  amount: string;
+  usdValue: number;
+  apy: number;
+  icon: string;
+}
+
 export const PortfolioPage = () => {
+
+
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [portfolioStats, setPortfolioStats] = useState({
+    totalSupplyValue: 0,
+    totalBorrowValue: 0,
+    netPortfolioValue: 0,
+    healthFactor: 999
+  });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const { account } = useWalletAccountStore();
+  const { markets } = useContractMarketStore();
+  const { getUserPosition } = useMarketContract();
+  const { balances } = useMarketTokenBalances();
+  const { calculateBorrowingPower } = useBorrowingPower();
+  const { openModal } = useModalStore();
+
+  // Fetch user positions
+  const fetchPositions = useCallback(async () => {
+    if (!account || !markets.length) {
+      setPositions([]);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const userPositions: Position[] = [];
+
+      // Get borrowing power data
+      const borrowingPowerData = await calculateBorrowingPower(account);
+
+      for (const market of markets) {
+        if (!market.isActive || !market.marketAddress) continue;
+
+        const position = await getUserPosition(market.id, account);
+        if (!position) continue;
+
+        const supplyBalance = parseFloat(position.supplyBalance || '0');
+        const borrowBalance = parseFloat(position.borrowBalance || '0');
+
+        // Add supply position if user has supplied
+        if (supplyBalance > 0) {
+          userPositions.push({
+            marketId: market.id,
+            symbol: market.symbol,
+            type: 'supply',
+            amount: position.supplyBalance,
+            usdValue: supplyBalance * market.price,
+            apy: market.supplyAPY,
+            icon: market.icon
+          });
+        }
+
+        // Add borrow position if user has borrowed
+        if (borrowBalance > 0) {
+          userPositions.push({
+            marketId: market.id,
+            symbol: market.symbol,
+            type: 'borrow',
+            amount: position.borrowBalance,
+            usdValue: borrowBalance * market.price,
+            apy: market.borrowAPR,
+            icon: market.icon
+          });
+        }
+      }
+
+      setPositions(userPositions);
+
+      // Calculate portfolio stats
+      const totalSupplyValue = userPositions
+        .filter(p => p.type === 'supply')
+        .reduce((sum, p) => sum + p.usdValue, 0);
+
+      const totalBorrowValue = userPositions
+        .filter(p => p.type === 'borrow')
+        .reduce((sum, p) => sum + p.usdValue, 0);
+
+      setPortfolioStats({
+        totalSupplyValue,
+        totalBorrowValue,
+        netPortfolioValue: totalSupplyValue - totalBorrowValue,
+        healthFactor: parseFloat(borrowingPowerData.healthFactor)
+      });
+
+    } catch (error) {
+      console.error('Error fetching positions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [account, markets, getUserPosition, calculateBorrowingPower]);
+
+  // Fetch positions when account or markets change
+  useEffect(() => {
+    fetchPositions();
+  }, [account]);
+
+  const handleAction = (action: string, position: Position) => {
+    const market = markets.find(m => m.id === position.marketId);
+    if (!market) return;
+
+    switch (action) {
+      case 'withdraw':
+        openModal('withdraw', {
+          market,
+          currentSupply: position.amount,
+          maxWithdraw: position.amount
+        });
+        break;
+      case 'supply-more':
+        openModal('supply', { preSelectedMarket: market });
+        break;
+      case 'repay':
+        openModal('repay', {
+          market,
+          currentDebt: position.amount,
+          totalDebt: position.amount
+        });
+        break;
+      case 'borrow-more':
+        openModal('borrow', { preSelectedMarket: market });
+        break;
+    }
+  };
+
+  const renderPosition = (position: Position) => (
+    <PositionCard key={`${position.marketId}-${position.type}`} $type={position.type}>
+      <PositionHeader>
+        <PositionInfo>
+          <PositionTitle>
+            <TokenIcon src={position.icon} alt={position.symbol} />
+            {position.symbol} {position.type === 'supply' ? 'Supply' : 'Borrow'}
+          </PositionTitle>
+          <PositionAmount>
+            {parseFloat(position.amount).toFixed(4)} {position.symbol}
+          </PositionAmount>
+          <PositionDetails>
+            ${position.usdValue.toFixed(2)} USD
+          </PositionDetails>
+        </PositionInfo>
+        <PositionAPY $type={position.type}>
+          {position.apy.toFixed(2)}%
+        </PositionAPY>
+      </PositionHeader>
+
+      <ActionButtons>
+        {position.type === 'supply' ? (
+          <>
+            <ActionButton onClick={() => handleAction('withdraw', position)}>
+              Withdraw
+            </ActionButton>
+            <ActionButton
+              $variant="primary"
+              onClick={() => handleAction('supply-more', position)}
+            >
+              Supply More
+            </ActionButton>
+          </>
+        ) : (
+          <>
+            <ActionButton
+              $variant="danger"
+              onClick={() => handleAction('repay', position)}
+            >
+              Repay
+            </ActionButton>
+            <ActionButton onClick={() => handleAction('borrow-more', position)}>
+              Borrow More
+            </ActionButton>
+          </>
+        )}
+      </ActionButtons>
+    </PositionCard>
+  );
+
+  if (!account) {
+    return (
+      <PageContainer>
+        <PageTitle>Portfolio</PageTitle>
+        <PageSubtitle>
+          Connect your wallet to view your lending positions
+        </PageSubtitle>
+        <EmptyState>
+          <EmptyIcon>👤</EmptyIcon>
+          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>Wallet Not Connected</h3>
+          <p>Please connect your wallet to access this section</p>
+        </EmptyState>
+      </PageContainer>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <PageTitle>Portfolio</PageTitle>
+        <PageSubtitle>
+          Your lending and borrowing positions
+        </PageSubtitle>
+        <LoadingCard>
+          Loading your portfolio...
+        </LoadingCard>
+      </PageContainer>
+    );
+  }
+
+  const supplyPositions = positions.filter(p => p.type === 'supply');
+  const borrowPositions = positions.filter(p => p.type === 'borrow');
+  const hasPositions = positions.length > 0;
 
   return (
     <PageContainer>
       <PageTitle>Portfolio</PageTitle>
       <PageSubtitle>
-        Not implement yet
-      </PageSubtitle> 
+        Your lending and borrowing positions
+      </PageSubtitle>
+
+      {hasPositions ? (
+        <>
+          {/* Portfolio Overview */}
+          <Card>
+            <CardTitle>Portfolio Overview</CardTitle>
+            <StatsGrid>
+              <StatCard>
+                <StatValue>${portfolioStats.totalSupplyValue.toFixed(2)}</StatValue>
+                <StatLabel>Total Supply Value</StatLabel>
+              </StatCard>
+              <StatCard>
+                <StatValue>${portfolioStats.totalBorrowValue.toFixed(2)}</StatValue>
+                <StatLabel>Total Borrow Value</StatLabel>
+              </StatCard>
+              <StatCard>
+                <StatValue>${portfolioStats.netPortfolioValue.toFixed(2)}</StatValue>
+                <StatLabel>Net Portfolio Value</StatLabel>
+              </StatCard>
+              <StatCard>
+                <StatValue>{portfolioStats.healthFactor.toFixed(2)}</StatValue>
+                <StatLabel>Health Factor</StatLabel>
+                <HealthFactorBadge $healthy={portfolioStats.healthFactor > 1.5}>
+                  {portfolioStats.healthFactor > 1.5 ? 'Healthy' : 'At Risk'}
+                </HealthFactorBadge>
+              </StatCard>
+            </StatsGrid>
+          </Card>
+
+          {/* Supply Positions */}
+          {supplyPositions.length > 0 && (
+            <Card>
+              <CardTitle>Supply Positions ({supplyPositions.length})</CardTitle>
+              <PositionsList>
+                {supplyPositions.map(renderPosition)}
+              </PositionsList>
+            </Card>
+          )}
+
+          {/* Borrow Positions */}
+          {borrowPositions.length > 0 && (
+            <Card>
+              <CardTitle>Borrow Positions ({borrowPositions.length})</CardTitle>
+              <PositionsList>
+                {borrowPositions.map(renderPosition)}
+              </PositionsList>
+            </Card>
+          )}
+        </>
+      ) : (
+        <EmptyState>
+          <EmptyIcon>📊</EmptyIcon>
+          <div style={{ marginBottom: '16px' }}>No positions found</div>
+          <div style={{ fontSize: '14px', marginBottom: '24px' }}>
+            Start by supplying assets to earn interest or borrowing against your collateral
+          </div>
+          <StartButton onClick={() => openModal('supply')}>
+            Start Lending
+          </StartButton>
+        </EmptyState>
+      )}
     </PageContainer>
   );
-
 };

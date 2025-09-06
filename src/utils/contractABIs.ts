@@ -291,7 +291,7 @@ export const CTOKEN_ABI: any = [
 export const BASE_LENDING_MARKET_ABI = CTOKEN_ABI;
 export const USDT_MARKET_ABI = CTOKEN_ABI;
 
-export const ERC20_ABI = [
+export const ERC20_ABI: any = [
   {
     "inputs": [
       {"internalType": "address", "name": "owner", "type": "address"},

@@ -18,7 +18,7 @@ import { ethers } from 'ethers';
 
 export type { TransactionResult } from './contractUtils';
 
-export { formatTokenAmount } from './contractUtils';
+// export { formatTokenAmount } from './contractUtils';
 
 // Contract addresses and config
 export {
@@ -70,16 +70,16 @@ export const parseContractError = (error: any): string => {
 };
 
 // Helper to format contract call results
-export const formatContractResult = (result: any, decimals: number = 18): string => {
-  try {
-    if (typeof result === 'bigint' || (result && result._isBigNumber)) {
-      return formatTokenAmount(BigInt(result.toString()), decimals);
-    }
-    return result.toString();
-  } catch {
-    return '0';
-  }
-};
+// export const formatContractResult = (result: any, decimals: number = 18): string => {
+//   try {
+//     if (typeof result === 'bigint' || (result && result._isBigNumber)) {
+//       return formatTokenAmount(BigInt(result.toString()), decimals);
+//     }
+//     return result.toString();
+//   } catch {
+//     return '0';
+//   }
+// };
 
 // Helper to validate transaction parameters
 export const validateTransactionParams = (

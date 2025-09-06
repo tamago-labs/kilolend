@@ -6,6 +6,8 @@ import { TokenDetailsModal } from './TokenDetailsModal';
 import { FaucetModal } from './FaucetModal';
 import { SupplyModal } from './SupplyModal';
 import { BorrowModal } from './BorrowModal';
+import { WithdrawModal } from './WithdrawModal';
+import { RepayModal } from './RepayModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -29,6 +31,28 @@ export const GlobalModalManager = () => {
           <BorrowModal
             isOpen={isOpen}
             onClose={closeModal}
+          />
+        );
+
+      case 'withdraw':
+        return (
+          <WithdrawModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            market={modalData.market}
+            currentSupply={modalData.currentSupply}
+            maxWithdraw={modalData.maxWithdraw}
+          />
+        );
+
+      case 'repay':
+        return (
+          <RepayModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            market={modalData.market}
+            currentDebt={modalData.currentDebt}
+            totalDebt={modalData.totalDebt}
           />
         );
 
@@ -79,17 +103,18 @@ export const GlobalModalManager = () => {
             placeholderText="Configure your preferences, notifications, and account settings. This feature will be available soon."
           />
         );
+
       case 'activities':
-          return (
-            <BlankModal
-              isOpen={isOpen}
-              onClose={closeModal}
-              title="Activity"
-              icon="⚙️"
-              placeholderTitle="Activity"
-              placeholderText="View your transaction history."
-            />
-          );
+        return (
+          <BlankModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            title="Activity"
+            icon="⚙️"
+            placeholderTitle="Activity"
+            placeholderText="View your transaction history."
+          />
+        );
 
       case 'learn':
         return (

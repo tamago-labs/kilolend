@@ -108,7 +108,7 @@ export const PRICE_API_CONFIG = {
 };
 
 // ERC20 ABI for token interactions
-export const ERC20_ABI = [
+export const ERC20_ABI: any = [
   "function name() view returns (string)",
   "function symbol() view returns (string)", 
   "function decimals() view returns (uint8)",

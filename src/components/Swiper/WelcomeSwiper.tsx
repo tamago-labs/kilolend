@@ -75,7 +75,7 @@ const slides = [
     subtitle: (
       <>
       The first <HighlightText>stablecoin-focused</HighlightText> decentralized lending 
-      with <HighlightText>AI</HighlightText> on <HighlightText2>LINE</HighlightText2> Mini Dapp
+      with <HighlightText>AI</HighlightText> on LINE Mini Dapp
     </>)
   },
   {
