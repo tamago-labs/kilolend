@@ -129,10 +129,10 @@ export const BorrowTransactionPreview = ({
       <OverviewTitle>Borrow Preview</OverviewTitle>
       
       <PreviewSection>
-        <PreviewRow>
+        {/* <PreviewRow>
           <PreviewLabel>Asset</PreviewLabel>
           <PreviewValue>{selectedAsset.symbol}</PreviewValue>
-        </PreviewRow>
+        </PreviewRow> */}
         <PreviewRow>
           <PreviewLabel>Borrow Amount</PreviewLabel>
           <PreviewValue>{amountNum.toFixed(4)} {selectedAsset.symbol}</PreviewValue>

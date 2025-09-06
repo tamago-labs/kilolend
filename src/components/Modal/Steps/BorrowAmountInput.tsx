@@ -191,6 +191,9 @@ interface BorrowAmountInputProps {
   borrowingPower: string;
   maxBorrowAmount: string;
   currentDebt: string;
+  availableLiquidity?: string;
+  isLiquidityLimited?: boolean;
+  maxFromCollateral?: string;
   onAmountChange: (amount: string) => void;
   onQuickAmountSelect: (percentage: number) => void;
   onMaxClick: () => void;
@@ -203,6 +206,9 @@ export const BorrowAmountInput = ({
   borrowingPower,
   maxBorrowAmount,
   currentDebt,
+  availableLiquidity,
+  isLiquidityLimited,
+  maxFromCollateral,
   onAmountChange,
   onQuickAmountSelect,
   onMaxClick
@@ -294,6 +300,20 @@ export const BorrowAmountInput = ({
         <BalanceValue>{maxBorrowNum.toFixed(4)} {selectedAsset.symbol}</BalanceValue>
       </BalanceInfo>
 
+      {availableLiquidity && (
+        <BalanceInfo>
+          <BalanceLabel>Market Liquidity:</BalanceLabel>
+          <BalanceValue>{parseFloat(availableLiquidity).toFixed(4)} {selectedAsset.symbol}</BalanceValue>
+        </BalanceInfo>
+      )}
+
+      {/* {isLiquidityLimited && maxFromCollateral && (
+        <BalanceInfo style={{ background: '#fef3c7', border: '1px solid #f59e0b' }}>
+          <BalanceLabel>⚠️ Limited by Liquidity:</BalanceLabel>
+          <BalanceValue>Max from collateral: {parseFloat(maxFromCollateral).toFixed(4)} {selectedAsset.symbol}</BalanceValue>
+        </BalanceInfo>
+      )} */}
+
       <BalanceInfo>
         <BalanceLabel>Current Debt:</BalanceLabel>
         <BalanceValue>{currentDebtNum.toFixed(4)} {selectedAsset.symbol}</BalanceValue>
@@ -313,6 +333,7 @@ export const BorrowAmountInput = ({
             You will borrow {amountNum.toFixed(4)} {selectedAsset.symbol} at {selectedAsset.borrowAPR.toFixed(2)}% APR. 
             Make sure you can repay this amount plus interest to avoid liquidation.
             {utilizationAfterBorrow > 80 && ' Your position will be at high risk of liquidation.'}
+            {isLiquidityLimited && ' This borrow amount is limited by available market liquidity.'}
           </WarningText>
         </WarningSection>
       )}

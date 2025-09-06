@@ -215,7 +215,7 @@ export const useMarketContract = (): MarketContractHook => {
   );
 
   const sendContractTransaction = useCallback(
-    async (marketId: MarketId, methodName: string, args: any[]): Promise<TransactionResult> => {
+    async (marketId: MarketId, methodName: string, args: any[], value?: string): Promise<TransactionResult> => {
       try {
         if (!account) {
           throw new Error('Wallet not connected');
@@ -226,15 +226,28 @@ export const useMarketContract = (): MarketContractHook => {
           throw new Error(`Market not available for ${methodName}`);
         }
 
+        console.log("value:", value)
+
         // Create contract interface for encoding transaction data
-        const iface = new ethers.Interface(CTOKEN_ABI);
+        const iface = new ethers.Interface(value ? [{
+          "inputs": [],
+          "name": "mint",
+          "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+          "stateMutability": "payable",
+          "type": "function"
+        }] : CTOKEN_ABI);   
         const data = iface.encodeFunctionData(methodName, args);
+
+        // For native KAIA, we need to send value with the transaction
+        const transactionValue = value || '0x0';
+
+        console.log("0xde0b6b3a7640000 : ",transactionValue )
 
         // Prepare transaction for LINE MiniDapp
         const transaction = {
           from: account,
-          to: marketConfig.marketAddress,
-          value: '0x0', // No ETH value for most market operations
+          to: marketConfig.marketAddress, 
+          value: transactionValue,
           gas: '0x927C0', // 600000 gas limit - adjust as needed
           data: data
         };
@@ -243,6 +256,7 @@ export const useMarketContract = (): MarketContractHook => {
           to: marketConfig.marketAddress,
           methodName,
           args,
+          value: transactionValue,
           data
         });
 
@@ -268,8 +282,19 @@ export const useMarketContract = (): MarketContractHook => {
 
   const supply = useCallback(
     async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const parsedAmount = parseTokenAmount(amount, MARKET_CONFIG[marketId].decimals);
-      return sendContractTransaction(marketId, 'mint', [parsedAmount]);
+      const marketConfig = MARKET_CONFIG[marketId];
+      
+      // For native KAIA, we need to send the value with the transaction
+      if (marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
+        // Native KAIA - send value with mint() call
+        const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
+        const hexValue = '0x' + parsedAmount.toString(16);
+        return sendContractTransaction(marketId, 'mint', [], hexValue);
+      } else {
+        // ERC20 token - normal mint with amount parameter
+        const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
+        return sendContractTransaction(marketId, 'mint', [parsedAmount]);
+      }
     },
     [sendContractTransaction]
   );

@@ -200,7 +200,7 @@ export const BorrowAssetSelection = ({
                 <AssetName>{market.symbol}</AssetName>
                 <AssetDetails>
                   <span>Borrow APR: {market.borrowAPR.toFixed(2)}%</span>
-                  <span>Liquidity: {formatUSD(market.totalSupply)}</span>
+                  <span>Available: {formatUSD(parseFloat(`${market.totalSupply}` || '0') - parseFloat(`${market.totalBorrow}` || '0'))}</span>
                 </AssetDetails>
               </AssetInfo>
               <AssetBalance>

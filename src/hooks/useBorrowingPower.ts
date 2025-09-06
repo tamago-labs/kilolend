@@ -17,6 +17,9 @@ export interface MarketBorrowingData {
   maxBorrowAmount: string;
   currentDebt: string;
   collateralFactor: number;
+  availableLiquidity?: string;
+  isLiquidityLimited?: boolean;
+  maxFromCollateral?: string;
 }
 
 export const useBorrowingPower = () => {
@@ -115,7 +118,7 @@ export const useBorrowingPower = () => {
         const position = await getUserPosition(marketId, userAddress);
         const currentDebt = position?.borrowBalance || '0';
 
-        // Calculate max borrow amount based on remaining borrowing power
+        // Calculate max borrow based on remaining borrowing power
         const remainingPower = new BigNumber(
           borrowingPower.borrowingPowerRemaining
         );
@@ -123,14 +126,49 @@ export const useBorrowingPower = () => {
 
         // Apply safety margin (e.g., 95% of available power)
         const safetyMargin = new BigNumber(0.95);
-        const maxBorrowAmount = remainingPower
+        const maxBorrowFromPower = remainingPower
           .multipliedBy(safetyMargin)
           .dividedBy(assetPrice);
+
+        // Get available liquidity from market
+        // Calculate available liquidity more accurately
+        const totalSupplyUSD = new BigNumber(market.totalSupply || '0');
+        const totalBorrowUSD = new BigNumber(market.totalBorrow || '0');
+        const availableLiquidityUSD = totalSupplyUSD.minus(totalBorrowUSD);
+        const availableLiquidity = availableLiquidityUSD.dividedBy(assetPrice);
+        
+        // Ensure liquidity is positive
+        const safeLiquidity = BigNumber.max(availableLiquidity, 0);
+
+        // The actual max borrow is the minimum of:
+        // 1. What the user can borrow based on collateral
+        // 2. What's available in the market (with small buffer for interest)
+        const liquidityBuffer = new BigNumber(0.98); // 2% buffer for accrued interest
+        const availableWithBuffer = safeLiquidity.multipliedBy(liquidityBuffer);
+        const maxBorrowAmount = BigNumber.min(maxBorrowFromPower, availableWithBuffer);
+        
+        const isLiquidityLimited = maxBorrowFromPower.isGreaterThan(availableWithBuffer);
+
+        console.log(`Max borrow calculation for ${marketId}:`, {
+          remainingPower: `${remainingPower.toFixed(2)}`,
+          assetPrice: `${assetPrice.toFixed(6)}`,
+          maxBorrowFromPower: `${maxBorrowFromPower.toFixed(6)} ${market.symbol}`,
+          availableLiquidityUSD: `${availableLiquidityUSD.toFixed(2)}`,
+          availableLiquidity: `${safeLiquidity.toFixed(6)} ${market.symbol}`,
+          availableWithBuffer: `${availableWithBuffer.toFixed(6)} ${market.symbol}`,
+          finalMaxBorrow: `${maxBorrowAmount.toFixed(6)} ${market.symbol}`,
+          isLiquidityLimited,
+          limitingFactor: isLiquidityLimited ? 'Market Liquidity' : 'User Collateral'
+        });
 
         return {
           maxBorrowAmount: maxBorrowAmount.toFixed(6),
           currentDebt,
           collateralFactor: getCollateralFactor(marketId),
+          // Additional info for UI
+          availableLiquidity: safeLiquidity.toFixed(6),
+          isLiquidityLimited,
+          maxFromCollateral: maxBorrowFromPower.toFixed(6)
         };
       } catch (error) {
         console.error('Error calculating max borrow amount:', error);
@@ -138,6 +176,9 @@ export const useBorrowingPower = () => {
           maxBorrowAmount: '0',
           currentDebt: '0',
           collateralFactor: 0,
+          availableLiquidity: '0',
+          isLiquidityLimited: false,
+          maxFromCollateral: '0'
         };
       }
     },

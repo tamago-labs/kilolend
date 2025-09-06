@@ -303,6 +303,9 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
             borrowingPower={borrowingPowerData?.borrowingPowerRemaining || '0'}
             maxBorrowAmount={maxBorrowData.maxBorrowAmount || '0'}
             currentDebt={maxBorrowData.currentDebt || '0'}
+            availableLiquidity={maxBorrowData.availableLiquidity}
+            isLiquidityLimited={maxBorrowData.isLiquidityLimited}
+            maxFromCollateral={maxBorrowData.maxFromCollateral}
             onAmountChange={(value) => {
               setAmount(value);
               setSelectedQuickAmount(null);
