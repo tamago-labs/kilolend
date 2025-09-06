@@ -61,12 +61,14 @@ interface SupplyTransactionPreviewProps {
   selectedAsset: ContractMarket;
   amount: string;
   isLoading?: boolean;
+  needsApproval?: boolean;
 }
 
 export const SupplyTransactionPreview = ({
   selectedAsset,
   amount,
-  isLoading = false
+  isLoading = false,
+  needsApproval = false
 }: SupplyTransactionPreviewProps) => {
   const usdValue = amount && selectedAsset ? parseFloat(amount) * selectedAsset.price : 0;
   const expectedCTokens = parseFloat(amount || '0') * 5; // Simplified calculation
@@ -93,9 +95,9 @@ export const SupplyTransactionPreview = ({
           <PreviewValue>{selectedAsset.supplyAPY.toFixed(2)}%</PreviewValue>
         </PreviewRow>
         <PreviewRow>
-          <PreviewLabel>Est. Gas Fee</PreviewLabel>
-          <PreviewValue>~$0.05</PreviewValue>
-        </PreviewRow>
+          <PreviewLabel>Token Approval</PreviewLabel>
+          <PreviewValue>{needsApproval ? 'Required' : 'Not Required'}</PreviewValue>
+        </PreviewRow> 
         <PreviewRow>
           <PreviewLabel>You will receive</PreviewLabel>
           <PreviewValue>{expectedCTokens.toFixed(2)} c{selectedAsset.symbol}</PreviewValue>
@@ -109,6 +111,7 @@ export const SupplyTransactionPreview = ({
             ? ' This asset can be used as collateral for borrowing.' 
             : ' Your supplied assets will be available for others to borrow.'
           }
+          {needsApproval && ' You will need to approve token spending first.'}
         </WarningText>
       </WarningSection>
     </div>

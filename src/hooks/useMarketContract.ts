@@ -85,28 +85,36 @@ export const useMarketContract = (): MarketContractHook => {
         borrowRatePerBlock: borrowRatePerBlock.toString(),
       });
 
-      // Calculate utilization rate: totalBorrows / (getCash + totalBorrows)
-      const totalLiquidity = getCash + totalBorrows;
-      const utilization = totalLiquidity > 0 ? Number(totalBorrows * 10000 / totalLiquidity) / 100 : 0;
+      // Calculate utilization rate using BigNumber for precision
+      const totalLiquidityBN = new BigNumber(getCash.toString()).plus(totalBorrows.toString());
+      const utilizationBN = totalLiquidityBN.isGreaterThan(0) 
+        ? new BigNumber(totalBorrows.toString()).dividedBy(totalLiquidityBN).multipliedBy(100)
+        : new BigNumber(0);
 
-      // Convert per-block rates to APY (assuming ~2 seconds per block on Kaia)
-      const blocksPerYear = (365 * 24 * 60 * 60) / 2; // ~15768000 blocks per year
-      const supplyAPY = new BigNumber(supplyRatePerBlock).multipliedBy( BigNumber(blocksPerYear)).dividedBy(10**16)
-      const borrowAPR = new BigNumber(borrowRatePerBlock).multipliedBy( BigNumber(blocksPerYear)).dividedBy(10**16)
+      // Convert per-block rates to APY using BigNumber (assuming ~2 seconds per block on Kaia)
+      const blocksPerYear = new BigNumber(365).multipliedBy(24).multipliedBy(60).multipliedBy(60).dividedBy(2);
+      const supplyAPYBN = new BigNumber(supplyRatePerBlock.toString())
+        .multipliedBy(blocksPerYear)
+        .dividedBy(new BigNumber(10).pow(18))
+        .multipliedBy(100);
+      const borrowAPRBN = new BigNumber(borrowRatePerBlock.toString())
+        .multipliedBy(blocksPerYear)
+        .dividedBy(new BigNumber(10).pow(18))
+        .multipliedBy(100);
 
       console.log(`Real rates for ${marketId}:`, {
-        utilization,
-        supplyAPY: supplyAPY.toString(),
-        borrowAPR: borrowAPR.toString(),
-        totalLiquidity: totalLiquidity.toString()
+        utilization: utilizationBN.toString(),
+        supplyAPY: supplyAPYBN.toString(),
+        borrowAPR: borrowAPRBN.toString(),
+        totalLiquidity: totalLiquidityBN.toString()
       });
 
       return {
         totalSupply: ethers.formatUnits(totalSupply, 8), // cTokens have 8 decimals
         totalBorrow: formatTokenAmount(totalBorrows, marketConfig.decimals),
-        supplyAPY: Number(supplyAPY.toString()),
-        borrowAPR: Number(borrowAPR.toString()),
-        utilizationRate: utilization,
+        supplyAPY: supplyAPYBN.toNumber(),
+        borrowAPR: borrowAPRBN.toNumber(),
+        utilizationRate: utilizationBN.toNumber(),
         exchangeRate: ethers.formatUnits(exchangeRate, 18),
       };
     } catch (error) {
@@ -139,10 +147,13 @@ export const useMarketContract = (): MarketContractHook => {
           return null;
         }
   
-        const supplyBalance = new BigNumber(cTokenBalance).multipliedBy( BigNumber(exchangeRateMantissa) ).dividedBy(10**18)
+        // Calculate supply balance from cToken balance and exchange rate using BigNumber
+        const supplyBalanceBN = new BigNumber(cTokenBalance.toString())
+          .multipliedBy(new BigNumber(exchangeRateMantissa.toString()))
+          .dividedBy(new BigNumber(10).pow(18));
 
         return {
-          supplyBalance: formatTokenAmount(BigInt(supplyBalance.toString()), marketConfig.decimals),
+          supplyBalance: formatTokenAmount(BigInt(supplyBalanceBN.toString()), marketConfig.decimals),
           borrowBalance: formatTokenAmount(borrowBalance, marketConfig.decimals),
           collateralValue: '0', // This would come from comptroller
           maxBorrowAmount: '0', // This would come from comptroller

@@ -34,9 +34,23 @@ const AssetCard = styled.div<{ $selected: boolean }>`
   }
 `;
 
-const AssetIcon = styled.img`
+const AssetIcon = styled.div`
   width: 40px;
   height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #64748b;
+`;
+
+const AssetIconImage = styled.img`
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   object-fit: cover;
 `;
@@ -131,7 +145,19 @@ export const SupplyAssetSelection = ({
             $selected={selectedAsset?.id === market.id}
             onClick={() => onAssetSelect(market)}
           >
-            <AssetIcon src={market.icon} alt={market.symbol} />
+            <AssetIcon>
+              <AssetIconImage 
+                src={market.icon} 
+                alt={market.symbol}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.style.display = 'none';
+                  if (target.parentElement) {
+                    target.parentElement.innerHTML = market.symbol.charAt(0);
+                  }
+                }}
+              />
+            </AssetIcon>
             <AssetInfo>
               <AssetName>{market.symbol}</AssetName>
               <AssetDetails>

@@ -9,6 +9,7 @@ import { useMarketContract, MarketInfo, TransactionResult } from '@/hooks/useMar
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
 import { useMarketData } from '@/hooks/useMarketData';
+import { useTokenApproval } from '@/hooks/useTokenApproval';
 import { 
   SupplyAssetSelection,
   SupplyAmountInput,
@@ -91,15 +92,6 @@ const NavButton = styled.button<{ $primary?: boolean }>`
   `}
 `;
 
-const LoadingMessage = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  color: #64748b;
-  font-size: 14px;
-`;
-
 const ErrorMessage = styled.div`
   background: #fef2f2;
   border: 1px solid #ef4444;
@@ -107,6 +99,16 @@ const ErrorMessage = styled.div`
   padding: 12px 16px;
   margin-bottom: 16px;
   color: #dc2626;
+  font-size: 14px;
+`;
+
+const ApprovalMessage = styled.div`
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #0369a1;
   font-size: 14px;
 `;
 
@@ -121,6 +123,8 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const [amount, setAmount] = useState('');
   const [selectedQuickAmount, setSelectedQuickAmount] = useState<number | null>(null);
   const [isTransacting, setIsTransacting] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [needsApproval, setNeedsApproval] = useState(false);
   const [transactionResult, setTransactionResult] = useState<TransactionResult | null>(null);
 
   const { markets } = useContractMarketStore();
@@ -128,6 +132,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const { supply } = useMarketContract();
   const { balances: tokenBalances, isLoading: balancesLoading } = useMarketTokenBalances();
   const { isLoading: marketDataLoading } = useMarketData();
+  const { checkAllowance, ensureApproval } = useTokenApproval();
 
   const totalSteps = 4;
 
@@ -138,10 +143,30 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     return acc;
   }, {} as Record<string, string>);
 
+  // Check if approval is needed when amount changes
+  useEffect(() => {
+    const checkApprovalNeeded = async () => {
+      if (selectedAsset && amount && parseFloat(amount) > 0) {
+        try {
+          const { hasEnoughAllowance } = await checkAllowance(selectedAsset.id, amount);
+          setNeedsApproval(!hasEnoughAllowance);
+        } catch (error) {
+          console.error('Error checking allowance:', error);
+          setNeedsApproval(false);
+        }
+      } else {
+        setNeedsApproval(false);
+      }
+    };
+
+    checkApprovalNeeded();
+  }, [selectedAsset, amount, checkAllowance]);
+
   const handleAssetSelect = (asset: any) => {
     setSelectedAsset(asset);
     setAmount('');
     setSelectedQuickAmount(null);
+    setNeedsApproval(false);
   };
 
   const handleQuickAmount = (percentage: number) => {
@@ -188,21 +213,43 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     setIsTransacting(true);
     
     try {
+      // Step 1: Handle approval if needed
+      if (needsApproval) {
+        setIsApproving(true);
+        console.log(`Token approval needed for ${selectedAsset.symbol}`);
+        
+        const approvalResult = await ensureApproval(selectedAsset.id, amount);
+        
+        if (!approvalResult.success) {
+          throw new Error(approvalResult.error || 'Token approval failed');
+        }
+        
+        console.log(`Token approval successful for ${selectedAsset.symbol}`);
+        setIsApproving(false);
+        setNeedsApproval(false);
+      }
+      
+      // Step 2: Execute supply transaction
+      console.log(`Starting supply transaction for ${amount} ${selectedAsset.symbol}`);
       const result = await supply(selectedAsset.id, amount);
       setTransactionResult(result);
       
       if (result.status === 'confirmed') {
+        console.log(`Supply successful: ${amount} ${selectedAsset.symbol} supplied`);
         setCurrentStep(4);
+      } else {
+        throw new Error(result.error || 'Supply transaction failed');
       }
     } catch (error) {
-      console.error('Supply failed:', error);
+      console.error('Supply process failed:', error);
       setTransactionResult({
         hash: '',
         status: 'failed',
-        error: 'Transaction failed. Please try again.'
+        error: error instanceof Error ? error.message : 'Transaction failed. Please try again.'
       });
     } finally {
       setIsTransacting(false);
+      setIsApproving(false);
     }
   };
 
@@ -241,6 +288,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
             selectedAsset={selectedAsset}
             amount={amount}
             isLoading={isTransacting}
+            needsApproval={needsApproval}
           />
         ) : null;
 
@@ -267,6 +315,8 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       setAmount('');
       setSelectedQuickAmount(null);
       setIsTransacting(false);
+      setIsApproving(false);
+      setNeedsApproval(false);
       setTransactionResult(null);
     }
   }, [isOpen]);
@@ -294,6 +344,12 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
               {transactionResult.error}
             </ErrorMessage>
           )}
+
+          {needsApproval && currentStep === 3 && (
+            <ApprovalMessage>
+              You need to approve {selectedAsset?.symbol} spending before supplying. This will require a separate transaction.
+            </ApprovalMessage>
+          )}
           
           {renderStepContent()}
         </StepContent>
@@ -311,10 +367,13 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
               onClick={currentStep === 3 ? handleConfirm : handleNext}
             >
               {isTransacting ? (
-                'Processing...'
+                isApproving ? 'Approving Token...' : 'Confirming Supply...'
               ) : (
                 <>
-                  {currentStep === 3 ? 'Confirm Supply' : 'Next'}
+                  {currentStep === 3 ? 
+                    (needsApproval ? 'Approve & Supply' : 'Confirm Supply') : 
+                    'Next'
+                  }
                   {currentStep < 3 && <ChevronRight size={16} style={{ marginLeft: '4px' }} />}
                 </>
               )}

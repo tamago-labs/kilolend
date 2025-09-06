@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import BigNumber from 'bignumber.js';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract } from './useMarketContract';
 import { MARKET_CONFIG, MarketId } from '@/utils/contractConfig';
@@ -27,7 +28,16 @@ export const useMarketData = () => {
       
       if (marketInfo) {
         console.log(`Market info for ${marketId}:`, marketInfo);
-        updateMarketData(marketId, marketInfo);
+        
+        // Use BigNumber for safe calculations
+        const safeMarketInfo = {
+          ...marketInfo,
+          supplyAPY: new BigNumber(marketInfo.supplyAPY || 0).toNumber(),
+          borrowAPR: new BigNumber(marketInfo.borrowAPR || 0).toNumber(),
+          utilizationRate: new BigNumber(marketInfo.utilizationRate || 0).toNumber()
+        };
+        
+        updateMarketData(marketId, safeMarketInfo);
       } else {
         console.warn(`No market info returned for ${marketId}`);
       }
