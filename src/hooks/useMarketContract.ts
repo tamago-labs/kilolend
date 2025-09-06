@@ -37,7 +37,7 @@ export interface TransactionResult {
 
 interface MarketContractHook {
   getMarketInfo: (marketId: MarketId) => Promise<MarketInfo | null>;
-  getUserPosition: (marketId: MarketId, userAddress: string) => Promise<UserPosition | null>;
+  getUserPosition: (marketId: any, userAddress: string) => Promise<UserPosition | null>;
   supply: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
   withdraw: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
   borrow: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
@@ -126,9 +126,10 @@ export const useMarketContract = (): MarketContractHook => {
   }, []);
 
   const getUserPosition = useCallback(
-    async (marketId: MarketId, userAddress: string): Promise<UserPosition | null> => {
+    async (marketId: any, userAddress: string): Promise<UserPosition | null> => {
       try {
-        const marketConfig = MARKET_CONFIG[marketId];
+        const CONFIG: any = MARKET_CONFIG
+        const marketConfig = CONFIG[marketId];
         if (!marketConfig.marketAddress) return null;
 
         const contract = await getContract(marketConfig.marketAddress, CTOKEN_ABI, false);
