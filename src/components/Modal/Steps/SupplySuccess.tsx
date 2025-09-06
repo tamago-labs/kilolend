@@ -1,15 +1,23 @@
 'use client';
 
 import styled from 'styled-components';
-import { TrendingUp } from 'react-feather';
+import { CheckCircle } from 'react-feather';
 
 const SuccessContainer = styled.div`
   text-align: center;
   padding: 40px 20px;
 `;
 
+
 const SuccessIcon = styled.div`
-  margin-bottom: 16px;
+  width: 80px;
+  height: 80px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px auto;
 `;
 
 const SuccessTitle = styled.h3`
@@ -72,7 +80,7 @@ export const SupplySuccess = ({
   return (
     <SuccessContainer>
       <SuccessIcon>
-        <TrendingUp size={48} color="#06C755" />
+       <CheckCircle size={40} color="white" />
       </SuccessIcon>
       <SuccessTitle>Supply Successful!</SuccessTitle>
       <SuccessMessage>

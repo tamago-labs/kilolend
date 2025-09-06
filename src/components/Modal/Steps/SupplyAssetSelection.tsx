@@ -161,12 +161,13 @@ export const SupplyAssetSelection = ({
             <AssetInfo>
               <AssetName>{market.symbol}</AssetName>
               <AssetDetails>
-                {market.isCollateralOnly ? 'Collateral Only' : `Utilization: ${market.utilization.toFixed(1)}%`}
+                {/* {market.isCollateralOnly ? 'Collateral Only' : `Utilization: ${market.utilization.toFixed(1)}%`} */}
+                {market.isCollateralOnly && 'Collateral Only • '}
+                Liquidity: ${market.totalSupply}
               </AssetDetails>
             </AssetInfo>
             <AssetMetrics>
-              <APYValue>{market.supplyAPY.toFixed(1)}%</APYValue>
-              <APYLabel>APY</APYLabel>
+              <APYValue>{market.supplyAPY.toFixed(1)}%</APYValue> 
               <BalanceValue>
                 Balance: {isLoading ? 'Loading...' : (userBalances[market.symbol] || '0.00')} {market.symbol}
               </BalanceValue>

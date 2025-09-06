@@ -94,10 +94,10 @@ export const SupplyTransactionPreview = ({
           <PreviewLabel>Supply APY</PreviewLabel>
           <PreviewValue>{selectedAsset.supplyAPY.toFixed(2)}%</PreviewValue>
         </PreviewRow>
-        <PreviewRow>
+        {/*<PreviewRow>
           <PreviewLabel>Token Approval</PreviewLabel>
           <PreviewValue>{needsApproval ? 'Required' : 'Not Required'}</PreviewValue>
-        </PreviewRow> 
+        </PreviewRow> */}
         <PreviewRow>
           <PreviewLabel>You will receive</PreviewLabel>
           <PreviewValue>{expectedCTokens.toFixed(2)} c{selectedAsset.symbol}</PreviewValue>

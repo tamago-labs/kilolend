@@ -25,7 +25,7 @@ export const CONTRACT_ADDRESSES = {
   cSIX: '0x772195938d86fcf500dF18563876d7Cefcf47e4D',  // Volatile
   cBORA: '0x260fC7251fAe677B6254773d347121862336fb9f', // Volatile
   cMBX: '0x10bB22532eC21Fd25719565f440b0322c010bDF3',  // Volatile
-  cKAIA: '0xf13D09eD3cbdD1C930d4de74808de1f33B6b3D4f', // Collateral Only
+  cKAIA: '0x307992307C89216b1079C7c5Cbc4F51005b1472D', // Collateral Only
   
   // Underlying Token Contracts (will be fetched from cTokens)
   USDT: '0x5F7392Ec616F829Ab54092e7F167F518835Ac740', // 6 decimals

@@ -68,7 +68,7 @@ const AssetDetails = styled.div`
   display: flex;
   gap: 16px;
   color: #64748b;
-  font-size: 14px;
+  font-size: 12px;
 `;
 
 const AssetBalance = styled.div`
@@ -198,7 +198,7 @@ export const BorrowAssetSelection = ({
               <AssetInfo>
                 <AssetName>{market.symbol}</AssetName>
                 <AssetDetails>
-                  <span>APR: {market.borrowAPR.toFixed(2)}%</span>
+                  <span>Borrow APR: {market.borrowAPR.toFixed(2)}%</span>
                   <span>Liquidity: ${market.totalSupply}</span>
                 </AssetDetails>
               </AssetInfo>

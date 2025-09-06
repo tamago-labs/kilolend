@@ -141,7 +141,7 @@ const initialContractMarkets: ContractMarket[] = [
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
     iconType: 'image' as const,
     description: 'Native KAIA token - collateral only',
-    marketAddress: '0xf13D09eD3cbdD1C930d4de74808de1f33B6b3D4f',
+    marketAddress: '0x307992307C89216b1079C7c5Cbc4F51005b1472D',
     tokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
     decimals: 18,
     supplyAPY: 0.1,
