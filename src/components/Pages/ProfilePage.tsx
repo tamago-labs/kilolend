@@ -10,6 +10,7 @@ import { PRICE_API_CONFIG, KAIA_TESTNET_TOKENS } from '@/utils/tokenConfig';
 import Blockies from 'react-blockies';
 import { RefreshCw, HelpCircle, MessageCircle } from 'react-feather';
 
+
 const PageContainer = styled.div`
   flex: 1;
   padding: 20px 16px;
@@ -55,12 +56,10 @@ const ProfileSection = styled.div`
 const ProfileHeader = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: 16px; 
 
   @media (max-width: 480px) {
-    gap: 12px;
-    margin-bottom: 16px;
+    gap: 12px; 
   }
 `;
 
@@ -101,6 +100,30 @@ const ProfileName = styled.h2`
   }
 `;
 
+const OverviewContainer = styled.div`
+  display: flex;
+  gap: 12px; 
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const LeftSection = styled.div`
+  
+  
+   width: 320px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
+`;
+
+const RightSection = styled.div`
+ flex: 1;
+  min-width: 0;
+`;
+
 const WalletAddress = styled.div`
   font-family: monospace;
   font-size: 14px;
@@ -114,8 +137,7 @@ const WalletAddress = styled.div`
 
 const TotalBalanceSection = styled.div`
   text-align: center;
-  padding: 20px 0;
-  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 3px;
 `;
 
 const TotalBalanceLabel = styled.div`
@@ -381,7 +403,7 @@ const SupportButton = styled.button<{ $primary?: boolean }>`
   transition: all 0.2s;
   border: 1px solid;
 
-  ${({ $primary }) => $primary 
+  ${({ $primary }) => $primary
     ? `
       background: linear-gradient(135deg, #00C300, #00A000);
       color: white;
@@ -428,14 +450,14 @@ export const ProfilePage = () => {
   const { account } = useWalletAccountStore();
   const { balances, isLoading, refreshBalances } = useTokenBalances();
   const { openModal } = useModalStore();
-  
+
   const [lineProfile, setLineProfile] = useState<LineProfile | null>(null);
   const [totalUSDValue, setTotalUSDValue] = useState<number>(0);
 
   // Get prices for tokens we have API data for
   const apiTokens = PRICE_API_CONFIG.supportedTokens;
   const { prices, getFormattedPrice, getFormattedChange, isLoading: pricesLoading } = usePriceUpdates({
-    symbols: ["MBX",...apiTokens]
+    symbols: ["MBX", ...apiTokens]
   });
 
 
@@ -443,7 +465,7 @@ export const ProfilePage = () => {
   useEffect(() => {
     // TODO: Replace with actual LINE LIFF integration
     const mockLineProfile = null; // Set to null to use blockie for now
-    
+
     if (mockLineProfile) {
       setLineProfile(mockLineProfile);
     }
@@ -452,17 +474,17 @@ export const ProfilePage = () => {
   // Calculate total USD value using only real price data
   useEffect(() => {
     let total = 0;
-    
+
     balances.forEach(balance => {
       // Handle MBX -> MARBLEX mapping for price lookup
       const priceKey = balance.symbol === 'MBX' ? 'MBX' : balance.symbol;
       const price = prices[priceKey];
-      
+
       if (price && parseFloat(balance.balance) > 0) {
         total += parseFloat(balance.balance) * price.price;
       }
     });
-    
+
     setTotalUSDValue(total);
   }, [balances, prices]);
 
@@ -474,13 +496,13 @@ export const ProfilePage = () => {
     supportedTokenSymbols.forEach(symbol => {
       // Find existing balance
       const existingBalance = balances.find(b => b.symbol === symbol);
-      
+
       if (existingBalance) {
         // Use existing balance data
         tokensList.push(existingBalance);
       } else {
         // Create placeholder for tokens with zero balance
-        const tokenConfig = symbol === 'KAIA' ? 
+        const tokenConfig = symbol === 'KAIA' ?
           {
             symbol: 'KAIA',
             name: 'KAIA',
@@ -492,18 +514,18 @@ export const ProfilePage = () => {
             isLoading: false,
             error: null
           } :
-          KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS] ? 
-          {
-            symbol,
-            name: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].name,
-            balance: '0',
-            formattedBalance: '0',
-            decimals: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].decimals,
-            icon: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].icon,
-            iconType: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].iconType,
-            isLoading: false,
-            error: null
-          } : null;
+          KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS] ?
+            {
+              symbol,
+              name: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].name,
+              balance: '0',
+              formattedBalance: '0',
+              decimals: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].decimals,
+              icon: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].icon,
+              iconType: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].iconType,
+              isLoading: false,
+              error: null
+            } : null;
 
         if (tokenConfig) {
           tokensList.push(tokenConfig);
@@ -519,7 +541,7 @@ export const ProfilePage = () => {
   const handleTokenClick = (tokenSymbol: string) => {
     // Handle MBX -> MARBLEX mapping for price lookup
     const priceKey = tokenSymbol === 'MBX' ? 'MBX' : tokenSymbol;
-    
+
     const tokenData = {
       symbol: tokenSymbol,
       balance: balances.find(b => b.symbol === tokenSymbol) || {
@@ -529,7 +551,7 @@ export const ProfilePage = () => {
       },
       price: prices[priceKey]
     };
-    
+
     openModal('token-details', tokenData);
   };
 
@@ -565,46 +587,64 @@ export const ProfilePage = () => {
   return (
     <PageContainer>
       <PageTitle>Profile</PageTitle>
-        <PageSubtitle>
-          View and manage your account details
-        </PageSubtitle>
+      <PageSubtitle>
+        View and manage your account details
+      </PageSubtitle>
 
 
 
       {/* Profile Section */}
-      <ProfileSection>
-        <ProfileHeader>
-          <ProfileAvatar>
-            {lineProfile?.pictureUrl ? (
-              <LineProfilePicture src={lineProfile.pictureUrl} alt="Profile" />
-            ) : (
-              <Blockies seed={account} size={8} scale={8} />
-            )}
-          </ProfileAvatar>
-          <ProfileInfo>
-            <ProfileName>
-              {lineProfile?.displayName || 'Wallet User'}
-            </ProfileName>
-            <WalletAddress>
-              {formatAddress(account)}
-            </WalletAddress>
-          </ProfileInfo>
-        </ProfileHeader>
-        
-        <TotalBalanceSection>
-          <TotalBalanceLabel>Total Portfolio Value</TotalBalanceLabel>
-          <TotalBalanceValue>
-            ${totalUSDValue.toFixed(2)}
-          </TotalBalanceValue>
-        </TotalBalanceSection>
-      </ProfileSection>
+
+      <OverviewContainer>
+        <LeftSection>
+          <ProfileSection>
+
+            <ProfileHeader>
+              <ProfileAvatar>
+                {lineProfile?.pictureUrl ? (
+                  <LineProfilePicture src={lineProfile.pictureUrl} alt="Profile" />
+                ) : (
+                  <Blockies seed={account} size={8} scale={8} />
+                )}
+              </ProfileAvatar>
+              <ProfileInfo>
+                <ProfileName>
+                  {lineProfile?.displayName || 'Wallet User'}
+                </ProfileName>
+                <WalletAddress>
+                  {formatAddress(account)}
+                </WalletAddress>
+              </ProfileInfo>
+            </ProfileHeader>
+
+
+          </ProfileSection>
+        </LeftSection>
+        <RightSection>
+          <ProfileSection>
+
+            <TotalBalanceSection>
+              <TotalBalanceLabel>Total Portfolio Value</TotalBalanceLabel>
+              <TotalBalanceValue>
+                ${totalUSDValue.toFixed(2)}
+              </TotalBalanceValue>
+            </TotalBalanceSection>
+
+
+
+          </ProfileSection>
+        </RightSection>
+
+      </OverviewContainer>
+
+
 
       {/* Tokens Section */}
       <TokensSection>
         <SectionHeader>
           <SectionTitle>Available Tokens</SectionTitle>
           <HeaderActions>
-            <FaucetButton onClick={handleOpenFaucet}> 
+            <FaucetButton onClick={handleOpenFaucet}>
               Get Test Tokens
             </FaucetButton>
             <RefreshButton onClick={handleRefresh} $loading={isLoading}>
@@ -621,7 +661,7 @@ export const ProfilePage = () => {
             {displayTokens.map((token: any) => {
               // Handle MBX -> MARBLEX mapping for price lookup
               const priceKey = token.symbol === 'MBX' ? 'MBX' : token.symbol;
- 
+
               const priceData = prices[priceKey];
               const change = getFormattedChange(priceKey);
               const currentPrice = getFormattedPrice(priceKey);
@@ -629,14 +669,14 @@ export const ProfilePage = () => {
               const usdValue = priceData && hasBalance ? parseFloat(token.balance) * priceData.price : 0;
 
               return (
-                <TokenRow 
-                  key={token.symbol} 
+                <TokenRow
+                  key={token.symbol}
                   $hasBalance={hasBalance}
                   onClick={() => handleTokenClick(token.symbol)}
                 >
                   <TokenIcon>
-                    <TokenIconImage 
-                      src={token.icon} 
+                    <TokenIconImage
+                      src={token.icon}
                       alt={token.symbol}
                       onError={(e) => {
                         const img = e.target as HTMLImageElement;
@@ -647,7 +687,7 @@ export const ProfilePage = () => {
                       }}
                     />
                   </TokenIcon>
-                  
+
                   <TokenInfo>
                     <TokenName>{token.name}</TokenName>
                     {priceData ? (
@@ -661,10 +701,10 @@ export const ProfilePage = () => {
                       </TokenPrice>
                     )}
                   </TokenInfo>
-                  
+
                   <TokenBalance>
                     <TokenBalanceAmount $hasBalance={hasBalance}>
-                      {hasBalance ? 
+                      {hasBalance ?
                         `${parseFloat(token.formattedBalance).toFixed(4)} ${token.symbol}` :
                         <ZeroBalanceText>0 {token.symbol}</ZeroBalanceText>
                       }
