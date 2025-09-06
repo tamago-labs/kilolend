@@ -9,6 +9,7 @@ import { useMarketContract } from '@/hooks/useMarketContract';
 import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
 import { useBorrowingPower } from '@/hooks/useBorrowingPower';
 import { useModalStore } from '@/stores/modalStore';
+import { PortfolioOverview } from '../Portfolio/PortfolioOverview';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -262,7 +263,6 @@ interface Position {
 
 export const PortfolioPage = () => {
 
-
   const [positions, setPositions] = useState<Position[]>([]);
   const [portfolioStats, setPortfolioStats] = useState({
     totalSupplyValue: 0,
@@ -270,6 +270,7 @@ export const PortfolioPage = () => {
     netPortfolioValue: 0,
     healthFactor: 999
   });
+  const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const { account } = useWalletAccountStore();
@@ -279,10 +280,11 @@ export const PortfolioPage = () => {
   const { calculateBorrowingPower } = useBorrowingPower();
   const { openModal } = useModalStore();
 
-  // Fetch user positions
+  // Fetch user positions and borrowing power
   const fetchPositions = useCallback(async () => {
     if (!account || !markets.length) {
       setPositions([]);
+      setBorrowingPowerData(null);
       return;
     }
 
@@ -292,12 +294,14 @@ export const PortfolioPage = () => {
       const userPositions: Position[] = [];
 
       // Get borrowing power data
-      const borrowingPowerData = await calculateBorrowingPower(account);
+      const borrowingPower = await calculateBorrowingPower(account);
+      setBorrowingPowerData(borrowingPower);
 
       for (const market of markets) {
         if (!market.isActive || !market.marketAddress) continue;
 
-        const position = await getUserPosition(market.id, account);
+        const m: any = market
+        const position = await getUserPosition(m.id, account);
         if (!position) continue;
 
         const supplyBalance = parseFloat(position.supplyBalance || '0');
@@ -336,7 +340,7 @@ export const PortfolioPage = () => {
       const totalSupplyValue = userPositions
         .filter(p => p.type === 'supply')
         .reduce((sum, p) => sum + p.usdValue, 0);
-
+      
       const totalBorrowValue = userPositions
         .filter(p => p.type === 'borrow')
         .reduce((sum, p) => sum + p.usdValue, 0);
@@ -345,7 +349,7 @@ export const PortfolioPage = () => {
         totalSupplyValue,
         totalBorrowValue,
         netPortfolioValue: totalSupplyValue - totalBorrowValue,
-        healthFactor: parseFloat(borrowingPowerData.healthFactor)
+        healthFactor: parseFloat(borrowingPower.healthFactor)
       });
 
     } catch (error) {
@@ -354,7 +358,7 @@ export const PortfolioPage = () => {
       setIsLoading(false);
     }
   }, [account, markets, getUserPosition, calculateBorrowingPower]);
-
+ 
   // Fetch positions when account or markets change
   useEffect(() => {
     fetchPositions();
@@ -480,32 +484,13 @@ export const PortfolioPage = () => {
       </PageSubtitle>
 
       {hasPositions ? (
-        <>
-          {/* Portfolio Overview */}
-          <Card>
-            <CardTitle>Portfolio Overview</CardTitle>
-            <StatsGrid>
-              <StatCard>
-                <StatValue>${portfolioStats.totalSupplyValue.toFixed(2)}</StatValue>
-                <StatLabel>Total Supply Value</StatLabel>
-              </StatCard>
-              <StatCard>
-                <StatValue>${portfolioStats.totalBorrowValue.toFixed(2)}</StatValue>
-                <StatLabel>Total Borrow Value</StatLabel>
-              </StatCard>
-              <StatCard>
-                <StatValue>${portfolioStats.netPortfolioValue.toFixed(2)}</StatValue>
-                <StatLabel>Net Portfolio Value</StatLabel>
-              </StatCard>
-              <StatCard>
-                <StatValue>{portfolioStats.healthFactor.toFixed(2)}</StatValue>
-                <StatLabel>Health Factor</StatLabel>
-                <HealthFactorBadge $healthy={portfolioStats.healthFactor > 1.5}>
-                  {portfolioStats.healthFactor > 1.5 ? 'Healthy' : 'At Risk'}
-                </HealthFactorBadge>
-              </StatCard>
-            </StatsGrid>
-          </Card>
+        <> 
+
+          <PortfolioOverview 
+            portfolioStats={portfolioStats}
+            borrowingPowerData={borrowingPowerData}
+            isLoading={isLoading}
+          />
 
           {/* Supply Positions */}
           {supplyPositions.length > 0 && (
