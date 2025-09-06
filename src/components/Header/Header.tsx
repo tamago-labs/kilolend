@@ -39,13 +39,10 @@ const ProfileSection = styled.div`
   align-items: center;
   gap: 8px;
   cursor: pointer;
-  padding: 6px 12px;
+  padding: 4px 12px;
   border-radius: 8px;
   transition: all 0.2s;
-  
-  &:hover {
-    background: #f8fafc;
-  }
+   
 `;
 
 const ProfileIcon = styled.div`
@@ -145,11 +142,7 @@ const DropdownItem = styled.div`
 const AddressRow = styled.div`
   font-family: monospace;
   font-size: 12px;
-  color: #64748b;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border-radius: 6px;
-  margin-bottom: 8px;
+  color: #64748b;  
   word-break: break-all;
 `;
 
@@ -234,6 +227,16 @@ export const Header = () => {
                 <WalletAddress>{formatAddress(account)}</WalletAddress>
               </ProfileInfo>
             </ProfileSection> */}
+            <ProfileSection>
+            <AddressRow>
+            <DropdownItem onClick={() => {
+                navigator.clipboard.writeText(account); 
+              }}>
+                  {formatAddress(account)}
+                </DropdownItem>
+              
+              </AddressRow>
+            </ProfileSection>
 
             <DisconnectButton onClick={handleDisconnect}>
               Disconnect
