@@ -4,6 +4,8 @@ import { useModalStore } from '@/stores/modalStore';
 import { BlankModal } from './BlankModal';
 import { TokenDetailsModal } from './TokenDetailsModal';
 import { FaucetModal } from './FaucetModal';
+import { SupplyModal } from './SupplyModal';
+import { BorrowModal } from './BorrowModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -16,25 +18,17 @@ export const GlobalModalManager = () => {
     switch (activeModal) {
       case 'supply':
         return (
-          <BlankModal
+          <SupplyModal
             isOpen={isOpen}
             onClose={closeModal}
-            title="Supply"
-            icon="📈"
-            placeholderTitle="Supply Assets"
-            placeholderText="Supply your stablecoins and earn yield. This feature will be available soon."
           />
         );
 
       case 'borrow':
         return (
-          <BlankModal
+          <BorrowModal
             isOpen={isOpen}
             onClose={closeModal}
-            title="Borrow"
-            icon="💰"
-            placeholderTitle="Borrow Assets"
-            placeholderText="Get stablecoin loans using your crypto as collateral. This feature will be available soon."
           />
         );
 
