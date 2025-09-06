@@ -230,13 +230,13 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
         <SectionTitle>Quick Actions</SectionTitle>
         <IconGrid>
           <IconButton onClick={handleAskAI}>
-            <IconCircle $index="1">
+            <IconCircle $index="5">
               <IconImage
                 src="./images/icon-robot.png"
                 alt="ASK-AI"
               />
             </IconCircle>
-            <IconLabel>AI Advisor</IconLabel>
+            <IconLabel>Ask AI</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleSupply}>
@@ -262,11 +262,21 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           <IconButton onClick={handleLearn}>
             <IconCircle $index="6">
               <IconImage
-                src="./images/icon-learn.png"
+                src="./images/icon-faq.png"
                 alt="LEARN"
               />
             </IconCircle>
-            <IconLabel>Learn</IconLabel>
+            <IconLabel>FAQ</IconLabel>
+          </IconButton>
+
+          <IconButton onClick={handleKilo}>
+            <IconCircle $index="7">
+              <IconImage
+                src="./images/icon-rewards.png"
+                alt="KILO"
+              />
+            </IconCircle>
+            <IconLabel>KILO</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleInvite}>
@@ -279,24 +289,24 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <IconLabel>Invite</IconLabel>
           </IconButton>
 
-          <IconButton onClick={handleKilo}>
-            <IconCircle $index="7">
-              <IconImage
-                src="./images/icon-gift.png"
-                alt="KILO"
-              />
-            </IconCircle>
-            <IconLabel>KILO</IconLabel>
-          </IconButton>
-
           <IconButton onClick={handleContacts}>
-            <IconCircle $index="4">
+            <IconCircle $index="1">
               <IconImage
                 src="./images/icon-contact.png"
                 alt="CONTACT"
               />
             </IconCircle>
             <IconLabel>Contacts</IconLabel>
+          </IconButton>
+
+          <IconButton onClick={handleContacts}>
+            <IconCircle $index="4">
+              <IconImage
+                src="./images/icon-send.png"
+                alt="SEND"
+              />
+            </IconCircle>
+            <IconLabel>Send</IconLabel>
           </IconButton>
         </IconGrid>
       </ActionsSection> 

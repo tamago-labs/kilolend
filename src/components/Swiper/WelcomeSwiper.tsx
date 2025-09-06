@@ -62,18 +62,38 @@ const HighlightText = styled.span`
   font-weight: 600;
 `;
 
+// #06C755
+const HighlightText2 = styled.span`
+  color: #06C755;
+  font-weight: 600;
+`;
+
 const slides = [
   {
     icon: 'K',
     title: 'KiloLend',
-    subtitle: 'The first stablecoin-focused decentralized lending with AI on LINE Mini Dapp'
+    subtitle: (
+      <>
+      The first <HighlightText>stablecoin-focused</HighlightText> decentralized lending 
+      with <HighlightText>AI</HighlightText> on <HighlightText2>LINE</HighlightText2> Mini Dapp
+    </>)
   },
   {
-    icon: '🤖',
+    icon: '🌱',
+    title: 'Start with USDT',
+    subtitle: (
+      <>
+        Supply your <HighlightText>USDT</HighlightText> and start earning a steady
+        <HighlightText> 5% APY</HighlightText> and rewards
+      </>
+    )
+  },
+  {
+    icon: '⚡',
     title: 'AI Assistant',
     subtitle: (
       <>
-        Get personalized lending advice with our <HighlightText>AI-powered assistant</HighlightText> that helps you make smart DeFi decisions
+        Get personalized advice with our <HighlightText>AI lending assistant</HighlightText> to guide smarter moves
       </>
     )
   },
