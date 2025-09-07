@@ -3,13 +3,13 @@
 import styled from 'styled-components';
 import { useEffect, useState } from "react";
 import { useAppStore } from '@/stores/appStore';
-import { useAIDealsStore } from '@/stores/aiDealsStore';
+// import { useAIDealsStore } from '@/stores/aiDealsStore';
 import { BottomNav, TabType } from '@/components/BottomNav/BottomNav';
 import { HomePage } from '@/components/Pages/HomePage';
 import { PortfolioPage } from '@/components/Pages/PortfolioPage';
 import { ActivityPage } from '@/components/Pages/ActivityPage';
 import { ProfilePage } from '@/components/Pages/ProfilePage';
-import { SwipeDeals } from '@/components/AIDeals/SwipeDeals';
+// import { SwipeDeals } from '@/components/AIDeals/SwipeDeals';
 // import { GlobalModal } from '@/components/GlobalModal/GlobalModal';
 import { SplashScreen } from '@/components/SplashScreen/SplashScreen';
 import { GlobalModalManager } from '@/components/Modal/GlobalModalManager';
@@ -30,7 +30,7 @@ const ContentArea = styled.div`
 export default function Home() {
 
     const { activeTab, setActiveTab } = useAppStore();
-    const { generateDeals, currentDeals } = useAIDealsStore();
+    // const { generateDeals, currentDeals } = useAIDealsStore();
     const [showSwipeDeals, setShowSwipeDeals] = useState(false);
     const [showSplash, setShowSplash] = useState(true);
 
@@ -46,7 +46,7 @@ export default function Home() {
         console.log('AI Query:', userQuery);
         
         // Generate AI deals
-        await generateDeals(userQuery);
+        // await generateDeals(userQuery);
         
         // Show swipe interface
         setShowSwipeDeals(true);
@@ -58,13 +58,13 @@ export default function Home() {
 
     const renderContent = () => {
         // Show swipe deals interface if deals are generated
-        if (showSwipeDeals && currentDeals.length > 0) {
-            return (
-                <SwipeDeals 
-                    onBack={handleBackToHome}
-                />
-            );
-        }
+        // if (showSwipeDeals && currentDeals.length > 0) {
+        //     return (
+        //         <SwipeDeals 
+        //             onBack={handleBackToHome}
+        //         />
+        //     );
+        // }
 
         // Show regular app content
         switch (activeTab) {

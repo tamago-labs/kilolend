@@ -78,7 +78,7 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({ is
   const { markets } = useContractMarketStore();
   const { positions, totalSupplied, totalBorrowed, healthFactor, netAPY } = useContractUserStore();
   const { openModal } = useModalStore();
-  const { account } = useWalletAccountStore();
+  // const { account } = useWalletAccountStore();
   const { setActiveTab } = useAppStore();
 
   const aiService = new LendingAIService();
@@ -153,8 +153,6 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({ is
       <ModalContainer>
         {!hasSubmitted ? (
           <> 
- 
-
             <BrainIconContainer>
               <BrainIconWrapper>
                 <IconImage src="./images/icon-robot.png" alt="AI Advisor" />

@@ -40,10 +40,7 @@ export const AIResultsSection: React.FC<AIResultsSectionProps> = ({
   if (isLoading) {
     return (
       <LoadingState>
-        <LoadingSpinner />
-        <div>
-          KiloBot is analyzing Kaia Network markets and crafting personalized strategies...
-        </div>
+        <LoadingSpinner /> 
       </LoadingState>
     );
   }
@@ -119,11 +116,11 @@ export const AIResultsSection: React.FC<AIResultsSectionProps> = ({
       )}
 
       {/* Reset / new query */}
-      <NavigationSection style={{ borderTop: 'none', paddingTop: '8px' }}>
+      {/* <NavigationSection style={{ borderTop: 'none', paddingTop: '8px' }}>
         <ResetButton onClick={onReset}>
           <RotateCcw size={14} /> New Strategy Query
         </ResetButton>
-      </NavigationSection>
+      </NavigationSection> */}
     </>
   );
 };

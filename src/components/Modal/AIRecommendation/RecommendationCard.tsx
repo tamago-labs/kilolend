@@ -102,14 +102,12 @@ export const AIRecommendationCard: React.FC<AIRecommendationCardProps> = ({
 
       {/* Action buttons */}
       <ActionButton $primary onClick={() => onAction(recommendation)}>
-        {recommendation.type === 'supply' ? 'Execute Supply Strategy' : 'Execute Borrow Strategy'}
-        <ExternalLink size={16} />
-      </ActionButton>
-
-      <ActionButton onClick={onViewPortfolio}>
+        {recommendation.type === 'supply' ? 'Supply Now' : 'Borrow Now'} 
+      </ActionButton> 
+      {/* <ActionButton onClick={onViewPortfolio}>
         View Portfolio Overview
         <ExternalLink size={16} />
-      </ActionButton>
+      </ActionButton> */}
     </RecommendationCard>
   );
 };
