@@ -8,8 +8,8 @@ import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 import { useModalStore } from '@/stores/modalStore';
 import { PRICE_API_CONFIG, KAIA_TESTNET_TOKENS } from '@/utils/tokenConfig';
 import Blockies from 'react-blockies';
-import { RefreshCw, HelpCircle, MessageCircle } from 'react-feather';
-import {liff} from "@/utils/liff";
+import { AlertCircle, RefreshCw, HelpCircle, MessageCircle, Settings } from 'react-feather';
+import { liff } from "@/utils/liff";
 
 const PageContainer = styled.div`
   flex: 1;
@@ -440,6 +440,21 @@ const ZeroBalanceText = styled.span`
   font-style: italic;
 `;
 
+const InfoMessage = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: #dbeafe;
+  border: 1px solid #3b82f6;
+  border-radius: 8px;
+  margin-bottom: 16px;
+`;
+
+const MessageText = styled.span`
+  font-size: 14px;
+`;
+
 interface LineProfile {
   displayName: string;
   pictureUrl: string;
@@ -453,24 +468,25 @@ export const ProfilePage = () => {
 
   const [lineProfile, setLineProfile] = useState<LineProfile | null>(null);
   const [totalUSDValue, setTotalUSDValue] = useState<number>(0);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Get prices for tokens we have API data for
   const apiTokens = PRICE_API_CONFIG.supportedTokens;
   const { prices, getFormattedPrice, getFormattedChange, isLoading: pricesLoading } = usePriceUpdates({
     symbols: ["MBX", ...apiTokens]
   });
- 
-  useEffect(() => {  
-    if (liff.isInClient()) { 
+
+  useEffect(() => {
+    if (liff.isInClient()) {
       liff.getProfile().then(
-        ({userId, displayName, pictureUrl}) => {
+        ({ userId, displayName, pictureUrl }) => {
           setLineProfile({
-            userId, 
+            userId,
             displayName,
             pictureUrl: pictureUrl || "https://kilolend.xyz/images/kilo-icon.png"
           })
         })
-    } 
+    }
   }, []);
 
   // Calculate total USD value using only real price data
@@ -580,7 +596,7 @@ export const ProfilePage = () => {
 
       <OverviewContainer>
         <LeftSection>
-          <ProfileSection> 
+          <ProfileSection>
             <ProfileHeader>
               <ProfileAvatar>
                 {lineProfile?.pictureUrl ? (
@@ -591,31 +607,37 @@ export const ProfilePage = () => {
               </ProfileAvatar>
               <ProfileInfo>
                 <ProfileName>
-                  {lineProfile?.displayName || account ? 'Wallet User' : "Not Connected"}
+                  {lineProfile?.displayName || "Unnamed"}
                 </ProfileName>
                 <WalletAddress>
                   {account ? formatAddress(account) : formatAddress("0xfffffffffffffffffffff")}
                 </WalletAddress>
               </ProfileInfo>
-            </ProfileHeader> 
+            </ProfileHeader>
           </ProfileSection>
         </LeftSection>
-        { account && (
+        {account && (
           <RightSection>
-          <ProfileSection> 
-            <TotalBalanceSection>
-              <TotalBalanceLabel>Total Portfolio Value</TotalBalanceLabel>
-              <TotalBalanceValue>
-                ${totalUSDValue.toFixed(2)}
-              </TotalBalanceValue>
-            </TotalBalanceSection> 
-          </ProfileSection>
-        </RightSection>
-          )
+            <ProfileSection>
+              <TotalBalanceSection>
+                <TotalBalanceLabel>Total Portfolio Value</TotalBalanceLabel>
+                <TotalBalanceValue>
+                  ${totalUSDValue.toFixed(2)}
+                </TotalBalanceValue>
+              </TotalBalanceSection>
+            </ProfileSection>
+          </RightSection>
+        )
 
-        }
-         
-      </OverviewContainer> 
+        } 
+      </OverviewContainer>
+          {!account && (
+          <InfoMessage>
+            <AlertCircle size={16} color="#3b82f6" />
+            <MessageText style={{ color: '#1e40af' }}>Please connect your wallet to access full function</MessageText>
+          </InfoMessage>
+        )}
+
       {/* Tokens Section */}
       <TokensSection>
         <SectionHeader>
@@ -635,7 +657,7 @@ export const ProfilePage = () => {
           <LoadingSpinner>Loading balances...</LoadingSpinner>
         ) : (
           <TokenList>
-            {displayTokens.map((token: any) => { 
+            {displayTokens.map((token: any) => {
               const priceKey = token.symbol === 'MBX' ? 'MBX' : token.symbol;
 
               const priceData = prices[priceKey];
@@ -707,9 +729,9 @@ export const ProfilePage = () => {
           <SupportButton onClick={() => openModal('feedback')}>
             <MessageCircle size={16} />
             Send Feedback
-          </SupportButton>
+          </SupportButton> 
         </SupportButtons>
-      </SupportSection>
+      </SupportSection> 
     </PageContainer>
   );
 };

@@ -11,6 +11,7 @@ import {
 import { useKaiaWalletSdk } from '@/components/Wallet/Sdk/walletSdk.hooks';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
+import { useAppStore } from '@/stores/appStore';
 
 export interface MarketInfo {
   totalSupply: string;
@@ -50,6 +51,7 @@ export const useMarketContract = (): MarketContractHook => {
   const { sendTransaction } = useKaiaWalletSdk();
   const { account } = useWalletAccountStore();
   const { getMarketById } = useContractMarketStore();
+  const { gasLimit } = useAppStore();
 
   const getMarketInfo = useCallback(async (marketId: MarketId): Promise<MarketInfo | null> => {
     try {
@@ -248,7 +250,7 @@ export const useMarketContract = (): MarketContractHook => {
           from: account,
           to: marketConfig.marketAddress, 
           value: transactionValue,
-          gas: '0x927C0', // 600000 gas limit - adjust as needed
+          gas: `0x${gasLimit.toString(16)}`, // Use gas limit from app store
           data: data
         };
 
@@ -277,7 +279,7 @@ export const useMarketContract = (): MarketContractHook => {
         };
       }
     },
-    [account, sendTransaction]
+    [account, sendTransaction, gasLimit]
   );
 
   const supply = useCallback(

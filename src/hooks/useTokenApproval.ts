@@ -6,6 +6,7 @@ import { MARKET_CONFIG, MarketId } from '@/utils/contractConfig';
 import { getContract, parseTokenAmount } from '@/utils/contractUtils';
 import { useKaiaWalletSdk } from '@/components/Wallet/Sdk/walletSdk.hooks';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import { useAppStore } from '@/stores/appStore';
 
 export interface ApprovalResult {
   success: boolean;
@@ -21,6 +22,7 @@ export interface TokenAllowance {
 export const useTokenApproval = () => {
   const { sendTransaction } = useKaiaWalletSdk();
   const { account } = useWalletAccountStore();
+  const { gasLimit } = useAppStore();
 
   /**
    * Check current allowance for a token
@@ -97,11 +99,11 @@ export const useTokenApproval = () => {
       const data = iface.encodeFunctionData('approve', [marketConfig.marketAddress, approvalAmount]);
 
       const transaction = {
-        from: account,
-        to: marketConfig.tokenAddress,
-        value: '0x0',
-        gas: '0x15F90', // 90000 gas limit for approvals
-        data: data
+      from: account,
+      to: marketConfig.tokenAddress,
+      value: '0x0',
+      gas: `0x${Math.min(gasLimit, 200000).toString(16)}`, // Use gas limit from store, max 200k for approvals
+      data: data
       };
 
       console.log(`Approving ${marketConfig.symbol} for ${marketId}:`, {
@@ -124,7 +126,7 @@ export const useTokenApproval = () => {
         error: error.message || 'Approval failed'
       };
     }
-  }, [account, sendTransaction]);
+  }, [account, sendTransaction, gasLimit]);
 
   /**
    * Check if approval is needed and approve if necessary

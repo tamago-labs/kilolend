@@ -8,6 +8,7 @@ import { SupplyModal } from './SupplyModal';
 import { BorrowModal } from './BorrowModal';
 import { WithdrawModal } from './WithdrawModal';
 import { RepayModal } from './RepayModal';
+import { SettingsModal } from './SettingsModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -94,13 +95,9 @@ export const GlobalModalManager = () => {
 
       case 'settings':
         return (
-          <BlankModal
+          <SettingsModal
             isOpen={isOpen}
             onClose={closeModal}
-            title="Settings"
-            icon="⚙️"
-            placeholderTitle="App Settings"
-            placeholderText="Configure your preferences, notifications, and account settings. This feature will be available soon."
           />
         );
 
