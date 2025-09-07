@@ -13,7 +13,7 @@ export type ModalType =
   | 'ai-recommendations'
   | 'settings'
   | 'activities'
-  | 'learn'
+  | 'faq'
   | 'invite'
   | 'kilo'
   | 'contacts'

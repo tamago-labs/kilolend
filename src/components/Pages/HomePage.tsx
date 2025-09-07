@@ -199,7 +199,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   };
 
   const handleLearn = () => {
-    openModal('learn');
+    openModal('faq');
   };
 
   const handleInvite = () => {

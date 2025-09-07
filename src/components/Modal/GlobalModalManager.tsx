@@ -10,6 +10,7 @@ import { WithdrawModal } from './WithdrawModal';
 import { RepayModal } from './RepayModal';
 import { SettingsModal } from './SettingsModal';
 import { AIRecommendationModal } from './AIRecommendationModal';
+import { FAQModal } from './FAQModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -122,15 +123,11 @@ export const GlobalModalManager = () => {
           />
         );
 
-      case 'learn':
+      case 'faq':
         return (
-          <BlankModal
+          <FAQModal
             isOpen={isOpen}
             onClose={closeModal}
-            title="Learn"
-            icon="📚"
-            placeholderTitle="Learn the Platform"
-            placeholderText="Understand how Kaia works, its features, and how to earn KILO Points."
           />
         );
 
