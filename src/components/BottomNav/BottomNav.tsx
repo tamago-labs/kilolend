@@ -19,6 +19,7 @@ const NavContent = styled.div`
   display: flex;
   justify-content: space-around;
   align-items: center;
+  padding-bottom: 10px;
 `;
 
 const NavButton = styled.button<{ $active?: boolean }>`

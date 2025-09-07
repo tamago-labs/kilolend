@@ -140,7 +140,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     os?: string;
   }>({ isLineConnected: false });
 
-  const gasOptions = [100000, 300000, 600000, 1000000];
+  const gasOptions = [300000, 600000, 1000000];
 
   useEffect(() => {
     const checkLineStatus = async () => {
@@ -198,10 +198,10 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
             <InfoLabel>DApp Version</InfoLabel>
             <InfoValue>0.2.0</InfoValue>
           </InfoRow>
-          <InfoRow>
+          {/* <InfoRow>
             <InfoLabel>Support Email</InfoLabel>
             <InfoValue>support@tamagolabs.com</InfoValue>
-          </InfoRow>
+          </InfoRow> */}
           <InfoRow>
             <InfoLabel>Access Mode</InfoLabel>
             <InfoValue>
@@ -214,7 +214,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
 
         {lineInfo.isLineConnected ? (
           <Section>
-            <SectionTitle>LINE Environment</SectionTitle>
+            {/* <SectionTitle>LINE Environment</SectionTitle> */}
             {lineInfo.lineVersion && (
               <InfoRow>
                 <InfoLabel>LINE Version</InfoLabel>
