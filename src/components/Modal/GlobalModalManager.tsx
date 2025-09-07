@@ -9,6 +9,7 @@ import { BorrowModal } from './BorrowModal';
 import { WithdrawModal } from './WithdrawModal';
 import { RepayModal } from './RepayModal';
 import { SettingsModal } from './SettingsModal';
+import { AIRecommendationModal } from './AIRecommendationModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -88,8 +89,16 @@ export const GlobalModalManager = () => {
             onClose={closeModal}
             title="AI Assistant"
             icon="🤖"
-            placeholderTitle="AI Recommendations"
-            placeholderText="Get personalized lending strategies and AI-powered deal recommendations. This feature will be available soon."
+            placeholderTitle="AI Chat"
+            placeholderText="Chat with KiloBot for general DeFi questions and guidance. This feature will be available soon."
+          />
+        );
+
+      case 'ai-recommendations':
+        return (
+          <AIRecommendationModal
+            isOpen={isOpen}
+            onClose={closeModal}
           />
         );
 
