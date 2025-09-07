@@ -9,7 +9,7 @@ import { useModalStore } from '@/stores/modalStore';
 import { PRICE_API_CONFIG, KAIA_TESTNET_TOKENS } from '@/utils/tokenConfig';
 import Blockies from 'react-blockies';
 import { RefreshCw, HelpCircle, MessageCircle } from 'react-feather';
-
+import {liff} from "@/utils/liff";
 
 const PageContainer = styled.div`
   flex: 1;
@@ -459,16 +459,18 @@ export const ProfilePage = () => {
   const { prices, getFormattedPrice, getFormattedChange, isLoading: pricesLoading } = usePriceUpdates({
     symbols: ["MBX", ...apiTokens]
   });
-
-
-  // Mock LINE profile for development (replace with actual LINE integration)
-  useEffect(() => {
-    // TODO: Replace with actual LINE LIFF integration
-    const mockLineProfile = null; // Set to null to use blockie for now
-
-    if (mockLineProfile) {
-      setLineProfile(mockLineProfile);
-    }
+ 
+  useEffect(() => {  
+    if (liff.isInClient()) { 
+      liff.getProfile().then(
+        ({userId, displayName, pictureUrl}) => {
+          setLineProfile({
+            userId, 
+            displayName,
+            pictureUrl
+          })
+        })
+    } 
   }, []);
 
   // Calculate total USD value using only real price data
@@ -567,23 +569,6 @@ export const ProfilePage = () => {
     return `${address.slice(0, 8)}...${address.slice(-6)}`;
   };
 
-  if (!account) {
-    return (
-      <PageContainer>
-        <PageTitle>Profile</PageTitle>
-        <PageSubtitle>
-          View and manage your account details
-        </PageSubtitle>
-
-        <ConnectPrompt>
-          <ConnectIcon>👤</ConnectIcon>
-          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>Wallet Not Connected</h3>
-          <p>Please connect your wallet to access this section</p>
-        </ConnectPrompt>
-      </PageContainer>
-    );
-  }
-
   return (
     <PageContainer>
       <PageTitle>Profile</PageTitle>
@@ -591,54 +576,46 @@ export const ProfilePage = () => {
         View and manage your account details
       </PageSubtitle>
 
-
-
       {/* Profile Section */}
 
       <OverviewContainer>
         <LeftSection>
-          <ProfileSection>
-
+          <ProfileSection> 
             <ProfileHeader>
               <ProfileAvatar>
                 {lineProfile?.pictureUrl ? (
                   <LineProfilePicture src={lineProfile.pictureUrl} alt="Profile" />
                 ) : (
-                  <Blockies seed={account} size={8} scale={8} />
+                  <Blockies seed={account || "1234"} size={8} scale={8} />
                 )}
               </ProfileAvatar>
               <ProfileInfo>
                 <ProfileName>
-                  {lineProfile?.displayName || 'Wallet User'}
+                  {lineProfile?.displayName || account ? 'Wallet User' : "Not Connected"}
                 </ProfileName>
                 <WalletAddress>
-                  {formatAddress(account)}
+                  {account ? formatAddress(account) : formatAddress("0xfffffffffffffffffffff")}
                 </WalletAddress>
               </ProfileInfo>
-            </ProfileHeader>
-
-
+            </ProfileHeader> 
           </ProfileSection>
         </LeftSection>
-        <RightSection>
-          <ProfileSection>
-
+        { account && (
+          <RightSection>
+          <ProfileSection> 
             <TotalBalanceSection>
               <TotalBalanceLabel>Total Portfolio Value</TotalBalanceLabel>
               <TotalBalanceValue>
                 ${totalUSDValue.toFixed(2)}
               </TotalBalanceValue>
-            </TotalBalanceSection>
-
-
-
+            </TotalBalanceSection> 
           </ProfileSection>
         </RightSection>
+          )
 
-      </OverviewContainer>
-
-
-
+        }
+         
+      </OverviewContainer> 
       {/* Tokens Section */}
       <TokensSection>
         <SectionHeader>
@@ -658,8 +635,7 @@ export const ProfilePage = () => {
           <LoadingSpinner>Loading balances...</LoadingSpinner>
         ) : (
           <TokenList>
-            {displayTokens.map((token: any) => {
-              // Handle MBX -> MARBLEX mapping for price lookup
+            {displayTokens.map((token: any) => { 
               const priceKey = token.symbol === 'MBX' ? 'MBX' : token.symbol;
 
               const priceData = prices[priceKey];
@@ -672,7 +648,7 @@ export const ProfilePage = () => {
                 <TokenRow
                   key={token.symbol}
                   $hasBalance={hasBalance}
-                  onClick={() => handleTokenClick(token.symbol)}
+                  onClick={() => account && handleTokenClick(token.symbol)}
                 >
                   <TokenIcon>
                     <TokenIconImage

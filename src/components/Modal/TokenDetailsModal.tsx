@@ -276,7 +276,7 @@ export const TokenDetailsModal = ({ isOpen, onClose, onOpenFaucet, tokenData }: 
 
   const handleViewOnExplorer = () => {
     if (balance?.address) {
-      const explorerUrl = `https://baobab.klaytnscope.com/token/${balance.address}`;
+      const explorerUrl = `https://www.kaiascan.io/token/${balance.address}`;
       window.open(explorerUrl, '_blank');
     }
   };
@@ -295,6 +295,8 @@ export const TokenDetailsModal = ({ isOpen, onClose, onOpenFaucet, tokenData }: 
   const usdValue = price && balance ? parseFloat(balance.balance) * price.price : 0;
   const changeIsPositive = price ? price.change24h >= 0 : true;
   const isTestnetToken = FAUCET_TOKENS.includes(symbol as FaucetTokenSymbol);
+
+
 
   return (
     <ModalOverlay onClick={onClose}>

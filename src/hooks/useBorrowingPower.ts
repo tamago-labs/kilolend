@@ -38,8 +38,9 @@ export const useBorrowingPower = () => {
         // Get user positions for all markets
         for (const market of markets) {
           if (!market.isActive) continue;
-
-          const position = await getUserPosition(market.id, userAddress);
+          
+          const m: any = market
+          const position = await getUserPosition(m.id, userAddress);
           if (!position) continue;
 
           const supplyBalance = new BigNumber(position.supplyBalance || '0');

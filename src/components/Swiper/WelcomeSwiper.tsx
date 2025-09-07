@@ -74,9 +74,9 @@ const slides = [
     title: 'KiloLend',
     subtitle: (
       <>
-      The first <HighlightText>stablecoin-focused</HighlightText> decentralized lending 
-      with <HighlightText>AI</HighlightText> on LINE Mini Dapp
-    </>)
+        The first <HighlightText>stablecoin-focused</HighlightText> decentralized lending
+        with <HighlightText>AI</HighlightText> on LINE Mini Dapp
+      </>)
   },
   {
     icon: '🌱',

@@ -57,8 +57,8 @@ const ModalContainer = styled.div<{ $isOpen: boolean }>`
   @media (max-width: 480px) {
     width: 100vw;
     border-radius: 16px 16px 0 0;
-    height: calc(100vh - 120px);
-    max-height: calc(100vh - 120px);
+    height: calc(100vh - 60px);
+    max-height: calc(100vh - 60px);
   }
 `;
 
