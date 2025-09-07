@@ -221,17 +221,7 @@ const FAQ_DATA: FAQCategory[] = [
         question: "Which blockchain network does KiloLend operate on?",
         answer: `<p>KiloLend operates on the <span class="highlight">KAIA Mainnet</span>, a high-performance blockchain  designed to bring Web3 to millions of users across Asia and is fully supported with the LINE Mini Dapp.</p>
         `
-      },
-      // {
-      //   question: "How do I connect to KAIA network?",
-      //   answer: `<p>To use KiloLend, you'll need to add KAIA network to your wallet:</p>
-      //   <ul>
-      //     <li><strong>Network Name:</strong> KAIA Mainnet</li>
-      //     <li><strong>Chain ID:</strong> 8217</li>
-      //     <li><strong>Currency:</strong> KAIA</li>
-      //   </ul>
-      //   <p>Most wallets like MetaMask will automatically suggest adding KAIA when you connect to KiloLend.</p>`
-      // }
+      }
     ]
   },
   {
@@ -247,11 +237,11 @@ const FAQ_DATA: FAQCategory[] = [
         question: "Is my money safe on KiloLend?",
         answer: `<p>KiloLend implements multiple security layers:</p>
         <ul>
-          <li><strong>Non-custodial:</strong> You always control your private keys</li>
-          <li><strong>Smart Contract Security:</strong> Based on battle-tested Compound V2 code</li>
-          <li><strong>Transparent:</strong> All transactions are on-chain and verifiable</li>
-          <li><strong>Risk Management:</strong> Automated liquidation prevents bad debt</li>
-        </ul>
+  <li><strong>Non-custodial:</strong> Fully decentralized and composable</li>
+  <li><strong>Smart Contract Security:</strong> Built on battle-tested Compound V2 code</li>
+  <li><strong>Transparent:</strong> All transactions are executed on-chain and verifiable</li>
+  <li><strong>Risk Management:</strong> An active liquidation bot prevents bad debt</li>
+</ul>
        `
       }
     ]
@@ -297,14 +287,13 @@ const FAQ_DATA: FAQCategory[] = [
     items: [ 
       {
         question: "What tokens can I lend and borrow?",
-        answer: `<p>KiloLend focuses on <span class="highlight">stablecoin lending</span> with support for major stable assets:</p>
+        answer: `<p>KiloLend focuses on <span class="highlight">stablecoins</span> with support for major stable assets:</p>
         <ul>
-          <li><strong>USDT:</strong> Tether USD - Most liquid stablecoin</li>
-          <li><strong>USDC:</strong> USD Coin - Circle's regulated stablecoin</li>
+          <li><strong>USDT:</strong> Tether USD - Most liquid stablecoin</li> 
           <li><strong>KAIA:</strong> Native network token for collateral</li>
           <li><strong>More Assets:</strong> Additional tokens being added regularly</li>
         </ul>
-        <p>Each market has specific supply and borrow rates that update in real-time based on utilization.</p>`
+        <p>With us, you can either increase exposure by using them as collateral to borrow USDT for buying more, or you can speculate on supported tokens by collateralizing USDT.</p>`
       },
       {
         question: "What are the fees for using KiloLend?",
@@ -321,7 +310,7 @@ const FAQ_DATA: FAQCategory[] = [
         answer: `
         <p>KiloLend is structured under an offshore entity and has delegated 
         operations and maintenance to <span class="highlight">Tamago Blockchain Labs Co., Ltd.</span>, 
-        a Web3 software company based in Fukuoka, Japan.</p>
+        a Web3 software company based in Japan.</p>
         `
       }
     ]
