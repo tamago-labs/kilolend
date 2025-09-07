@@ -18,6 +18,7 @@ export type ModalType =
   | 'kilo'
   | 'contacts'
   | 'token-details'
+  | 'wallet-address'
   | 'support'
   | 'feedback'
   | 'faucet'

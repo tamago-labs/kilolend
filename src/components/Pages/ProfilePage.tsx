@@ -38,7 +38,7 @@ const PageSubtitle = styled.p`
   line-height: 1.6;
 `;
 
-const ProfileSection = styled.div`
+const ProfileSection = styled.div<{ $clickable?: boolean }>`
   background: white;
   border-radius: 12px;
   padding: 24px; 
@@ -46,6 +46,16 @@ const ProfileSection = styled.div`
   margin-top: -8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   border: 1px solid #e2e8f0;
+  cursor: ${({ $clickable }) => ($clickable ? 'pointer' : 'default')};
+  transition: all 0.2s;
+
+  ${({ $clickable }) => $clickable && `
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      border-color: #cbd5e1;
+    }
+  `}
 
   @media (max-width: 480px) {
     padding: 20px;
@@ -124,11 +134,16 @@ const RightSection = styled.div`
   min-width: 0;
 `;
 
-const WalletAddress = styled.div`
+const WalletAddress = styled.div<{ $clickable?: boolean }>`
   font-family: monospace;
   font-size: 14px;
   color: #64748b;
   word-break: break-all;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+   
 
   @media (max-width: 480px) {
     font-size: 13px;
@@ -581,6 +596,12 @@ export const ProfilePage = () => {
     openModal('faucet');
   };
 
+  const handleProfileClick = () => {
+    if (account) {
+      openModal('wallet-address', { walletAddress: account });
+    }
+  };
+
   const formatAddress = (address: string) => {
     return `${address.slice(0, 8)}...${address.slice(-6)}`;
   };
@@ -596,7 +617,11 @@ export const ProfilePage = () => {
 
       <OverviewContainer>
         <LeftSection>
-          <ProfileSection>
+          <ProfileSection 
+            $clickable={!!account} 
+            onClick={handleProfileClick}
+            title={account ? "Click to view wallet address and QR code" : ""}
+          >
             <ProfileHeader>
               <ProfileAvatar>
                 {lineProfile?.pictureUrl ? (
@@ -609,7 +634,7 @@ export const ProfilePage = () => {
                 <ProfileName>
                   {lineProfile?.displayName || "Unnamed"}
                 </ProfileName>
-                <WalletAddress>
+                <WalletAddress $clickable={!!account}>
                   {account ? formatAddress(account) : formatAddress("0xfffffffffffffffffffff")}
                 </WalletAddress>
               </ProfileInfo>

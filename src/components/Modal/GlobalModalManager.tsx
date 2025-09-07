@@ -11,6 +11,7 @@ import { RepayModal } from './RepayModal';
 import { SettingsModal } from './SettingsModal';
 import { AIRecommendationModal } from './AIRecommendationModal';
 import { FAQModal } from './FAQModal';
+import { WalletAddressModal } from './WalletAddressModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -174,6 +175,15 @@ export const GlobalModalManager = () => {
             onClose={closeModal}
             onOpenFaucet={handleOpenFaucet}
             tokenData={modalData}
+          />
+        );
+
+      case 'wallet-address':
+        return (
+          <WalletAddressModal
+            isOpen={isOpen}
+            onClose={closeModal}
+            walletAddress={modalData.walletAddress || ''}
           />
         );
 
