@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.20;
 
 import "@kaiachain/contracts/KIP/token/KIP7/KIP7.sol";
 
