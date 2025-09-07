@@ -467,7 +467,7 @@ export const ProfilePage = () => {
           setLineProfile({
             userId, 
             displayName,
-            pictureUrl
+            pictureUrl: pictureUrl || "https://kilolend.xyz/images/kilo-icon.png"
           })
         })
     } 
