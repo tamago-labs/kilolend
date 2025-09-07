@@ -14,6 +14,26 @@ const fadeIn = keyframes`
   }
 `;
 
+const spin = keyframes`
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+`;
+
+const slideInUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
 const SplashContainer = styled.div`
   position: fixed;
   top: 0;
@@ -36,10 +56,42 @@ const Logo = styled.img`
   width: 280px;
   height: auto;
   max-width: 90vw;
-  margin-bottom: 200px;
+  margin-bottom: 20px;
 
   @media (max-width: 480px) {
     width: 240px;
+    margin-bottom: 40px;
+  }
+`;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  flex-direction: row; 
+  gap: 10px; 
+  margin-bottom: 20px;
+`;
+
+const Spinner = styled.div`
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top: 3px solid #ffffff;
+  border-radius: 50%;
+  animation: ${spin} 1s linear infinite;
+`;
+
+const LoadingText = styled.div`
+  color: #ffffff;
+  font-size: 16px;
+  margin-top: auto;
+  margin-bottom: auto;
+  font-weight: 500;
+  text-align: center;
+  line-height: 1.5;
+  opacity: 0.9;
+  
+  @media (max-width: 480px) {
+    font-size: 14px; 
   }
 `;
 
@@ -48,6 +100,7 @@ interface SplashScreenProps {
 }
 
 export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
+
   useEffect(() => {
     const timer = setTimeout(() => {
       onFinish();
@@ -61,6 +114,10 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       <LogoContainer>
         <Logo src="/images/kilolend-logo.png" alt="KiloLend" />
       </LogoContainer>
+      <LoadingContainer>
+        <Spinner />
+        <LoadingText>{"DeFi Lending Made Simple on LINE"}</LoadingText>
+      </LoadingContainer>
     </SplashContainer>
   );
 };
