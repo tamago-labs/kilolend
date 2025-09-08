@@ -616,8 +616,9 @@ export const ProfilePage = () => {
       {/* Profile Section */}
 
       <OverviewContainer>
-        <LeftSection>
-          <ProfileSection 
+        <LeftSection> 
+          { (lineProfile || account) && (
+            <ProfileSection 
             $clickable={!!account} 
             onClick={handleProfileClick}
             title={account ? "Click to view wallet address and QR code" : ""}
@@ -632,7 +633,7 @@ export const ProfilePage = () => {
               </ProfileAvatar>
               <ProfileInfo>
                 <ProfileName>
-                  {lineProfile?.displayName || "Unnamed"}
+                  {lineProfile?.displayName || "Wallet User"}
                 </ProfileName>
                 <WalletAddress $clickable={!!account}>
                   {account ? formatAddress(account) : formatAddress("0xfffffffffffffffffffff")}
@@ -640,6 +641,8 @@ export const ProfilePage = () => {
               </ProfileInfo>
             </ProfileHeader>
           </ProfileSection>
+          )}
+
         </LeftSection>
         {account && (
           <RightSection>

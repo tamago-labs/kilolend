@@ -9,6 +9,7 @@ import Blockies from 'react-blockies';
 import { Settings, Clock } from "react-feather"
 import { useModalStore } from '@/stores/modalStore';
 import { useAppStore } from '@/stores/appStore';
+import { Copy, Check } from 'react-feather';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -36,13 +37,28 @@ const RightSection = styled.div`
 
 const ProfileSection = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: center; 
   cursor: pointer;
   padding: 4px 12px;
+  padding-left: 0px;
   border-radius: 8px;
+  transition: all 0.2s; 
+`;
+
+const CopyButton = styled.button<{ $copied?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  background: ${({ $copied }) => ($copied ? '#06C755' : 'white')};
+  color: ${({ $copied }) => ($copied ? 'white' : '#64748b')};
+  border: 1px solid ${({ $copied }) => ($copied ? '#06C755' : '#e2e8f0')};
+  border-radius: 4px;
+  cursor: pointer;
   transition: all 0.2s;
-   
+  flex-shrink: 0;
+ 
 `;
 
 const ProfileIcon = styled.div`
@@ -133,6 +149,7 @@ const DropdownItem = styled.div`
   font-size: 14px;
   color: #1e293b;
   transition: all 0.2s;
+  display: flex;
   
   &:hover {
     background: #f8fafc;
@@ -144,6 +161,7 @@ const AddressRow = styled.div`
   font-size: 12px;
   color: #64748b;  
   word-break: break-all;
+  
 `;
 
 const DisconnectRow = styled.div`
@@ -170,6 +188,7 @@ export const Header = () => {
   const { account, setAccount } = useWalletAccountStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const { disconnectWallet } = useKaiaWalletSdk();
+  const [copied, setCopied] = useState(false)
 
   const handleDisconnect = useCallback(() => {
     disconnectWallet().then(() => {
@@ -206,7 +225,6 @@ export const Header = () => {
               <ProfileIcon>
                 <Blockies
                   seed={account}
-
                 />
               </ProfileIcon>
               <ProfileInfo>
@@ -214,30 +232,22 @@ export const Header = () => {
                 <WalletAddress>{formatAddress(account)}</WalletAddress>
               </ProfileInfo>
             </ProfileSection>
-
-            {/* Mobile view */}
-            {/* <ProfileSection onClick={() => setShowDropdown(!showDropdown)}>
-              <ProfileIcon>
-                <Blockies
-                  seed={account}
-                />
-              </ProfileIcon>
-              <ProfileInfo>
-                <ConnectedStatus>Connected</ConnectedStatus>
-                <WalletAddress>{formatAddress(account)}</WalletAddress>
-              </ProfileInfo>
-            </ProfileSection> */}
             <ProfileSection>
-            <AddressRow>
-            <DropdownItem onClick={() => {
-                navigator.clipboard.writeText(account); 
-              }}>
-                  {formatAddress(account)}
-                </DropdownItem>
-              
+              <AddressRow>
+                <DropdownItem onClick={() => {
+                  navigator.clipboard.writeText(account);
+                  setCopied(true)
+                }}>
+                   <CopyButton $copied={copied}>
+                    {copied ? <Check size={12} /> : <Copy size={12} />}
+                  </CopyButton>
+                  <div style={{marginTop: "auto", marginBottom: "auto", marginLeft:"10px"}}>
+                    {formatAddress(account)} 
+                  </div> 
+                </DropdownItem> 
               </AddressRow>
+            
             </ProfileSection>
-
             <DisconnectButton onClick={handleDisconnect}>
               Disconnect
             </DisconnectButton>
@@ -271,7 +281,7 @@ export const Header = () => {
           <Icon onClick={handleActivities}>
             <Clock size={22} />
           </Icon>
-        )} 
+        )}
       </RightSection>
     </HeaderContainer>
   );
