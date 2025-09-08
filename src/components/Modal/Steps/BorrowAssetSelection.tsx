@@ -21,6 +21,7 @@ const BorrowingPowerCard = styled.div<{ $haspower: boolean }>`
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
+  text-align: center;
 `;
 
 const PowerTitle = styled.div<{ $haspower: boolean }>`
@@ -203,8 +204,8 @@ export const BorrowAssetSelection = ({
         <PowerDetails>
           {hasBorrowingPower ? (
             <>
-              You have {enteredMarkets.length} collateral asset{enteredMarkets.length !== 1 ? 's' : ''} enabled. 
-              You can borrow up to this amount across all assets.
+              {/* You have {enteredMarkets.length} collateral asset{enteredMarkets.length !== 1 ? 's' : ''} enabled. 
+              You can borrow up to this amount across all assets. */}
             </>
           ) : (
             <>

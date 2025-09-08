@@ -267,10 +267,9 @@ export const BorrowAmountInput = ({
           <AssetName>{selectedAsset.symbol}</AssetName>
           <AssetAPR>Borrow APR: {selectedAsset.borrowAPR.toFixed(2)}%</AssetAPR>
         </AssetInfo>
-      </AssetHeader>
-
+      </AssetHeader> 
       {/* Show collateral status if relevant */}
-      {isUserInMarket !== undefined && (
+      {/* {isUserInMarket !== undefined && (
         <WarningSection $type="info">
           <WarningText $type="info">
             <strong>Collateral Status:</strong> {isUserInMarket ? 
@@ -279,8 +278,7 @@ export const BorrowAmountInput = ({
             }
           </WarningText>
         </WarningSection>
-      )}
-
+      )} */} 
       <InputSection>
         <InputLabel>Amount to Borrow</InputLabel>
         <InputContainer>
