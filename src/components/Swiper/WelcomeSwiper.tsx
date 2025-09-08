@@ -82,8 +82,8 @@ const slides = [
     title: 'Start with USDT',
     subtitle: (
       <>
-        Supply your <HighlightText>USDT</HighlightText> and start earning a steady
-        <HighlightText> 3% APY</HighlightText> and points
+        Supply <HighlightText>USDT</HighlightText> and earn a stable
+        <HighlightText> 3% APY</HighlightText> plus daily KILO points
       </>
     )
   },
@@ -101,7 +101,8 @@ const slides = [
     title: 'Earn KILO Points',
     subtitle: (
       <>
-        <HighlightText>Collect KILO points</HighlightText> by contributing and get multipliers by inviting friends
+        <HighlightText>Collect daily points</HighlightText> and boost rewards by
+        <HighlightText> inviting friends</HighlightText>
       </>
     )
   }

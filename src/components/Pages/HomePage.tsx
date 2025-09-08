@@ -233,7 +233,9 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
       <ActionsSection>
         <SectionTitle>Quick Actions</SectionTitle>
         <IconGrid>
-          <IconButton onClick={handleAskAI}>
+
+
+          {/* <IconButton onClick={handleAskAI}>
             <IconCircle $index="5">
               <IconImage
                 src="./images/icon-robot.png"
@@ -241,7 +243,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               />
             </IconCircle>
             <IconLabel>Ask AI</IconLabel>
-          </IconButton>
+          </IconButton> */}
 
           <IconButton onClick={handleSupply}>
             <IconCircle $index="3">
@@ -262,6 +264,16 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             </IconCircle>
             <IconLabel>Borrow</IconLabel>
           </IconButton>
+
+          <IconButton onClick={handleAskAI}>
+            <IconCircle $index="5">
+              <IconImage
+                src="./images/icon-robot.png"
+                alt="ASK-AI"
+              />
+            </IconCircle>
+            <IconLabel>Ask AI</IconLabel>
+          </IconButton> 
 
           <IconButton onClick={handleLearn}>
             <IconCircle $index="6">
@@ -300,7 +312,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                 alt="CONTACT"
               />
             </IconCircle>
-            <IconLabel>Contacts</IconLabel>
+            <IconLabel>Leaderboard</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleContacts}>
