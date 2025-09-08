@@ -76,7 +76,7 @@ export const AIRecommendationCard: React.FC<AIRecommendationCardProps> = ({
       {recommendation.benefits?.length > 0 && (
         <RiskSection>
           <SectionTitle>
-            <Shield size={14} /> Strategy Benefits
+             Strategy Benefits
           </SectionTitle>
           <RiskList>
             {recommendation.benefits.map((benefit, index) => (
@@ -90,7 +90,7 @@ export const AIRecommendationCard: React.FC<AIRecommendationCardProps> = ({
       {recommendation.riskWarnings?.length > 0 && (
         <RiskSection>
           <SectionTitle>
-            <Shield size={14} /> Risk Considerations
+             Risk Considerations
           </SectionTitle>
           <RiskList>
             {recommendation.riskWarnings.map((warning, index) => (

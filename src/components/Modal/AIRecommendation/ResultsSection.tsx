@@ -95,19 +95,19 @@ export const AIResultsSection: React.FC<AIResultsSectionProps> = ({
         <NavigationSection>
           <NavButton
             onClick={onPrevious}
-            $disabled={currentIndex === 0}
+            // $disabled={currentIndex === 0}
             disabled={currentIndex === 0}
           >
             <ArrowLeft size={16} /> Previous
           </NavButton>
 
           <PageIndicator>
-            Strategy {currentIndex + 1} of {recommendations.length}
+            {currentIndex + 1} of {recommendations.length}
           </PageIndicator>
 
           <NavButton
             onClick={onNext}
-            $disabled={currentIndex === recommendations.length - 1}
+            // $disabled={currentIndex === recommendations.length - 1}
             disabled={currentIndex === recommendations.length - 1}
           >
             Next <ArrowRight size={16} />

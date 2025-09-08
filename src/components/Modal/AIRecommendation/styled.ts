@@ -1,5 +1,131 @@
 import styled from 'styled-components';
 
+// Main modal container
+export const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-height: calc(100vh - 120px);
+  min-height: 500px;
+`;
+
+// Step progress indicator
+export const StepProgress = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 32px;
+  padding: 0 20px;
+`;
+
+export const StepDot = styled.div<{ $active: boolean; $completed: boolean }>`
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: ${({ $active, $completed }) =>
+    $completed ? '#06C755' : $active ? '#06C755' : '#e2e8f0'};
+  margin: 0 4px;
+  transition: all 0.3s ease;
+`;
+
+// Step content area
+export const StepContent = styled.div`
+  flex: 1;
+  padding: 0 4px;
+  overflow-y: auto;
+  
+  /* Custom scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  
+  &::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+`;
+
+// Navigation container
+export const NavigationContainer = styled.div`
+display: flex;
+gap: 12px;
+padding-top: 20px;
+border-top: 1px solid #e2e8f0;
+margin-top: auto;
+`;
+
+export const NavButton = styled.button<{ $primary?: boolean }>`
+flex: 1;
+padding: 16px 24px;
+border-radius: 12px;
+font-size: 16px;
+font-weight: 600;
+cursor: pointer;
+transition: all 0.2s ease;
+border: 2px solid;
+
+${({ $primary }) =>
+  $primary
+    ? `
+  background: #06C755;
+  color: white;
+  border-color: #06C755;
+
+  &:hover {
+    background: #059212;
+    border-color: #059212;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    background: #94a3b8;
+    border-color: #94a3b8;
+    cursor: not-allowed;
+    transform: none;
+  }
+`
+    : `
+  background: white;
+  color: #64748b;
+  border-color: #e2e8f0;
+
+  &:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+`}
+`;
+
+// Error message
+export const ErrorMessage = styled.div`
+  background: #fef2f2;
+  border: 1px solid #ef4444;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #dc2626;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  &::before {
+    content: '⚠️';
+    font-size: 16px;
+  }
+`;
+
+// Legacy styled components for compatibility
 export const ModalContainer = styled.div`
   display: flex;
   flex-direction: column;
@@ -292,26 +418,6 @@ export const NavigationSection = styled.div`
   border-top: 1px solid #e2e8f0;
 `;
 
-export const NavButton = styled.button<{ $disabled?: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  background: ${({ $disabled }) => ($disabled ? '#f1f5f9' : '#f8fafc')};
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  color: ${({ $disabled }) => ($disabled ? '#cbd5e1' : '#64748b')};
-  cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
-  font-size: 14px;
-  font-weight: 500;
-  transition: all 0.2s;
-  
-  &:hover:not(:disabled) {
-    background: #f1f5f9;
-    border-color: #cbd5e1;
-  }
-`;
-
 export const PageIndicator = styled.div`
   font-size: 14px;
   color: #64748b;
@@ -389,4 +495,10 @@ export const ResetButton = styled.button`
     background: #f1f5f9;
     border-color: #cbd5e1;
   }
+`;
+
+export const LoadingMessage = styled.div`
+  text-align: center;
+  color: #64748b;
+  font-size: 14px;
 `;

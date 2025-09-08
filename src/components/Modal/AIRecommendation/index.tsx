@@ -9,92 +9,56 @@ import { useModalStore } from '@/stores/modalStore';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useAppStore } from '@/stores/appStore';
 
-import { ModalContainer, ResultsSection } from './styled';
+import { 
+  Container,
+  StepProgress,
+  StepDot,
+  StepContent,
+  NavigationContainer,
+  NavButton,
+  ErrorMessage
+} from './styled';
 import { AIRecommendationModalProps } from './constants';
-import { AIInputSection } from './InputSection';
+import { AITemplateSelection } from './TemplateSelection';
+import { AICustomPrompt } from './CustomPrompt';
 import { AIResultsSection } from './ResultsSection';
 
-import styled, { keyframes } from 'styled-components';
-
-const brainPulse = keyframes`
-  0% {
-    background-position: 0% 50%; 
-  }
-  25% {
-    background-position: 100% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  75% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
-`;
-
-const BrainIconContainer = styled.div`
-  text-align: center;
-  color: #06C755; /* LINE green accent */
-`;
-
-const BrainIconWrapper = styled.div`
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 16px;
-  font-size: 24px;
-  background: linear-gradient(85deg, #1e293b, #06C755, #05b648, #06C755);
-  background-size: 400% 400%;
-  animation: ${brainPulse} 3.5s ease infinite;
-  box-shadow: 0 0 25px rgba(168, 85, 247, 0.3);
-`;
-
-const IconImage = styled.img`
-  width: 80%;
-  height: 80%;
-  object-fit: contain;
-  filter: brightness(1.1);
-  
-  @media (max-width: 480px) {
-    width: 65%;
-    height: 65%;
-  }
-`;
-
-
 export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({ isOpen, onClose }) => {
-  const [prompt, setPrompt] = useState<string>('');
+  const [currentStep, setCurrentStep] = useState(1);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | null>(null);
+  const [customPrompt, setCustomPrompt] = useState<string>('');
+  const [finalPrompt, setFinalPrompt] = useState<string>('');
   const [recommendations, setRecommendations] = useState<PoolRecommendation[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
 
   const { markets } = useContractMarketStore();
   const { positions, totalSupplied, totalBorrowed, healthFactor, netAPY } = useContractUserStore();
   const { openModal } = useModalStore();
-  // const { account } = useWalletAccountStore();
   const { setActiveTab } = useAppStore();
 
   const aiService = new LendingAIService();
+  const totalSteps = 3; // Reduced from 4 to 3
 
   // ================= HANDLERS =================
 
-  const handleTemplateClick = (template: string) => {
-    setPrompt(template);
+  const handleTemplateSelect = (template: string) => {
+    setSelectedTemplate(template);
+    setFinalPrompt(template);
   };
 
-  const handleSubmit = async () => {
-    if (!prompt.trim()) return;
+  const handleCustomPromptChange = (prompt: string) => {
+    setCustomPrompt(prompt);
+    setFinalPrompt(prompt);
+    setSelectedTemplate(null);
+  };
+
+  const handleSubmitAnalysis = async () => {
+    if (!finalPrompt.trim()) return;
 
     setIsLoading(true);
     setError(null);
-    setHasSubmitted(true);
 
     try {
       const userContext: UserContext = {
@@ -105,9 +69,10 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({ is
         netAPY,
       };
 
-      const results = await aiService.getPoolRecommendations(prompt, markets, userContext);
+      const results = await aiService.getPoolRecommendations(finalPrompt, markets, userContext);
       setRecommendations(results);
       setCurrentIndex(0);
+      setCurrentStep(3);
     } catch (err: any) {
       setError(err.message || 'Failed to get recommendations');
     } finally {
@@ -116,10 +81,22 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({ is
   };
 
   const handleNext = () => {
+    if (canProceed() && currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+    }
+  };
+
+  const handleRecommendationNext = () => {
     if (currentIndex < recommendations.length - 1) setCurrentIndex(currentIndex + 1);
   };
 
-  const handlePrevious = () => {
+  const handleRecommendationPrevious = () => {
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
   };
 
@@ -139,50 +116,120 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({ is
   };
 
   const handleReset = () => {
-    setHasSubmitted(false);
+    setCurrentStep(1);
+    setSelectedTemplate(null);
+    setCustomPrompt('');
+    setFinalPrompt('');
     setRecommendations([]);
     setCurrentIndex(0);
     setError(null);
-    setPrompt('');
   };
 
-  // ================= RENDER =================
+  const canProceed = () => {
+    switch (currentStep) {
+      case 1: return selectedTemplate !== null || customPrompt.trim() !== '';
+      case 2: return finalPrompt.trim() !== '';
+      default: return false;
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <AITemplateSelection
+            selectedTemplate={selectedTemplate}
+            customPrompt={customPrompt}
+            onTemplateSelect={handleTemplateSelect}
+            onCustomPromptChange={handleCustomPromptChange}
+          />
+        );
+
+      case 2:
+        return (
+          <AICustomPrompt
+            prompt={finalPrompt}
+            onPromptChange={setFinalPrompt}
+            isLoading={isLoading}
+            onSubmit={handleSubmitAnalysis}
+          />
+        );
+
+      case 3:
+        return (
+          <AIResultsSection
+            isLoading={isLoading}
+            error={error}
+            recommendations={recommendations}
+            currentIndex={currentIndex}
+            onNext={handleRecommendationNext}
+            onPrevious={handleRecommendationPrevious}
+            onReset={handleReset}
+            onAction={handleAction}
+            onViewPortfolio={handleViewPortfolio}
+          />
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  // Reset state when modal opens
+  React.useEffect(() => {
+    if (isOpen) {
+      handleReset();
+    }
+  }, [isOpen]);
 
   return (
-    <BaseModal isOpen={isOpen} onClose={onClose} title="Ask AI Advisor">
-      <ModalContainer>
-        {!hasSubmitted ? (
-          <> 
-            {/* <BrainIconContainer>
-              <BrainIconWrapper>
-                <IconImage src="./images/icon-robot.png" alt="AI Advisor" />
-              </BrainIconWrapper>
-            </BrainIconContainer> */}
- 
-            <AIInputSection
-              prompt={prompt}
-              setPrompt={setPrompt}
-              onSubmit={handleSubmit}
-              isLoading={isLoading}
-              onTemplateClick={handleTemplateClick}
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      title="Ask AI Advisor"
+    >
+      <Container>
+        <StepProgress>
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <StepDot
+              key={i}
+              $active={i + 1 === currentStep}
+              $completed={i + 1 < currentStep}
             />
-          </>
-        ) : (
-          <ResultsSection>
-            <AIResultsSection
-              isLoading={isLoading}
-              error={error}
-              recommendations={recommendations}
-              currentIndex={currentIndex}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              onReset={handleReset}
-              onAction={handleAction}
-              onViewPortfolio={handleViewPortfolio}
-            />
-          </ResultsSection>
+          ))}
+        </StepProgress>
+
+        <StepContent>
+          {error && currentStep < 3 && (
+            <ErrorMessage>
+              {error}
+            </ErrorMessage>
+          )}
+          
+          {renderStepContent()}
+        </StepContent>
+
+        {currentStep < 3 && (
+          <NavigationContainer>
+            {currentStep > 1 && (
+              <NavButton onClick={handleBack} disabled={isLoading}>
+                Back
+              </NavButton>
+            )}
+            <NavButton
+              $primary
+              disabled={!canProceed() || isLoading}
+              onClick={currentStep === 2 ? handleSubmitAnalysis : handleNext}
+            >
+              {currentStep === 2 ? (
+                isLoading ? 'Analyzing...' : 'Next'
+              ) : (
+                'Next'
+              )}
+            </NavButton>
+          </NavigationContainer>
         )}
-      </ModalContainer>
+      </Container>
     </BaseModal>
   );
 };
