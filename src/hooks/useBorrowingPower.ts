@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import BigNumber from 'bignumber.js';
 import { useMarketContract } from './useMarketContract';
+import { useComptrollerContract } from './useComptrollerContract';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { MARKET_CONFIG, MarketId } from '@/utils/contractConfig';
 
@@ -11,6 +12,8 @@ export interface BorrowingPowerData {
   borrowingPowerRemaining: string;
   healthFactor: string;
   liquidationThreshold: string;
+  enteredMarkets: string[]; // cToken addresses
+  enteredMarketIds: MarketId[]; // market IDs
 }
 
 export interface MarketBorrowingData {
@@ -20,26 +23,35 @@ export interface MarketBorrowingData {
   availableLiquidity?: string;
   isLiquidityLimited?: boolean;
   maxFromCollateral?: string;
+  isUserInMarket?: boolean;
 }
 
 export const useBorrowingPower = () => {
   const { getUserPosition } = useMarketContract();
+  const { getAccountLiquidity, getAssetsIn, getEnteredMarketIds, getMarketInfo } = useComptrollerContract();
   const { markets } = useContractMarketStore();
 
   /**
-   * Calculate borrowing power for a user across all markets
+   * Calculate borrowing power for a user using Comptroller
    */
   const calculateBorrowingPower = useCallback(
     async (userAddress: string): Promise<BorrowingPowerData> => {
       try {
+        // Get account liquidity from comptroller (this gives us real borrowing power)
+        const accountLiquidity = await getAccountLiquidity(userAddress);
+        
+        // Get entered markets (assets being used as collateral)
+        const enteredMarkets = await getAssetsIn(userAddress);
+        const enteredMarketIds = await getEnteredMarketIds(userAddress);
+
         let totalCollateralValue = new BigNumber(0);
         let totalBorrowValue = new BigNumber(0);
 
-        // Get user positions for all markets
+        // Calculate totals by checking all user positions
         for (const market of markets) {
           if (!market.isActive) continue;
           
-          const m: any = market
+          const m: any = market;
           const position = await getUserPosition(m.id, userAddress);
           if (!position) continue;
 
@@ -47,35 +59,42 @@ export const useBorrowingPower = () => {
           const borrowBalance = new BigNumber(position.borrowBalance || '0');
           const marketPrice = new BigNumber(market.price || '0');
 
-          // Calculate collateral value (supply * price * collateral factor)
-          if (supplyBalance.isGreaterThan(0)) {
-            const collateralFactor = getCollateralFactor(market.id);
+          // Add to collateral value if market is entered
+          if (supplyBalance.isGreaterThan(0) && enteredMarkets.includes(market.marketAddress || '')) {
+            // Get real collateral factor from comptroller
+            const marketInfo = await getMarketInfo(market.marketAddress || '');
             const collateralValue = supplyBalance
               .multipliedBy(marketPrice)
-              .multipliedBy(collateralFactor);
+              .multipliedBy(marketInfo.collateralFactor / 100);
             totalCollateralValue = totalCollateralValue.plus(collateralValue);
           }
 
-          // Calculate borrow value
+          // Add to borrow value
           if (borrowBalance.isGreaterThan(0)) {
             const borrowValue = borrowBalance.multipliedBy(marketPrice);
             totalBorrowValue = totalBorrowValue.plus(borrowValue);
           }
         }
 
-        // Calculate borrowing power remaining
-        const borrowingPowerRemaining =
-          totalCollateralValue.minus(totalBorrowValue);
-
-        // Calculate utilization percentage
+        // Use comptroller's liquidity calculation as the source of truth
+        const borrowingPowerRemaining = new BigNumber(accountLiquidity.liquidity);
         const borrowingPowerUsed = totalCollateralValue.isGreaterThan(0)
           ? totalBorrowValue.dividedBy(totalCollateralValue).multipliedBy(100)
           : new BigNumber(0);
 
-        // Calculate health factor (simplified)
+        // Health factor calculation
         const healthFactor = totalBorrowValue.isGreaterThan(0)
           ? totalCollateralValue.dividedBy(totalBorrowValue)
-          : new BigNumber(999); // Very high if no debt
+          : new BigNumber(999);
+
+        console.log('Borrowing power calculation:', {
+          totalCollateralValue: totalCollateralValue.toFixed(2),
+          totalBorrowValue: totalBorrowValue.toFixed(2),
+          borrowingPowerRemaining: borrowingPowerRemaining.toFixed(2),
+          enteredMarkets: enteredMarkets.length,
+          healthFactor: healthFactor.toFixed(2),
+          accountLiquidityFromComptroller: accountLiquidity.liquidity
+        });
 
         return {
           totalCollateralValue: totalCollateralValue.toFixed(2),
@@ -83,7 +102,9 @@ export const useBorrowingPower = () => {
           borrowingPowerUsed: borrowingPowerUsed.toFixed(2),
           borrowingPowerRemaining: borrowingPowerRemaining.toFixed(2),
           healthFactor: healthFactor.toFixed(2),
-          liquidationThreshold: '80', // 80% threshold for most assets
+          liquidationThreshold: '80', // Can be made dynamic from comptroller if needed
+          enteredMarkets,
+          enteredMarketIds
         };
       } catch (error) {
         console.error('Error calculating borrowing power:', error);
@@ -94,10 +115,12 @@ export const useBorrowingPower = () => {
           borrowingPowerRemaining: '0',
           healthFactor: '0',
           liquidationThreshold: '80',
+          enteredMarkets: [],
+          enteredMarketIds: []
         };
       }
     },
-    [getUserPosition, markets]
+    [getUserPosition, markets, getAccountLiquidity, getAssetsIn, getEnteredMarketIds, getMarketInfo]
   );
 
   /**
@@ -119,19 +142,22 @@ export const useBorrowingPower = () => {
         const position = await getUserPosition(marketId, userAddress);
         const currentDebt = position?.borrowBalance || '0';
 
-        // Calculate max borrow based on remaining borrowing power
-        const remainingPower = new BigNumber(
-          borrowingPower.borrowingPowerRemaining
-        );
+        // Get real collateral factor from comptroller
+        const marketInfo = await getMarketInfo(market.marketAddress || '');
+        
+        // Check if user is in this market (has supplied and entered)
+        const isUserInMarket = borrowingPower.enteredMarketIds.includes(marketId);
+
+        // Calculate max borrow based on remaining borrowing power from comptroller
+        const remainingPower = new BigNumber(borrowingPower.borrowingPowerRemaining);
         const assetPrice = new BigNumber(market.price || '1');
 
-        // Apply safety margin (e.g., 95% of available power)
+        // Apply safety margin (e.g., 95% of available power to account for price fluctuations)
         const safetyMargin = new BigNumber(0.95);
         const maxBorrowFromPower = remainingPower
           .multipliedBy(safetyMargin)
           .dividedBy(assetPrice);
 
-        // Get available liquidity from market
         // Calculate available liquidity more accurately
         const totalSupplyUSD = new BigNumber(market.totalSupply || '0');
         const totalBorrowUSD = new BigNumber(market.totalBorrow || '0');
@@ -141,35 +167,35 @@ export const useBorrowingPower = () => {
         // Ensure liquidity is positive
         const safeLiquidity = BigNumber.max(availableLiquidity, 0);
 
-        // The actual max borrow is the minimum of:
-        // 1. What the user can borrow based on collateral
-        // 2. What's available in the market (with small buffer for interest)
-        const liquidityBuffer = new BigNumber(0.98); // 2% buffer for accrued interest
+        // Apply liquidity buffer for accrued interest
+        const liquidityBuffer = new BigNumber(0.98); // 2% buffer
         const availableWithBuffer = safeLiquidity.multipliedBy(liquidityBuffer);
-        const maxBorrowAmount = BigNumber.min(maxBorrowFromPower, availableWithBuffer);
         
+        // Final max borrow is the minimum of borrowing power and available liquidity
+        const maxBorrowAmount = BigNumber.min(maxBorrowFromPower, availableWithBuffer);
         const isLiquidityLimited = maxBorrowFromPower.isGreaterThan(availableWithBuffer);
 
         console.log(`Max borrow calculation for ${marketId}:`, {
-          remainingPower: `${remainingPower.toFixed(2)}`,
-          assetPrice: `${assetPrice.toFixed(6)}`,
+          remainingPowerUSD: `$${remainingPower.toFixed(2)}`,
+          assetPrice: `$${assetPrice.toFixed(6)}`,
           maxBorrowFromPower: `${maxBorrowFromPower.toFixed(6)} ${market.symbol}`,
-          availableLiquidityUSD: `${availableLiquidityUSD.toFixed(2)}`,
+          availableLiquidityUSD: `$${availableLiquidityUSD.toFixed(2)}`,
           availableLiquidity: `${safeLiquidity.toFixed(6)} ${market.symbol}`,
-          availableWithBuffer: `${availableWithBuffer.toFixed(6)} ${market.symbol}`,
           finalMaxBorrow: `${maxBorrowAmount.toFixed(6)} ${market.symbol}`,
           isLiquidityLimited,
+          isUserInMarket,
+          collateralFactor: `${marketInfo.collateralFactor}%`,
           limitingFactor: isLiquidityLimited ? 'Market Liquidity' : 'User Collateral'
         });
 
         return {
           maxBorrowAmount: maxBorrowAmount.toFixed(6),
           currentDebt,
-          collateralFactor: getCollateralFactor(marketId),
-          // Additional info for UI
+          collateralFactor: marketInfo.collateralFactor,
           availableLiquidity: safeLiquidity.toFixed(6),
           isLiquidityLimited,
-          maxFromCollateral: maxBorrowFromPower.toFixed(6)
+          maxFromCollateral: maxBorrowFromPower.toFixed(6),
+          isUserInMarket
         };
       } catch (error) {
         console.error('Error calculating max borrow amount:', error);
@@ -179,11 +205,12 @@ export const useBorrowingPower = () => {
           collateralFactor: 0,
           availableLiquidity: '0',
           isLiquidityLimited: false,
-          maxFromCollateral: '0'
+          maxFromCollateral: '0',
+          isUserInMarket: false
         };
       }
     },
-    [calculateBorrowingPower, getUserPosition, markets]
+    [calculateBorrowingPower, getUserPosition, markets, getMarketInfo]
   );
 
   return {
@@ -191,17 +218,3 @@ export const useBorrowingPower = () => {
     calculateMaxBorrowAmount,
   };
 };
-
-
-// FIXME: fetch from smart contract
-function getCollateralFactor(marketId: any): number { 
-  const collateralFactors: Record<any, number> = {
-    usdt: 0.85, // 85% collateral factor
-    six: 0.7, // 70% collateral factor
-    bora: 0.7, // 70% collateral factor
-    mbx: 0.7, // 70% collateral factor
-    kaia: 0.75, // 75% collateral factor
-  };
-
-  return collateralFactors[marketId] || 0.7; // Default 70%
-}

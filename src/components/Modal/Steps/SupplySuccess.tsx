@@ -1,13 +1,12 @@
 'use client';
 
 import styled from 'styled-components';
-import { CheckCircle } from 'react-feather';
+import { CheckCircle, Shield } from 'react-feather';
 
 const SuccessContainer = styled.div`
   text-align: center;
   padding: 40px 20px;
 `;
-
 
 const SuccessIcon = styled.div`
   width: 80px;
@@ -64,18 +63,37 @@ const DetailValue = styled.span`
   color: #166534;
 `;
 
+const CollateralBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 16px;
+`;
+
+const CollateralText = styled.span`
+  font-size: 13px;
+  color: #075985;
+  font-weight: 500;
+`;
+
 interface SupplySuccessProps {
   transactionHash?: string;
   amount: string;
   asset: string;
   expectedAPY: number;
+  collateralEnabled?: boolean;
 }
 
 export const SupplySuccess = ({
   transactionHash,
   amount,
   asset,
-  expectedAPY
+  expectedAPY,
+  collateralEnabled = false
 }: SupplySuccessProps) => {
   return (
     <SuccessContainer>
@@ -85,6 +103,7 @@ export const SupplySuccess = ({
       <SuccessTitle>Supply Successful!</SuccessTitle>
       <SuccessMessage>
         Your supply transaction has been submitted to the network. You're now earning {expectedAPY.toFixed(2)}% APY!
+        {collateralEnabled && ' Your asset is also enabled as collateral for borrowing.'}
       </SuccessMessage>
       
       <TransactionDetails>
@@ -107,6 +126,15 @@ export const SupplySuccess = ({
           </DetailRow>
         )}
       </TransactionDetails>
+
+      {collateralEnabled && (
+        <CollateralBadge>
+          <Shield size={16} color="#0ea5e9" />
+          <CollateralText>
+            Collateral Enabled - You can now borrow against this asset
+          </CollateralText>
+        </CollateralBadge>
+      )}
     </SuccessContainer>
   );
 };

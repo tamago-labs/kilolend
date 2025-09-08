@@ -5,6 +5,7 @@ import { BaseModal } from '../BaseModal';
 import { ChevronRight } from 'react-feather';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract, MarketInfo, TransactionResult } from '@/hooks/useMarketContract';
+import { useComptrollerContract } from '@/hooks/useComptrollerContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
 import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
@@ -38,14 +39,17 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const [selectedQuickAmount, setSelectedQuickAmount] = useState<number | null>(null);
   const [isTransacting, setIsTransacting] = useState(false);
   const [isApproving, setIsApproving] = useState(false);
+  const [isEnteringMarket, setIsEnteringMarket] = useState(false);
   const [needsApproval, setNeedsApproval] = useState(false);
+  const [enableAsCollateral, setEnableAsCollateral] = useState(true);
+  const [isMarketAlreadyEntered, setIsMarketAlreadyEntered] = useState(false);
   const [transactionResult, setTransactionResult] = useState<TransactionResult | null>(null);
 
   const { markets } = useContractMarketStore();
   const { account } = useWalletAccountStore();
   const { supply } = useMarketContract();
-  const { balances: tokenBalances, isLoading: balancesLoading } = useMarketTokenBalances();
-  const { isLoading: marketDataLoading } = useMarketDataWithPrices();
+  const { enterMarkets, isMarketEntered } = useComptrollerContract();
+  const { balances: tokenBalances, isLoading: balancesLoading } = useMarketTokenBalances(); 
   const { checkAllowance, ensureApproval } = useTokenApproval();
 
   const totalSteps = 4;
@@ -75,6 +79,33 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
 
     checkApprovalNeeded();
   }, [selectedAsset, amount, checkAllowance]);
+
+  // Check if market is already entered when asset is selected
+  useEffect(() => {
+    const checkMarketStatus = async () => {
+      if (selectedAsset && account) {
+        try {
+          const marketAddress = selectedAsset.marketAddress;
+          if (marketAddress) {
+            const isEntered = await isMarketEntered(account, marketAddress);
+            setIsMarketAlreadyEntered(isEntered);
+            
+            // If market is already entered, don't need to enable collateral
+            if (isEntered) {
+              setEnableAsCollateral(false);
+            } else {
+              setEnableAsCollateral(true);
+            }
+          }
+        } catch (error) {
+          console.error('Error checking market status:', error);
+          setIsMarketAlreadyEntered(false);
+        }
+      }
+    };
+
+    checkMarketStatus();
+  }, [selectedAsset, account, isMarketEntered]);
 
   const handleAssetSelect = (asset: any) => {
     setSelectedAsset(asset);
@@ -145,15 +176,34 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       
       // Step 2: Execute supply transaction
       console.log(`Starting supply transaction for ${amount} ${selectedAsset.symbol}`);
-      const result = await supply(selectedAsset.id, amount);
-      setTransactionResult(result);
+      const supplyResult = await supply(selectedAsset.id, amount);
       
-      if (result.status === 'confirmed') {
-        console.log(`Supply successful: ${amount} ${selectedAsset.symbol} supplied`);
-        setCurrentStep(4);
-      } else {
-        throw new Error(result.error || 'Supply transaction failed');
+      if (supplyResult.status !== 'confirmed') {
+        throw new Error(supplyResult.error || 'Supply transaction failed');
       }
+
+      console.log(`Supply successful: ${amount} ${selectedAsset.symbol} supplied`);
+
+      // Step 3: Enter market if user enabled collateral and market not already entered
+      if (enableAsCollateral && !isMarketAlreadyEntered && selectedAsset.marketAddress) {
+        setIsEnteringMarket(true);
+        console.log(`Entering market for ${selectedAsset.symbol} to enable as collateral`);
+        
+        const enterResult = await enterMarkets([selectedAsset.marketAddress]);
+        
+        if (enterResult.status === 'confirmed') {
+          console.log(`Market entry successful for ${selectedAsset.symbol}`);
+        } else {
+          console.warn(`Market entry failed for ${selectedAsset.symbol}:`, enterResult.error);
+          // Don't fail the entire transaction for market entry failure
+        }
+        
+        setIsEnteringMarket(false);
+      }
+
+      setTransactionResult(supplyResult);
+      setCurrentStep(4);
+      
     } catch (error) {
       console.error('Supply process failed:', error);
       setTransactionResult({
@@ -164,6 +214,28 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     } finally {
       setIsTransacting(false);
       setIsApproving(false);
+      setIsEnteringMarket(false);
+    }
+  };
+
+  const getTransactionStatusText = () => {
+    if (isApproving) return 'Approving Token...';
+    if (isEnteringMarket) return 'Enabling as Collateral...';
+    if (isTransacting) return 'Confirming Supply...';
+    return '';
+  };
+
+  const getConfirmButtonText = () => {
+    if (isTransacting) return getTransactionStatusText();
+    
+    if (needsApproval && enableAsCollateral && !isMarketAlreadyEntered) {
+      return 'Approve, Supply & Enable Collateral';
+    } else if (needsApproval) {
+      return 'Approve & Supply';
+    } else if (enableAsCollateral && !isMarketAlreadyEntered) {
+      return 'Supply & Enable Collateral';
+    } else {
+      return 'Confirm Supply';
     }
   };
 
@@ -203,6 +275,9 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
             amount={amount}
             isLoading={isTransacting}
             needsApproval={needsApproval}
+            enableAsCollateral={enableAsCollateral}
+            isMarketAlreadyEntered={isMarketAlreadyEntered}
+            onCollateralToggle={setEnableAsCollateral}
           />
         ) : null;
 
@@ -213,6 +288,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
             amount={amount}
             asset={selectedAsset.symbol}
             expectedAPY={selectedAsset.supplyAPY}
+            collateralEnabled={enableAsCollateral && !isMarketAlreadyEntered}
           />
         ) : null;
 
@@ -230,7 +306,10 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       setSelectedQuickAmount(null);
       setIsTransacting(false);
       setIsApproving(false);
+      setIsEnteringMarket(false);
       setNeedsApproval(false);
+      setEnableAsCollateral(true);
+      setIsMarketAlreadyEntered(false);
       setTransactionResult(null);
     }
   }, [isOpen]);
@@ -264,6 +343,12 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
               You need to approve {selectedAsset?.symbol} spending before supplying. This will require a separate transaction.
             </ApprovalMessage>
           )}
+
+          {enableAsCollateral && !isMarketAlreadyEntered && currentStep === 3 && (
+            <ApprovalMessage>
+              This asset will be enabled as collateral, allowing you to borrow against it. You can disable this later if needed.
+            </ApprovalMessage>
+          )}
           
           {renderStepContent()}
         </StepContent>
@@ -280,15 +365,12 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
               disabled={!canProceed() || isTransacting}
               onClick={currentStep === 3 ? handleConfirm : handleNext}
             >
-              {isTransacting ? (
-                isApproving ? 'Approving Token...' : 'Confirming Supply...'
+              {currentStep === 3 ? (
+                getConfirmButtonText()
               ) : (
                 <>
-                  {currentStep === 3 ? 
-                    (needsApproval ? 'Approve & Supply' : 'Confirm Supply') : 
-                    'Next'
-                  }
-                  {currentStep < 3 && <ChevronRight size={16} style={{ marginLeft: '4px' }} />}
+                  Next
+                  <ChevronRight size={16} style={{ marginLeft: '4px' }} />
                 </>
               )}
             </NavButton>

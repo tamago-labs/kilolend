@@ -6,8 +6,7 @@ import { ChevronRight } from 'react-feather';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract, TransactionResult } from '@/hooks/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
-import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
+import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances'; 
 import { useBorrowingPower } from '@/hooks/useBorrowingPower';
 import {
   BorrowAssetSelection,
@@ -49,8 +48,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   const { account } = useWalletAccountStore();
   const { borrow } = useMarketContract();
   const { balances: tokenBalances, isLoading: balancesLoading } =
-    useMarketTokenBalances();
-  const { isLoading: marketDataLoading } = useMarketDataWithPrices();
+    useMarketTokenBalances(); 
   const { calculateBorrowingPower, calculateMaxBorrowAmount } =
     useBorrowingPower();
 
@@ -59,8 +57,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   // Convert token balances to include borrow balances
   const userBalances = Object.keys(tokenBalances).reduce((acc, marketId) => {
     const balance = tokenBalances[marketId];
-    acc[balance.symbol] = balance.formattedBalance;
-    acc[`${balance.symbol}_borrowed`] = '0.00'; // mock borrowed balance
+    acc[balance.symbol] = balance.formattedBalance; 
     return acc;
   }, {} as Record<string, string>);
 
