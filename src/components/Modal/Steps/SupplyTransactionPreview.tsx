@@ -209,9 +209,9 @@ export const SupplyTransactionPreview = ({
         </CollateralSection>
       )}
 
+       
       <WarningSection>
-        <WarningText>
-          By supplying {selectedAsset.symbol}, you will earn {selectedAsset.supplyAPY.toFixed(2)}% APY. 
+        <WarningText> 
           {selectedAsset.isCollateralOnly 
             ? ' This asset can be used as collateral for borrowing.' 
             : ' Your supplied assets will be available for others to borrow.'

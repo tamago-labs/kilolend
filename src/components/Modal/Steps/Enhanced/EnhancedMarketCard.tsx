@@ -304,7 +304,7 @@ export const EnhancedMarketCard = ({
   const balanceNumeric = parseFloat(userBalance || '0');
   const balanceUSD = balanceNumeric * market.price;
   
-  const availableLiquidity = parseFloat(`${market.totalSupply}`) - parseFloat(`${market.totalBorrow}`);
+  // const availableLiquidity = parseFloat(`${market.totalSupply}`) - parseFloat(`${market.totalBorrow}`);
   
   const getRiskLevel = () => {
     if (market.isCollateralOnly) return 'low';
@@ -397,7 +397,8 @@ export const EnhancedMarketCard = ({
           marginTop: '8px'
         }}> 
           <div style={{ fontSize: '12px', color: '#64748b' }}>
-            {formatUSD(availableLiquidity.toString())} available
+            {/* {formatUSD(availableLiquidity.toString())} available */}
+          {formatUSD(market.totalSupply)} liquidity
           </div>
            { getMarketBadgeType() === "collateral" && (
               <MarketBadge $type={"collateral"}> 

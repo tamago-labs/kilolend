@@ -182,6 +182,12 @@ export const SupplyAssetSelection = ({
   //     }
   //   }
   // }, [selectedAsset, markets]);
+
+  useEffect(() => { 
+    if (markets.length > 0 && markets[currentMarketIndex]) { 
+      onAssetSelect(markets[currentMarketIndex])
+    }
+  },[markets, currentMarketIndex])
  
   const handlePrevious = () => {
     if (currentMarketIndex > 0) {
@@ -209,9 +215,7 @@ export const SupplyAssetSelection = ({
   const isCurrentSelected = selectedAsset?.id === currentMarket?.id;
 
   // Calculate summary stats
-  const totalMarkets = markets.length;
-  const totalSupplyUSD = markets.reduce((sum, m) => sum + parseFloat(`${m.totalSupply}` || '0'), 0);
-  const avgAPY = markets.reduce((sum, m) => sum + m.supplyAPY, 0) / totalMarkets;
+  const totalMarkets = markets.length; 
 
   if (isLoading) {
     return (
@@ -257,7 +261,7 @@ export const SupplyAssetSelection = ({
               isLoading={isLoading}
             />
             
-            <SelectButton
+            {/* <SelectButton
               $selected={isCurrentSelected}
               onClick={handleSelectCurrent}
               disabled={isLoading}
@@ -266,7 +270,7 @@ export const SupplyAssetSelection = ({
                 ? `✓ ${currentMarket.symbol} Selected` 
                 : `Select ${currentMarket.symbol} for Supply`
               }
-            </SelectButton>
+            </SelectButton> */}
           </div>
         )}
       </CardSection>

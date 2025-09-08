@@ -178,7 +178,7 @@ export const BorrowSuccess = ({
         </DetailRow>
       </DetailsSection>
 
-      <NextStepsSection>
+      {/* <NextStepsSection>
         <NextStepsTitle>Important Reminders</NextStepsTitle>
         <NextStepsList>
           <NextStepsItem>
@@ -194,15 +194,15 @@ export const BorrowSuccess = ({
             Consider setting up alerts for health factor changes
           </NextStepsItem>
         </NextStepsList>
-      </NextStepsSection>
+      </NextStepsSection> */}
 
-      <WarningSection>
+      {/* <WarningSection>
         <WarningText>
           <strong>⚠️ Important:</strong> Your debt will increase over time due to interest. 
           Make sure to repay your loan or maintain sufficient collateral to avoid liquidation. 
           You can monitor your position in the dashboard.
         </WarningText>
-      </WarningSection>
+      </WarningSection> */}
     </Container>
   );
 };

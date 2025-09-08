@@ -347,11 +347,11 @@ export const BorrowAmountInput = ({
         </BalanceInfo>
       )}
 
-      {amountNum > 0 && (
+      {(utilizationAfterBorrow > 80 || isLiquidityLimited) && (
         <WarningSection>
           <WarningText>
-            You will borrow {amountNum.toFixed(4)} {selectedAsset.symbol} at {selectedAsset.borrowAPR.toFixed(2)}% APR. 
-            Make sure you can repay this amount plus interest to avoid liquidation.
+            {/* You will borrow {amountNum.toFixed(4)} {selectedAsset.symbol} at {selectedAsset.borrowAPR.toFixed(2)}% APR. 
+            Make sure you can repay this amount plus interest to avoid liquidation. */}
             {utilizationAfterBorrow > 80 && ' Your position will be at high risk of liquidation.'}
             {isLiquidityLimited && ' This borrow amount is limited by available market liquidity.'}
           </WarningText>

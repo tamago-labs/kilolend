@@ -233,7 +233,7 @@ export const BorrowTransactionPreview = ({
         </div>
       </div>
 
-      <RiskSection $level={riskLevel}>
+      {/* <RiskSection $level={riskLevel}>
         <RiskTitle $level={riskLevel}>
           {riskLevel === 'high' ? '⚠️ High Risk' : 
            riskLevel === 'medium' ? '⚡ Medium Risk' : 
@@ -250,21 +250,21 @@ export const BorrowTransactionPreview = ({
             `Your health factor will be ${newHealthFactor.toFixed(2)}, which is relatively safe. You have good collateral coverage for this borrow amount.`
           }
         </RiskText>
-      </RiskSection>
+      </RiskSection> */}
 
-      {borrowingPowerData?.enteredMarkets && borrowingPowerData.enteredMarkets.length > 0 && (
+      {/* {borrowingPowerData?.enteredMarkets && borrowingPowerData.enteredMarkets.length > 0 && (
         <InfoSection>
           <InfoText>
             <strong>Collateral Assets:</strong> You have {borrowingPowerData.enteredMarkets.length} asset(s) enabled as collateral. 
             If market conditions change significantly, you may need to repay debt or add more collateral to maintain a healthy position.
           </InfoText>
         </InfoSection>
-      )}
+      )} */}
 
-      <div style={{ background: '#f0f9ff', border: '1px solid #0ea5e9', borderRadius: '8px', padding: '12px', fontSize: '14px', color: '#0369a1' }}>
+      {/* <div style={{ background: '#f0f9ff', border: '1px solid #0ea5e9', borderRadius: '8px', padding: '12px', fontSize: '14px', color: '#0369a1' }}>
         <strong>Important:</strong> Interest accrues continuously. Your debt will increase over time. 
         Monitor your health factor and make sure you can repay the loan to avoid liquidation.
-      </div>
+      </div> */}
     </div>
   );
 };

@@ -285,7 +285,7 @@ export const WalletAddressModal = ({ isOpen, onClose, walletAddress }: WalletAdd
             </CopyButton>
           </AddressContainer>
         </AddressSection> 
-        <WarningSection>
+        {/* <WarningSection>
           <WarningTitle>
             ⚠️ Important Security Notes
           </WarningTitle>
@@ -296,7 +296,7 @@ export const WalletAddressModal = ({ isOpen, onClose, walletAddress }: WalletAdd
               <li>This address is only for receiving - sending requires your wallet app</li>
             </ul>
           </WarningText>
-        </WarningSection>
+        </WarningSection> */}
 
         <ActionButtons>
           <ActionButton onClick={handleViewOnExplorer}>

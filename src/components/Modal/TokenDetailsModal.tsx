@@ -391,7 +391,7 @@ export const TokenDetailsModal = ({ isOpen, onClose, onOpenFaucet, tokenData }: 
               </AddressValue>
             </AddressSection>
           )}
-
+   
           <ActionButtons> 
             
             <ActionButton onClick={handleViewOnExplorer}>
@@ -399,10 +399,10 @@ export const TokenDetailsModal = ({ isOpen, onClose, onOpenFaucet, tokenData }: 
               View on Explorer
             </ActionButton>
             
-            <ActionButton $primary onClick={() => {/* Handle trade action */}}>
+            {/* <ActionButton $primary onClick={() => {}}>
               <TrendingUp size={16} />
               Trade
-            </ActionButton>
+            </ActionButton> */}
           </ActionButtons>
         </ModalBody>
       </ModalContent>

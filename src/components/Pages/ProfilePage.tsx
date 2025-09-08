@@ -635,8 +635,11 @@ export const ProfilePage = () => {
                 <ProfileName>
                   {lineProfile?.displayName || "Wallet User"}
                 </ProfileName>
-                <WalletAddress $clickable={!!account}>
+                {/* <WalletAddress $clickable={!!account}>
                   {account ? formatAddress(account) : formatAddress("0xfffffffffffffffffffff")}
+                </WalletAddress> */}
+                <WalletAddress>
+                  Click to open details
                 </WalletAddress>
               </ProfileInfo>
             </ProfileHeader>

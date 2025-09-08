@@ -109,13 +109,13 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     checkMarketStatus();
   }, [selectedAsset, account, isMarketEntered]);
 
-  const handleAssetSelect = (asset: any) => {
+  const handleAssetSelect = (asset: any) => { 
     setSelectedAsset(asset);
     setAmount('');
     setSelectedQuickAmount(null);
     setNeedsApproval(false);
-  };
-
+  }; 
+  
   const handleQuickAmount = (percentage: number) => {
     if (selectedAsset) {
       const balance = parseFloat(userBalances[selectedAsset.symbol] || '0');
@@ -309,7 +309,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(1);
-      setSelectedAsset(null);
+      // setSelectedAsset(null);
       setAmount('');
       setSelectedQuickAmount(null);
       setIsTransacting(false);

@@ -127,14 +127,14 @@ export const SupplySuccess = ({
         )}
       </TransactionDetails>
 
-      {collateralEnabled && (
+      {/* {collateralEnabled && (
         <CollateralBadge>
           <Shield size={16} color="#0ea5e9" />
           <CollateralText>
             Collateral Enabled - You can now borrow against this asset
           </CollateralText>
         </CollateralBadge>
-      )}
+      )} */}
     </SuccessContainer>
   );
 };
