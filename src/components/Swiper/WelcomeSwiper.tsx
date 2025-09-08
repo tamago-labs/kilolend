@@ -74,8 +74,7 @@ const slides = [
     title: 'KiloLend',
     subtitle: (
       <>
-        The first <HighlightText>stablecoin-focused</HighlightText> DeFi lending
-        with <HighlightText>AI</HighlightText> on LINE Mini Dapp
+        The first stablecoin-focused <HighlightText>DeFAI lending</HighlightText> on LINE Mini Dapp
       </>)
   },
   {
@@ -84,7 +83,7 @@ const slides = [
     subtitle: (
       <>
         Supply your <HighlightText>USDT</HighlightText> and start earning a steady
-        <HighlightText> 5% APY</HighlightText> and rewards
+        <HighlightText> 3% APY</HighlightText> and points
       </>
     )
   },
@@ -102,7 +101,7 @@ const slides = [
     title: 'Earn KILO Points',
     subtitle: (
       <>
-        <HighlightText>Collect KILO points</HighlightText> by inviting friends and unlock exclusive rewards in our ecosystem
+        <HighlightText>Collect KILO points</HighlightText> by contributing and get multipliers by inviting friends
       </>
     )
   }

@@ -90,7 +90,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
       }
     };
     loadBorrowingData();
-  }, [account, isOpen, calculateBorrowingPower]);
+  }, [account, isOpen]);
 
   // Load max borrow data when asset is selected
   useEffect(() => {

@@ -153,11 +153,11 @@ export const AIRecommendationModal: React.FC<AIRecommendationModalProps> = ({ is
       <ModalContainer>
         {!hasSubmitted ? (
           <> 
-            <BrainIconContainer>
+            {/* <BrainIconContainer>
               <BrainIconWrapper>
                 <IconImage src="./images/icon-robot.png" alt="AI Advisor" />
               </BrainIconWrapper>
-            </BrainIconContainer>
+            </BrainIconContainer> */}
  
             <AIInputSection
               prompt={prompt}
