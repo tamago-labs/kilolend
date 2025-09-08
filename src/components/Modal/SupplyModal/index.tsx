@@ -8,6 +8,7 @@ import { useMarketContract, MarketInfo, TransactionResult } from '@/hooks/useMar
 import { useComptrollerContract } from '@/hooks/useComptrollerContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
+import { useUserPositions } from '@/hooks/useUserPositions';
 import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
 import { useTokenApproval } from '@/hooks/useTokenApproval';
 import { 
@@ -49,7 +50,8 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const { account } = useWalletAccountStore();
   const { supply } = useMarketContract();
   const { enterMarkets, isMarketEntered } = useComptrollerContract();
-  const { balances: tokenBalances, isLoading: balancesLoading } = useMarketTokenBalances(); 
+  const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances(); 
+  const { refreshPositions } = useUserPositions();
   const { checkAllowance, ensureApproval } = useTokenApproval();
 
   const totalSteps = 4;
@@ -200,6 +202,12 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
         
         setIsEnteringMarket(false);
       }
+
+      // Step 4: Refresh all data after successful transaction
+      setTimeout(() => {
+        refreshBalances(); // Refresh token balances
+        refreshPositions(); // Refresh user positions
+      }, 2000); // Wait 2 seconds for blockchain to update
 
       setTransactionResult(supplyResult);
       setCurrentStep(4);

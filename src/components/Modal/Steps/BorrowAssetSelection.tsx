@@ -15,6 +15,34 @@ const Title = styled.h3`
   margin: 0 0 16px 0;
 `;
 
+const BorrowingPowerCard = styled.div<{ $haspower: boolean }>`
+  background: ${({ $haspower }) => $haspower ? '#f0f9ff' : '#fef2f2'};
+  border: 1px solid ${({ $haspower }) => $haspower ? '#0ea5e9' : '#ef4444'};
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+`;
+
+const PowerTitle = styled.div<{ $haspower: boolean }>`
+  font-size: 14px;
+  font-weight: 600;
+  color: ${({ $haspower }) => $haspower ? '#0369a1' : '#dc2626'};
+  margin-bottom: 8px;
+`;
+
+const PowerValue = styled.div<{ $haspower: boolean }>`
+  font-size: 18px;
+  font-weight: 700;
+  color: ${({ $haspower }) => $haspower ? '#0ea5e9' : '#dc2626'};
+  margin-bottom: 8px;
+`;
+
+const PowerDetails = styled.div`
+  font-size: 13px;
+  color: #64748b;
+  line-height: 1.4;
+`;
+
 const AssetCard = styled.div<{ $selected: boolean }>`
   display: flex;
   align-items: center;
@@ -119,6 +147,8 @@ interface BorrowAssetSelectionProps {
   selectedAsset: ContractMarket | null;
   userBalances: Record<string, string>;
   borrowingPower: string;
+  enteredMarkets?: string[];
+  enteredMarketIds?: string[];
   onAssetSelect: (asset: ContractMarket) => void;
   isLoading?: boolean;
 }
@@ -128,6 +158,8 @@ export const BorrowAssetSelection = ({
   selectedAsset,
   userBalances,
   borrowingPower,
+  enteredMarkets = [],
+  enteredMarketIds = [],
   onAssetSelect,
   isLoading = false
 }: BorrowAssetSelectionProps) => {
@@ -155,28 +187,47 @@ export const BorrowAssetSelection = ({
 
   const borrowingPowerNum = parseFloat(borrowingPower || '0');
   const hasBorrowingPower = borrowingPowerNum > 0;
+  const hasCollateral = enteredMarkets.length > 0;
 
   return (
     <Container>
       <Title>Select Asset to Borrow</Title>
       
-      {!hasBorrowingPower && (
+      <BorrowingPowerCard $haspower={hasBorrowingPower}>
+        <PowerTitle $haspower={hasBorrowingPower}>
+          {hasBorrowingPower ? 'Available Borrowing Power' : 'No Borrowing Power'}
+        </PowerTitle>
+        <PowerValue $haspower={hasBorrowingPower}>
+          ${borrowingPowerNum.toFixed(2)}
+        </PowerValue>
+        <PowerDetails>
+          {hasBorrowingPower ? (
+            <>
+              You have {enteredMarkets.length} collateral asset{enteredMarkets.length !== 1 ? 's' : ''} enabled. 
+              You can borrow up to this amount across all assets.
+            </>
+          ) : (
+            <>
+              {hasCollateral ? 
+                'Your collateral may not have sufficient value or you may have reached your borrowing limit.' :
+                'You need to supply collateral first to borrow assets. Go to the Supply tab to deposit assets that can be used as collateral.'
+              }
+            </>
+          )}
+        </PowerDetails>
+      </BorrowingPowerCard>
+
+      {!hasBorrowingPower && !hasCollateral && (
         <EmptyState>
-          <EmptyStateTitle>No Borrowing Power</EmptyStateTitle>
+          <EmptyStateTitle>No Collateral Found</EmptyStateTitle>
           <EmptyStateText>
-            You need to supply collateral first to borrow assets. Go to the Supply tab to deposit assets that can be used as collateral.
+            Supply assets and enable them as collateral to start borrowing.
           </EmptyStateText>
         </EmptyState>
       )}
 
       {hasBorrowingPower && (
         <>
-          <div style={{ marginBottom: '16px', padding: '12px', background: '#f0f9ff', borderRadius: '8px', border: '1px solid #0ea5e9' }}>
-            <div style={{ fontSize: '14px', color: '#0369a1' }}>
-              Available Borrowing Power: <strong>${borrowingPowerNum.toFixed(2)}</strong>
-            </div>
-          </div>
-
           {borrowableMarkets.map((market) => (
             <AssetCard
               key={market.id}

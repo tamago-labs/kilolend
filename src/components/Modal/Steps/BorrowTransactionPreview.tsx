@@ -90,11 +90,25 @@ const HealthFactorFill = styled.div<{ $percentage: number; $level: 'low' | 'medi
   transition: all 0.3s ease;
 `;
 
+const InfoSection = styled.div`
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+`;
+
+const InfoText = styled.div`
+  font-size: 14px;
+  color: #0369a1;
+  line-height: 1.4;
+`;
+
 interface BorrowTransactionPreviewProps {
   selectedAsset: ContractMarket;
   amount: string;
   currentDebt: string;
-  borrowingPower: string;
+  borrowingPowerData: any; // Complete borrowing power data object
   isLoading?: boolean;
 }
 
@@ -102,44 +116,67 @@ export const BorrowTransactionPreview = ({
   selectedAsset,
   amount,
   currentDebt,
-  borrowingPower,
+  borrowingPowerData,
   isLoading = false
 }: BorrowTransactionPreviewProps) => {
   const amountNum = parseFloat(amount || '0');
   const currentDebtNum = parseFloat(currentDebt || '0');
-  const borrowingPowerNum = parseFloat(borrowingPower || '0');
+  const amountUSD = amountNum * selectedAsset.price;
   
-  const newTotalDebt = currentDebtNum + amountNum;
-  const utilizationAfterBorrow = borrowingPowerNum > 0 ? (newTotalDebt / borrowingPowerNum) * 100 : 0;
-  const usdValue = amountNum * selectedAsset.price;
+  // Extract borrowing power data
+  const totalCollateralValue = parseFloat(borrowingPowerData?.totalCollateralValue || '0');
+  const totalBorrowValue = parseFloat(borrowingPowerData?.totalBorrowValue || '0');
+  const borrowingPowerRemaining = parseFloat(borrowingPowerData?.borrowingPowerRemaining || '0');
+  const currentHealthFactor = parseFloat(borrowingPowerData?.healthFactor || '999');
   
-  // Calculate health factor (simplified)
-  const healthFactor = borrowingPowerNum > 0 ? (borrowingPowerNum / newTotalDebt) : 0;
+  // Calculate new values after this borrow
+  const newTotalBorrowValueUSD = totalBorrowValue + amountUSD;
+  const newBorrowingPowerRemaining = borrowingPowerRemaining - amountUSD;
   
-  // Determine risk level
+  // Calculate new health factor after borrow
+  // Health Factor = Total Collateral Value / Total Borrow Value
+  const newHealthFactor = newTotalBorrowValueUSD > 0 ? 
+    totalCollateralValue / newTotalBorrowValueUSD : 999;
+  
+  // Calculate utilization percentage
+  const utilizationBefore = totalCollateralValue > 0 ? 
+    (totalBorrowValue / totalCollateralValue) * 100 : 0;
+  const utilizationAfter = totalCollateralValue > 0 ? 
+    (newTotalBorrowValueUSD / totalCollateralValue) * 100 : 0;
+  
+  // Determine risk level based on health factor and utilization
   let riskLevel: 'low' | 'medium' | 'high' = 'low';
-  if (utilizationAfterBorrow > 80) riskLevel = 'high';
-  else if (utilizationAfterBorrow > 60) riskLevel = 'medium';
+  if (newHealthFactor < 1.2 || utilizationAfter > 80) riskLevel = 'high';
+  else if (newHealthFactor < 1.5 || utilizationAfter > 60) riskLevel = 'medium';
 
   // Calculate yearly interest
   const yearlyInterest = amountNum * (selectedAsset.borrowAPR / 100);
+
+  // console.log('BorrowTransactionPreview calculations:', {
+  //   amountNum,
+  //   amountUSD,
+  //   totalCollateralValue,
+  //   totalBorrowValue,
+  //   newTotalBorrowValueUSD,
+  //   currentHealthFactor,
+  //   newHealthFactor,
+  //   utilizationBefore,
+  //   utilizationAfter,
+  //   riskLevel
+  // });
 
   return (
     <div>
       <OverviewTitle>Borrow Preview</OverviewTitle>
       
       <PreviewSection>
-        {/* <PreviewRow>
-          <PreviewLabel>Asset</PreviewLabel>
-          <PreviewValue>{selectedAsset.symbol}</PreviewValue>
-        </PreviewRow> */}
         <PreviewRow>
           <PreviewLabel>Borrow Amount</PreviewLabel>
           <PreviewValue>{amountNum.toFixed(4)} {selectedAsset.symbol}</PreviewValue>
         </PreviewRow>
         <PreviewRow>
           <PreviewLabel>USD Value</PreviewLabel>
-          <PreviewValue>${usdValue.toFixed(2)}</PreviewValue>
+          <PreviewValue>${amountUSD.toFixed(2)}</PreviewValue>
         </PreviewRow>
         <PreviewRow>
           <PreviewLabel>Borrow APR</PreviewLabel>
@@ -150,39 +187,50 @@ export const BorrowTransactionPreview = ({
           <PreviewValue>${yearlyInterest.toFixed(2)}</PreviewValue>
         </PreviewRow>
         <PreviewRow>
-          <PreviewLabel>Current Debt</PreviewLabel>
-          <PreviewValue>{currentDebtNum.toFixed(4)} {selectedAsset.symbol}</PreviewValue>
+          <PreviewLabel>Current Total Debt</PreviewLabel>
+          <PreviewValue>${totalBorrowValue.toFixed(2)}</PreviewValue>
         </PreviewRow>
         <PreviewRow>
           <PreviewLabel>New Total Debt</PreviewLabel>
-          <PreviewValue>{newTotalDebt.toFixed(4)} {selectedAsset.symbol}</PreviewValue>
+          <PreviewValue>${newTotalBorrowValueUSD.toFixed(2)}</PreviewValue>
         </PreviewRow>
         <PreviewRow>
-          <PreviewLabel>Borrowing Power Used</PreviewLabel>
-          <PreviewValue $danger={utilizationAfterBorrow > 80}>
-            {utilizationAfterBorrow.toFixed(1)}%
+          <PreviewLabel>Total Collateral Value</PreviewLabel>
+          <PreviewValue>${totalCollateralValue.toFixed(2)}</PreviewValue>
+        </PreviewRow>
+        <PreviewRow>
+          <PreviewLabel>Utilization</PreviewLabel>
+          <PreviewValue $danger={utilizationAfter > 80}>
+            {utilizationBefore.toFixed(1)}% → {utilizationAfter.toFixed(1)}%
           </PreviewValue>
         </PreviewRow>
         <PreviewRow>
           <PreviewLabel>Health Factor</PreviewLabel>
-          <PreviewValue $danger={healthFactor < 1.2}>
-            {healthFactor.toFixed(2)}
+          <PreviewValue $danger={newHealthFactor < 1.2}>
+            {currentHealthFactor.toFixed(2)} → {newHealthFactor.toFixed(2)}
           </PreviewValue>
+        </PreviewRow>
+        <PreviewRow>
+          <PreviewLabel>Remaining Borrowing Power</PreviewLabel>
+          <PreviewValue>${newBorrowingPowerRemaining.toFixed(2)}</PreviewValue>
         </PreviewRow>
       </PreviewSection>
 
       {/* Health Factor Visualization */}
       <div style={{ marginBottom: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px', fontSize: '12px', color: '#64748b' }}>
-          <span>Health Factor</span>
-          <span>{healthFactor.toFixed(2)}</span>
+          <span>New Health Factor</span>
+          <span>{newHealthFactor > 10 ? '10+' : newHealthFactor.toFixed(2)}</span>
         </div>
         <HealthFactorBar>
           <HealthFactorFill 
-            $percentage={Math.min(healthFactor * 50, 100)} 
+            $percentage={Math.min((newHealthFactor / 3) * 100, 100)} 
             $level={riskLevel}
           />
         </HealthFactorBar>
+        <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
+          {`Safe: > 1.5 • Risky: 1.2-1.5 • Danger: < 1.2`}
+        </div>
       </div>
 
       <RiskSection $level={riskLevel}>
@@ -193,20 +241,29 @@ export const BorrowTransactionPreview = ({
         </RiskTitle>
         <RiskText $level={riskLevel}>
           {riskLevel === 'high' && 
-            'Your position will be at high risk of liquidation. Consider borrowing less or supplying more collateral.'
+            `Your health factor will be ${newHealthFactor.toFixed(2)}, which is dangerously low. Your position will be at high risk of liquidation. Consider borrowing less or supplying more collateral.`
           }
           {riskLevel === 'medium' && 
-            'Your position has moderate risk. Monitor your health factor and be prepared to repay or add collateral if needed.'
+            `Your health factor will be ${newHealthFactor.toFixed(2)}, which indicates moderate risk. Monitor your position closely and be prepared to repay or add collateral if needed.`
           }
           {riskLevel === 'low' && 
-            'Your position is relatively safe. You have good collateral coverage for this borrow amount.'
+            `Your health factor will be ${newHealthFactor.toFixed(2)}, which is relatively safe. You have good collateral coverage for this borrow amount.`
           }
         </RiskText>
       </RiskSection>
 
+      {borrowingPowerData?.enteredMarkets && borrowingPowerData.enteredMarkets.length > 0 && (
+        <InfoSection>
+          <InfoText>
+            <strong>Collateral Assets:</strong> You have {borrowingPowerData.enteredMarkets.length} asset(s) enabled as collateral. 
+            If market conditions change significantly, you may need to repay debt or add more collateral to maintain a healthy position.
+          </InfoText>
+        </InfoSection>
+      )}
+
       <div style={{ background: '#f0f9ff', border: '1px solid #0ea5e9', borderRadius: '8px', padding: '12px', fontSize: '14px', color: '#0369a1' }}>
         <strong>Important:</strong> Interest accrues continuously. Your debt will increase over time. 
-        Make sure you can repay the loan to avoid liquidation.
+        Monitor your health factor and make sure you can repay the loan to avoid liquidation.
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { MARKET_CONFIG, MarketId } from '@/utils/contractConfig';
 import { ERC20_ABI } from '@/utils/contractABIs';
@@ -21,12 +21,23 @@ export const useMarketTokenBalances = () => {
   const [balances, setBalances] = useState<Record<string, MarketTokenBalance>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  
+  // Use refs to avoid stale closures in intervals
+  const accountRef = useRef(account);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Update account ref when account changes
+  useEffect(() => {
+    accountRef.current = account;
+  }, [account]);
 
   /**
    * Fetch balance for a specific market token
    */
-  const fetchTokenBalance = useCallback(async (marketId: MarketId) => {
-    if (!account) {
+  const fetchTokenBalance = useCallback(async (marketId: MarketId): Promise<MarketTokenBalance> => {
+    const currentAccount = accountRef.current;
+    
+    if (!currentAccount) {
       return {
         marketId,
         symbol: MARKET_CONFIG[marketId].symbol,
@@ -44,7 +55,7 @@ export const useMarketTokenBalances = () => {
     try {
       // For native KAIA
       if (marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
-        const balance = await provider.getBalance(account);
+        const balance = await provider.getBalance(currentAccount);
         const formattedBalance = ethers.formatEther(balance);
         
         return {
@@ -65,7 +76,7 @@ export const useMarketTokenBalances = () => {
         provider
       );
       
-      const balance = await contract.balanceOf(account);
+      const balance = await contract.balanceOf(currentAccount);
       const formattedBalance = ethers.formatUnits(balance, marketConfig.decimals);
       
       return {
@@ -89,18 +100,23 @@ export const useMarketTokenBalances = () => {
         error: 'Failed to fetch balance'
       };
     }
-  }, [account]);
+  }, []);
 
   /**
    * Fetch all market token balances
    */
-  const fetchAllBalances = useCallback(async () => {
-    if (!account) {
+  const fetchAllBalances = useCallback(async (showLoading = true) => {
+    const currentAccount = accountRef.current;
+    
+    if (!currentAccount) {
       setBalances({});
+      setLastUpdate(null);
       return;
     }
 
-    setIsLoading(true);
+    if (showLoading) {
+      setIsLoading(true);
+    }
 
     try {
       const marketIds = Object.keys(MARKET_CONFIG) as MarketId[];
@@ -128,12 +144,51 @@ export const useMarketTokenBalances = () => {
 
       setBalances(newBalances);
       setLastUpdate(new Date());
+      
+      console.log('Token balances updated:', newBalances);
     } catch (error) {
       console.error('Error fetching market token balances:', error);
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
-  }, [account, fetchTokenBalance]);
+  }, [fetchTokenBalance]);
+
+  /**
+   * Setup interval for auto-refresh
+   */
+  const setupInterval = useCallback(() => {
+    // Clear existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    // Only setup interval if we have an account
+    if (accountRef.current) {
+      intervalRef.current = setInterval(() => {
+        fetchAllBalances(false); // Don't show loading for background updates
+      }, 30000); // Increased to 30 seconds to reduce API calls
+    }
+  }, [fetchAllBalances]);
+
+  /**
+   * Clear interval
+   */
+  const clearCurrentInterval = useCallback(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  }, []);
+
+  /**
+   * Manual refresh function
+   */
+  const refreshBalances = useCallback(() => {
+    console.log('Manual refresh triggered');
+    fetchAllBalances(true);
+  }, [fetchAllBalances]);
 
   /**
    * Get balance by market ID
@@ -150,36 +205,32 @@ export const useMarketTokenBalances = () => {
   }, [balances]);
 
   /**
-   * Refresh all balances
-   */
-  const refreshBalances = useCallback(() => {
-    fetchAllBalances();
-  }, [fetchAllBalances]);
-
-  /**
-   * Auto-fetch balances when account changes
+   * Handle account changes
    */
   useEffect(() => {
+    console.log('Account changed in useMarketTokenBalances:', account);
+    
     if (account) {
-      fetchAllBalances();
+      // Fetch initial data
+      fetchAllBalances(true);
+      // Setup interval
+      setupInterval();
     } else {
+      // Clear data and interval
       setBalances({});
       setLastUpdate(null);
+      clearCurrentInterval();
     }
-  }, [account, fetchAllBalances]);
+  }, [account]); // Only depend on account
 
   /**
-   * Auto-refresh balances every 15 seconds
+   * Cleanup on unmount
    */
   useEffect(() => {
-    if (!account) return;
-
-    const interval = setInterval(() => {
-      fetchAllBalances();
-    }, 15000);
-
-    return () => clearInterval(interval);
-  }, [account, fetchAllBalances]);
+    return () => {
+      clearCurrentInterval();
+    };
+  }, [clearCurrentInterval]);
 
   return {
     balances,

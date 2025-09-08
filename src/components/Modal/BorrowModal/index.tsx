@@ -6,7 +6,8 @@ import { ChevronRight } from 'react-feather';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract, TransactionResult } from '@/hooks/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances'; 
+import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
+import { useUserPositions } from '@/hooks/useUserPositions';
 import { useBorrowingPower } from '@/hooks/useBorrowingPower';
 import {
   BorrowAssetSelection,
@@ -47,17 +48,29 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   const { markets } = useContractMarketStore();
   const { account } = useWalletAccountStore();
   const { borrow } = useMarketContract();
-  const { balances: tokenBalances, isLoading: balancesLoading } =
-    useMarketTokenBalances(); 
-  const { calculateBorrowingPower, calculateMaxBorrowAmount } =
-    useBorrowingPower();
+  const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances(); 
+  const { positions: userPositions, getFormattedBalances, refreshPositions } = useUserPositions();
+  const { calculateBorrowingPower, calculateMaxBorrowAmount } = useBorrowingPower();
 
   const totalSteps = 4;
 
-  // Convert token balances to include borrow balances
+  // Get formatted balances including both supply and borrow
+  const formattedBalances = getFormattedBalances();
+  
+  // Convert to the format expected by components (including underlying token balances and borrow balances)
   const userBalances = Object.keys(tokenBalances).reduce((acc, marketId) => {
     const balance = tokenBalances[marketId];
-    acc[balance.symbol] = balance.formattedBalance; 
+    const symbol = balance.symbol;
+    
+    // Add underlying token balance
+    acc[symbol] = balance.formattedBalance;
+    
+    // Add borrow balance
+    if (formattedBalances[symbol]) {
+      acc[`${symbol}_borrowed`] = formattedBalances[symbol].borrow;
+      acc[`${symbol}_supplied`] = formattedBalances[symbol].supply;
+    }
+    
     return acc;
   }, {} as Record<string, string>);
 
@@ -85,10 +98,12 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
       if (!selectedAsset || !account) return;
 
       try {
+        console.log('Loading max borrow data for:', selectedAsset.id);
         const maxBorrow = await calculateMaxBorrowAmount(
           selectedAsset.id,
           account
         );
+        console.log('Max borrow data loaded:', maxBorrow);
         setMaxBorrowData(maxBorrow);
       } catch (error) {
         console.error('Error loading max borrow data:', error);
@@ -168,6 +183,12 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
         console.log(
           `Borrow successful: ${amount} ${selectedAsset.symbol} borrowed`
         );
+
+        setTimeout(() => {
+          refreshBalances(); // Refresh token balances
+          refreshPositions(); // Refresh user positions (including borrow balances)
+        }, 2000); // Wait 2 seconds for blockchain to update
+
         setCurrentStep(4);
       } else {
         throw new Error(result.error || 'Borrow transaction failed');
@@ -191,6 +212,18 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
     if (isLoadingBorrowData) {
       return <LoadingMessage>Loading borrowing power data...</LoadingMessage>;
     }
+
+    // Debug logging for borrowing power data
+    // if (borrowingPowerData) {
+    //   console.log('Current borrowing power data:', {
+    //     totalCollateralValue: borrowingPowerData.totalCollateralValue,
+    //     totalBorrowValue: borrowingPowerData.totalBorrowValue,
+    //     borrowingPowerRemaining: borrowingPowerData.borrowingPowerRemaining,
+    //     healthFactor: borrowingPowerData.healthFactor,
+    //     enteredMarkets: borrowingPowerData.enteredMarkets?.length || 0
+    //   });
+    // }
+ 
     switch (currentStep) {
       case 1:
         return (
@@ -199,6 +232,8 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
             selectedAsset={selectedAsset}
             userBalances={userBalances}
             borrowingPower={borrowingPowerData?.borrowingPowerRemaining || '0'}
+            enteredMarkets={borrowingPowerData?.enteredMarkets || []}
+            enteredMarketIds={borrowingPowerData?.enteredMarketIds || []}
             onAssetSelect={handleAssetSelect}
             isLoading={balancesLoading}
           />
@@ -215,6 +250,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
             availableLiquidity={maxBorrowData.availableLiquidity}
             isLiquidityLimited={maxBorrowData.isLiquidityLimited}
             maxFromCollateral={maxBorrowData.maxFromCollateral}
+            isUserInMarket={maxBorrowData.isUserInMarket}
             onAmountChange={(value) => {
               setAmount(value);
               setSelectedQuickAmount(null);
@@ -224,12 +260,12 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
           />
         ) : null;
       case 3:
-        return selectedAsset && maxBorrowData ? (
+        return selectedAsset && maxBorrowData && borrowingPowerData ? (
           <BorrowTransactionPreview
             selectedAsset={selectedAsset}
             amount={amount}
             currentDebt={maxBorrowData.currentDebt || '0'}
-            borrowingPower={borrowingPowerData?.totalCollateralValue || '0'}
+            borrowingPowerData={borrowingPowerData}
             isLoading={isTransacting}
           />
         ) : null;

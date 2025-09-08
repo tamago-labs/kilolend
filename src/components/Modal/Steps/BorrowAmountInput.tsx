@@ -163,18 +163,18 @@ const BalanceValue = styled.span`
   color: #1e293b;
 `;
 
-const WarningSection = styled.div`
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
+const WarningSection = styled.div<{ $type?: 'warning' | 'info' }>`
+  background: ${({ $type }) => $type === 'info' ? '#f0f9ff' : '#fef3c7'};
+  border: 1px solid ${({ $type }) => $type === 'info' ? '#0ea5e9' : '#f59e0b'};
   border-radius: 12px;
   padding: 16px;
   margin-top: 16px;
 `;
 
-const WarningText = styled.p`
+const WarningText = styled.p<{ $type?: 'warning' | 'info' }>`
   margin: 0;
   font-size: 14px;
-  color: #92400e;
+  color: ${({ $type }) => $type === 'info' ? '#0369a1' : '#92400e'};
   line-height: 1.4;
 `;
 
@@ -194,6 +194,7 @@ interface BorrowAmountInputProps {
   availableLiquidity?: string;
   isLiquidityLimited?: boolean;
   maxFromCollateral?: string;
+  isUserInMarket?: boolean;
   onAmountChange: (amount: string) => void;
   onQuickAmountSelect: (percentage: number) => void;
   onMaxClick: () => void;
@@ -209,6 +210,7 @@ export const BorrowAmountInput = ({
   availableLiquidity,
   isLiquidityLimited,
   maxFromCollateral,
+  isUserInMarket,
   onAmountChange,
   onQuickAmountSelect,
   onMaxClick
@@ -237,8 +239,9 @@ export const BorrowAmountInput = ({
   const amountNum = parseFloat(amount || '0');
 
   // Calculate new utilization after borrow
-  const newTotalDebt = currentDebtNum + amountNum;
-  const utilizationAfterBorrow = borrowingPowerNum > 0 ? (newTotalDebt / borrowingPowerNum) * 100 : 0;
+  const newTotalDebtUSD = (currentDebtNum + amountNum) * selectedAsset.price;
+  const totalCollateralValueEstimate = borrowingPowerNum / 0.8; // Rough estimate assuming 80% LTV
+  const utilizationAfterBorrow = totalCollateralValueEstimate > 0 ? (newTotalDebtUSD / totalCollateralValueEstimate) * 100 : 0;
 
   const quickAmounts = [25, 50, 75];
 
@@ -265,6 +268,18 @@ export const BorrowAmountInput = ({
           <AssetAPR>Borrow APR: {selectedAsset.borrowAPR.toFixed(2)}%</AssetAPR>
         </AssetInfo>
       </AssetHeader>
+
+      {/* Show collateral status if relevant */}
+      {isUserInMarket !== undefined && (
+        <WarningSection $type="info">
+          <WarningText $type="info">
+            <strong>Collateral Status:</strong> {isUserInMarket ? 
+              'You have sufficient collateral enabled to borrow this asset.' : 
+              'You may need to supply and enable collateral to increase your borrowing power.'
+            }
+          </WarningText>
+        </WarningSection>
+      )}
 
       <InputSection>
         <InputLabel>Amount to Borrow</InputLabel>
@@ -300,6 +315,11 @@ export const BorrowAmountInput = ({
         <BalanceValue>{maxBorrowNum.toFixed(4)} {selectedAsset.symbol}</BalanceValue>
       </BalanceInfo>
 
+      <BalanceInfo>
+        <BalanceLabel>Remaining Borrowing Power:</BalanceLabel>
+        <BalanceValue>${borrowingPowerNum.toFixed(2)}</BalanceValue>
+      </BalanceInfo>
+
       {availableLiquidity && (
         <BalanceInfo>
           <BalanceLabel>Market Liquidity:</BalanceLabel>
@@ -307,25 +327,27 @@ export const BorrowAmountInput = ({
         </BalanceInfo>
       )}
 
-      {/* {isLiquidityLimited && maxFromCollateral && (
+      {isLiquidityLimited && maxFromCollateral && (
         <BalanceInfo style={{ background: '#fef3c7', border: '1px solid #f59e0b' }}>
-          <BalanceLabel>⚠️ Limited by Liquidity:</BalanceLabel>
+          <BalanceLabel>⚠️ Limited by Liquidity</BalanceLabel>
           <BalanceValue>Max from collateral: {parseFloat(maxFromCollateral).toFixed(4)} {selectedAsset.symbol}</BalanceValue>
         </BalanceInfo>
-      )} */}
+      )}
 
       <BalanceInfo>
         <BalanceLabel>Current Debt:</BalanceLabel>
         <BalanceValue>{currentDebtNum.toFixed(4)} {selectedAsset.symbol}</BalanceValue>
       </BalanceInfo>
 
-      <BalanceInfo>
-        <BalanceLabel>Borrowing Power Used:</BalanceLabel>
-        <BalanceValue>
-          {utilizationAfterBorrow.toFixed(1)}%
-          {utilizationAfterBorrow > 80 && <span style={{ color: '#dc2626', marginLeft: '8px' }}>⚠️ High Risk</span>}
-        </BalanceValue>
-      </BalanceInfo>
+      {amountNum > 0 && (
+        <BalanceInfo>
+          <BalanceLabel>Borrowing Power Used:</BalanceLabel>
+          <BalanceValue>
+            {utilizationAfterBorrow.toFixed(1)}%
+            {utilizationAfterBorrow > 80 && <span style={{ color: '#dc2626', marginLeft: '8px' }}>⚠️ High Risk</span>}
+          </BalanceValue>
+        </BalanceInfo>
+      )}
 
       {amountNum > 0 && (
         <WarningSection>
