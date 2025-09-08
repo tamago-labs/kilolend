@@ -187,8 +187,7 @@ export const Header = () => {
 
   const { account, setAccount } = useWalletAccountStore();
   const [showDropdown, setShowDropdown] = useState(false);
-  const { disconnectWallet } = useKaiaWalletSdk();
-  const [copied, setCopied] = useState(false)
+  const { disconnectWallet } = useKaiaWalletSdk(); 
 
   const handleDisconnect = useCallback(() => {
     disconnectWallet().then(() => {
@@ -235,12 +234,9 @@ export const Header = () => {
             <ProfileSection>
               <AddressRow>
                 <DropdownItem onClick={() => {
-                  navigator.clipboard.writeText(account);
-                  setCopied(true)
+                  navigator.clipboard.writeText(account); 
                 }}>
-                   <CopyButton $copied={copied}>
-                    {copied ? <Check size={12} /> : <Copy size={12} />}
-                  </CopyButton>
+                    
                   <div style={{marginTop: "auto", marginBottom: "auto", marginLeft:"10px"}}>
                     {formatAddress(account)} 
                   </div> 
