@@ -34,7 +34,7 @@ export class BackendAwsCdkStack extends cdk.Stack {
 
     const vpc = new ec2.Vpc(this, 'InferenceVPC', {
       maxAzs: 2,
-      natGateways: 0, 
+      natGateways: 0,
       subnetConfiguration: [
         {
           cidrMask: 24,
@@ -52,6 +52,138 @@ export class BackendAwsCdkStack extends cdk.Stack {
     this.cluster = new ecs.Cluster(this, 'KiloLendCluster', {
       vpc,
       clusterName: 'kilolend-bots'
+    });
+
+    const executionRole = new iam.Role(this, 'BotsExecutionRole', {
+      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
+      ],
+    });
+
+    const taskRole = new iam.Role(this, 'BotsTaskRole', {
+      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+    });
+
+    const taskDef = new ecs.FargateTaskDefinition(this, 'KilolendBotsTaskDef', {
+      cpu: 1024,            // total CPU shared by all containers
+      memoryLimitMiB: 2048, // total memory pool
+      executionRole,
+      taskRole,
+    });
+
+    // Oracle Bot
+    taskDef.addContainer('OracleBot', {
+      image: ecs.ContainerImage.fromRegistry(
+        '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/kilolend-oracle-bot:latest',
+      ),
+      essential: true,
+      environment: {
+        NODE_ENV: 'production',
+        AWS_REGION: this.region,
+        BOT_TYPE: 'oracle',
+        RPC_URL: "https://public-en-kairos.node.kaia.io",
+        PRIVATE_KEY: "",
+        ORACLE_ADDRESS: "0xF0b8eaEeBe416Ec43f79b0c83CCc5670d2b7C3Db",
+        USDT_ADDRESS: "0x5F7392Ec616F829Ab54092e7F167F518835Ac740",
+        SIX_ADDRESS: "0xe438E6157Ad6e38A8528fd68eBf5d8C4F57420eC",
+        BORA_ADDRESS: "0xFdB35092c0cf5e1A5175308CB312613972C3DF3D",
+        MBX_ADDRESS: "0xCeB75a9a4Af613afd42BD000893eD16fB1F0F057",
+        UPDATE_INTERVAL_MINUTES: "120",
+        PRICE_API_URL: "https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices"
+      },
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: 'oracle-bot',
+        logGroup: new logs.LogGroup(this, 'OracleBotLogGroup', {
+          logGroupName: '/ecs/oracle-bot',
+          retention: logs.RetentionDays.ONE_WEEK,
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+        }),
+      }),
+    });
+
+    // Liquidation Bot
+    taskDef.addContainer('LiquidationBot', {
+      image: ecs.ContainerImage.fromRegistry(
+        '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/kilolend-liquidation-bot:latest',
+      ),
+      essential: true,
+      environment: {
+        NODE_ENV: 'production',
+        AWS_REGION: this.region,
+        BOT_TYPE: 'liquidation',
+        RPC_URL: 'https://public-en-kairos.node.kaia.io',
+        PRIVATE_KEY: '', 
+        COMPTROLLER_ADDRESS: '0xA4d31FAD3D2b0b2777F639e6FBe125368Fd4d845',
+        ORACLE_ADDRESS: '0xF0b8eaEeBe416Ec43f79b0c83CCc5670d2b7C3Db', 
+        CUSDT_ADDRESS: '0x3466441C38D2F76405085b730268240E4F2d0D25',
+        CSIX_ADDRESS: '0x772195938d86fcf500dF18563876d7Cefcf47e4D',
+        CBORA_ADDRESS: '0x260fC7251fAe677B6254773d347121862336fb9f',
+        CMBX_ADDRESS: '0x10bB22532eC21Fd25719565f440b0322c010bDF3',
+        CKAIA_ADDRESS: '0x307992307C89216b1079C7c5Cbc4F51005b1472D', 
+        USDT_ADDRESS: '0x5F7392Ec616F829Ab54092e7F167F518835Ac740',
+        SIX_ADDRESS: '0xe438E6157Ad6e38A8528fd68eBf5d8C4F57420eC',
+        BORA_ADDRESS: '0xFdB35092c0cf5e1A5175308CB312613972C3DF3D',
+        MBX_ADDRESS: '0xCeB75a9a4Af613afd42BD000893eD16fB1F0F057', 
+        CHECK_INTERVAL_SECONDS: '600',
+        MIN_PROFIT_USD: '10',
+        MAX_GAS_PRICE_GWEI: '50',
+        LIQUIDATION_INCENTIVE: '0.08',
+        CLOSE_FACTOR: '0.5', 
+        MAX_LIQUIDATION_USD: '5000',
+        MIN_COLLATERAL_USD: '100',
+      },
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: 'liquidation-bot',
+        logGroup: new logs.LogGroup(this, 'LiquidationBotLogGroup', {
+          logGroupName: '/ecs/liquidation-bot',
+          retention: logs.RetentionDays.ONE_WEEK,
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+        }),
+      }),
+    });
+    
+
+    // Points Bot
+    taskDef.addContainer('PointBot', {
+      image: ecs.ContainerImage.fromRegistry(
+        '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/kilolend-point-bot:latest',
+      ),
+      essential: true,
+      environment: {
+        NODE_ENV: 'production',
+        AWS_REGION: this.region,
+        BOT_TYPE: 'points',
+        RPC_URL: 'https://public-en-kairos.node.kaia.io', 
+        PRICE_API_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices',
+        API_BASE_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod', 
+        CUSDT_ADDRESS: '0x3466441C38D2F76405085b730268240E4F2d0D25',
+        CSIX_ADDRESS: '0x772195938d86fcf500dF18563876d7Cefcf47e4D',
+        CBORA_ADDRESS: '0x260fC7251fAe677B6254773d347121862336fb9f',
+        CMBX_ADDRESS: '0x10bB22532eC21Fd25719565f440b0322c010bDF3',
+        CKAIA_ADDRESS: '0x307992307C89216b1079C7c5Cbc4F51005b1472D', 
+        USDT_ADDRESS: '0x5F7392Ec616F829Ab54092e7F167F518835Ac740',
+        SIX_ADDRESS: '0xe438E6157Ad6e38A8528fd68eBf5d8C4F57420eC',
+        BORA_ADDRESS: '0xFdB35092c0cf5e1A5175308CB312613972C3DF3D',
+        MBX_ADDRESS: '0xCeB75a9a4Af613afd42BD000893eD16fB1F0F057',
+      },
+      logging: ecs.LogDrivers.awsLogs({
+        streamPrefix: 'point-bot',
+        logGroup: new logs.LogGroup(this, 'PointBotLogGroup', {
+          logGroupName: '/ecs/point-bot',
+          retention: logs.RetentionDays.ONE_WEEK,
+          removalPolicy: cdk.RemovalPolicy.DESTROY,
+        }),
+      }),
+    });
+    // Service to run all together
+    new ecs.FargateService(this, 'KilolendBotsService', {
+      cluster: this.cluster,
+      serviceName: 'kilolend-bots',
+      taskDefinition: taskDef,
+      desiredCount: 1,
+      assignPublicIp: true,
+      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
     });
 
 
@@ -229,7 +361,7 @@ export class BackendAwsCdkStack extends cdk.Stack {
     });
 
     // API Gateway Resources and Methods
-    
+
     // Prices endpoints
     const pricesResource = this.api.root.addResource('prices');
     pricesResource.addMethod('GET', priceApiIntegration); // GET /prices - get all latest prices
@@ -249,7 +381,7 @@ export class BackendAwsCdkStack extends cdk.Stack {
     const usersResource = this.api.root.addResource('users');
     const userPointsResource = usersResource.addResource('{userAddress}');
     userPointsResource.addMethod('GET', leaderboardApiIntegration); // GET /users/{address} - get user points
-    
+
     // const pointsResource = userPointsResource.addResource('points');
     // pointsResource.addMethod('POST', leaderboardApiIntegration); // POST /users/{address}/points - add points
 

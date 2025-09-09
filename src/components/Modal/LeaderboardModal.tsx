@@ -304,7 +304,7 @@ const infoSlides = [
   },
   {
     title: "Today's Leaderboard",
-    content: "Rankings update in real-time but are not final until the end of the day (GMT)."
+    content: "Rankings are updated hourly but are not final until the end of the day (GMT)."
   }, 
   {
     title: "Point Calculation",
