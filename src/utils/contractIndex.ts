@@ -24,9 +24,7 @@ export type { TransactionResult } from './contractUtils';
 export {
   KAIA_TESTNET_CONFIG,
   CONTRACT_ADDRESSES,
-  MARKET_CONFIG,
-  GAS_CONFIG,
-  PROTOCOL_CONFIG
+  MARKET_CONFIG
 } from './contractConfig';
 
 export type { MarketId, ContractName } from './contractConfig';

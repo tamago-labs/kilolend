@@ -1,4 +1,4 @@
-import { MARKET_CONFIG, PROTOCOL_CONFIG, MarketId } from './contractConfig';
+import { MARKET_CONFIG, MarketId } from './contractConfig';
 
 /**
  * Utility functions for handling token amounts and decimals

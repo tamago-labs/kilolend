@@ -61,3 +61,5 @@ export const getTransactionErrorMessage = (error: any): string => {
   return 'Transaction failed. Please try again.';
 };
 
+export const KAIA_SCAN_URL = "https://kairos.kaiascan.io"
+

@@ -9,7 +9,8 @@ import Blockies from 'react-blockies';
 import { Settings, Clock } from "react-feather"
 import { useModalStore } from '@/stores/modalStore';
 import { useAppStore } from '@/stores/appStore';
-import { Copy, Check } from 'react-feather';
+import { liff } from "@/utils/liff";
+import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -187,7 +188,7 @@ export const Header = () => {
 
   const { account, setAccount } = useWalletAccountStore();
   const [showDropdown, setShowDropdown] = useState(false);
-  const { disconnectWallet } = useKaiaWalletSdk(); 
+  const { disconnectWallet } = useKaiaWalletSdk();
 
   const handleDisconnect = useCallback(() => {
     disconnectWallet().then(() => {
@@ -201,7 +202,22 @@ export const Header = () => {
   };
 
   const handleActivities = () => {
-    openModal("activities")
+    if (!account) {
+      alert("Connect your wallet first to open activities");
+      return
+    }
+
+    const accountUrl = `${KAIA_SCAN_URL}/address/${account}?tabId=txList&page=1`;
+
+    if (liff.isInClient()) {
+      liff.openWindow({
+        url: accountUrl,
+        external: true,
+      });
+    } else { 
+      window.open(accountUrl, "_blank"); 
+    }
+
   }
 
   const formatAddress = (address: string) => {
@@ -234,15 +250,15 @@ export const Header = () => {
             <ProfileSection>
               <AddressRow>
                 <DropdownItem onClick={() => {
-                  navigator.clipboard.writeText(account); 
+                  navigator.clipboard.writeText(account);
                 }}>
-                    
-                  <div style={{marginTop: "auto", marginBottom: "auto", marginLeft:"10px"}}>
-                    {formatAddress(account)} 
-                  </div> 
-                </DropdownItem> 
+
+                  <div style={{ marginTop: "auto", marginBottom: "auto", marginLeft: "10px" }}>
+                    {formatAddress(account)}
+                  </div>
+                </DropdownItem>
               </AddressRow>
-            
+
             </ProfileSection>
             <DisconnectButton onClick={handleDisconnect}>
               Disconnect

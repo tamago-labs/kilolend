@@ -3,7 +3,7 @@ export const KAIA_TESTNET_CONFIG = {
   chainId: 1001,
   chainName: 'Kaia Kairos Testnet',
   rpcUrl: 'https://public-en-kairos.node.kaia.io',
-  blockExplorer: 'https://kairos.kaiascope.com',
+  blockExplorer: 'https://kaiascan.io',
   nativeCurrency: {
     name: 'KAIA',
     symbol: 'KAIA',
@@ -11,7 +11,7 @@ export const KAIA_TESTNET_CONFIG = {
   }
 };
 
-// Smart Contract Addresses on Kaia Kairos Testnet - Updated with deployed contracts
+// Smart Contract Addresses on Kaia Kairos Testnet
 export const CONTRACT_ADDRESSES = {
   // Main Contracts
   Comptroller: '0xA4d31FAD3D2b0b2777F639e6FBe125368Fd4d845',
@@ -103,45 +103,7 @@ export const MARKET_CONFIG = {
     interestModel: 'Collateral'
   }
 };
-
-// Gas Configuration
-export const GAS_CONFIG = {
-  // Standard gas limits for different operations
-  APPROVE: 60000,
-  SUPPLY: 150000,
-  WITHDRAW: 180000,
-  BORROW: 200000,
-  REPAY: 150000,
-  DEPOSIT_COLLATERAL: 120000,
-  WITHDRAW_COLLATERAL: 150000,
-  LIQUIDATE: 300000,
-  
-  // Gas price (in Gwei)
-  DEFAULT_GAS_PRICE: 25, // 25 Gwei
-  
-  // Buffer multiplier for gas estimation
-  GAS_BUFFER: 1.2
-};
-
-// Protocol Constants
-export const PROTOCOL_CONFIG = {
-  // LTV ratios (basis points, 10000 = 100%)
-  KAIA_LTV: 7500,         // 75%
-  
-  // Liquidation threshold and penalty
-  LIQUIDATION_THRESHOLD: 8000,  // 80%
-  LIQUIDATION_PENALTY: 1000,    // 10%
-  
-  // Protocol fee
-  PROTOCOL_FEE: 500,      // 5%
-  
-  // Minimum amounts per token (adjusted for decimals)
-  MIN_COLLATERAL: '1000000000000000000', // 1 KAIA in wei (18 decimals)
-  MIN_BORROW_USDT: '1000000',             // 1 USDT (6 decimals)
-  MIN_BORROW_SIX: '1000000000000000000',  // 1 SIX (18 decimals)
-  MIN_BORROW_BORA: '1000000000000000000', // 1 BORA (18 decimals)
-  MIN_BORROW_MBX: '1000000000000000000',  // 1 MBX (18 decimals)
-};
-
+ 
+ 
 export type MarketId = keyof typeof MARKET_CONFIG;
 export type ContractName = keyof typeof CONTRACT_ADDRESSES;

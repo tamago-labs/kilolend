@@ -140,7 +140,7 @@ export const BorrowSuccess = ({
   borrowAPR
 }: BorrowSuccessProps) => {
   const yearlyInterest = parseFloat(amount) * (borrowAPR / 100);
-  const explorerUrl = transactionHash ? `https://kairos.kaiascan.io/tx/${transactionHash}` : null;
+  // const explorerUrl = transactionHash ? `https://kairos.kaiascan.io/tx/${transactionHash}` : null;
 
   return (
     <Container>
@@ -153,11 +153,11 @@ export const BorrowSuccess = ({
         You have successfully borrowed {amount} {asset}. The tokens have been sent to your wallet.
       </SuccessMessage>
 
-      {explorerUrl && (
+      {/* {explorerUrl && (
         <TransactionLink href={explorerUrl} target="_blank" rel="noopener noreferrer">
           View Transaction <ExternalLink size={16} />
         </TransactionLink>
-      )}
+      )} */}
 
       <DetailsSection>
         <DetailRow>

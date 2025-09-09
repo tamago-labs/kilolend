@@ -3,6 +3,9 @@
 import styled from 'styled-components';
 import { X, TrendingUp, TrendingDown, ExternalLink, Copy } from 'react-feather';
 import { FAUCET_TOKENS, FaucetTokenSymbol } from '@/utils/tokenConfig';
+import { liff } from "@/utils/liff";
+import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
+
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -276,8 +279,16 @@ export const TokenDetailsModal = ({ isOpen, onClose, onOpenFaucet, tokenData }: 
 
   const handleViewOnExplorer = () => {
     if (balance?.address) {
-      const explorerUrl = `https://www.kaiascan.io/token/${balance.address}`;
-      window.open(explorerUrl, '_blank');
+      const explorerUrl = `${KAIA_SCAN_URL}/token/${balance.address}`;
+      if (liff.isInClient()) {
+        liff.openWindow({
+          url: explorerUrl,
+          external: true,
+        });
+      } else { 
+        window.open(explorerUrl, '_blank');
+      }
+      
     }
   };
 
@@ -398,11 +409,7 @@ export const TokenDetailsModal = ({ isOpen, onClose, onOpenFaucet, tokenData }: 
               <ExternalLink size={16} />
               View on Explorer
             </ActionButton>
-            
-            {/* <ActionButton $primary onClick={() => {}}>
-              <TrendingUp size={16} />
-              Trade
-            </ActionButton> */}
+             
           </ActionButtons>
         </ModalBody>
       </ModalContent>
