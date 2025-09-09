@@ -4,4 +4,5 @@ export { BorrowModal } from './BorrowModal';
 export { FaucetModal } from './FaucetModal';
 export { TokenDetailsModal } from './TokenDetailsModal';
 export { SendModal } from './SendModal';
+export { LeaderboardModal } from './LeaderboardModal';
 export { GlobalModalManager } from './GlobalModalManager';

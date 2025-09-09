@@ -13,6 +13,7 @@ import { AIRecommendationModal } from './AIRecommendationModal';
 import { FAQModal } from './FAQModal';
 import { WalletAddressModal } from './WalletAddressModal';
 import { SendModal } from './SendModal';
+import { LeaderboardModal } from './LeaderboardModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -223,6 +224,14 @@ export const GlobalModalManager = () => {
       case 'send':
         return (
           <SendModal
+            isOpen={isOpen}
+            onClose={closeModal}
+          />
+        );
+
+      case 'leaderboard':
+        return (
+          <LeaderboardModal
             isOpen={isOpen}
             onClose={closeModal}
           />

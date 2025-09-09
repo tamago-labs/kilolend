@@ -210,8 +210,8 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     openModal('kilo');
   };
 
-  const handleContacts = () => {
-    openModal('contacts');
+  const handleLeaderboard = () => {
+    openModal('leaderboard');
   };
 
   const handleSend = () => {
@@ -309,7 +309,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <IconLabel>Invite</IconLabel>
           </IconButton>
 
-          <IconButton onClick={handleContacts}>
+          <IconButton onClick={handleLeaderboard}>
             <IconCircle $index="1">
               <IconImage
                 src="./images/icon-contact.png"

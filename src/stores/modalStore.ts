@@ -17,6 +17,7 @@ export type ModalType =
   | 'invite'
   | 'kilo'
   | 'contacts'
+  | 'leaderboard'
   | 'token-details'
   | 'wallet-address'
   | 'support'
