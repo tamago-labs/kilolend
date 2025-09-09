@@ -1,6 +1,10 @@
-import { ethers } from 'ethers';
-import axios from 'axios';
-import dotenv from 'dotenv';
+const { ethers } = require('ethers');
+const dotenv = require('dotenv');
+const KiloPointCalculator = require('./src/KiloPointCalculator.js');
+const PriceManager = require('./src/PriceManager.js');
+const StatsManager = require('./src/StatsManager.js');
+const DatabaseService = require('./src/DatabaseService.js');
+const BalanceManager = require('./src/BalanceManager.js');
 
 // Load environment variables
 dotenv.config();
@@ -19,12 +23,14 @@ const CTOKEN_ABI = [
 class KiloPointBot {
   constructor() {
     this.rpcUrl = process.env.RPC_URL;
-    this.priceApiUrl = process.env.PRICE_API_URL;
     this.pollInterval = parseInt(process.env.POLL_INTERVAL_SECONDS || '60') * 1000;
     
     // Smart scanning configuration
-    this.scanWindowSeconds = parseInt(process.env.SCAN_WINDOW_SECONDS || '60'); // Only scan last 60 seconds
-    this.maxBlocksPerScan = parseInt(process.env.MAX_BLOCKS_PER_SCAN || '100'); // Safety limit
+    this.scanWindowSeconds = parseInt(process.env.SCAN_WINDOW_SECONDS || '60');
+    this.maxBlocksPerScan = parseInt(process.env.MAX_BLOCKS_PER_SCAN || '100');
+    
+    // KILO Points distribution configuration
+    const dailyKiloDistribution = parseInt(process.env.DAILY_KILO_DISTRIBUTION || '100000');
     
     // Market configuration
     this.markets = {
@@ -32,7 +38,7 @@ class KiloPointBot {
         symbol: 'cUSDT',
         underlying: process.env.USDT_ADDRESS,
         underlyingSymbol: 'USDT',
-        decimals: 6 // USDT has 6 decimals
+        decimals: 6
       },
       [process.env.CSIX_ADDRESS]: {
         symbol: 'cSIX', 
@@ -54,70 +60,56 @@ class KiloPointBot {
       },
       [process.env.CKAIA_ADDRESS]: {
         symbol: 'cKAIA',
-        underlying: ethers.ZeroAddress, // Native KAIA
+        underlying: ethers.ZeroAddress,
         underlyingSymbol: 'KAIA',
         decimals: 18
       }
     };
 
-    // Price cache to avoid repeated API calls
-    this.priceCache = {
-      data: {},
-      lastUpdate: 0,
-      cacheDuration: 15 * 60 * 1000 // 15 minutes cache
-    };
-
-    // Daily statistics tracking
-    this.dailyStats = {
-      users: new Set(),
-      tvlChanges: {},
-      borrowChanges: {},
-      totalEvents: 0
-    };
-
     this.lastProcessedBlock = null;
     this.provider = null;
-    this.currentDate = this.getCurrentDate();
     
     this.init();
-  }
-
-  getCurrentDate() {
-    return new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   }
 
   async init() {
     try {
       console.log('🔧 Initializing Kilo Point Bot...');
       
-      // Validate environment variables
       this.validateConfig();
       
-      // Setup provider
       this.provider = new ethers.JsonRpcProvider(this.rpcUrl);
 
-      // Test connection
       const network = await this.provider.getNetwork();
       console.log(`📡 Connected to network: ${network.name} (Chain ID: ${network.chainId})`);
 
-      // Initialize starting block (current block for smart scanning)
       this.lastProcessedBlock = await this.provider.getBlockNumber();
 
+      // Initialize managers
+      this.databaseService = new DatabaseService(process.env.API_BASE_URL);
+      this.priceManager = new PriceManager(process.env.PRICE_API_URL);
+      this.balanceManager = new BalanceManager(this.provider, this.markets);
+      this.statsManager = new StatsManager(this.databaseService);
+      this.kiloCalculator = new KiloPointCalculator(parseInt(process.env.DAILY_KILO_DISTRIBUTION || '100000'));
+
       console.log('✅ Kilo Point Bot initialized successfully');
-      console.log(`📍 Price API: ${this.priceApiUrl}`);
+      console.log(`📍 Price API: ${process.env.PRICE_API_URL}`);
       console.log(`📍 Starting from block: ${this.lastProcessedBlock} (current)`);
       console.log(`📍 Tracking ${Object.keys(this.markets).length} markets`);
       console.log(`⏱️  Scan window: ${this.scanWindowSeconds} seconds (~${this.scanWindowSeconds} blocks)`);
+      console.log(`🎯 Daily KILO distribution: ${this.kiloCalculator.dailyKiloDistribution.toLocaleString()} KILO`);
+      console.log('💡 Base TVL calculated from cToken balance percentages');
       
       // Log market info
       for (const [cTokenAddress, market] of Object.entries(this.markets)) {
         console.log(`  ${market.symbol} (${market.underlyingSymbol}): ${cTokenAddress}`);
       }
 
-      // Test price API connection
-      await this.fetchPrices();
+      await this.priceManager.fetchPrices();
       
-      // Start smart polling
+      // Test database connection
+      await this.databaseService.testConnection();
+      
       console.log('🎯 Using smart polling for reliable monitoring...');
       this.startSmartPolling();
       
@@ -140,90 +132,6 @@ class KiloPointBot {
     }
   }
 
-  async fetchPrices() {
-    try {
-      // Check cache first
-      const now = Date.now();
-      if (now - this.priceCache.lastUpdate < this.priceCache.cacheDuration) {
-        return this.priceCache.data;
-      }
-
-      const response = await axios.get(this.priceApiUrl, {
-        timeout: 10000 // 10 second timeout
-      });
-      
-      if (!response.data || !response.data.success) {
-        throw new Error('API response indicates failure');
-      }
-      
-      const prices = {
-        // USDT is always $1.00
-        'USDT': 1.0
-      };
-      const priceData = response.data.data;
-      
-      // Process each price from API
-      for (const item of priceData) {
-        const symbol = item.symbol;
-        
-        // Map API symbols to our markets (skip USDT since we hardcode it)
-        if (symbol === 'MARBLEX') {
-          prices['MBX'] = item.price;
-        } else if (symbol !== 'USDT') { // Skip USDT from API
-          prices[symbol] = item.price;
-        }
-      }
-      
-      // Update cache
-      this.priceCache.data = prices;
-      this.priceCache.lastUpdate = now;
-      
-      console.log(`✅ Successfully fetched ${Object.keys(prices).length} prices`);
-      console.log(`   USDT: $1.00 (stablecoin - hardcoded)`);
-      for (const [symbol, price] of Object.entries(prices)) {
-        if (symbol !== 'USDT') {
-          console.log(`   ${symbol}: $${price}`);
-        }
-      }
-      
-      return prices;
-      
-    } catch (error) {
-      console.error('❌ Failed to fetch prices:', error.message);
-      // Return cached prices if available, with USDT fallback
-      if (Object.keys(this.priceCache.data).length > 0) {
-        console.log('⚠️  Using cached prices');
-        return this.priceCache.data;
-      }
-      
-      // Emergency fallback with just USDT
-      console.log('⚠️  Using emergency fallback prices');
-      return { 'USDT': 1.0 };
-    }
-  }
-
-  async getTokenPrice(underlyingSymbol) {
-    try {
-      const prices = await this.fetchPrices();
-      
-      // USDT is always $1.00
-      if (underlyingSymbol === 'USDT') {
-        return 1.0;
-      }
-      
-      return prices[underlyingSymbol] || 0;
-    } catch (error) {
-      console.warn(`⚠️  Failed to get price for ${underlyingSymbol}:`, error.message);
-      
-      // Return $1 for USDT even on error
-      if (underlyingSymbol === 'USDT') {
-        return 1.0;
-      }
-      
-      return 0;
-    }
-  }
-
   formatTokenAmount(amount, decimals) {
     return ethers.formatUnits(amount, decimals);
   }
@@ -231,7 +139,7 @@ class KiloPointBot {
   async calculateUSDValue(underlyingSymbol, amount, decimals) {
     try {
       const tokenAmount = parseFloat(this.formatTokenAmount(amount, decimals));
-      const tokenPrice = await this.getTokenPrice(underlyingSymbol);
+      const tokenPrice = await this.priceManager.getTokenPrice(underlyingSymbol);
       const usdValue = tokenAmount * tokenPrice;
       
       return {
@@ -250,75 +158,15 @@ class KiloPointBot {
   }
 
   updateDailyStats(user, market, usdValue, type) {
-    // Check if we need to reset daily stats (new day)
-    const currentDate = this.getCurrentDate();
-    if (currentDate !== this.currentDate) {
-      this.printDailySummary();
-      this.resetDailyStats();
-      this.currentDate = currentDate;
-    }
-
-    // Track unique users
-    this.dailyStats.users.add(user);
-    this.dailyStats.totalEvents++;
-
-    // Initialize market stats if needed
-    if (!this.dailyStats.tvlChanges[market]) {
-      this.dailyStats.tvlChanges[market] = 0;
-    }
-    if (!this.dailyStats.borrowChanges[market]) {
-      this.dailyStats.borrowChanges[market] = 0;
-    }
-
-    // Update stats based on event type
-    switch (type) {
-      case 'mint':
-        this.dailyStats.tvlChanges[market] += usdValue; // Add to TVL
-        break;
-      case 'redeem':
-        this.dailyStats.tvlChanges[market] -= usdValue; // Subtract from TVL
-        break;
-      case 'borrow':
-        this.dailyStats.borrowChanges[market] += usdValue; // Add to borrows
-        break;
-      case 'repay':
-        this.dailyStats.borrowChanges[market] -= usdValue; // Subtract from borrows
-        break;
-    }
-  }
-
-  resetDailyStats() {
-    this.dailyStats = {
-      users: new Set(),
-      tvlChanges: {},
-      borrowChanges: {},
-      totalEvents: 0
-    };
-  }
-
-  printDailySummary() {
-    console.log('\\n📊 DAILY SUMMARY');
-    console.log('================');
-    console.log(`📅 Date: ${this.currentDate}`);
-    console.log(`👥 Unique Users: ${this.dailyStats.users.size}`);
-    console.log(`🎯 Total Events: ${this.dailyStats.totalEvents}`);
+    const newDay = this.statsManager.updateDailyStats(user, market, usdValue, type);
     
-    console.log('\\n💰 TVL Changes:');
-    let totalTVLChange = 0;
-    for (const [market, change] of Object.entries(this.dailyStats.tvlChanges)) {
-      console.log(`  ${market}: ${change >= 0 ? '+' : ''}$${change.toFixed(2)}`);
-      totalTVLChange += change;
+    // If new day started, print summary and reset
+    if (newDay) {
+      this.statsManager.printDailySummary(this.kiloCalculator, this.balanceManager);
+      this.statsManager.reset();
+      // Re-update for the new day
+      this.statsManager.updateDailyStats(user, market, usdValue, type);
     }
-    console.log(`  🏆 Net TVL Change: ${totalTVLChange >= 0 ? '+' : ''}$${totalTVLChange.toFixed(2)}`);
-
-    console.log('\\n🏦 Borrow Changes:');
-    let totalBorrowChange = 0;
-    for (const [market, change] of Object.entries(this.dailyStats.borrowChanges)) {
-      console.log(`  ${market}: ${change >= 0 ? '+' : ''}$${change.toFixed(2)}`);
-      totalBorrowChange += change;
-    }
-    console.log(`  🏆 Net Borrow Change: ${totalBorrowChange >= 0 ? '+' : ''}$${totalBorrowChange.toFixed(2)}`);
-    console.log('================\\n');
   }
 
   async handleMintEvent(minter, mintAmount, mintTokens, event, market) {
@@ -339,7 +187,6 @@ class KiloPointBot {
       console.log(`🆔 Tx: ${event.transactionHash}`);
       console.log('─'.repeat(50));
 
-      // Update daily stats
       this.updateDailyStats(minter, market.underlyingSymbol, calculation.usdValue, 'mint');
       
     } catch (error) {
@@ -365,7 +212,6 @@ class KiloPointBot {
       console.log(`🆔 Tx: ${event.transactionHash}`);
       console.log('─'.repeat(50));
 
-      // Update daily stats
       this.updateDailyStats(redeemer, market.underlyingSymbol, calculation.usdValue, 'redeem');
       
     } catch (error) {
@@ -391,7 +237,6 @@ class KiloPointBot {
       console.log(`🆔 Tx: ${event.transactionHash}`);
       console.log('─'.repeat(50));
 
-      // Update daily stats
       this.updateDailyStats(borrower, market.underlyingSymbol, calculation.usdValue, 'borrow');
       
     } catch (error) {
@@ -418,7 +263,6 @@ class KiloPointBot {
       console.log(`🆔 Tx: ${event.transactionHash}`);
       console.log('─'.repeat(50));
 
-      // Update daily stats (use borrower for user tracking)
       this.updateDailyStats(borrower, market.underlyingSymbol, calculation.usdValue, 'repay');
       
     } catch (error) {
@@ -426,52 +270,51 @@ class KiloPointBot {
     }
   }
 
-  // Smart Polling Approach - only scan recent blocks
   startSmartPolling() {
     console.log('🔄 Starting smart polling mode...');
     console.log(`⏱️  Polling every ${this.pollInterval / 1000} seconds`);
     console.log(`🎯 Scanning only last ${this.scanWindowSeconds} seconds (~${this.scanWindowSeconds} blocks)`);
     console.log('─'.repeat(50));
 
-    // Process events immediately
     this.processRecentEvents();
     
-    // Then poll for new events
     setInterval(() => {
       this.processRecentEvents();
     }, this.pollInterval);
 
     // Print daily summary every hour
+    // setInterval(() => {
+    //   if (this.statsManager.getTotalEvents() > 0) {
+    //     this.statsManager.printDailySummary(this.kiloCalculator, this.balanceManager);
+    //   }
+    // }, 60 * 60 * 1000);
     setInterval(() => {
-      if (this.dailyStats.totalEvents > 0) {
-        this.printDailySummary();
+      if (this.statsManager.getTotalEvents() > 0) {
+        this.statsManager.printDailySummary(this.kiloCalculator, this.balanceManager);
       }
-    }, 60 * 60 * 1000); // Every hour
+    }, 10 * 60 * 1000);
   }
 
   async processRecentEvents() {
     try {
       const currentBlock = await this.provider.getBlockNumber();
       
-      // Calculate block range for the last scan window (e.g., 60 seconds)
       const blocksToScan = Math.min(this.scanWindowSeconds, this.maxBlocksPerScan);
       const fromBlock = Math.max(currentBlock - blocksToScan, this.lastProcessedBlock || currentBlock - blocksToScan);
       const toBlock = currentBlock;
 
       if (toBlock <= fromBlock) {
-        return; // No new blocks to process
+        return;
       }
 
       console.log(`🔍 Scanning recent blocks ${fromBlock} to ${toBlock} (${toBlock - fromBlock + 1} blocks)...`);
 
       let totalEventsFound = 0;
 
-      // Process each market
       for (const [cTokenAddress, market] of Object.entries(this.markets)) {
         const contract = new ethers.Contract(cTokenAddress, CTOKEN_ABI, this.provider);
 
         try {
-          // Get all events for this contract in the recent block range
           const [mintEvents, redeemEvents, borrowEvents, repayEvents] = await Promise.all([
             contract.queryFilter(contract.filters.Mint(), fromBlock, toBlock),
             contract.queryFilter(contract.filters.Redeem(), fromBlock, toBlock),
@@ -479,7 +322,6 @@ class KiloPointBot {
             contract.queryFilter(contract.filters.RepayBorrow(), fromBlock, toBlock)
           ]);
 
-          // Process all events
           const allEvents = [
             ...mintEvents.map(e => ({ ...e, type: 'mint' })),
             ...redeemEvents.map(e => ({ ...e, type: 'redeem' })),
@@ -487,7 +329,6 @@ class KiloPointBot {
             ...repayEvents.map(e => ({ ...e, type: 'repay' }))
           ];
 
-          // Sort events by block number and transaction index
           allEvents.sort((a, b) => {
             if (a.blockNumber !== b.blockNumber) {
               return a.blockNumber - b.blockNumber;
@@ -495,7 +336,6 @@ class KiloPointBot {
             return a.transactionIndex - b.transactionIndex;
           });
 
-          // Process events in order
           for (const event of allEvents) {
             switch (event.type) {
               case 'mint':
@@ -536,12 +376,11 @@ class KiloPointBot {
     }
   }
 
-  // Graceful shutdown
-  shutdown() {
+  async shutdown() {
     console.log('🛑 Shutting down Kilo Point Bot...');
     
-    if (this.dailyStats.totalEvents > 0) {
-      this.printDailySummary();
+    if (this.statsManager.getTotalEvents() > 0) {
+      await this.statsManager.printDailySummary(this.kiloCalculator, this.balanceManager);
     }
     
     process.exit(0);
@@ -572,4 +411,4 @@ console.log('🎯 KiloLend Point Bot Starting...');
 console.log('==================================');
 
 const bot = new KiloPointBot();
-global.pointBot = bot; // Store reference for graceful shutdown
+global.pointBot = bot;

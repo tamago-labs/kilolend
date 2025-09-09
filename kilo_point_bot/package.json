@@ -1,8 +1,7 @@
 {
   "name": "kilolend-point-bot",
   "version": "1.0.0",
-  "description": "Event tracking bot for KiloLend protocol supply/borrow activities",
-  "type": "module",
+  "description": "Event tracking bot for KiloLend protocol supply/borrow activities", 
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
