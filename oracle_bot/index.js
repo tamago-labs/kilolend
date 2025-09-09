@@ -1,6 +1,6 @@
-import { ethers } from 'ethers';
-import axios from 'axios';
-import dotenv from 'dotenv';
+const axios = require('axios');
+const { ethers } = require('ethers');
+const dotenv = require('dotenv');
 
 // Load environment variables
 dotenv.config();
@@ -22,7 +22,7 @@ class OracleBot {
     this.oracleAddress = process.env.ORACLE_ADDRESS;
     this.priceApiUrl = process.env.PRICE_API_URL;
     this.updateInterval = parseInt(process.env.UPDATE_INTERVAL_MINUTES) * 60 * 1000; // Convert to milliseconds
-    
+
     // Token address mapping - underlying tokens for price updates
     this.tokenAddresses = {
       'BORA': process.env.BORA_ADDRESS,
@@ -35,21 +35,21 @@ class OracleBot {
     this.provider = null;
     this.wallet = null;
     this.oracleContract = null;
-    
+
     this.init();
   }
 
   async init() {
     try {
       console.log('🔧 Initializing Oracle Bot...');
-      
+
       // Validate environment variables
       this.validateConfig();
-      
+
       // Setup provider and wallet
       this.provider = new ethers.JsonRpcProvider(this.rpcUrl);
       this.wallet = new ethers.Wallet(this.privateKey, this.provider);
-      
+
       // Setup oracle contract
       this.oracleContract = new ethers.Contract(
         this.oracleAddress,
@@ -61,13 +61,13 @@ class OracleBot {
       console.log(`📍 Wallet address: ${this.wallet.address}`);
       console.log(`📍 Oracle contract: ${this.oracleAddress}`);
       console.log(`⏱️  Update interval: ${process.env.UPDATE_INTERVAL_MINUTES} minutes`);
-      
+
       // Check if wallet is whitelisted
       await this.checkWhitelistStatus();
-      
+
       // Start the update loop
       this.startUpdateLoop();
-      
+
     } catch (error) {
       console.error('❌ Failed to initialize Oracle Bot:', error.message);
       process.exit(1);
@@ -79,7 +79,7 @@ class OracleBot {
       'RPC_URL', 'PRIVATE_KEY', 'ORACLE_ADDRESS', 'PRICE_API_URL',
       'BORA_ADDRESS', 'SIX_ADDRESS', 'MBX_ADDRESS', 'USDT_ADDRESS'
     ];
-    
+
     for (const key of required) {
       if (!process.env[key]) {
         throw new Error(`Missing required environment variable: ${key}`);
@@ -91,11 +91,11 @@ class OracleBot {
     try {
       const isWhitelisted = await this.oracleContract.whitelist(this.wallet.address);
       console.log(`📋 Wallet whitelist status: ${isWhitelisted ? 'WHITELISTED ✅' : 'NOT WHITELISTED ❌'}`);
-      
+
       if (!isWhitelisted) {
         console.warn('⚠️  WARNING: Wallet is not whitelisted. Price updates will fail.');
         console.warn('💡 Contact the oracle owner to add your address to the whitelist.');
-        
+
         // Try to get owner address
         try {
           const owner = await this.oracleContract.owner();
@@ -112,41 +112,41 @@ class OracleBot {
   async fetchPrices() {
     try {
       console.log('🔍 Fetching prices from API...');
-      
+
       const response = await axios.get(this.priceApiUrl, {
         timeout: 10000 // 10 second timeout
       });
-      
+
       if (!response.data || !response.data.success) {
         throw new Error('API response indicates failure');
       }
-      
+
       const prices = {};
       const priceData = response.data.data;
-      
+
       // Process each price from API
       for (const item of priceData) {
         const symbol = item.symbol;
-        
+
         // Map API symbols to our token addresses
         if (this.tokenAddresses[symbol]) {
           // Convert price to 18-decimal format (e18 based)
           // For example: 1.01 becomes 101e16 = 1.01e18
           const priceInWei = ethers.parseEther(item.price.toString());
-          
+
           prices[symbol] = {
             address: this.tokenAddresses[symbol],
             price: priceInWei,
             rawPrice: item.price
           };
-          
+
           console.log(`💰 ${symbol}: $${item.price} (${priceInWei.toString()} wei = ${item.price}e18)`);
         }
       }
-      
+
       console.log(`✅ Successfully fetched ${Object.keys(prices).length} prices`);
       return prices;
-      
+
     } catch (error) {
       console.error('❌ Failed to fetch prices:', error.message);
       throw error;
@@ -156,20 +156,20 @@ class OracleBot {
   async updatePrices(priceData) {
     try {
       console.log('📝 Updating oracle prices...');
-      
+
       if (Object.keys(priceData).length === 0) {
         console.log('⚠️  No prices to update');
         return;
       }
-      
+
       // Check current gas price
       const feeData = await this.provider.getFeeData();
       console.log(`⛽ Gas price: ${ethers.formatUnits(feeData.gasPrice, 'gwei')} gwei`);
-      
+
       // Update each price individually using setDirectPrice
       let successCount = 0;
       let failCount = 0;
-      
+
       for (const [symbol, data] of Object.entries(priceData)) {
         try {
           console.log(`🔄 Updating ${symbol} price: $${data.rawPrice}`);
@@ -177,12 +177,12 @@ class OracleBot {
           const tx = await this.oracleContract.setDirectPrice(data.address, data.price, {
             gasLimit: 200000, // Set a reasonable gas limit per transaction
           });
-          
+
           console.log(`📤 Transaction sent for ${symbol}: ${tx.hash}`);
           console.log('⏳ Waiting for confirmation...');
-          
+
           const receipt = await tx.wait();
-          
+
           if (receipt.status === 1) {
             console.log(`✅ ${symbol} price update successful!`);
             console.log(`📊 Block: ${receipt.blockNumber}, Gas used: ${receipt.gasUsed.toString()}`);
@@ -191,28 +191,28 @@ class OracleBot {
             console.log(`❌ ${symbol} transaction failed`);
             failCount++;
           }
-          
+
           // Wait a bit between transactions to avoid nonce issues
           await new Promise(resolve => setTimeout(resolve, 2000));
-          
+
         } catch (error) {
           console.error(`❌ Failed to update ${symbol} price:`, error.message);
           failCount++;
-          
+
           // Check specific error types
           if (error.message.includes('Not whitelisted')) {
             console.log('💡 Tip: This wallet is not whitelisted for price updates.');
             break; // Stop trying other tokens if not whitelisted
           }
-          
+
           if (error.message.includes('gas')) {
             console.log('💡 Tip: This might be a gas estimation issue. Check if wallet has enough balance.');
           }
         }
       }
-      
+
       console.log(`📊 Update Summary: ${successCount} successful, ${failCount} failed`);
-      
+
     } catch (error) {
       console.error('❌ Failed to update prices:', error.message);
       throw error;
@@ -223,15 +223,15 @@ class OracleBot {
     try {
       console.log('\\n🔄 Starting price update cycle...');
       console.log(`⏰ ${new Date().toISOString()}`);
-      
+
       // Fetch latest prices
       const priceData = await this.fetchPrices();
-      
+
       // Update oracle
       await this.updatePrices(priceData);
-      
+
       console.log('✅ Update cycle completed successfully\\n');
-      
+
     } catch (error) {
       console.error('❌ Update cycle failed:', error.message);
       console.log('🔄 Will retry on next cycle\\n');
@@ -240,15 +240,15 @@ class OracleBot {
 
   startUpdateLoop() {
     console.log('🚀 Starting price update loop...');
-    
+
     // Run immediately on start
     this.runUpdate();
-    
+
     // Then run on interval
     setInterval(() => {
       this.runUpdate();
     }, this.updateInterval);
-    
+
     console.log(`⏱️  Updates scheduled every ${process.env.UPDATE_INTERVAL_MINUTES} minutes`);
   }
 

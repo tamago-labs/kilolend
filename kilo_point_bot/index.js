@@ -283,16 +283,11 @@ class KiloPointBot {
     }, this.pollInterval);
 
     // Print daily summary every hour
-    // setInterval(() => {
-    //   if (this.statsManager.getTotalEvents() > 0) {
-    //     this.statsManager.printDailySummary(this.kiloCalculator, this.balanceManager);
-    //   }
-    // }, 60 * 60 * 1000);
     setInterval(() => {
       if (this.statsManager.getTotalEvents() > 0) {
         this.statsManager.printDailySummary(this.kiloCalculator, this.balanceManager);
       }
-    }, 10 * 60 * 1000);
+    }, 60 * 60 * 1000);
   }
 
   async processRecentEvents() {
