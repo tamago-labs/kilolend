@@ -53,8 +53,8 @@ const CardTitle = styled.h3`
   color: #1e293b;
   margin-bottom: 16px;
 `;
- 
- 
+
+
 const PositionsList = styled.div`
   display: flex;
   flex-direction: column;
@@ -164,10 +164,104 @@ const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' | 'dange
   }
 `;
 
+const TabsContainer = styled.div`
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+`;
+
+const TabsHeader = styled.div`
+  display: flex;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+`;
+
+const Tab = styled.button<{ $active: boolean }>`
+  flex: 1;
+  padding: 16px 20px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  background: ${({ $active }) => $active ? 'white' : 'transparent'};
+  color: ${({ $active }) => $active ? '#1e293b' : '#64748b'};
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  
+  ${({ $active }) => $active && `
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #06c755;
+    }
+  `}
+
+  &:hover {
+    background: ${({ $active }) => $active ? 'white' : '#f1f5f9'};
+  }
+
+  @media (max-width: 480px) {
+    padding: 14px 16px;
+    font-size: 15px;
+  }
+`;
+
+const TabContent = styled.div`
+  padding: 24px;
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
+`;
+
+const TabTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+    margin-bottom: 16px;
+  }
+`;
+
+const PositionCount = styled.span`
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: 40px 20px;
   color: #64748b;
+`;
+
+const EmptyTitle = styled.h4`
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+`;
+
+const EmptyDescription = styled.p`
+  font-size: 14px;
+  line-height: 1.5;
+  max-width: 280px;
+  margin: 0 auto;
 `;
 
 const EmptyIcon = styled.div`
@@ -198,7 +292,7 @@ const StartButton = styled.button`
     box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
   }
 `;
- 
+
 const LoadingCard = styled.div`
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -227,6 +321,8 @@ interface Position {
 export const PortfolioPage = () => {
 
   const [positions, setPositions] = useState<Position[]>([]);
+  const [activeTab, setActiveTab] = useState<'supply' | 'borrow'>('supply');
+
   const [portfolioStats, setPortfolioStats] = useState({
     totalSupplyValue: 0,
     totalBorrowValue: 0,
@@ -303,7 +399,7 @@ export const PortfolioPage = () => {
       const totalSupplyValue = userPositions
         .filter(p => p.type === 'supply')
         .reduce((sum, p) => sum + p.usdValue, 0);
-      
+
       const totalBorrowValue = userPositions
         .filter(p => p.type === 'borrow')
         .reduce((sum, p) => sum + p.usdValue, 0);
@@ -321,7 +417,7 @@ export const PortfolioPage = () => {
       setIsLoading(false);
     }
   }, [account, markets, getUserPosition, calculateBorrowingPower]);
- 
+
   // Fetch positions when account or markets change
   useEffect(() => {
     fetchPositions();
@@ -446,46 +542,100 @@ export const PortfolioPage = () => {
         Your lending and borrowing positions
       </PageSubtitle>
 
-      {hasPositions ? (
-        <>  
-          <PortfolioOverview 
-            portfolioStats={portfolioStats}
-            borrowingPowerData={borrowingPowerData}
-            isLoading={isLoading}
-          />
+      {
+        hasPositions ? (
+          <>
+            <PortfolioOverview
+              portfolioStats={portfolioStats}
+              borrowingPowerData={borrowingPowerData}
+              isLoading={isLoading}
+            />
 
-          {/* Supply Positions */}
-          {supplyPositions.length > 0 && (
-            <Card>
-              <CardTitle>Supply Positions ({supplyPositions.length})</CardTitle>
-              <PositionsList>
-                {supplyPositions.map(renderPosition)}
-              </PositionsList>
-            </Card>
-          )}
+            {/* Tabbed Positions */}
+            <TabsContainer>
+              <TabsHeader>
+                <Tab
+                  $active={activeTab === 'supply'}
+                  onClick={() => setActiveTab('supply')}
+                >
+                  Supply Positions
+                  {supplyPositions.length > 0 && (
+                    <PositionCount>{supplyPositions.length}</PositionCount>
+                  )}
+                </Tab>
+                <Tab
+                  $active={activeTab === 'borrow'}
+                  onClick={() => setActiveTab('borrow')}
+                >
+                  Borrow Positions
+                  {borrowPositions.length > 0 && (
+                    <PositionCount>{borrowPositions.length}</PositionCount>
+                  )}
+                </Tab>
+              </TabsHeader>
 
-          {/* Borrow Positions */}
-          {borrowPositions.length > 0 && (
-            <Card>
-              <CardTitle>Borrow Positions ({borrowPositions.length})</CardTitle>
-              <PositionsList>
-                {borrowPositions.map(renderPosition)}
-              </PositionsList>
-            </Card>
-          )}
-        </>
-      ) : (
-        <EmptyState>
-          <EmptyIcon>📊</EmptyIcon>
-          <div style={{ marginBottom: '16px' }}>No positions found</div>
-          <div style={{ fontSize: '14px', marginBottom: '24px' }}>
-            Start by supplying assets to earn interest or borrowing against your collateral
-          </div>
-          <StartButton onClick={() => openModal('supply')}>
-            Start Lending
-          </StartButton>
-        </EmptyState>
-      )}
-    </PageContainer>
+              <TabContent>
+                {activeTab === 'supply' && (
+                  <>
+                    {supplyPositions.length > 0 ? (
+                      <>
+                        {/* <TabTitle>
+                          Your Supply Positions
+                          <PositionCount>{supplyPositions.length}</PositionCount>
+                        </TabTitle> */}
+                        <PositionsList>
+                          {supplyPositions.map(renderPosition)}
+                        </PositionsList>
+                      </>
+                    ) : (
+                      <EmptyState> 
+                        <EmptyTitle>No Supply Positions</EmptyTitle>
+                        <EmptyDescription>
+                          You haven't supplied any assets yet. Start earning interest by supplying tokens to the protocol.
+                        </EmptyDescription>
+                      </EmptyState>
+                    )}
+                  </>
+                )}
+
+                {activeTab === 'borrow' && (
+                  <>
+                    {borrowPositions.length > 0 ? (
+                      <>
+                        {/* <TabTitle>
+                          Your Borrow Positions
+                          <PositionCount>{borrowPositions.length}</PositionCount>
+                        </TabTitle> */}
+                        <PositionsList>
+                          {borrowPositions.map(renderPosition)}
+                        </PositionsList>
+                      </>
+                    ) : (
+                      <EmptyState> 
+                        <EmptyTitle>No Borrow Positions</EmptyTitle>
+                        <EmptyDescription>
+                          You haven't borrowed any assets yet. Use your supplied assets as collateral to borrow tokens.
+                        </EmptyDescription>
+                      </EmptyState>
+                    )}
+                  </>
+                )}
+              </TabContent>
+            </TabsContainer>
+          </>
+        ) : (
+          <EmptyState>
+            <EmptyIcon>📊</EmptyIcon>
+            <div style={{ marginBottom: '16px' }}>No positions found</div>
+            <div style={{ fontSize: '14px', marginBottom: '24px' }}>
+              Start by supplying assets to earn interest or borrowing against your collateral
+            </div>
+            <StartButton onClick={() => openModal('supply')}>
+              Start Lending
+            </StartButton>
+          </EmptyState>
+        )
+      }
+    </PageContainer >
   );
 };
