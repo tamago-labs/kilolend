@@ -53,34 +53,8 @@ const CardTitle = styled.h3`
   color: #1e293b;
   margin-bottom: 16px;
 `;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 24px;
-`;
-
-const StatCard = styled.div`
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 16px;
-  text-align: center;
-`;
-
-const StatValue = styled.div`
-  font-size: 24px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 4px;
-`;
-
-const StatLabel = styled.div`
-  font-size: 12px;
-  color: #64748b;
-  font-weight: 500;
-`;
-
+ 
+ 
 const PositionsList = styled.div`
   display: flex;
   flex-direction: column;
@@ -224,18 +198,7 @@ const StartButton = styled.button`
     box-shadow: 0 2px 8px rgba(0, 195, 0, 0.3);
   }
 `;
-
-const HealthFactorBadge = styled.div<{ $healthy: boolean }>`
-  display: inline-block;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${props => props.$healthy ? '#dcfce7' : '#fee2e2'};
-  color: ${props => props.$healthy ? '#166534' : '#991b1b'};
-  margin-top: 8px;
-`;
-
+ 
 const LoadingCard = styled.div`
   background: #f8fafc;
   border: 1px solid #e2e8f0;
@@ -484,8 +447,7 @@ export const PortfolioPage = () => {
       </PageSubtitle>
 
       {hasPositions ? (
-        <> 
-
+        <>  
           <PortfolioOverview 
             portfolioStats={portfolioStats}
             borrowingPowerData={borrowingPowerData}

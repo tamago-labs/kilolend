@@ -12,6 +12,7 @@ import { SettingsModal } from './SettingsModal';
 import { AIRecommendationModal } from './AIRecommendationModal';
 import { FAQModal } from './FAQModal';
 import { WalletAddressModal } from './WalletAddressModal';
+import { SendModal } from './SendModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -214,6 +215,14 @@ export const GlobalModalManager = () => {
       case 'faucet':
         return (
           <FaucetModal
+            isOpen={isOpen}
+            onClose={closeModal}
+          />
+        );
+
+      case 'send':
+        return (
+          <SendModal
             isOpen={isOpen}
             onClose={closeModal}
           />

@@ -214,6 +214,10 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     openModal('contacts');
   };
 
+  const handleSend = () => {
+    openModal('send');
+  };
+
   return (
     <PageContainer>
       {/* Top Cards Section */}
@@ -315,7 +319,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <IconLabel>Leaderboard</IconLabel>
           </IconButton>
 
-          <IconButton onClick={handleContacts}>
+          <IconButton onClick={handleSend}>
             <IconCircle $index="4">
               <IconImage
                 src="./images/icon-send.png"

@@ -127,10 +127,13 @@ export const KAIA_TESTNET_CONFIG = {
   chainId: 1001,
   name: 'KAIA Testnet',
   rpcUrl: 'https://public-en-kairos.node.kaia.io',
-  blockExplorer: 'https://baobab.klaytnscope.com',
+  blockExplorer: 'https://kairos.kaiascan.io',
   nativeCurrency: {
     name: 'KAIA',
     symbol: 'KAIA', 
     decimals: 18
   }
 };
+
+// Block explorer URL
+export const KAIA_SCAN_URL = 'https://kairos.kaiascan.io';
