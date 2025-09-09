@@ -55,8 +55,8 @@ const InfoCard = styled.div`
   &::before {
     content: '';
     position: absolute;
-    top: -30%;
-    right: -30%;
+    top: -10%;
+    right: -10%;
     width: 80px;
     height: 80px;
     background: rgba(255, 255, 255, 0.1);
@@ -256,6 +256,7 @@ interface LeaderboardData {
   baseTVL: number;
   multiplier: number;
   netContribution: number;
+  share: number
 }
 
 interface LeaderboardResponse {
@@ -267,9 +268,7 @@ interface LeaderboardResponse {
   };
   message?: string;
 }
-
-interface LeaderboardModalProps extends Omit<BaseModalProps, 'children'> {}
-
+ 
 const formatAddress = (address: string) => {
   return `${address.slice(0, 6)}...${address.slice(-4)}`;
 };
@@ -299,29 +298,21 @@ const infoSlides = [
     title: "Leaderboard is Live",
     content: "Start collecting KILO points now. Points are fully claimable 1:1 for tokens at launch."
   },
-  // {
-  //   title: "Today's Leaderboard",
-  //   content: "Leaderboard rankings update in real time but are not final until the end of the day (GMT)."
-  // },
   {
     title: "Daily Distribution",
-    content: "100,000 KILO points are distributed every day among active users based on their lending and borrowing activity."
+    content: "Over 100,000 points are distributed daily among active users based on their activity."
   },
+  {
+    title: "Today's Leaderboard",
+    content: "Rankings update in real-time but are not final until the end of the day (GMT)."
+  }, 
   {
     title: "Point Calculation",
-    content: "Points = TVL (50%) + Net Contribution (50%) × Multiplier. Net = (Supply - Withdraw) - (Borrow - Repay)."
-  },
-  {
-    title: "Maximize Your Rewards",
-    content: "Earn more by supplying larger amounts, keeping funds longer in the protocol, and maintaining consistent activity."
-  },
-  {
-    title: "Invite & Multiply",
-    content: "Boost your rewards by inviting friends. Each successful invite adds a 5% multiplier to your KILO points, compounding with your existing activity."
+    content: "Points = TVL (50%) + Net Contribution (50%) × Multiplier. Invite friends to increase your multiplier."
   }
 ];
 
-export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: LeaderboardModalProps) => {
+export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: any) => {
   
   const { account } = useWalletAccountStore();
   
@@ -399,9 +390,10 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: Lea
                 <TableHeaderCell>#</TableHeaderCell>
                 <TableHeaderCell $fixed={true}>Wallet</TableHeaderCell>
                 <TableHeaderCell>KILO</TableHeaderCell>
-                <TableHeaderCell>Base Points</TableHeaderCell> 
+                <TableHeaderCell>Share %</TableHeaderCell>
                 <TableHeaderCell>Multiplier</TableHeaderCell> 
-                <TableHeaderCell>TVL Points</TableHeaderCell>  
+                <TableHeaderCell>Base Points</TableHeaderCell> 
+                <TableHeaderCell>TVL</TableHeaderCell>  
                 <TableHeaderCell>Net Daily</TableHeaderCell> 
               </tr>
             </TableHeader>
@@ -419,8 +411,9 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: Lea
                     )}
                   </WalletCell>
                   <KiloCell>{formatKilo(user.kiloReward)}</KiloCell>
-                  <TableCell>{user.basePoints.toFixed(2)}</TableCell>
-                   <TableCell>{user.multiplier}x</TableCell> 
+                  <TableCell>{user.share.toFixed(2)}</TableCell> 
+                  <TableCell>{user.multiplier}x</TableCell> 
+                  <TableCell>{user.basePoints.toFixed(2)}</TableCell> 
                   <TableCell>{user.baseTVL.toFixed(2)}</TableCell> 
                   <TableCell>
                     <NetContribution $positive={user.netContribution >= 0}>
@@ -438,16 +431,14 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: Lea
 
   return (
     <BaseModal isOpen={isOpen} onClose={onClose} title={title}>
-      <LeaderboardContent>
-
+      <LeaderboardContent> 
         <InfoCard>
           <InfoContent>
             <InfoTitle>{infoSlides[currentSlide].title}</InfoTitle>
-            <InfoText>{infoSlides[currentSlide].content}</InfoText>
-         
-              <InfoText style={{ marginTop: '8px', fontSize: '12px', opacity: 0.8 }}>
+            <InfoText>{infoSlides[currentSlide].content}</InfoText> 
+              {/* <InfoText style={{ marginTop: '8px', fontSize: '12px', opacity: 0.8 }}>
                 Current day KILO points is not final until end of day GMT
-              </InfoText> 
+              </InfoText>  */}
             <InfoDots>
               {infoSlides.map((_, index) => (
                 <InfoDot key={index} $active={index === currentSlide} />
@@ -466,10 +457,7 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: Lea
               {getTabLabel(daysAgo)}
             </Tab>
           ))}
-        </TabsContainer>
-
-        
-
+        </TabsContainer> 
         {renderContent()}
       </LeaderboardContent>
     </BaseModal>
