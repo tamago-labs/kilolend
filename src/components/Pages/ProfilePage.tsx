@@ -753,11 +753,11 @@ export const ProfilePage = () => {
       <SupportSection>
         <SectionTitle>Need Help?</SectionTitle>
         <SupportButtons>
-          <SupportButton $primary onClick={() => openModal('support')}>
+          <SupportButton $primary onClick={() => openModal('faq')}>
             <HelpCircle size={16} />
             Get Support
           </SupportButton>
-          <SupportButton onClick={() => openModal('feedback')}>
+          <SupportButton onClick={() => alert('Email to support@tamagolabs.com')}>
             <MessageCircle size={16} />
             Send Feedback
           </SupportButton> 

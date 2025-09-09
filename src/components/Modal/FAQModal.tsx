@@ -309,7 +309,7 @@ const FAQ_DATA: FAQCategory[] = [
         question: "Who is behind KiloLend?",
         answer: `
         <p>KiloLend is structured under an offshore entity and has delegated 
-        operations and maintenance to <span class="highlight">Tamago Blockchain Labs Co., Ltd.</span>, 
+        operations and maintenance to <span class="highlight">Tamago Labs</span>, 
         a Web3 software company based in Japan.</p>
         `
       }
