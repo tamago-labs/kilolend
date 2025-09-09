@@ -1,0 +1,20 @@
+{
+  "name": "kilolend-liquidation-bot",
+  "version": "1.0.0",
+  "description": "Liquidation bot for KiloLend protocol to liquidate underwater positions",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "ethers": "^6.15.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "engines": {
+    "node": "^20.3.1"
+  }
+}
