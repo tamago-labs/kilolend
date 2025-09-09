@@ -233,7 +233,7 @@ export const BorrowTransactionPreview = ({
         </div>
       </div>
 
-      {/* <RiskSection $level={riskLevel}>
+      <RiskSection $level={riskLevel}>
         <RiskTitle $level={riskLevel}>
           {riskLevel === 'high' ? '⚠️ High Risk' : 
            riskLevel === 'medium' ? '⚡ Medium Risk' : 
@@ -250,7 +250,7 @@ export const BorrowTransactionPreview = ({
             `Your health factor will be ${newHealthFactor.toFixed(2)}, which is relatively safe. You have good collateral coverage for this borrow amount.`
           }
         </RiskText>
-      </RiskSection> */}
+      </RiskSection>
 
       {/* {borrowingPowerData?.enteredMarkets && borrowingPowerData.enteredMarkets.length > 0 && (
         <InfoSection>

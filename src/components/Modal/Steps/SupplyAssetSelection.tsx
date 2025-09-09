@@ -20,8 +20,7 @@ const OverviewTitle = styled.h3`
 `;
 
 const CardSection = styled.div`
-  margin-bottom: 24px;
-  min-height: 450px;
+  margin-bottom: 24px; 
   display: flex;
   align-items: center;
   position: relative;
@@ -259,18 +258,7 @@ export const SupplyAssetSelection = ({
               market={currentMarket}
               userBalance={userBalances[currentMarket.symbol] || '0'}
               isLoading={isLoading}
-            />
-            
-            {/* <SelectButton
-              $selected={isCurrentSelected}
-              onClick={handleSelectCurrent}
-              disabled={isLoading}
-            >
-              {isCurrentSelected 
-                ? `✓ ${currentMarket.symbol} Selected` 
-                : `Select ${currentMarket.symbol} for Supply`
-              }
-            </SelectButton> */}
+            /> 
           </div>
         )}
       </CardSection>

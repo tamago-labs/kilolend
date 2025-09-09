@@ -651,7 +651,7 @@ export const ProfilePage = () => {
           <RightSection>
             <ProfileSection>
               <TotalBalanceSection>
-                <TotalBalanceLabel>Total Portfolio Value</TotalBalanceLabel>
+                <TotalBalanceLabel>Total Value</TotalBalanceLabel>
                 <TotalBalanceValue>
                   ${totalUSDValue.toFixed(2)}
                 </TotalBalanceValue>

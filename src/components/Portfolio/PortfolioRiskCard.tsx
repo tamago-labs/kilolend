@@ -84,8 +84,8 @@ const ProgressFill = styled.div<{ $percentage: number; $color: string }>`
 `;
 
 const HealthFactorDisplay = styled.div<{ $healthy: boolean }>`
-  background: ${({ $healthy }) => $healthy ? 
-    'linear-gradient(135deg, #f0fdf4, #dcfce7)' : 
+  background: ${({ $healthy }) => $healthy ?
+    'linear-gradient(135deg, #f0fdf4, #dcfce7)' :
     'linear-gradient(135deg, #fef2f2, #fee2e2)'
   };
   border: 1px solid ${({ $healthy }) => $healthy ? '#00C300' : '#ef4444'};
@@ -96,11 +96,9 @@ const HealthFactorDisplay = styled.div<{ $healthy: boolean }>`
 `;
 
 const HealthFactorValue = styled.div<{ $healthy: boolean }>`
-  font-size: 32px;
-  font-weight: 700;
-  color: ${({ $healthy }) => $healthy ? '#059212' : '#dc2626'};
-  margin-bottom: 4px;
-  line-height: 1;
+font-size: 16px;
+font-weight: 600;
+  color: ${({ $healthy }) => $healthy ? '#059212' : '#dc2626'};  
 `;
 
 const HealthFactorLabel = styled.div<{ $healthy: boolean }>`
@@ -180,29 +178,29 @@ interface PortfolioRiskCardProps {
   isLoading?: boolean;
 }
 
-export const PortfolioRiskCard = ({ 
-  portfolioStats, 
+export const PortfolioRiskCard = ({
+  portfolioStats,
   borrowingPowerData,
-  isLoading = false 
+  isLoading = false
 }: PortfolioRiskCardProps) => {
   const isHealthy = portfolioStats.healthFactor > 1.5;
   const isAtRisk = portfolioStats.healthFactor <= 1.2 && portfolioStats.healthFactor > 0;
-  
-  const borrowingPowerUsed = borrowingPowerData ? 
-    parseFloat(borrowingPowerData.borrowingPowerUsed) : 
-    portfolioStats.totalSupplyValue > 0 ? 
-      (portfolioStats.totalBorrowValue / portfolioStats.totalSupplyValue) * 100 : 
+
+  const borrowingPowerUsed = borrowingPowerData ?
+    parseFloat(borrowingPowerData.borrowingPowerUsed) :
+    portfolioStats.totalSupplyValue > 0 ?
+      (portfolioStats.totalBorrowValue / portfolioStats.totalSupplyValue) * 100 :
       0;
 
-  const borrowingPowerRemaining = borrowingPowerData ? 
-    parseFloat(borrowingPowerData.borrowingPowerRemaining) : 
+  const borrowingPowerRemaining = borrowingPowerData ?
+    parseFloat(borrowingPowerData.borrowingPowerRemaining) :
     Math.max(0, portfolioStats.totalSupplyValue * 0.8 - portfolioStats.totalBorrowValue);
 
   const liquidationRisk = borrowingPowerUsed;
-  const liquidationColor = 
+  const liquidationColor =
     liquidationRisk > 80 ? '#dc2626' :
-    liquidationRisk > 60 ? '#f59e0b' :
-    '#059212';
+      liquidationRisk > 60 ? '#f59e0b' :
+        '#059212';
 
   if (isLoading) {
     return (
@@ -216,7 +214,7 @@ export const PortfolioRiskCard = ({
   }
 
   return (
-    <RiskCard> 
+    <RiskCard>
 
       {/* Health Factor */}
       {/* <HealthFactorDisplay $healthy={isHealthy}>
@@ -235,8 +233,8 @@ export const PortfolioRiskCard = ({
           <BorrowingPowerValue>{borrowingPowerUsed.toFixed(1)}%</BorrowingPowerValue>
         </BorrowingPowerHeader>
         <ProgressBar>
-          <ProgressFill 
-            $percentage={borrowingPowerUsed} 
+          <ProgressFill
+            $percentage={borrowingPowerUsed}
             $color={liquidationColor}
           />
         </ProgressBar>
@@ -256,8 +254,8 @@ export const PortfolioRiskCard = ({
         <MetricHeader>
           <MetricLabel>Collateral Value</MetricLabel>
           <MetricValue>
-            ${borrowingPowerData ? 
-              parseFloat(borrowingPowerData.totalCollateralValue).toFixed(2) : 
+            ${borrowingPowerData ?
+              parseFloat(borrowingPowerData.totalCollateralValue).toFixed(2) :
               (portfolioStats.totalSupplyValue * 0.8).toFixed(2)
             }
           </MetricValue>
@@ -266,18 +264,30 @@ export const PortfolioRiskCard = ({
 
       <MetricSection>
         <MetricHeader>
+          <MetricLabel>Health Factor</MetricLabel>
+          {/* <MetricValue $color="#f59e0b">
+            {borrowingPowerData?.liquidationThreshold || '80'}%
+          </MetricValue> */}
+          <HealthFactorValue $healthy={isHealthy}>
+            {portfolioStats.healthFactor > 999 ? '∞' : portfolioStats.healthFactor.toFixed(2)}
+          </HealthFactorValue>
+        </MetricHeader>
+      </MetricSection>
+
+      {/* <MetricSection>
+        <MetricHeader>
           <MetricLabel>Liquidation Threshold</MetricLabel>
           <MetricValue $color="#f59e0b">
             {borrowingPowerData?.liquidationThreshold || '80'}%
           </MetricValue>
         </MetricHeader>
-      </MetricSection>
+      </MetricSection> */}
 
       {/* Risk Warnings */}
       {isAtRisk && (
         <RiskWarning>
           <WarningText>
-            ⚠️ Your health factor is low. Consider repaying debt or adding more collateral to avoid liquidation.
+            ⚠️ Your health factor is critical. Consider repaying debt or adding more collateral to avoid liquidation.
           </WarningText>
         </RiskWarning>
       )}
@@ -285,7 +295,7 @@ export const PortfolioRiskCard = ({
       {borrowingPowerUsed > 80 && (
         <RiskWarning>
           <WarningText>
-            🚨 High borrowing utilization. You're approaching liquidation risk.
+            High borrowing utilization. You're approaching liquidation risk.
           </WarningText>
         </RiskWarning>
       )}

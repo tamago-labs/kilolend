@@ -308,6 +308,13 @@ export const BorrowAmountInput = ({
         </QuickAmountsContainer>
       </InputSection>
 
+      {isLiquidityLimited && maxFromCollateral && (
+        <BalanceInfo style={{ background: '#fef3c7', border: '1px solid #f59e0b' }}>
+          <BalanceLabel>⚠️ Limited by Liquidity</BalanceLabel>
+          <BalanceValue>Max from collateral: {parseFloat(maxFromCollateral).toFixed(4)} {selectedAsset.symbol}</BalanceValue>
+        </BalanceInfo>
+      )}
+
       <BalanceInfo>
         <BalanceLabel>Available to Borrow:</BalanceLabel>
         <BalanceValue>{maxBorrowNum.toFixed(4)} {selectedAsset.symbol}</BalanceValue>
@@ -325,12 +332,7 @@ export const BorrowAmountInput = ({
         </BalanceInfo>
       )}
 
-      {isLiquidityLimited && maxFromCollateral && (
-        <BalanceInfo style={{ background: '#fef3c7', border: '1px solid #f59e0b' }}>
-          <BalanceLabel>⚠️ Limited by Liquidity</BalanceLabel>
-          <BalanceValue>Max from collateral: {parseFloat(maxFromCollateral).toFixed(4)} {selectedAsset.symbol}</BalanceValue>
-        </BalanceInfo>
-      )}
+      
 
       <BalanceInfo>
         <BalanceLabel>Current Debt:</BalanceLabel>

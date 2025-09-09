@@ -133,50 +133,50 @@ export const TEMPLATE_CATEGORIES: TemplateCategory[] = [
       ]
     }
   },
-  {
-    id: 'gaming',
-    name: 'Gaming Tokens Strategy',
-    description: 'Specialized strategies for gaming ecosystem tokens like MBX, BORA, and SIX',
-    icon: 'Gamepad2',
-    color: '#f59e0b',
-    templates: {
-      en: [
-        "Which gaming token is better for lending: MBX, BORA, or SIX Network?",
-        "I want to build a gaming token portfolio with USDT on KiloLend",
-        "Help me choose between MBX and BORA for high-yield strategies",
-        "What are the risks of lending gaming tokens vs stablecoins?",
-        "I believe in gaming sector growth, suggest optimal allocation strategy",
-        "Compare APY rates for all gaming tokens available on KiloLend"
-      ],
-      ko: [
-        "MBX, BORA, SIX Network 중 어떤 게이밍 토큰이 대출에 좋을까요?",
-        "KiloLend에서 USDT로 게이밍 토큰 포트폴리오를 만들고 싶어요",
-        "고수익 전략을 위해 MBX와 BORA 중 선택을 도와주세요",
-        "게이밍 토큰 대출 vs 스테이블코인의 위험은 무엇인가요?",
-        "게이밍 섹터 성장을 믿어요, 최적의 배분 전략을 제안해주세요",
-        "KiloLend에서 제공하는 모든 게이밍 토큰의 APY를 비교해주세요"
-      ],
-      ja: [
-        "MBX、BORA、SIX Networkのどのゲーミングトークンが貸出に良いですか？",
-        "KiloLendでUSDTを使ってゲーミングトークンポートフォリオを作りたいです",
-        "高利回り戦略のためにMBXとBORAの選択を手伝ってください",
-        "ゲーミングトークン貸出 vs ステーブルコインのリスクは何ですか？",
-        "ゲーミングセクターの成長を信じています、最適な配分戦略を提案してください",
-        "KiloLendで利用可能なすべてのゲーミングトークンのAPYを比較してください"
-      ],
-      th: [
-        "โทเค็นเกมมิ่งไหนดีกว่าสำหรับการให้กู้: MBX, BORA หรือ SIX Network?",
-        "อยากสร้างพอร์ตโฟลิโอโทเค็นเกมมิ่งด้วย USDT ใน KiloLend",
-        "ช่วยเลือกระหว่าง MBX และ BORA สำหรับกลยุทธ์ผลตอบแทนสูง",
-        "ความเสี่ยงของการให้กู้โทเค็นเกมมิ่ง vs stablecoin คืออะไร?",
-        "เชื่อในการเติบโตของภาคเกมมิ่ง แนะนำกลยุทธ์การจัดสรรที่เหมาะสม",
-        "เปรียบเทียบอัตรา APY ของโทเค็นเกมมิ่งทั้งหมดใน KiloLend"
-      ]
-    }
-  },
+  // {
+  //   id: 'gaming',
+  //   name: 'Gaming Tokens Strategy',
+  //   description: 'Specialized strategies for gaming ecosystem tokens like MBX, BORA, and SIX',
+  //   icon: 'Gamepad2',
+  //   color: '#f59e0b',
+  //   templates: {
+  //     en: [
+  //       "Which gaming token is better for lending: MBX, BORA, or SIX Network?",
+  //       "I want to build a gaming token portfolio with USDT on KiloLend",
+  //       "Help me choose between MBX and BORA for high-yield strategies",
+  //       "What are the risks of lending gaming tokens vs stablecoins?",
+  //       "I believe in gaming sector growth, suggest optimal allocation strategy",
+  //       "Compare APY rates for all gaming tokens available on KiloLend"
+  //     ],
+  //     ko: [
+  //       "MBX, BORA, SIX Network 중 어떤 게이밍 토큰이 대출에 좋을까요?",
+  //       "KiloLend에서 USDT로 게이밍 토큰 포트폴리오를 만들고 싶어요",
+  //       "고수익 전략을 위해 MBX와 BORA 중 선택을 도와주세요",
+  //       "게이밍 토큰 대출 vs 스테이블코인의 위험은 무엇인가요?",
+  //       "게이밍 섹터 성장을 믿어요, 최적의 배분 전략을 제안해주세요",
+  //       "KiloLend에서 제공하는 모든 게이밍 토큰의 APY를 비교해주세요"
+  //     ],
+  //     ja: [
+  //       "MBX、BORA、SIX Networkのどのゲーミングトークンが貸出に良いですか？",
+  //       "KiloLendでUSDTを使ってゲーミングトークンポートフォリオを作りたいです",
+  //       "高利回り戦略のためにMBXとBORAの選択を手伝ってください",
+  //       "ゲーミングトークン貸出 vs ステーブルコインのリスクは何ですか？",
+  //       "ゲーミングセクターの成長を信じています、最適な配分戦略を提案してください",
+  //       "KiloLendで利用可能なすべてのゲーミングトークンのAPYを比較してください"
+  //     ],
+  //     th: [
+  //       "โทเค็นเกมมิ่งไหนดีกว่าสำหรับการให้กู้: MBX, BORA หรือ SIX Network?",
+  //       "อยากสร้างพอร์ตโฟลิโอโทเค็นเกมมิ่งด้วย USDT ใน KiloLend",
+  //       "ช่วยเลือกระหว่าง MBX และ BORA สำหรับกลยุทธ์ผลตอบแทนสูง",
+  //       "ความเสี่ยงของการให้กู้โทเค็นเกมมิ่ง vs stablecoin คืออะไร?",
+  //       "เชื่อในการเติบโตของภาคเกมมิ่ง แนะนำกลยุทธ์การจัดสรรที่เหมาะสม",
+  //       "เปรียบเทียบอัตรา APY ของโทเค็นเกมมิ่งทั้งหมดใน KiloLend"
+  //     ]
+  //   }
+  // },
   {
     id: 'advanced',
-    name: 'Advanced Portfolio',
+    name: 'Portfolio',
     description: 'Sophisticated multi-asset strategies and portfolio optimization on KiloLend',
     icon: 'Zap',
     color: '#8b5cf6',

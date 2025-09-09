@@ -398,7 +398,7 @@ export const EnhancedMarketCard = ({
         }}> 
           <div style={{ fontSize: '12px', color: '#64748b' }}>
             {/* {formatUSD(availableLiquidity.toString())} available */}
-          {formatUSD(market.totalSupply)} liquidity
+          {formatUSD(market.totalSupply)} USD liquidity
           </div>
            { getMarketBadgeType() === "collateral" && (
               <MarketBadge $type={"collateral"}> 

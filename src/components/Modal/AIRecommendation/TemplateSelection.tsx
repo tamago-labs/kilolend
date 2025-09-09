@@ -43,7 +43,7 @@ const KiloLendBadge = styled.div`
 const OptionsContainer = styled.div`
   display: flex;
   gap: 12px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 `;
 
 const OptionTab = styled.button<{ $active: boolean }>`
@@ -86,7 +86,7 @@ const LanguageTab = styled.button<{ $active: boolean }>`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 80px;
+  min-width: 55px;
 
   &:hover {
     border-color: #06C755;
@@ -300,12 +300,12 @@ export const AITemplateSelection: React.FC<TemplateSelectionProps> = ({
   return (
     <Container> 
 
-      <Header>
-        {/* <Title>Choose Your Strategy</Title> */}
+    {/*  <Header>
+         <Title>Choose Your Strategy</Title> 
         <Subtitle>
           Select from curated templates or create a custom prompt. Our AI analyzes KiloLend markets in real-time.
         </Subtitle>
-      </Header>
+      </Header>*/}
 
       <OptionsContainer>
         <OptionTab 
@@ -331,7 +331,8 @@ export const AITemplateSelection: React.FC<TemplateSelectionProps> = ({
                 $active={selectedLanguage === lang.code}
                 onClick={() => setSelectedLanguage(lang.code as 'en' | 'ko' | 'ja' | 'th')}
               >
-                {lang.flag} {lang.name}
+                {lang.flag} 
+                {/*{lang.name}*/}
               </LanguageTab>
             ))}
           </LanguageTabs>
