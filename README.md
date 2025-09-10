@@ -116,27 +116,23 @@ npm run dev:https
 pnpm dev:https
 ```
 
-## Deployment
+## Deployment (KAIA Mainnet)
 
-All smart contracts are deployed on the KAIA Kairos Testnet. One issue is that the KRWMarket is not functional, likely due to numeric overflow caused by KRW's typical value scale. We plan to refactor and fix this in the next version
+All smart contracts are deployed on the mainnet. 
 
-```
-// Main Contracts
-PriceOracle: 0xe5209A4f622C6eD2C158dcCcdDB69B05f9D0E4E0
-InterestRateModel: 0x0Ee774bF5793b51C9c52decde8C07b783c42Df96
-USDTMarket: 0xA657b300009802Be7c88617128545534aCA12dbe
-KRWMarket: 0xE53048D2D19338A294395D8A7f780E44A9379925
-THBMarket: 0xd91Fd5c773C24Cc27D39c86EfEb3bfF57eF36F99
-JPYMarket: 0x3c4151361e9718b45409B803B6a9Ee623DBF59FE
+### Core Contracts
+- **Comptroller:** [0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2](https://www.kaiascan.io/address/0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2)  
+- **KiloOracle:** [0xBB265F42Cce932c5e383536bDf50B82e08eaf454](https://www.kaiascan.io/address/0xBB265F42Cce932c5e383536bDf50B82e08eaf454)  
+- **StablecoinJumpRateModel:** [0x792ecD8E829ca66DE9a744F7a6C17F4B76FE932e](https://www.kaiascan.io/address/0x792ecD8E829ca66DE9a744F7a6C17F4B76FE932e)  
+- **VolatileRateModel:** [0x741AD28811a05845D1de298860F796a54CaE2130](https://www.kaiascan.io/address/0x741AD28811a05845D1de298860F796a54CaE2130)  
+- **CollateralRateModel:** [0x0FB331ed4abE0A2D7da880c6D81C42436B5abAC6](https://www.kaiascan.io/address/0x0FB331ed4abE0A2D7da880c6D81C42436B5abAC6)  
 
-// Mock Tokens (KIP-7)
-USDT: 0x16EE94e3C07B24EbA6067eb9394BA70178aAc4c0
-KRW: 0xf2260B00250c772CB64606dBb88d9544F709308C
-JPY: 0xFa15adECD1CC94bd17cf48DD3b41F066FE2812a7
-THB: 0x576430Ecadbd9729B32a4cA9Fed9F38331273924
-stKAIA: 0x65e38111d8e2561aDC0E2EA1eeA856E6a43dC892
-wKAIA: 0x553588e084604a2677e10E46ea0a8A8e9D859146
-```
+### Lending Markets
+- **cUSDT (Stablecoin):** [0x498823F094f6F2121CcB4e09371a57A96d619695](https://www.kaiascan.io/address/0x498823F094f6F2121CcB4e09371a57A96d619695)  
+- **cSIX (Volatile):** [0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c](https://www.kaiascan.io/address/0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c)  
+- **cBORA (Volatile):** [0x7a937C07d49595282c711FBC613c881a83B9fDFD](https://www.kaiascan.io/address/0x7a937C07d49595282c711FBC613c881a83B9fDFD)  
+- **cMBX (Volatile):** [0xE321e20F0244500A194543B1EBD8604c02b8fA85](https://www.kaiascan.io/address/0xE321e20F0244500A194543B1EBD8604c02b8fA85)  
+- **cKAIA (Collateral Only):** [0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3](https://www.kaiascan.io/address/0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3)  
 
 
 
