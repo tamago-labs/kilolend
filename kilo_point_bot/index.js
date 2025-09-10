@@ -87,13 +87,12 @@ class KiloPointBot {
 
       // Initialize managers
       this.databaseService = new DatabaseService(process.env.API_BASE_URL);
-      this.priceManager = new PriceManager(process.env.PRICE_API_URL);
+      this.priceManager = new PriceManager(`${process.env.PRICE_API_URL}/prices`);
       this.balanceManager = new BalanceManager(this.provider, this.markets);
       this.statsManager = new StatsManager(this.databaseService);
       this.kiloCalculator = new KiloPointCalculator(parseInt(process.env.DAILY_KILO_DISTRIBUTION || '100000'));
 
-      console.log('✅ Kilo Point Bot initialized successfully');
-      console.log(`📍 Price API: ${process.env.PRICE_API_URL}`);
+      console.log('✅ Kilo Point Bot initialized successfully'); 
       console.log(`📍 Starting from block: ${this.lastProcessedBlock} (current)`);
       console.log(`📍 Tracking ${Object.keys(this.markets).length} markets`);
       console.log(`⏱️  Scan window: ${this.scanWindowSeconds} seconds (~${this.scanWindowSeconds} blocks)`);
@@ -110,6 +109,9 @@ class KiloPointBot {
       // Test database connection
       await this.databaseService.testConnection();
       
+      // Initialize with existing users
+      await this.initializeExistingUsers();
+      
       console.log('🎯 Using smart polling for reliable monitoring...');
       this.startSmartPolling();
       
@@ -121,7 +123,7 @@ class KiloPointBot {
 
   validateConfig() {
     const required = [
-      'RPC_URL', 'PRICE_API_URL', 'CUSDT_ADDRESS', 'CSIX_ADDRESS', 
+      'RPC_URL', 'CUSDT_ADDRESS', 'CSIX_ADDRESS', 
       'CBORA_ADDRESS', 'CMBX_ADDRESS', 'CKAIA_ADDRESS'
     ];
     
@@ -154,6 +156,51 @@ class KiloPointBot {
         tokenPrice: 0,
         usdValue: 0
       };
+    }
+  }
+
+  /**
+   * Initialize existing users and calculate their base TVL
+   * This ensures users who contributed before the script started are included
+   */
+  async initializeExistingUsers() {
+    try {
+      console.log('\n📊 INITIALIZING EXISTING USERS...');
+      console.log('=================================');
+      
+      // Fetch all users from the API
+      const allUsers = await this.databaseService.getAllUsers();
+      
+      if (allUsers.length === 0) {
+        console.log('💭 No existing users found in the system');
+        return;
+      }
+      
+      console.log(`🚀 Found ${allUsers.length} existing users, calculating base TVL...`);
+      
+      // Calculate base TVL for all existing users
+      const existingUserBaseTVL = await this.balanceManager.calculateBaseTVLForUsers(allUsers);
+      
+      // Initialize stats manager with existing users' base TVL
+      let usersWithTVL = 0;
+      for (const userAddress of allUsers) {
+        const baseTVLData = existingUserBaseTVL[userAddress];
+        if (baseTVLData && baseTVLData.totalBaseTVL > 0) {
+          this.statsManager.initializeUserBaseTVL(userAddress, baseTVLData.totalBaseTVL, baseTVLData.marketBreakdown);
+          console.log(`✅ Initialized ${userAddress.slice(0, 8)}... with ${baseTVLData.totalBaseTVL.toFixed(2)} base TVL`);
+          usersWithTVL++;
+        }
+      }
+      
+      console.log(`\n🏆 Initialization Complete:`);
+      console.log(`   • Total users: ${allUsers.length}`);
+      console.log(`   • Users with TVL: ${usersWithTVL}`);
+      console.log(`   • Ready to track new events!`);
+      console.log('=================================\n');
+      
+    } catch (error) {
+      console.error('❌ Error initializing existing users:', error.message);
+      console.log('💡 Continuing without existing user data - new events will still be tracked');
     }
   }
 

@@ -85,6 +85,22 @@ class StatsManager {
   }
 
   /**
+   * Initialize user's base TVL from cToken balances at startup
+   * This is called when loading existing users who had balances before the bot started
+   */
+  initializeUserBaseTVL(userAddress, totalBaseTVL, marketBreakdown) {
+    this.initializeUserStats(userAddress);
+    
+    const userStats = this.dailyStats.userStats[userAddress];
+    userStats.baseTVL = totalBaseTVL;
+    userStats.balanceBreakdown = marketBreakdown;
+    userStats.lastBalanceUpdate = new Date().toISOString();
+    
+    // Add user to the tracked users set
+    this.dailyStats.users.add(userAddress);
+  }
+
+  /**
    * Update user's base TVL from cToken balances
    */
   updateUserBaseTVL(userAddress, baseTVLData) {

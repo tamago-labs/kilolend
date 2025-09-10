@@ -204,6 +204,45 @@ class DatabaseService {
   }
 
   /**
+   * Get all users in the system
+   * Used to calculate base TVL for existing users at startup
+   */
+  async getAllUsers() {
+    try {
+      if (!this.apiBaseUrl) {
+        console.warn('⚠️  API_BASE_URL not configured');
+        return [];
+      }
+
+      console.log('🔍 Fetching all users from API...');
+      
+      const response = await axios.get(
+        `${this.apiBaseUrl}/all`,
+        {
+          timeout: this.timeout
+        }
+      );
+
+      if (response.data && response.data.success && response.data.data) {
+        const users = response.data.data.map(user => user.userAddress);
+        console.log(`✅ Found ${users.length} users in the system`);
+        return users;
+      } else {
+        console.log('⚠️  No users found or invalid response format');
+        return [];
+      }
+
+    } catch (error) {
+      console.error('❌ Error fetching all users:', error.message);
+      if (error.response) {
+        console.error('📍 Response status:', error.response.status);
+        console.error('📍 Response data:', error.response.data);
+      }
+      return [];
+    }
+  }
+
+  /**
    * Get configuration info
    */
   getConfig() {
