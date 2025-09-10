@@ -14,6 +14,7 @@ import { FAQModal } from './FAQModal';
 import { WalletAddressModal } from './WalletAddressModal';
 import { SendModal } from './SendModal';
 import { LeaderboardModal } from './LeaderboardModal';
+import { KiloPointsModal } from "./KiloModal"
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -148,13 +149,9 @@ export const GlobalModalManager = () => {
 
       case 'kilo':
         return (
-          <BlankModal
+          <KiloPointsModal
             isOpen={isOpen}
             onClose={closeModal}
-            title="KILO Points"
-            icon="💎"
-            placeholderTitle="Your KILO Points"
-            placeholderText="Check your current KILO Points balance and learn how to earn more."
           />
         );
 

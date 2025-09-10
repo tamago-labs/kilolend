@@ -334,8 +334,6 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: any
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  
-
   // Fetch leaderboard data
   useEffect(() => {
     const fetchLeaderboard = async () => {

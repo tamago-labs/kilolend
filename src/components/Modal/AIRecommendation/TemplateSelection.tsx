@@ -300,12 +300,12 @@ export const AITemplateSelection: React.FC<TemplateSelectionProps> = ({
   return (
     <Container> 
 
-    {/*  <Header>
-         <Title>Choose Your Strategy</Title> 
+     <Header>
+         <Title>Provide Your Input</Title> 
         <Subtitle>
           Select from curated templates or create a custom prompt. Our AI analyzes KiloLend markets in real-time.
         </Subtitle>
-      </Header>*/}
+      </Header>
 
       <OptionsContainer>
         <OptionTab 

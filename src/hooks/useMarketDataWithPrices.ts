@@ -20,7 +20,7 @@ export const useMarketDataWithPrices = () => {
   // Update market store with real price data when prices change
   useEffect(() => {
     if (priceData.prices && Object.keys(priceData.prices).length > 0) {
-      console.log('Updating market store with real prices:', priceData.prices);
+      // console.log('Updating market store with real prices:', priceData.prices);
       updatePriceData(priceData.prices);
     }
   }, [priceData.prices, updatePriceData]);
