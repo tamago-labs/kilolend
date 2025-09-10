@@ -1,4 +1,4 @@
-const { DynamoDBClient, GetItemCommand, PutItemCommand } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBClient, GetItemCommand, PutItemCommand, ScanCommand } = require('@aws-sdk/client-dynamodb');
 const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 const dynamoClient = new DynamoDBClient({});
@@ -42,6 +42,12 @@ exports.handler = async (event) => {
             case '/users/{userAddress}':
                 if (httpMethod === 'GET') {
                     return await getUserPoints(event);
+                }
+                break;
+
+            case '/all':
+                if (httpMethod === 'GET') {
+                    return await getAllUsers(event);
                 }
                 break;
 
@@ -340,6 +346,38 @@ async function getUserPoints(event) {
 
     } catch (error) {
         console.error('Error getting user points:', error);
+        throw error;
+    }
+}
+
+
+// GET /users - Get all users for KILO point bot
+async function getAllUsers(event) {
+    try { 
+
+        const command = new ScanCommand({
+            TableName: USER_POINTS_TABLE,
+            ProjectionExpression: "userAddress" // only fetch userAddress field
+        });
+
+        const result = await dynamoClient.send(command);
+
+        const items = (result.Items || []).map(item => unmarshall(item));
+  
+        return {
+            statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+            },
+            body: JSON.stringify({
+                success: true,
+                data: items
+            })
+        };
+
+    } catch (error) {
+        console.error('Error getting all users:', error);
         throw error;
     }
 }
