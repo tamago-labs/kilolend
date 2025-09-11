@@ -87,7 +87,7 @@ class KiloPointBot {
 
       // Initialize managers
       this.databaseService = new DatabaseService(process.env.API_BASE_URL);
-      this.priceManager = new PriceManager(`${process.env.PRICE_API_URL}/prices`);
+      this.priceManager = new PriceManager(`${process.env.API_BASE_URL}/prices`);
       this.balanceManager = new BalanceManager(this.provider, this.markets);
       this.statsManager = new StatsManager(this.databaseService);
       this.kiloCalculator = new KiloPointCalculator(parseInt(process.env.DAILY_KILO_DISTRIBUTION || '100000'));
@@ -331,9 +331,7 @@ class KiloPointBot {
 
     // Print daily summary every hour
     setInterval(() => {
-      if (this.statsManager.getTotalEvents() > 0) {
         this.statsManager.printDailySummary(this.kiloCalculator, this.balanceManager);
-      }
     }, 60 * 60 * 1000);
   }
 

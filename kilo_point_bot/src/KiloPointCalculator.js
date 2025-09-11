@@ -54,7 +54,7 @@ class KiloPointCalculator {
       const stats = userStats[userAddress];
       
       // Calculate user base points using the 50/50 formula
-      const basePoints = stats.baseTVL * 0.5;
+      const basePoints = stats.baseTVL * 0.5; // we use reduce this weight if TVL is large enough
       const netPoints = Math.max(0, stats.netContribution) * 0.5; // Only positive net contribution counts
       const userBasePoints = basePoints + netPoints;
       

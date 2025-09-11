@@ -93,7 +93,7 @@ class StatsManager {
     
     const userStats = this.dailyStats.userStats[userAddress];
     userStats.baseTVL = totalBaseTVL;
-    userStats.balanceBreakdown = marketBreakdown;
+    // userStats.balanceBreakdown = marketBreakdown;
     userStats.lastBalanceUpdate = new Date().toISOString();
     
     // Add user to the tracked users set

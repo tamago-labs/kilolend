@@ -7,6 +7,7 @@ const axios = require('axios');
 class DatabaseService {
   constructor(apiBaseUrl) {
     this.apiBaseUrl = apiBaseUrl || process.env.API_BASE_URL;
+    this.apiKey = process.env.API_KEY; // API key for protected endpoints
     this.timeout = 10000; // 10 second timeout
   }
 
@@ -29,6 +30,11 @@ class DatabaseService {
       console.log(`💾 Storing leaderboard to database for ${date}...`);
       console.log(`📊 ${distributions.length} users to store as JSON`);
 
+      // Check if API key is configured for protected endpoints
+      if (!this.apiKey) {
+        console.warn('⚠️  API_KEY not configured - leaderboard storage may fail if endpoint is protected');
+      }
+
       const payload = {
         date,
         distributions,
@@ -45,14 +51,23 @@ class DatabaseService {
 
       console.log(JSON.stringify(payload))
 
+      // Prepare headers
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      // Add API key if available
+      if (this.apiKey) {
+        headers['X-Api-Key'] = this.apiKey;
+        console.log('🔑 Using API key for authenticated request');
+      }
+
       const response = await axios.post(
         `${this.apiBaseUrl}/leaderboard`,
         payload,
         {
           timeout: this.timeout,
-          headers: {
-            'Content-Type': 'application/json'
-          }
+          headers
         }
       );
 
@@ -248,6 +263,7 @@ class DatabaseService {
   getConfig() {
     return {
       apiBaseUrl: this.apiBaseUrl,
+      apiKeyConfigured: !!this.apiKey,
       timeout: this.timeout,
       configured: !!this.apiBaseUrl
     };
