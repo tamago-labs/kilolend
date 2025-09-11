@@ -1,29 +1,36 @@
 # KiloLend
 
-KiloLend is a stablecoin-focused decentralized lending protocol on LINE Mini Dapp built on the KAIA blockchain. It integrates AI-powered personalized intelligence to help onboard new Web3 users and guide them in any language. Users can supply or borrow assets with interest rates that adjust dynamically based on pool utilization. Real-time price feeds are secured by Pyth Oracle, while AI provide personalized recommendations powered by AWS Bedrock AI-Engine using Claude 4 model.
+**KiloLend** is a stablecoin-focused decentralized lending protocol on **LINE Mini Dapp** that integrates an intelligent AI agent with a distinct character to help onboard new Web3 users. Interest rates adjust dynamically based on market utilization and the risk model assigned to each asset class, supported by real-time oracles like **Pyth** and **Orakl**, while the AI provides personalized recommendations powered by the **AWS Bedrock** AI engine using the **Claude 4** model.
 
-For example, a user can input 'I want to earn 5% on my USDT with low risk' or '안전한 스테이블코인으로 4-5% 수익률을 원해요,' and the AI will analyze and summarize the available deals just for them.
-
-- Presentation: https://drive.google.com/file/d/11ox5X6yBpzUu0Y4qZPMWu1oOc0ZuWgsj/view?usp=sharing
-- YouTube Demo: https://youtu.be/Lq4lOqcQn8Q
-- Dapp: https://kilolend.netlify.app/
-
+- LINE Mini Dapp: https://liff.line.me/2007932254-AVnKMMp9
+- Web Access: https://kilolend.xyz/
 
 ## Highlighted Features
 
-- Live on **KAIA Kairos Testnet**, built with **LINE Dapp Starter** and its SDK
-- **Stablecoin-focused:** all lending pools are based on stablecoins such as USDT, JPYC, THB, and KRW, allowing users to lock volatile assets like wKAIA and stKAIA to borrow them
-- Uses **Pyth Oracle** for real-time, on-chain price feeds in Loan Health and LTV calculations
-- Uses **Claude AI** via **AWS Bedrock** to interpret available pools into personalized, human-readable recommendations in any language
-- Utilizes a dual-slope interest rate model based on pool utilization
+- Live on **KAIA Mainnet**, built with **LINE Dapp Starter** and LIFF SDK  
+- **Compound V2 Fork** – built on **battle-tested Compound V2** code with minimal modifications  
+- **Stablecoin-focused** – custom risk models supporting seamless **stablecoin ↔ volatile asset** lending
+- **Gamification with KILO Points** – earned by active users and converted **1:1 into KILO tokens** at launch  
+- **AI Agent Chat** – distinct LINE-style characters that help analyze **portfolio performance** and **lending markets** in real time  
+
 
 ## System Overview
 
-The system comprises two main parts: the smart contract and the Dapp which includes an AI module integrated with AWS Bedrock. It is stablecoin-focused, meaning only stablecoins like USDT, KRW, THB and JPY are listed.
+The system comprises **3 main components** as shown in the diagram below:
 
-<img width="1002" height="482" alt="mock-bohdi-tree-Page-7 drawio (1)" src="https://github.com/user-attachments/assets/979e9ad9-d719-420a-9c3b-a04348f2783c" />
+- **LINE Mini Dapp** – The main interface for users to fully access the system: supply and borrow assets, manage portfolios, send tokens, and invite friends to multiply KILO points. Alternatively, it can be accessed via browser if LINE is not installed. Wallets are secured by the LINE Mini Dapp — no private keys to manage, just sign in with LINE or Gmail.  
 
-Users can lock volatile assets such as wKAIA and stKAIA as collateral to borrow stablecoins for any purpose. Borrowers must repay with interest.
+- **Smart Contracts** – Handle decentralized lending for supported assets. Forked from **Compound V2** with custom risk models for collateral-only assets, volatile assets, and stablecoins. The **KILO Oracle** provides price feeds using a combination of **Pyth Oracle, Orakl Network**, and an **internal Oracle bot** that tracks prices from CoinMarketCap and other sources.  
+
+- **Backend (AWS CDK)** – Uses AWS **CDK stacks** to deploy and manage infrastructure. Includes an **ECS cluster** running bots in Docker containers with auto-scaling, **DynamoDB** as the main database for KILO points and leaderboard data, and **serverless Lambda functions** powering APIs for the Mini Dapp.  
+
+
+<img width="1494" height="705" alt="kilo-system-overview" src="https://github.com/user-attachments/assets/cab76214-c9b9-44c6-8462-009e1eaaf6ad" />
+
+The system is designed for easy integration of new features, enabling continuous improvement while minimizing maintenance and costs through the **AWS CDK stack**. Forking **Compound V2** ensures security by leveraging a proven protocol, allowing us to focus on delivering core value from the start. The **LINE Mini Dapp** helps us scale to reach Asian users through LINE LIFF’s unique features, while our **AI agent** assists in onboarding them to Web3.
+
+
+ 
 
 ## Smart Contract
 
