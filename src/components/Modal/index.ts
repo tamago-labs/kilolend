@@ -6,3 +6,4 @@ export { TokenDetailsModal } from './TokenDetailsModal';
 export { SendModal } from './SendModal';
 export { LeaderboardModal } from './LeaderboardModal';
 export { GlobalModalManager } from './GlobalModalManager';
+export { InviteModal } from './InviteModal';

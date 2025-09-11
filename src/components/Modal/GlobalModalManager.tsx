@@ -15,6 +15,7 @@ import { WalletAddressModal } from './WalletAddressModal';
 import { SendModal } from './SendModal';
 import { LeaderboardModal } from './LeaderboardModal';
 import { KiloPointsModal } from "./KiloModal"
+import { InviteModal } from './InviteModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -137,13 +138,9 @@ export const GlobalModalManager = () => {
 
       case 'invite':
         return (
-          <BlankModal
+          <InviteModal
             isOpen={isOpen}
             onClose={closeModal}
-            title="Invite"
-            icon="✉️"
-            placeholderTitle="Invite Friends"
-            placeholderText="Invite your friends on LINE Messenger and earn KILO Points when they join."
           />
         );
 

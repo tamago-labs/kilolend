@@ -348,193 +348,273 @@ const ContactText = styled.p`
   color: #64748b;
   margin-bottom: 16px;
 `;
- 
+
+
+const InfoCard = styled.div`
+margin-top: 16px;
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+`;
+
+const InfoHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+`;
+
+const InfoIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  background: #ecfdf5;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #10b981;
+`;
+
+const InfoTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0;
+`;
+
+const InfoText = styled.p`
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+`;
+
+const BenefitsList = styled.ul`
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const BenefitItem = styled.li`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+`;
+
+const BenefitIcon = styled.div`
+  width: 16px;
+  height: 16px;
+  background: #10b981;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+`;
+
 interface PointsData {
-    totalPoints: number;
-    dailyBreakdown: Record<string, number>;
-    lastUpdated?: string;
-    status?: string;
-    isNewUser: boolean;
+  totalPoints: number;
+  dailyBreakdown: Record<string, number>;
+  lastUpdated?: string;
+  status?: string;
+  isNewUser: boolean;
 }
 
 interface KiloPointsModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    userAddress: string;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
-export const KiloPointsModal = ({ isOpen, onClose, userAddress }: KiloPointsModalProps) => {
-    
-    const { account } = useWalletAccountStore();
+export const KiloPointsModal = ({ isOpen, onClose }: KiloPointsModalProps) => {
+
+  const { account } = useWalletAccountStore();
 
 
-    const [pointsData, setPointsData] = useState<PointsData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(false);
+  const [pointsData, setPointsData] = useState<PointsData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-    useEffect(() => {
-        if (isOpen && account) {
-            loadUserPoints(account);
-        }
-    }, [isOpen, account]);
+  useEffect(() => {
+    if (isOpen && account) {
+      loadUserPoints(account);
+    }
+  }, [isOpen, account]);
 
-    const loadUserPoints = async (account) => {
-        setLoading(true);
-        setError(false);
+  const loadUserPoints = async (account: any) => {
+    setLoading(true);
+    setError(false);
 
-        try { 
-            const response = await fetch(`https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/users/${account}`);
-            const data = await response.json();
+    try {
+      const response = await fetch(`https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/users/${account}`);
+      const data = await response.json();
 
-            if (!data.success) {
-                setPointsData({ totalPoints: 0, dailyBreakdown: {}, isNewUser: true });
-            } else {
-                const dailyBreakdown = { ...data.data };
-                delete dailyBreakdown.userAddress;
-                delete dailyBreakdown.lastUpdated;
-                delete dailyBreakdown.status;
+      if (!data.success) {
+        setPointsData({ totalPoints: 0, dailyBreakdown: {}, isNewUser: true });
+      } else {
+        const dailyBreakdown = { ...data.data };
+        delete dailyBreakdown.userAddress;
+        delete dailyBreakdown.lastUpdated;
+        delete dailyBreakdown.status;
 
-                const totalPoints = Object.values(dailyBreakdown)
-                    .reduce((sum, points) => sum + (points as number), 0);
+        const totalPoints: any = Object.values(dailyBreakdown)
+          .reduce((sum: any, points: any) => sum + (points as number), 0);
 
-                setPointsData({
-                    totalPoints,
-                    dailyBreakdown,
-                    lastUpdated: data.data.lastUpdated,
-                    status: data.data.status,
-                    isNewUser: false
-                });
-            }
-        } catch (err) {
-            console.error('Error fetching points:', err);
-            setError(true);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const formatDate = (dateStr: string) => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric'
+        setPointsData({
+          totalPoints,
+          dailyBreakdown,
+          lastUpdated: data.data.lastUpdated,
+          status: data.data.status,
+          isNewUser: false
         });
-    };
+      }
+    } catch (err) {
+      console.error('Error fetching points:', err);
+      setError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const formatNumber = (num: number) => {
-        return new Intl.NumberFormat().format(num);
-    };
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
 
-    const renderContent = () => {
+  const formatNumber = (num: number) => {
+    return new Intl.NumberFormat().format(num);
+  };
 
-        if (!account) {
-            return (
-                <InfoMessage>
-            <AlertCircle size={16} color="#3b82f6" />
-            <MessageText style={{ color: '#1e40af' }}>Please connect your wallet</MessageText>
-          </InfoMessage>
-            );
-        }
+  const renderContent = () => {
 
-        if (loading) {
-            return (
-                <LoadingState> 
-                    Loading your KILO points...
-                </LoadingState>
-            );
-        }
+    if (!account) {
+      return (
+        <InfoMessage>
+          <AlertCircle size={16} color="#3b82f6" />
+          <MessageText style={{ color: '#1e40af' }}>Please connect your wallet</MessageText>
+        </InfoMessage>
+      );
+    }
 
-        if (error) {
-            return (
-                <ErrorState>
-                    <div style={{ color: '#ef4444', marginBottom: '16px' }}>❌ Error loading points</div>
-                    <RetryButton onClick={loadUserPoints}>
-                        Try Again
-                    </RetryButton>
-                </ErrorState>
-            );
-        }
+    if (loading) {
+      return (
+        <LoadingState>
+          Loading your KILO points...
+        </LoadingState>
+      );
+    }
 
-        if (pointsData?.isNewUser) {
-            return (
-                <EmptyStateContainer>
-                    <EmptyStateIcon>
-                        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                        </svg>
-                    </EmptyStateIcon>
-                    <EmptyStateTitle>Start Earning KILO!</EmptyStateTitle>
-                    <EmptyStateText>
-                        Supply or borrow assets to start earning KILO points daily.
-                        Points are distributed based on your lending activity.
-                    </EmptyStateText>
-                </EmptyStateContainer>
-            );
-        }
+    if (error) {
+      return (
+        <ErrorState>
+          <div style={{ color: '#ef4444', marginBottom: '16px' }}>❌ Error loading points</div>
+          <RetryButton onClick={loadUserPoints}>
+            Try Again
+          </RetryButton>
+        </ErrorState>
+      );
+    }
 
-        const dailyEntries = Object.entries(pointsData?.dailyBreakdown || {})
-            .sort(([dateA], [dateB]) => dateB.localeCompare(dateA));
+    if (pointsData?.isNewUser) {
+      return (
+        <EmptyStateContainer>
+          <EmptyStateIcon>
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+            </svg>
+          </EmptyStateIcon>
+          <EmptyStateTitle>Start Earning KILO!</EmptyStateTitle>
+          <EmptyStateText>
+            Supply or borrow assets to start earning KILO points daily.
+            Points are distributed based on your lending activity.
+          </EmptyStateText>
+        </EmptyStateContainer>
+      );
+    }
 
-        return (
-            <DailyBreakdownSection>
-                <SectionTitle>Daily Breakdown</SectionTitle>
-                <DailyList>
-                    {dailyEntries.map(([date, points]) => (
-                        <DailyItem key={date}>
-                            <DailyItemLeft>
-                                <DateIndicator />
-                                <DateText>{formatDate(date)}</DateText>
-                            </DailyItemLeft>
-                            <DailyItemRight>
-                                <PointsValue>+{formatNumber(points)}</PointsValue>
-                                <KiloLabel>KILO</KiloLabel>
-                            </DailyItemRight>
-                        </DailyItem>
-                    ))}
-                </DailyList>
-
-                {dailyEntries.length === 0 && (
-                    <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
-                        No daily rewards yet
-                    </div>
-                )}
-            </DailyBreakdownSection>
-        );
-    };
+    const dailyEntries = Object.entries(pointsData?.dailyBreakdown || {})
+      .sort(([dateA], [dateB]) => dateB.localeCompare(dateA));
 
     return (
-        <BaseModal isOpen={isOpen} onClose={onClose} title="KILO Points">
-            <KiloPointsContent>
-                <TotalPointsBanner>
-                    <AnimatedKiloIcon>
-                        <KiloIconInner>
-                                <img src="./images/icon-rewards.png"
-                                    alt="KILO"/>
-                        </KiloIconInner>
-                    </AnimatedKiloIcon>
+      <DailyBreakdownSection>
+        <SectionTitle>Daily Breakdown</SectionTitle>
+        <DailyList>
+          {dailyEntries.map(([date, points]) => (
+            <DailyItem key={date}>
+              <DailyItemLeft>
+                <DateIndicator />
+                <DateText>{formatDate(date)}</DateText>
+              </DailyItemLeft>
+              <DailyItemRight>
+                <PointsValue>+{formatNumber(points)}</PointsValue>
+                <KiloLabel>KILO</KiloLabel>
+              </DailyItemRight>
+            </DailyItem>
+          ))}
+        </DailyList>
 
-                    <TotalPointsLabel>Your KILO Points</TotalPointsLabel>
-                    <TotalPointsValue>
-                        {pointsData?.isNewUser ? '0' : formatNumber(pointsData?.totalPoints || 0)}
-                    </TotalPointsValue> 
-                        <LastUpdatedText>
-                            Last updated: { pointsData?.lastUpdated ? new Date(pointsData.lastUpdated).toLocaleDateString() : "N/A"}
-                        </LastUpdatedText> 
-                </TotalPointsBanner>
-
-                    <ContactSection> 
-          <ContactText>
-            <ul>
-    <li><strong>100,000 points</strong> are allocated daily at midnight GMT.</li>
-    <li>Your share is based on your <strong>daily net contribution</strong> + <strong>overall contribution</strong> to TVL.</li>
-    <li>A <strong>multiplier</strong> is applied to calculate your final <strong>KILO points</strong>.</li>
-  </ul>
-          </ContactText> 
-        </ContactSection>
-
-                {renderContent()}
-            </KiloPointsContent>
-        </BaseModal>
+        {dailyEntries.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '24px', color: '#64748b' }}>
+            No daily rewards yet
+          </div>
+        )}
+      </DailyBreakdownSection>
     );
+  };
+
+  return (
+    <BaseModal isOpen={isOpen} onClose={onClose} title="KILO Points">
+      <KiloPointsContent>
+        <TotalPointsBanner>
+          <AnimatedKiloIcon>
+            <KiloIconInner>
+              <img src="./images/icon-rewards.png"
+                alt="KILO" />
+            </KiloIconInner>
+          </AnimatedKiloIcon>
+
+          <TotalPointsLabel>Your KILO Points</TotalPointsLabel>
+          <TotalPointsValue>
+            {pointsData?.isNewUser ? '0' : formatNumber(pointsData?.totalPoints || 0)}
+          </TotalPointsValue>
+          <LastUpdatedText>
+            Last updated: {pointsData?.lastUpdated ? new Date(pointsData.lastUpdated).toLocaleDateString() : "N/A"}
+          </LastUpdatedText>
+        </TotalPointsBanner>
+ 
+
+        <InfoCard> 
+          <BenefitsList>
+            <BenefitItem>
+              <BenefitIcon>+</BenefitIcon>
+              <span><strong>100,000 points</strong> are allocated daily at midnight GMT.</span>
+            </BenefitItem>
+            <BenefitItem>
+              <BenefitIcon>+</BenefitIcon>
+              <span>Your share is based on your <strong>daily net contribution</strong> + <strong>overall contribution</strong> to TVL.</span>
+            </BenefitItem>
+            <BenefitItem>
+              <BenefitIcon>+</BenefitIcon>
+              <span>A <strong>multiplier</strong> is applied to calculate your final <strong>KILO points</strong>.</span>
+            </BenefitItem>
+          </BenefitsList>
+        </InfoCard>
+
+        {renderContent()}
+      </KiloPointsContent>
+    </BaseModal>
+  );
 };
