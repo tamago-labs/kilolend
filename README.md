@@ -2,6 +2,10 @@
 
 **KiloLend** is a stablecoin-focused decentralized lending protocol on **LINE Mini Dapp** that integrates an intelligent AI agent with a distinct character to help onboard new Web3 users. Interest rates adjust dynamically based on market utilization and the risk model assigned to each asset class, supported by real-time oracles like **Pyth** and **Orakl**, while the AI powered by the **AWS Bedrock** AI engine using the **Claude 4** model.
 
+<img width="1920" height="1080" alt="Kilolend - KRW Stablecoin Hackathon  (1)" src="https://github.com/user-attachments/assets/e609d4b4-1ba4-4373-9160-1ccd26802615" />
+
+## Links
+
 - LINE Mini Dapp: https://liff.line.me/2007932254-AVnKMMp9
 - Web Access: https://kilolend.xyz/
 
