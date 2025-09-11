@@ -190,7 +190,7 @@ export const InviteModal = ({ isOpen, onClose }: InviteModalProps) => {
         [
           {
             "type": "text",
-            "text": "🌐 Join me on KiloLend — the first DeFi lending platform on LINE! \\n\\n🌱 Earn KILO points by lending and borrowing\\n🎉 Boost your rewards with bonus multipliers when you invite friends\\n\\nStart earning today: https://liff.line.me/2007932254-AVnKMMp9"
+            "text": "🌐 Join me on KiloLend — the first DeFi lending platform on LINE! \n\n🌱 Earn KILO points by lending and borrowing\n🎉 Boost your rewards with bonus multipliers when you invite friends\n\nStart earning today: https://liff.line.me/2007932254-AVnKMMp9"
           }
         ],
         {
