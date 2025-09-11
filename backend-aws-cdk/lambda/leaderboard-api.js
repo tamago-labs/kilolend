@@ -217,10 +217,16 @@ async function getDailyLeaderboard(event) {
 }
 
 // POST /leaderboard - Store daily summary from Point Bot
+// This endpoint requires API key authentication
 async function storeDailySummary(event) {
     try {
+        // API Gateway handles API key validation automatically
+        // If we reach here, the API key is valid
+        
         const requestBody = JSON.parse(event.body);
         const { date, distributions, summary } = requestBody;
+
+        console.log(`Storing leaderboard data for ${date} from authenticated bot`);
 
         if (!date || !distributions || !Array.isArray(distributions)) {
             return {
