@@ -11,32 +11,32 @@
 
 ## Highlighted Features
 
-- Live on **KAIA Mainnet**, built with **LINE Dapp Starter** and LIFF SDK  
-- **Compound V2 Fork** – built on **battle-tested Compound V2** code with minimal modifications  
-- **Stablecoin-focused** – custom risk models supporting seamless **stablecoin ↔ volatile asset** lending
-- **Gamification with KILO Points** – earned by active users and converted **1:1 into KILO tokens** at launch  
-- **AI Agent Chat** – distinct LINE-style characters that help analyze **portfolio performance** and **lending markets** in real time  
+- **Live on KAIA Mainnet**, built with **LINE Dapp Starter** and **LIFF SDK**
+- **Compound V2 Fork** – built on battle-tested Compound V2 code with minimal modifications
+- **Stablecoin-focused** – custom risk models supporting seamless stablecoin ↔ volatile asset lending
+- **Gamification with KILO Points** – earned by active users and converted 1:1 into KILO tokens at launch
+- **AI Agent Chat** – distinct LINE-style characters that help analyze portfolio performance and lending markets in real time
+- **Social Growth System** – invite friends to multiply KILO points with up to 2x multipliers
 
 ## System Overview
 
-The system comprises **3 main components** as shown in the diagram below:
+The system comprises 3 main components designed for scalability and user-friendly Web3 onboarding:
 
-- **LINE Mini Dapp** – The main interface for users to fully access the system: supply and borrow assets, manage portfolios, send tokens, and invite friends to multiply KILO points. Alternatively, it can be accessed via browser if LINE is not installed. Wallets are secured by the LINE Mini Dapp — no private keys to manage, just sign in with LINE or Gmail.  
+- **LINE Mini Dapp** – The main interface for users to fully access the system: supply and borrow assets, manage portfolios, send tokens, and invite friends to multiply KILO points. Alternatively, it can be accessed via browser if LINE is not installed. Wallets are secured by the LINE Mini Dapp — no private keys to manage, just sign in with LINE or Gmail.
 
-- **Smart Contracts** – Handle decentralized lending for supported assets. Forked from **Compound V2** with custom risk models for collateral-only assets, volatile assets, and stablecoins. The **KILO Oracle** provides price feeds using a combination of **Pyth Oracle, Orakl Network**, and an **internal Oracle bot** that tracks prices from CoinMarketCap and other sources.  
+- **Smart Contracts** – Handle decentralized lending for supported assets. Forked from Compound V2 with custom risk models for collateral-only assets, volatile assets, and stablecoins. The KILO Oracle provides price feeds using a combination of Pyth Oracle, Orakl Network, and an internal Oracle bot that tracks prices from CoinMarketCap and other sources.
 
-- **Backend (AWS CDK)** – Uses AWS **CDK stacks** to deploy and manage infrastructure. Includes an **ECS cluster** running bots in Docker containers with auto-scaling, **DynamoDB** as the main database for KILO points and leaderboard data, and **serverless Lambda functions** serving APIs for the Mini Dapp.  
-
+- **Backend (AWS CDK)** – Uses AWS CDK stacks to deploy and manage infrastructure. Includes an ECS cluster running bots in Docker containers with auto-scaling, DynamoDB as the main database for KILO points and leaderboard data, and serverless Lambda functions serving APIs for the Mini Dapp. 
 
 <img width="1494" height="705" alt="kilo-system-overview" src="https://github.com/user-attachments/assets/cab76214-c9b9-44c6-8462-009e1eaaf6ad" />
 
-The system is designed for easy integration of new features, enabling continuous improvement while minimizing maintenance and costs through the **AWS CDK stack**. Forking **Compound V2** ensures security by leveraging a proven protocol, allowing us to focus on delivering core value from the start. The **LINE Mini Dapp** helps us scale to reach Asian users through LINE LIFF’s unique features, while our **AI agent** assists in onboarding them to Web3.
+The system is designed for easy integration of new features, enabling continuous improvement while minimizing maintenance and costs through the **AWS CDK stack**. Forking **Compound V2** ensures security by leveraging a proven protocol, allowing us to focus on delivering core value from the start. The **LINE Mini Dapp** helps us scale to reach Asian users through LINE LIFF's unique features, while our **AI agent** assists in onboarding them to Web3.
 
 ## LINE Mini Dapp
 
-LINE Mini Dapp is the main interface where users can **supply assets** like USDT into lending pools to earn interest automatically. When depositing, users receive **cTokens** representing their share, which can be redeemed anytime for the underlying assets plus accrued interest.  
+LINE Mini Dapp is the main interface where users can **supply assets** like USDT into lending pools to earn interest automatically. When depositing, users receive **cTokens** representing their share, which can be redeemed anytime for the underlying assets plus accrued interest.
 
-Users can **borrow against collateral** up to their collateral limit. They need to maintain healthy ratios to avoid liquidation and should regularly check their portfolio. Meanwhile, the **Liquidation Bot** is actively monitoring the protocol for unhealthy loans (collateral ratio < 1.20). Additional features, like smart notifications, will be added in the future.
+Users can **borrow against collateral** up to their collateral limit. They need to maintain healthy ratios to avoid liquidation and should regularly check their portfolio. Meanwhile, the **Liquidation Bot** is actively monitoring the protocol for unhealthy loans (collateral ratio < 1.20).
 
 <img width="1920" height="1080" alt="Kilolend - KRW Stablecoin Hackathon " src="https://github.com/user-attachments/assets/7be74f6d-f32e-4b19-8e40-8628ca69a846" />
 
@@ -58,26 +58,53 @@ KiloLend’s smart contracts use a **Compound V2 fork** with custom improvements
 
 ### Core Architecture
 
-The lending protocol consists of interconnected smart contracts that work together as follows:
+The lending protocol consists of interconnected smart contracts:
 
 - **Comptroller** – Acts as the central management hub, controlling all market operations including collateral factors, liquidation thresholds, and market configurations. It ensures users maintain healthy borrowing positions and prevents risky transactions.
-- **CToken Markets** – Each supported asset (like USDT and stKAIA) has its own market contract that handles deposits, withdrawals, and interest calculations. When users supply assets, they receive cTokens representing their share of the pool.
+- **CToken Markets** – Each supported asset (like USDT and KAIA) has its own market contract that handles deposits, withdrawals, and interest calculations. When users supply assets, they receive cTokens representing their share of the pool.
 - **Risk Models** – Dynamic algorithms adjust borrowing and lending rates per asset class based on utilization. Stablecoins use a low base rate with a gradual slope, volatile assets have steeper risk-adjusted curves, and collateral-only assets apply fixed rates for native tokens.
 - **Kilo Oracle** – A Compound V2-compatible oracle supporting three modes: bot (manual prices), Pyth (real-time with staleness checks) and Orakl, with automatic decimal normalization for different token types.
 
 ### Lending & Borrowing Process
 
-- **Supplying Assets** works by users depositing their tokens into lending pools to earn interest automatically. When they supply assets like USDT, they receive cTokens that represent their share of the pool and can be redeemed anytime for the underlying assets plus accrued interest. The interest rates adjust dynamically based on market demand, ensuring competitive returns for lenders.
+- **Supplying Assets** works by users depositing their tokens into lending pools to earn interest automatically. When they supply assets like USDT, they receive cTokens that represent their share of the pool and can be redeemed anytime for the underlying assets plus accrued interest. Interest rates adjust dynamically based on market demand.
 
 - **Borrowing Against Collateral** allows users to unlock liquidity from their assets without selling them. Users can borrow up to their collateral limit while maintaining healthy ratios to avoid liquidation. The system continuously monitors portfolio health and provides clear indicators of borrowing capacity and liquidation risk.
 
 - **Interest Accrual** happens automatically in real-time without requiring any user interaction. Both borrowers and lenders see their positions update continuously as interest compounds
 
-This all creates a seamless experience that abstracts away the complexity of DeFi. By building custom risk models and a multi-mode oracle on top of the proven Compound V2 framework, KiloLend is ready to deliver stablecoin-focused lending with security, efficiency, and simplicity for everyday users.
+This creates a seamless experience that abstracts away the complexity of DeFi while maintaining security and efficiency through proven Compound V2 mechanics.
 
 ## Backend 
 
-TBD
+KiloLend's backend infrastructure is built on AWS using Infrastructure as Code (CDK) to ensure scalability, reliability, and cost-effectiveness. The architecture consists of multiple specialized components that work together to support the decentralized lending protocol, KILO points system, and social features.
+
+### Infrastructure Overview
+
+- **AWS CDK Stack** – The entire backend is deployed and managed through AWS CDK (Cloud Development Kit), enabling version-controlled infrastructure that can be easily replicated across environments. This approach ensures consistent deployments and simplified maintenance.
+
+- **ECS Cluster with Auto-Scaling** – Docker containers run specialized bots that monitor the protocol 24/7. The cluster automatically scales based on demand and includes health checks to ensure continuous operation.
+
+- **Serverless APIs** – Lambda functions serve REST APIs that power the Mini Dapp features, including KILO points management, and invite system integration.
+
+### Bot Infrastructure (ECS Cluster)
+
+#### **Oracle Bot**
+- **Purpose:** Update on-chain prices for all configured feeds
+- **Data Sources:** CoinMarketCap API
+- **Update Frequency:** Every 2 hours 
+
+#### **Liquidation Bot** 
+- **Purpose:** Monitors and executes liquidations to maintain protocol stability
+- **Monitoring:** Continuously scans all borrowing positions every 10 minutes
+- **Trigger Conditions:** Collateral ratio < 1.20 (liquidation threshold)
+
+#### **KILO Point Bot** 
+- **Purpose:** Tracks lending activities and calculates daily KILO point distributions
+- **Event Monitoring:** Real-time tracking of Mint, Redeem, Borrow, RepayBorrow events
+- **Calculation Formula:** `(Base TVL × 50%) + (Net Contribution × 50%) × Invite Multiplier`
+
+This robust backend architecture ensures KiloLend can handle growth from hundreds to thousands of users while maintaining the reliability, security, and performance required for a DeFi lending protocol with social features.
 
 ## AI Recommendations
 
@@ -85,12 +112,50 @@ TBD
 
 ## How to Test
 
-The smart contracts are built with Foundry and are located in the /contracts folder, with all tests and deployment scripts available.
+The smart contracts are built with **Foundry** and are located in the `/contracts` folder, with all tests and deployment scripts available.
+
+### Setup
+
+1. **Install Foundry**
+```bash
+curl -L https://foundry.paradigm.xyz | bash
+foundryup
+```
+
+2. **Install Dependencies & Build**
+```bash
+cd contracts/
+forge install
+forge build
+```
+
+3. **Testing**
+
+```bash
+# Run all tests
+forge test
+
+# Run tests with detailed output
+forge test -vvv
+
+# Run specific test file
+forge test --match-path test/CTokenTest.t.sol
+```
+
+## Test Structure
 
 ```
-cd contracts/
-forge build
-forge test
+test/
+├── unit/
+│   ├── CToken.t.sol               # Supply, redeem, borrow, repay functionality
+│   ├── Comptroller.t.sol          # Market management and collateral logic
+│   ├── JumpRateModelV2.t.sol      # Interest rate calculations
+│   └── OracleTest.t.sol           # Price oracle functionality
+├── /
+│   ├── MultiMarket.t.sol          # Complete user lending workflows
+│   └── Liquidation.t.sol          # Liquidation scenarios
+└── mocks/ 
+    └── MockToken.t.sol              # Test token implementations
 ```
 
 ## Getting Started
@@ -149,7 +214,7 @@ pnpm dev:https
 
 ## Deployment (KAIA Mainnet)
 
-All smart contracts are deployed on the **KAIA Mainnet** and verified them all through **KaiaScan**, ensuring transparency. Users can easily view contract details, transactions, and interactions directly on KaiaScan. 
+All smart contracts are deployed on **KAIA Mainnet** and verified through **KaiaScan**. Users can easily view contract details, transactions, and interactions directly on KaiaScan. 
 
 ### Core Contracts
 - **Comptroller:** [0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2](https://www.kaiascan.io/address/0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2)  
