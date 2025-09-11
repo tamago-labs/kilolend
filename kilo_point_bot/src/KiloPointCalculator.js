@@ -1,3 +1,5 @@
+const axios = require('axios');
+
 /**
  * KILO Point Calculation Engine
  * Handles the complex point calculation and distribution logic
@@ -5,29 +7,52 @@
 class KiloPointCalculator {
   constructor(dailyKiloDistribution = 100000) {
     this.dailyKiloDistribution = dailyKiloDistribution;
+    this.apiBaseUrl = process.env.API_BASE_URL;
+    this.timeout = 10000; // 10 second timeout
   }
 
-  // Get multiplier for a user - can be extended with complex logic
+  /**
+   * Get invite multiplier for a user from the invite API
+   * Falls back to 1.0 if API call fails or user not found
+   */
+  async getInviteMultiplier(userAddress) {
+    try {
+      if (!this.apiBaseUrl) {
+        console.warn('⚠️  API_BASE_URL not configured, using default multiplier');
+        return 1.0;
+      }
+
+      const response = await axios.get(
+        `${this.apiBaseUrl}/invite/${userAddress.toLowerCase()}`,
+        { timeout: this.timeout }
+      );
+
+      if (response.data && response.data.success) {
+        const multiplier = response.data.data.multiplier || 1.0;
+        console.log(`🎯 User ${userAddress.slice(0, 8)}... invite multiplier: ${multiplier.toFixed(2)}x`);
+        return multiplier;
+      } else {
+        console.log(`📋 User ${userAddress.slice(0, 8)}... not found in invite system, using default 1.0x`);
+        return 1.0;
+      }
+    } catch (error) {
+      if (error.response && error.response.status === 404) {
+        console.log(`📋 User ${userAddress.slice(0, 8)}... not in invite system, using default 1.0x`);
+      } else {
+        console.warn(`⚠️  Failed to get invite multiplier for ${userAddress.slice(0, 8)}...: ${error.message}`);
+      }
+      return 1.0; // Default on error
+    }
+  }
+
+  // Get comprehensive multiplier for a user
   async getUserMultiplier(userAddress, userStats = null) {
     try {
-      // Future implementation could include:
-      // - API call to get user tier/level
-      // - Check user's historical activity
-      // - Special event multipliers
-      // - NFT holder bonuses
-      // - Loyalty program multipliers
+      // Get base invite multiplier
+      let totalMultiplier = await this.getInviteMultiplier(userAddress);
+       
       
-      // Example of future conditional logic:
-      /*
-      if (userStats && userStats.baseTVL > 10) {
-        return 2.0; // VIP users get 2x multiplier
-      }
-      if (userStats && userStats.activities.supplies > 5) {
-        return 1.5; // Active users get 1.5x multiplier
-      }
-      */
-      
-      return 1.0; // Default multiplier
+      return totalMultiplier;
       
     } catch (error) {
       console.warn(`⚠️  Failed to get multiplier for ${userAddress}:`, error.message);
@@ -44,6 +69,7 @@ class KiloPointCalculator {
     console.log('💡 Formula: (Base TVL × 50%) + (Net Contribution × 50%)');
     console.log('💡 Base TVL = Sum of cToken share percentages across all markets');
     console.log('💡 Net Contribution = (Supply - Withdraw) - (Borrow - Repay)');
+    console.log('💡 Final Points = Base Points × Invite Multiplier');
     console.log('');
 
     // Step 1: Calculate base points for each user using the formula:
@@ -75,9 +101,9 @@ class KiloPointCalculator {
 
     console.log(`🎯 Total Base Points Generated: ${totalBasePoints.toFixed(2)}`);
 
-    // Step 2: Get multipliers for each user
-    console.log('\\n🔄 GETTING USER MULTIPLIERS...');
-    console.log('===============================');
+    // Step 2: Get invite multipliers for each user
+    console.log('\\n🔄 GETTING USER INVITE MULTIPLIERS...');
+    console.log('====================================');
 
     for (const userAddress of users) {
       const stats = userStats[userAddress];
@@ -99,7 +125,7 @@ class KiloPointCalculator {
       totalWeightedPoints += weightedPoints;
       
       console.log(`👤 ${userAddress.slice(0, 8)}...`);
-      console.log(`   ${stats.basePoints.toFixed(2)} points × ${stats.multiplier}x = ${weightedPoints.toFixed(2)} weighted points`);
+      console.log(`   ${stats.basePoints.toFixed(2)} points × ${stats.multiplier.toFixed(2)}x = ${weightedPoints.toFixed(2)} weighted points`);
     }
 
     console.log(`\\n🎯 Total Weighted Points: ${totalWeightedPoints.toFixed(2)}`);
@@ -161,6 +187,7 @@ class KiloPointCalculator {
       console.log(`   Weighted Points: ${dist.weightedPoints.toFixed(2)}`);
       console.log(`   Share: ${(dist.share * 100).toFixed(2)}%`);
       console.log(`   🎁 KILO Reward: ${Math.floor(dist.kilo).toLocaleString()} KILO`);
+      
       console.log('');
     }
 
