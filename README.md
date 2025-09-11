@@ -29,8 +29,24 @@ The system comprises **3 main components** as shown in the diagram below:
 
 The system is designed for easy integration of new features, enabling continuous improvement while minimizing maintenance and costs through the **AWS CDK stack**. Forking **Compound V2** ensures security by leveraging a proven protocol, allowing us to focus on delivering core value from the start. The **LINE Mini Dapp** helps us scale to reach Asian users through LINE LIFF’s unique features, while our **AI agent** assists in onboarding them to Web3.
 
+## LINE Mini Dapp
 
- 
+LINE Mini Dapp is the main interface where users can **supply assets** like USDT into lending pools to earn interest automatically. When depositing, users receive **cTokens** representing their share, which can be redeemed anytime for the underlying assets plus accrued interest.  
+
+Users can **borrow against collateral** up to their collateral limit. They need to maintain healthy ratios to avoid liquidation and should regularly check their portfolio. Meanwhile, the **Liquidation Bot** is actively monitoring the protocol for unhealthy loans (collateral ratio < 1.20). Additional features, like smart notifications, will be added in the future.
+
+<img width="1920" height="1080" alt="Kilolend - KRW Stablecoin Hackathon " src="https://github.com/user-attachments/assets/7be74f6d-f32e-4b19-8e40-8628ca69a846" />
+
+This LINE Mini Dapp is fully integrated with the Mini Dapp SDK and LIFF:
+
+- **Seamless Login** – Users can authenticate via LINE, Google, and other supported providers. Once logged in, users can view their wallet address and a QR code for instant transactions.  
+
+- **QR Code Reader** – Using `liff.scanCodeV2`, users can scan QR codes with their mobile camera to quickly send KAIA or USDT tokens to friends or anyone in need.
+
+- **Invite for Boosting KILO Points** – Users can invite friends via `liff.shareTargetPicker()` one person at a time to earn bonus KILO points. Each invite gives 2% and a cap at 100%. (subject to change)
+
+LINE profile name and picture are fetched for display purposes only and are not stored in the dapp or our system. If LINE is not installed, we can still access via a standard browser, but most features above will not be available.
+
 
 ## Smart Contract
 
