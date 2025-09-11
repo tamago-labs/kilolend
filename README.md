@@ -125,7 +125,7 @@ pnpm dev:https
 
 ## Deployment (KAIA Mainnet)
 
-All smart contracts are deployed on the mainnet. 
+All smart contracts are deployed on the **KAIA Mainnet** and verified them all through **KaiaScan**, ensuring transparency. Users can easily view contract details, transactions, and interactions directly on KaiaScan. 
 
 ### Core Contracts
 - **Comptroller:** [0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2](https://www.kaiascan.io/address/0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2)  
