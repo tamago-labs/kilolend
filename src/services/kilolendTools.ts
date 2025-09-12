@@ -334,7 +334,7 @@ export class KiloLendToolsService {
         },
         handler: async (params: { includeLeaderboard?: boolean }) => {
           // Simulated KILO points data - replace with real API calls
-          const kiloData = {
+          const kiloData: any = {
             userPoints: Math.floor(Math.random() * 10000),
             userRank: Math.floor(Math.random() * 100) + 1,
             pointsThisWeek: Math.floor(Math.random() * 500),

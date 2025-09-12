@@ -4,6 +4,8 @@ import styled from 'styled-components';
 import { useModalStore } from '@/stores/modalStore';
 import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
 import { TokenPriceSwiper, WelcomeSwiper } from '@/components/Swiper';
+import RandomIcon from "@/components/RandomIcon"
+
 
 const PageContainer = styled.div`
   flex: 1;
@@ -238,16 +240,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
         <SectionTitle>Quick Actions</SectionTitle>
         <IconGrid>
 
-
-          {/* <IconButton onClick={handleAskAI}>
-            <IconCircle $index="5">
-              <IconImage
-                src="./images/icon-robot.png"
-                alt="ASK-AI"
-              />
-            </IconCircle>
-            <IconLabel>Ask AI</IconLabel>
-          </IconButton> */}
+ 
 
           <IconButton onClick={handleSupply}>
             <IconCircle $index="3">
@@ -271,10 +264,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
           <IconButton onClick={handleAskAI}>
             <IconCircle $index="5">
-              <IconImage
-                src="./images/icon-robot.png"
-                alt="ASK-AI"
-              />
+              <RandomIcon/>
             </IconCircle>
             <IconLabel>Ask AI</IconLabel>
           </IconButton> 

@@ -30,6 +30,7 @@ export const AGENT_PRESETS: AgentPreset[] = [
   {
     id: 'penguin_guardian',
     name: 'Penny the Penguin',
+    image :"./images/icon-penguin.png",
     description: 'Friendly and approachable guide who keeps things safe.',
     personality: 'penguin',
     avatar: '🐧',
@@ -63,6 +64,7 @@ COMMUNICATION STYLE:
   {
     id: 'tiger_strategist',
     name: 'Tora the Tiger',
+    image :"./images/icon-tiger.png",
     description: 'Bold and confident strategist who hunts for high rewards.',
     personality: 'tiger',
     avatar: '🐅',
@@ -95,6 +97,7 @@ COMMUNICATION STYLE:
   {
     id: 'snake_optimizer',
     name: 'Sly the Snake',
+    image :"./images/icon-snake.png",
     description: 'Smooth and calculating guide who optimizes every move.',
     personality: 'snake',
     avatar: '🐍',

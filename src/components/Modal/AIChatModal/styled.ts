@@ -105,12 +105,18 @@ export const AgentAvatar = styled.div`
   width: 60px;
   height: 60px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #06C755, #05b648);
+  overflow: hidden; /* ensures image is clipped to circle */
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
   flex-shrink: 0;
+  background: linear-gradient(135deg, #06C755, #05b648);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* fills parent, maintaining aspect ratio, crops if necessary */
+  }
 `;
 
 export const AgentInfo = styled.div`
