@@ -327,34 +327,102 @@ export class KiloLendToolsService {
         description: 'Get user KILO points balance and leaderboard information',
         parameters: {
           type: 'object',
-          properties: {
-            includeLeaderboard: { type: 'boolean', description: 'Include leaderboard data' }
-          },
+          properties: {},
           required: []
         },
-        handler: async (params: { includeLeaderboard?: boolean }) => {
-          // Simulated KILO points data - replace with real API calls
-          const kiloData: any = {
-            userPoints: Math.floor(Math.random() * 10000),
-            userRank: Math.floor(Math.random() * 100) + 1,
-            pointsThisWeek: Math.floor(Math.random() * 500),
-            multiplier: 1.2,
-            activities: [
-              { action: 'Supply USDT', points: 100, timestamp: Date.now() - 86400000 },
-              { action: 'Daily login', points: 25, timestamp: Date.now() - 3600000 }
-            ]
-          };
+        handler: async () => {
+          try {
+            // Check if user address is available
+            if (!this.userAddress) {
+              return {
+                error: 'No wallet connected',
+                message: 'Please connect your wallet to view KILO points',
+                suggestion: 'Connect your wallet and try again'
+              };
+            }
 
-          if (params.includeLeaderboard) {
-            kiloData.leaderboard = Array.from({ length: 10 }, (_, i) => ({
-              rank: i + 1,
-              address: `0x${Math.random().toString(16).substr(2, 8)}...`,
-              points: 15000 - (i * 1000),
-              badge: i < 3 ? ['🥇', '🥈', '🥉'][i] : null
-            }));
+            // Use the same API endpoint as the KiloModal
+            const response = await fetch(
+              `https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/users/${this.userAddress}`
+            );
+            
+            if (!response.ok) {
+              throw new Error(`API request failed with status ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            if (!data.success) {
+              return {
+                userPoints: 0,
+                userRank: null,
+                dailyBreakdown: {},
+                isNewUser: true,
+                message: 'Start earning KILO points by supplying or borrowing assets!',
+                howToEarn: [
+                  '100,000 points are allocated daily at midnight GMT',
+                  'Your share is based on your daily net contribution + overall TVL contribution',
+                  'A multiplier is applied to calculate your final KILO points'
+                ]
+              };
+            }
+            
+            // Process the daily points data same as KiloModal
+            let totalPoints = 0;
+            const dailyBreakdown: Record<string, number> = {};
+            
+            if (data.dailyPoints && Array.isArray(data.dailyPoints)) {
+              data.dailyPoints.forEach((entry: any) => {
+                const points = entry[entry.date] || 0;
+                dailyBreakdown[entry.date] = points;
+                totalPoints += points;
+              });
+            }
+            
+            // Get recent activities (last 7 days)
+            const recentActivities = Object.entries(dailyBreakdown)
+              .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+              .slice(0, 7)
+              .map(([date, points]) => ({
+                date,
+                points,
+                action: 'Daily rewards',
+                formattedDate: new Date(date).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })
+              }));
+            
+            const result = {
+              userPoints: totalPoints,
+              userRank: null, // Not provided by current API
+              dailyBreakdown,
+              recentActivities,
+              isNewUser: false,
+              totalDaysActive: Object.keys(dailyBreakdown).length,
+              averageDailyPoints: totalPoints > 0 ? Math.round(totalPoints / Math.max(1, Object.keys(dailyBreakdown).length)) : 0,
+              howItWorks: {
+                dailyAllocation: '100,000 KILO points allocated daily at midnight GMT',
+                distribution: 'Based on your daily net contribution + overall TVL contribution',
+                multiplier: 'A multiplier is applied to calculate final KILO points'
+              },
+              lastUpdated: new Date().toISOString()
+            };
+             
+            
+            return result;
+            
+          } catch (error: any) {
+            console.error('Error fetching KILO points:', error);
+            return {
+              error: 'Failed to fetch KILO points data',
+              message: 'Unable to retrieve your KILO points at this time. Please try again later.',
+              details: error.message,
+              userPoints: 0,
+              isError: true
+            };
           }
-
-          return kiloData;
         }
       }
     ];
