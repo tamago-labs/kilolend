@@ -530,9 +530,6 @@ export const KiloPointsModal = ({ isOpen, onClose }: KiloPointsModalProps) => {
       return (
         <ErrorState>
           <div style={{ color: '#ef4444', marginBottom: '16px' }}>❌ Error loading points</div>
-          <RetryButton onClick={loadUserPoints}>
-            Try Again
-          </RetryButton>
         </ErrorState>
       );
     }
