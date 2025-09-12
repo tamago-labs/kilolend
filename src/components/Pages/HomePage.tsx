@@ -187,7 +187,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   useMarketDataWithPrices();
 
   const handleAskAI = () => {
-    openModal('ai-recommendations');
+    openModal('ai-chat-new');
   };
 
   const handleSupply = () => {

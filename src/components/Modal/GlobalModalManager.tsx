@@ -16,6 +16,7 @@ import { SendModal } from './SendModal';
 import { LeaderboardModal } from './LeaderboardModal';
 import { KiloPointsModal } from "./KiloModal"
 import { InviteModal } from './InviteModal';
+import { AIChatModal } from './AIChatModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -97,6 +98,14 @@ export const GlobalModalManager = () => {
             icon="🤖"
             placeholderTitle="AI Chat"
             placeholderText="Chat with KiloBot for general DeFi questions and guidance. This feature will be available soon."
+          />
+        );
+
+      case 'ai-chat-new':
+        return (
+          <AIChatModal
+            isOpen={isOpen}
+            onClose={closeModal}
           />
         );
 
