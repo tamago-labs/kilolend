@@ -235,27 +235,27 @@ npm run dev:https
 pnpm dev:https
 ```
 
-# Roadmap
+## Roadmap
 
-## Q3/2025 (Complete)
+### Q3/2025 (Complete)
 - Successfully launched V1 on KAIA Mainnet with full lending protocol functionality  
 - Started off-chain KILO points program
 - Supported 5 assets: USDT, KAIA, BORA, SIX, MBX with different risk models  
 - Client-side AI agent assistance for user guidance  
 
-## Q4/2025
+### Q4/2025
 - Implement autonomous agent framework 
 - Enable automated execution based on user-defined strategies  
 - Deploy agent infrastructure to TEE (Trusted Execution Environment)  
 - Complete tokenomics design and prepare TGE documentation   
 
-## Q1/2026
+### Q1/2026
 - Conduct full security audits and optimize performance
 - Execute Token Generation Event (TGE) and public token launch   
 - Integrate token utilities across the platform ecosystem  
 - Begin token distribution to early adopters and community members
 
-## Q2/2026
+### Q2/2026
 - Enable purchase of various stablecoins via credit card and other methods
 - Expand partnership network with institutional clients and DeFi protocols  
 - Launch V2 of lending contracts with KILO token integration  
