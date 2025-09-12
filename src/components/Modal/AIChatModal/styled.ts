@@ -613,7 +613,7 @@ export const InfoBox = styled.div`
   
   ul {
     font-size: 12px;
-    color: #64748b;
+    color: #3b82f6;
     margin: 0;
     padding-left: 20px;
   }

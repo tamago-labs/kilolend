@@ -80,18 +80,22 @@ const getAgentTemplates = (agent: AIAgent) => {
       text: "What are the current market rates?",
       description: "Get real-time APY rates and market statistics"
     },
-    portfolio: {
-      text: "Analyze my portfolio risk",
-      description: "Check portfolio health and liquidation risks"
-    },
-    yields: {
-      text: "Find the best yield opportunities",
-      description: "Discover optimal strategies for earning"
-    },
+    // portfolio: {
+    //   text: "Analyze my portfolio risk",
+    //   description: "Check portfolio health and liquidation risks"
+    // },
+    // yields: {
+    //   text: "Find the best yield opportunities",
+    //   description: "Discover optimal strategies for earning"
+    // },
     simulate: {
       text: "What happens if I supply 1000 USDT?",
       description: "Simulate position changes and impacts"
-    }
+    },
+    basic:  {
+      text: "Explain how DeFi lending works",
+      description: "Learn the fundamentals of decentralized lending"
+    },
   };
   
   const personalityTemplates = {
@@ -195,7 +199,7 @@ export const InputTemplates: React.FC<InputTemplatesProps> = ({
   return (
     <TemplatesContainer $visible={isVisible}>
       <TemplateSection>
-        <SectionTitle>📊 Market & Portfolio</SectionTitle>
+        {/* <SectionTitle>📊 Market & Portfolio</SectionTitle> */}
         {templates.common.map((template, index) => (
           <TemplateButton 
             key={index}
@@ -207,7 +211,7 @@ export const InputTemplates: React.FC<InputTemplatesProps> = ({
         ))}
       </TemplateSection>
       
-      <TemplateSection>
+      {/* <TemplateSection>
         <SectionTitle>
           {agent.personality === 'tiger' && 'Conservative Strategies'}
           {agent.personality === 'snake' && 'Growth Strategies'}
@@ -237,7 +241,7 @@ export const InputTemplates: React.FC<InputTemplatesProps> = ({
             <div className="template-description">{template.description}</div>
           </TemplateButton>
         ))}
-      </TemplateSection>
+      </TemplateSection> */}
     </TemplatesContainer>
   );
 };

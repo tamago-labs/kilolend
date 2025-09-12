@@ -113,41 +113,49 @@ export class KiloLendToolsService {
           required: []
         },
         handler: async (params: { includePositionDetails?: boolean; includeRiskAnalysis?: boolean }) => {
-          if (!this.portfolioData) {
-            return {
-              error: 'Portfolio data not available. User may need to connect wallet.',
-              hasPositions: false
-            };
-          }
-
-          const portfolio: PortfolioSummary = {
-            totalSuppliedUSD: this.portfolioData.totalSupplied || 0,
-            totalBorrowedUSD: this.portfolioData.totalBorrowed || 0,
-            totalCollateralUSD: this.portfolioData.totalCollateralValue || 0,
-            netWorth: (this.portfolioData.totalSupplied || 0) - (this.portfolioData.totalBorrowed || 0),
-            healthFactor: this.portfolioData.healthFactor || 999,
-            netAPY: this.portfolioData.netAPY || 0,
-            positions: this.portfolioData.positions || [],
-            riskLevel: this.calculateRiskLevel(this.portfolioData.healthFactor || 999)
+          
+          return {
+            warning: true,
+            message: 'Portfolio data is not yet available. This feature will be supported in the next version.',
+            availableSoon: true,
+            hasPositions: false
           };
+          
+          // if (!this.portfolioData) {
+          //   return {
+          //     error: 'Portfolio data not available. User may need to connect wallet.',
+          //     hasPositions: false
+          //   };
+          // }
 
-          let result: any = portfolio;
+          // const portfolio: PortfolioSummary = {
+          //   totalSuppliedUSD: this.portfolioData.totalSupplied || 0,
+          //   totalBorrowedUSD: this.portfolioData.totalBorrowed || 0,
+          //   totalCollateralUSD: this.portfolioData.totalCollateralValue || 0,
+          //   netWorth: (this.portfolioData.totalSupplied || 0) - (this.portfolioData.totalBorrowed || 0),
+          //   healthFactor: this.portfolioData.healthFactor || 999,
+          //   netAPY: this.portfolioData.netAPY || 0,
+          //   positions: this.portfolioData.positions || [],
+          //   riskLevel: this.calculateRiskLevel(this.portfolioData.healthFactor || 999)
+          // };
 
-          if (params.includePositionDetails && portfolio.positions.length > 0) {
-            result.positionDetails = portfolio.positions.map(pos => ({
-              marketId: pos.marketId,
-              type: pos.type,
-              amountUSD: pos.usdValue,
-              apy: pos.apy,
-              isHealthy: pos.isHealthy
-            }));
-          }
+          // let result: any = portfolio;
 
-          if (params.includeRiskAnalysis) {
-            result.riskAnalysis = this.analyzePortfolioRisk(portfolio);
-          }
+          // if (params.includePositionDetails && portfolio.positions.length > 0) {
+          //   result.positionDetails = portfolio.positions.map(pos => ({
+          //     marketId: pos.marketId,
+          //     type: pos.type,
+          //     amountUSD: pos.usdValue,
+          //     apy: pos.apy,
+          //     isHealthy: pos.isHealthy
+          //   }));
+          // }
 
-          return result;
+          // if (params.includeRiskAnalysis) {
+          //   result.riskAnalysis = this.analyzePortfolioRisk(portfolio);
+          // }
+
+          // return result;
         }
       },
 
@@ -213,36 +221,45 @@ export class KiloLendToolsService {
           required: []
         },
         handler: async (params: { priceDropScenarios?: number[] }) => {
-          if (!this.portfolioData || this.portfolioData.totalBorrowed === 0) {
-            return {
-              riskLevel: 'None',
-              message: 'No borrowing positions - no liquidation risk',
-              healthFactor: this.portfolioData?.healthFactor || 999
-            };
-          }
-
-          const scenarios = (params.priceDropScenarios || [10, 20, 30]).map(dropPercent => {
-            const adjustedCollateralValue = this.portfolioData.totalSupplied * (1 - dropPercent / 100);
-            const newHealthFactor = adjustedCollateralValue * 0.75 / this.portfolioData.totalBorrowed;
-            
-            return {
-              priceDropPercent: dropPercent,
-              newHealthFactor,
-              liquidationRisk: newHealthFactor < 1,
-              marginOfSafety: Math.max(0, newHealthFactor - 1)
-            };
-          });
-
-          const currentRisk = this.calculateRiskLevel(this.portfolioData.healthFactor);
           
           return {
-            currentHealthFactor: this.portfolioData.healthFactor,
-            riskLevel: currentRisk,
-            scenarios,
-            recommendations: this.generateRiskRecommendations(scenarios, currentRisk),
-            liquidationPrice: this.calculateLiquidationPrice(),
-            timestamp: new Date().toISOString()
+            warning: true,
+            message: 'Portfolio data is not yet available. This feature will be supported in the next version.',
+            availableSoon: true,
+            hasPositions: false
           };
+          
+          
+          // if (!this.portfolioData || this.portfolioData.totalBorrowed === 0) {
+          //   return {
+          //     riskLevel: 'None',
+          //     message: 'No borrowing positions - no liquidation risk',
+          //     healthFactor: this.portfolioData?.healthFactor || 999
+          //   };
+          // }
+
+          // const scenarios = (params.priceDropScenarios || [10, 20, 30]).map(dropPercent => {
+          //   const adjustedCollateralValue = this.portfolioData.totalSupplied * (1 - dropPercent / 100);
+          //   const newHealthFactor = adjustedCollateralValue * 0.75 / this.portfolioData.totalBorrowed;
+            
+          //   return {
+          //     priceDropPercent: dropPercent,
+          //     newHealthFactor,
+          //     liquidationRisk: newHealthFactor < 1,
+          //     marginOfSafety: Math.max(0, newHealthFactor - 1)
+          //   };
+          // });
+
+          // const currentRisk = this.calculateRiskLevel(this.portfolioData.healthFactor);
+          
+          // return {
+          //   currentHealthFactor: this.portfolioData.healthFactor,
+          //   riskLevel: currentRisk,
+          //   scenarios,
+          //   recommendations: this.generateRiskRecommendations(scenarios, currentRisk),
+          //   liquidationPrice: this.calculateLiquidationPrice(),
+          //   timestamp: new Date().toISOString()
+          // };
         }
       },
 
@@ -263,62 +280,70 @@ export class KiloLendToolsService {
           required: ['action', 'asset', 'amount']
         },
         handler: async (params: { action: string; asset: string; amount: number }) => {
-          const market = this.marketData.find(m => m.symbol === params.asset);
-          if (!market) {
-            return { error: `Market for ${params.asset} not found` };
-          }
-
-          if (!this.portfolioData) {
-            return { error: 'Portfolio data not available' };
-          }
-
-          const currentPortfolio = { ...this.portfolioData };
-          let newPortfolio = { ...currentPortfolio };
-
-          switch (params.action) {
-            case 'supply':
-              newPortfolio.totalSupplied += params.amount;
-              break;
-            case 'withdraw':
-              newPortfolio.totalSupplied = Math.max(0, newPortfolio.totalSupplied - params.amount);
-              break;
-            case 'borrow':
-              newPortfolio.totalBorrowed += params.amount;
-              break;
-            case 'repay':
-              newPortfolio.totalBorrowed = Math.max(0, newPortfolio.totalBorrowed - params.amount);
-              break;
-          }
-
-          // Recalculate health factor
-          newPortfolio.healthFactor = newPortfolio.totalBorrowed > 0 
-            ? (newPortfolio.totalSupplied * 0.75) / newPortfolio.totalBorrowed 
-            : 999;
-
+          
           return {
-            action: params.action,
-            asset: params.asset,
-            amount: params.amount,
-            before: {
-              totalSupplied: currentPortfolio.totalSupplied,
-              totalBorrowed: currentPortfolio.totalBorrowed,
-              healthFactor: currentPortfolio.healthFactor,
-              netWorth: currentPortfolio.totalSupplied - currentPortfolio.totalBorrowed
-            },
-            after: {
-              totalSupplied: newPortfolio.totalSupplied,
-              totalBorrowed: newPortfolio.totalBorrowed,
-              healthFactor: newPortfolio.healthFactor,
-              netWorth: newPortfolio.totalSupplied - newPortfolio.totalBorrowed
-            },
-            impact: {
-              healthFactorChange: newPortfolio.healthFactor - currentPortfolio.healthFactor,
-              netWorthChange: (newPortfolio.totalSupplied - newPortfolio.totalBorrowed) - (currentPortfolio.totalSupplied - currentPortfolio.totalBorrowed),
-              riskChange: this.assessRiskChange(currentPortfolio.healthFactor, newPortfolio.healthFactor),
-              recommendation: this.generateSimulationRecommendation(params.action, newPortfolio.healthFactor)
-            },
-            timestamp: new Date().toISOString()
+            warning: true,
+            message: 'Portfolio data is not yet available. This feature will be supported in the next version.',
+            availableSoon: true,
+            hasPositions: false
           };
+          
+          // const market = this.marketData.find(m => m.symbol === params.asset);
+          // if (!market) {
+          //   return { error: `Market for ${params.asset} not found` };
+          // }
+
+          // if (!this.portfolioData) {
+          //   return { error: 'Portfolio data not available' };
+          // }
+
+          // const currentPortfolio = { ...this.portfolioData };
+          // let newPortfolio = { ...currentPortfolio };
+
+          // switch (params.action) {
+          //   case 'supply':
+          //     newPortfolio.totalSupplied += params.amount;
+          //     break;
+          //   case 'withdraw':
+          //     newPortfolio.totalSupplied = Math.max(0, newPortfolio.totalSupplied - params.amount);
+          //     break;
+          //   case 'borrow':
+          //     newPortfolio.totalBorrowed += params.amount;
+          //     break;
+          //   case 'repay':
+          //     newPortfolio.totalBorrowed = Math.max(0, newPortfolio.totalBorrowed - params.amount);
+          //     break;
+          // }
+
+          // // Recalculate health factor
+          // newPortfolio.healthFactor = newPortfolio.totalBorrowed > 0 
+          //   ? (newPortfolio.totalSupplied * 0.75) / newPortfolio.totalBorrowed 
+          //   : 999;
+
+          // return {
+          //   action: params.action,
+          //   asset: params.asset,
+          //   amount: params.amount,
+          //   before: {
+          //     totalSupplied: currentPortfolio.totalSupplied,
+          //     totalBorrowed: currentPortfolio.totalBorrowed,
+          //     healthFactor: currentPortfolio.healthFactor,
+          //     netWorth: currentPortfolio.totalSupplied - currentPortfolio.totalBorrowed
+          //   },
+          //   after: {
+          //     totalSupplied: newPortfolio.totalSupplied,
+          //     totalBorrowed: newPortfolio.totalBorrowed,
+          //     healthFactor: newPortfolio.healthFactor,
+          //     netWorth: newPortfolio.totalSupplied - newPortfolio.totalBorrowed
+          //   },
+          //   impact: {
+          //     healthFactorChange: newPortfolio.healthFactor - currentPortfolio.healthFactor,
+          //     netWorthChange: (newPortfolio.totalSupplied - newPortfolio.totalBorrowed) - (currentPortfolio.totalSupplied - currentPortfolio.totalBorrowed),
+          //     riskChange: this.assessRiskChange(currentPortfolio.healthFactor, newPortfolio.healthFactor),
+          //     recommendation: this.generateSimulationRecommendation(params.action, newPortfolio.healthFactor)
+          //   },
+          //   timestamp: new Date().toISOString()
+          // };
         }
       },
 
