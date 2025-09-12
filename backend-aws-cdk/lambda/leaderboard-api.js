@@ -1,4 +1,4 @@
-const { DynamoDBClient, GetItemCommand, PutItemCommand, ScanCommand } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBClient, GetItemCommand, PutItemCommand, ScanCommand, QueryCommand } = require('@aws-sdk/client-dynamodb');
 const { marshall, unmarshall } = require('@aws-sdk/util-dynamodb');
 
 const dynamoClient = new DynamoDBClient({});
@@ -309,81 +309,87 @@ async function storeDailySummary(event) {
 
 // GET /users/{userAddress} - Get user total points
 async function getUserPoints(event) {
-    try {
-        const { userAddress } = event.pathParameters;
+  try {
+    const { userAddress } = event.pathParameters;
 
-        const command = new GetItemCommand({
-            TableName: USER_POINTS_TABLE,
-            Key: marshall({
-                userAddress: userAddress
-            })
-        });
+    const command = new QueryCommand({
+      TableName: USER_POINTS_TABLE,
+      KeyConditionExpression: 'userAddress = :user',
+      ExpressionAttributeValues: marshall({
+        ':user': userAddress
+      })
+    });
 
-        const result = await dynamoClient.send(command);
+    const result = await dynamoClient.send(command);
 
-        if (!result.Item) {
-            return {
-                statusCode: 404,
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Access-Control-Allow-Origin': '*',
-                },
-                body: JSON.stringify({
-                    success: false,
-                    message: 'User not found'
-                })
-            };
-        }
-
-        // Unmarshall the DynamoDB item
-        const item = unmarshall(result.Item);
-
-        return {
-            statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-            },
-            body: JSON.stringify({
-                success: true,
-                data: item
-            })
-        };
-
-    } catch (error) {
-        console.error('Error getting user points:', error);
-        throw error;
+    if (!result.Items || result.Items.length === 0) {
+      return {
+        statusCode: 404,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({
+          success: false,
+          message: 'User not found'
+        })
+      };
     }
+
+    const items = result.Items.map(i => unmarshall(i));
+
+    // Optionally calculate total points
+    const totalPoints = items.reduce((sum, i) => sum + (i.kiloReward || 0), 0);
+
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        success: true,
+        totalPoints,
+        dailyPoints: items // array of { date, kiloReward }
+      })
+    };
+
+  } catch (error) {
+    console.error('Error getting user points:', error);
+    throw error;
+  }
 }
 
 
 // GET /users - Get all users for KILO point bot
 async function getAllUsers(event) {
-    try { 
+  try {
+    const command = new ScanCommand({
+      TableName: USER_POINTS_TABLE,
+      ProjectionExpression: "userAddress" // fetch only PK
+    });
 
-        const command = new ScanCommand({
-            TableName: USER_POINTS_TABLE,
-            ProjectionExpression: "userAddress" // only fetch userAddress field
-        });
+    const result = await dynamoClient.send(command);
 
-        const result = await dynamoClient.send(command);
+    const items = (result.Items || []).map(i => unmarshall(i));
 
-        const items = (result.Items || []).map(item => unmarshall(item));
-  
-        return {
-            statusCode: 200,
-            headers: {
-                'Content-Type': 'application/json',
-                'Access-Control-Allow-Origin': '*',
-            },
-            body: JSON.stringify({
-                success: true,
-                data: items
-            })
-        };
+    // Deduplicate user addresses
+    const uniqueUsers = [...new Set(items.map(i => i.userAddress))].map(addr => ({ userAddress: addr }));
 
-    } catch (error) {
-        console.error('Error getting all users:', error);
-        throw error;
-    }
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+      },
+      body: JSON.stringify({
+        success: true,
+        data: uniqueUsers
+      })
+    };
+
+  } catch (error) {
+    console.error('Error getting all users:', error);
+    throw error;
+  }
 }

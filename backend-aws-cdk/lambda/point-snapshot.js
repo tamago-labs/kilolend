@@ -80,6 +80,7 @@ exports.handler = async () => {
         PutRequest: {
           Item: marshall({
             userAddress: user.address,
+            date: formattedYesterday, // sort key
             [formattedYesterday]: user.kiloReward, // Store kilo reward for this specific date
             lastUpdated: new Date().toISOString(),
             status: 'active'
