@@ -106,9 +106,32 @@ KiloLend's backend infrastructure is built on AWS using Infrastructure as Code (
 
 This robust backend architecture ensures KiloLend can handle growth from hundreds to thousands of users while maintaining the reliability, security, and performance required for a DeFi lending protocol with social features.
 
-## AI Recommendations
+## AI Assistants
 
-TBD
+KiloLend uses an AI assistant to guide you through DeFi lending with ease. Different agents come with unique personality traits, communication styles, and context programmed directly into the system prompt when a user starts chatting.
+
+<img width="1674" height="465" alt="ai-diagram drawio" src="https://github.com/user-attachments/assets/b0718ad3-897b-418f-89ea-dcd308a41080" />
+
+The agent is aware of both the user’s data and market trends by leveraging tools that gather information from the dApp state and external APIs.We now have 9 specialized tools covering market data, portfolio analytics, yield optimization, risk assessment, and position simulation, with more to be added in the future.
+
+The following are all the agents and their settings in the current version.
+
+**Penny the Penguin** 
+- **Risk Profile:** Conservative, low-risk strategies
+- **Best For:** New DeFi users, risk-averse investors, stable income seekers
+- **Approach:** Prioritizes capital preservation, recommends USDT and conservative collateral ratios (health factor > 2.5), uses simple explanations with penguin metaphors
+
+**Tora the Tiger** 
+- **Risk Profile:** Aggressive, growth-focused opportunities
+- **Best For:** Experienced DeFi users, yield maximizers, active portfolio managers
+- **Approach:** Identifies high-APY opportunities (SIX 8.1%, BORA 7.8%, MBX 6.9%), suggests leveraged strategies with optimal health factors (> 2.0)
+
+**Sly the Snake** 
+- **Risk Profile:** Balanced, precision-focused strategies
+- **Best For:** Data-driven users, optimization seekers, advanced strategists
+- **Approach:** Calculates optimal collateral utilization, recommends rebalancing strategies, focuses on compound efficiency with precise ratios (2.1-2.3)
+
+The AI maintains context across chat sessions and adapts responses based on preferred language and context. Currently, the system supports up to 10 messages per chat to help manage token costs, as we sponsor the usage. Users can clear the chat and start a new session at any time. This limit may change over time.
 
 ## How to Test
 
@@ -211,6 +234,32 @@ npm run dev:https
 # or
 pnpm dev:https
 ```
+
+# Roadmap
+
+## Q3/2025 (Complete)
+- Successfully launched V1 on KAIA Mainnet with full lending protocol functionality  
+- Started off-chain KILO points program
+- Supported 5 assets: USDT, KAIA, BORA, SIX, MBX with different risk models  
+- Client-side AI agent assistance for user guidance  
+
+## Q4/2025
+- Implement autonomous agent framework 
+- Enable automated execution based on user-defined strategies  
+- Deploy agent infrastructure to TEE (Trusted Execution Environment)  
+- Complete tokenomics design and prepare TGE documentation   
+
+## Q1/2026
+- Conduct full security audits and optimize performance
+- Execute Token Generation Event (TGE) and public token launch   
+- Integrate token utilities across the platform ecosystem  
+- Begin token distribution to early adopters and community members
+
+## Q2/2026
+- Enable purchase of various stablecoins via credit card and other methods
+- Expand partnership network with institutional clients and DeFi protocols  
+- Launch V2 of lending contracts with KILO token integration  
+- Enhance yield opportunities and optimization features
 
 ## Deployment (KAIA Mainnet)
 
