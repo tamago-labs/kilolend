@@ -10,6 +10,7 @@ export type ModalType =
   | 'portfolio' 
   | 'analytics' 
   | 'ai-chat' 
+  | 'ai-chat-new'
   | 'ai-recommendations'
   | 'settings'
   | 'activities'
