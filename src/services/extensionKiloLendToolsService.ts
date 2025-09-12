@@ -1,17 +1,17 @@
 import { ContractMarket } from '@/stores/contractMarketStore';
 import { ContractUserPosition } from '@/stores/contractUserStore';
-import { conversationMemory, type RecommendedAction } from './memory/conversationMemory';
+import { conversationMemory, type RecommendedAction } from './memory/conversationMemory'; 
 import { actionIntegration } from './actionIntegration';
 
-export interface AdvancedKiloLendTool {
+export interface ExtensionKiloLendTool {
   name: string;
   description: string;
   parameters: any;
   handler: (params: any, sessionId?: string) => Promise<any>;
 }
 
-export class AdvancedKiloLendToolsService {
-  private tools: Map<string, AdvancedKiloLendTool> = new Map();
+export class ExtensionKiloLendToolsService {
+  private tools: Map<string, ExtensionKiloLendTool> = new Map();
   private marketData: ContractMarket[] = [];
   private portfolioData: any = null;
   private userAddress: string | null = null;
@@ -27,7 +27,7 @@ export class AdvancedKiloLendToolsService {
   }
 
   private initializeAdvancedTools() {
-    const tools: AdvancedKiloLendTool[] = [
+    const tools: ExtensionKiloLendTool[] = [
       {
         name: 'analyze_market_trends',
         description: 'Analyze market trends and provide insights on optimal timing for actions',
@@ -436,4 +436,4 @@ export class AdvancedKiloLendToolsService {
   }
 }
 
-export const advancedKiloLendToolsService = new AdvancedKiloLendToolsService();
+export const extensionKiloLendToolsService = new ExtensionKiloLendToolsService();

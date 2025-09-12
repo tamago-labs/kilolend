@@ -4,9 +4,8 @@ import {
 } from "@aws-sdk/client-bedrock-runtime";
 import { AIAgent } from '@/types/aiAgent';
 import { kilolendToolsService } from './kilolendTools';
-import { advancedKiloLendToolsService } from './advancedKiloLendTools';
-import { conversationMemory } from './memory/conversationMemory';
-import { actionIntegration } from './actionIntegration';
+import { extensionKiloLendToolsService } from './extensionKiloLendToolsService';
+import { conversationMemory } from './memory/conversationMemory'; 
 
 export interface ChatMessage {
   id: string;
@@ -50,12 +49,12 @@ export const injectKiloLendData = (markets: any[], portfolio?: any, userAddress?
   
   // Inject data into all tool services
   kilolendToolsService.setKiloLendData(markets, portfolio, userAddress);
-  advancedKiloLendToolsService.setKiloLendData(markets, portfolio, userAddress);
+  extensionKiloLendToolsService.setKiloLendData(markets, portfolio, userAddress);
   
   // Initialize action integration with stores (will be done in the hook)
 };
 
-export class EnhancedAIChatService {
+export class NewAIChatService {
   private client: BedrockRuntimeClient;
   private sessionId: string | null = null;
 
@@ -109,8 +108,8 @@ export class EnhancedAIChatService {
     
     // Combine all available tools
     const basicTools = kilolendToolsService.getClaudeToolsFormat();
-    const advancedTools = advancedKiloLendToolsService.getClaudeToolsFormat();
-    const availableTools = [...basicTools, ...advancedTools];
+    const moreTools = extensionKiloLendToolsService.getClaudeToolsFormat();
+    const availableTools = [...basicTools, ...moreTools];
 
     try {
       while (true) {
@@ -243,7 +242,7 @@ export class EnhancedAIChatService {
             if (basicTools.some(t => t.name === toolUse.name)) {
               result = await kilolendToolsService.executeTool(toolUse.name, toolUse.input);
             } else {
-              result = await advancedKiloLendToolsService.executeTool(toolUse.name, toolUse.input, sessionId || "");
+              result = await extensionKiloLendToolsService.executeTool(toolUse.name, toolUse.input, sessionId || "");
             }
 
             toolResults.push({
@@ -286,7 +285,7 @@ export class EnhancedAIChatService {
       }
 
     } catch (error: any) {
-      console.error('Enhanced AI Chat Service: API error:', error);
+      console.error('AI Chat Service: API error:', error);
       throw new Error(`Claude API error: ${error.message}`);
     }
 
@@ -441,4 +440,4 @@ Personalize recommendations based on their current positions and risk profile.`;
   }
 }
 
-export const enhancedAIChatService = new EnhancedAIChatService();
+export const AIChatService = new NewAIChatService();

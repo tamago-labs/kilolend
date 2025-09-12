@@ -6,11 +6,11 @@ import { useContractUserStore } from '@/stores/contractUserStore';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useModalStore } from '@/stores/modalStore';
 import {
-  enhancedAIChatService,
+  AIChatService,
   injectKiloLendData,
   type ChatMessage,
   type StreamChunk
-} from '@/services/enhancedAIChatService';
+} from '@/services/AIChatService';
 import { actionIntegration } from '@/services/actionIntegration';
 import { conversationMemory } from '@/services/memory/conversationMemory';
 import { type AIAgent } from '@/types/aiAgent';
@@ -67,7 +67,7 @@ export const useEnhancedAIChat = (agent: AIAgent): UseEnhancedAIChatResult => {
 
     // Initialize session if we have a user address
     if (account && !sessionId) {
-      const newSessionId = enhancedAIChatService.initializeSession(account, agent);
+      const newSessionId = AIChatService.initializeSession(account, agent);
       setSessionId(newSessionId);
     }
   }, [markets, userStore, account, agent, sessionId]);
@@ -145,7 +145,7 @@ export const useEnhancedAIChat = (agent: AIAgent): UseEnhancedAIChatResult => {
 
       if (hasAWSCredentials) {
         // Use real AI service
-        const streamGenerator = enhancedAIChatService.streamChat(
+        const streamGenerator = AIChatService.streamChat(
           agent,
           chatHistory,
           content,
@@ -179,21 +179,21 @@ export const useEnhancedAIChat = (agent: AIAgent): UseEnhancedAIChatResult => {
         }
       } else {
 
-      const fallbackMessage = `Unable to connect to the AI service. \n\n*Contact KILOLend team for assistance.*`;
-      
-      agentMessageContent = fallbackMessage;
-      
-      // Add the complete message immediately
-      setMessages(prev => {
-      const existingIndex = prev.findIndex(m => m.id === agentMessage.id);
-      if (existingIndex >= 0) {
-      const newMessages = [...prev];
-        newMessages[existingIndex].content = fallbackMessage;
-        return newMessages;
-      } else {
-        return [...prev, { ...agentMessage, content: fallbackMessage }];
-      }
-      });
+        const fallbackMessage = `Unable to connect to the AI service. \n\n*Contact KILOLend team for assistance.*`;
+
+        agentMessageContent = fallbackMessage;
+
+        // Add the complete message immediately
+        setMessages(prev => {
+          const existingIndex = prev.findIndex(m => m.id === agentMessage.id);
+          if (existingIndex >= 0) {
+            const newMessages = [...prev];
+            newMessages[existingIndex].content = fallbackMessage;
+            return newMessages;
+          } else {
+            return [...prev, { ...agentMessage, content: fallbackMessage }];
+          }
+        });
       }
 
       // Ensure final message is added
@@ -237,44 +237,44 @@ export const useEnhancedAIChat = (agent: AIAgent): UseEnhancedAIChatResult => {
   }, []);
 
   const clearMessages = useCallback(() => {
-  setMessages([]);
-  setError(null);
-  
-  // Clean up old session and create new one
-  if (account) {
-    conversationMemory.cleanupOldSessions();
-  const newSessionId = enhancedAIChatService.initializeSession(account, agent);
-    setSessionId(newSessionId);
-  }
-  
-  // Re-add greeting
-  if (agent) {
-  const greetingMessage: ChatMessage = {
-      id: `greeting_${Date.now()}`,
-    content: getAgentGreeting(agent),
-      sender: 'agent',
+    setMessages([]);
+    setError(null);
+
+    // Clean up old session and create new one
+    if (account) {
+      conversationMemory.cleanupOldSessions();
+      const newSessionId = AIChatService.initializeSession(account, agent);
+      setSessionId(newSessionId);
+    }
+
+    // Re-add greeting
+    if (agent) {
+      const greetingMessage: ChatMessage = {
+        id: `greeting_${Date.now()}`,
+        content: getAgentGreeting(agent),
+        sender: 'agent',
         timestamp: Date.now()
       };
       setMessages([greetingMessage]);
-  }
+    }
   }, [agent, account]);
 
   const retryLastMessage = useCallback(async () => {
-  if (lastUserMessage) {
-  await sendMessage(lastUserMessage);
-  }
+    if (lastUserMessage) {
+      await sendMessage(lastUserMessage);
+    }
   }, [lastUserMessage, sendMessage]);
 
   return {
     messages,
-  isLoading,
-  isStreaming,
-  error,
-  sendMessage,
-  clearMessages,
-  retryLastMessage,
-  stopStreaming,
-  canSendMessage,
+    isLoading,
+    isStreaming,
+    error,
+    sendMessage,
+    clearMessages,
+    retryLastMessage,
+    stopStreaming,
+    canSendMessage,
     messageCount: userMessageCount,
     needsClear
   };

@@ -30,50 +30,54 @@ const getAgentBadges = (agent: AgentPreset): string[] => {
   const { personality, defaultPreferences } = agent;
   const badges = [];
 
-  // Risk tolerance badge
-  switch (defaultPreferences.riskTolerance) {
-    case 'low':
-      badges.push('🛡️ Safety First');
-      break;
-    case 'medium':
-      badges.push('⚖️ Balanced');
-      break;
-    case 'high':
-      badges.push('🚀 High Yield');
-      break;
-  }
+  console.log("agent: ", agent)
+
 
   // Communication style badge
   switch (defaultPreferences.communicationStyle) {
     case 'friendly':
-      badges.push('🤗 Beginner-Friendly');
+      badges.push('Friendly');
       break;
     case 'formal':
-      badges.push('💪 Strategic');
+      badges.push('Formal');
       break;
     case 'casual':
-      badges.push('🧠 Optimizer');
+      badges.push('Casual');
       break;
   }
+
+  // Risk tolerance badge
+  switch (defaultPreferences.riskTolerance) {
+    case 'low':
+      badges.push('Conservative');
+      break;
+    case 'medium':
+      badges.push('Balanced');
+      break;
+    case 'high':
+      badges.push('High Yield');
+      break;
+  }
+
 
   // Focus areas badges
   if (defaultPreferences.focusAreas.includes('stable_returns')) {
-    badges.push('💎 Stable Returns');
+    badges.push('Stable Returns');
   }
   if (defaultPreferences.focusAreas.includes('high_yields')) {
-    badges.push('📈 Growth Focus');
+    badges.push('Growth Focus');
   }
   if (defaultPreferences.focusAreas.includes('optimization')) {
-    badges.push('⚙️ Efficiency Expert');
+    badges.push('Efficiency Expert');
   }
   if (defaultPreferences.focusAreas.includes('beginner_friendly')) {
-    badges.push('📚 Educational');
+    badges.push('Educational');
   }
   if (defaultPreferences.focusAreas.includes('advanced_strategies')) {
-    badges.push('🎯 Advanced Tactics');
+    badges.push('Advanced Tactics');
   }
 
-  return badges.slice(0, 3); // Limit to 3 badges max
+  return badges.slice(0, 1); // Limit to 3 badges max
 };
 
 export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
@@ -85,8 +89,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
 }) => {
   return (
     <>
-      <SectionTitle>Choose Your Agent</SectionTitle>
-
+      {/* <SectionTitle>Choose Your Agent</SectionTitle> */} 
       <AgentGrid>
         {AGENT_PRESETS.slice(0, 3).map((agent) => {
           const badges = getAgentBadges(agent);
