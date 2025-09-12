@@ -34,7 +34,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
 }) => {
   return (
     <>
-      <SectionTitle>Choose Your AI Assistant</SectionTitle>
+      <SectionTitle>Choose Your Agent</SectionTitle>
       
       <AgentGrid>
         {AGENT_PRESETS.map((agent) => (
@@ -43,7 +43,9 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
             $selected={selectedAgent?.id === agent.id}
             onClick={() => onAgentSelect(agent)}
           >
-            <AgentAvatar>{agent.avatar}</AgentAvatar>
+            <AgentAvatar>
+              <img src={`${agent.image}`} alt="Agent Avatar" />
+            </AgentAvatar>
             <AgentInfo>
               <AgentName>{agent.name}</AgentName>
               <AgentDescription>{agent.description}</AgentDescription>
@@ -56,7 +58,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
         ))}
       </AgentGrid>
 
-      <CustomSection>
+      {/*<CustomSection>
         <SectionTitle>Or Create Custom Agent</SectionTitle>
         <CustomPromptInput
           value={customPrompt}
@@ -91,7 +93,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
             </div>
           </div>
         )}
-      </CustomSection>
+      </CustomSection>*/}
        
     </>
   );

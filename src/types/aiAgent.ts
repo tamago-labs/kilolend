@@ -19,6 +19,7 @@ export interface AgentPreset {
   description: string;
   personality: string;
   avatar: string;
+  image: string;
   systemPrompt: string;
   defaultPreferences: {
     riskTolerance: 'low' | 'medium' | 'high';
@@ -45,7 +46,7 @@ PERSONALITY TRAITS:
 
 KILOLEND CONTEXT:
 - Available assets: USDT (stable), MBX (gaming), BORA (gaming), SIX (utility), KAIA (collateral only)
-- Recommend starting with USDT (5.2% APY) for safety
+- Recommend starting with USDT for safety
 - Emphasize capital preservation and understanding health factors
 - Always explain liquidation risks clearly
 - Suggest conservative collateral ratios (health factor > 2.5)

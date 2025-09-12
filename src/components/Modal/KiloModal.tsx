@@ -450,40 +450,49 @@ export const KiloPointsModal = ({ isOpen, onClose }: KiloPointsModalProps) => {
     }
   }, [isOpen, account]);
 
-  const loadUserPoints = async (account: any) => {
-    setLoading(true);
-    setError(false);
+  const loadUserPoints = async (account: string) => {
+  setLoading(true);
+  setError(false);
 
-    try {
-      const response = await fetch(`https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/users/${account}`);
-      const data = await response.json();
+  try { 
 
-      if (!data.success) {
-        setPointsData({ totalPoints: 0, dailyBreakdown: {}, isNewUser: true });
-      } else {
-        const dailyBreakdown = { ...data.data };
-        delete dailyBreakdown.userAddress;
-        delete dailyBreakdown.lastUpdated;
-        delete dailyBreakdown.status;
+    const response = await fetch(
+      `https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/users/${account}`
+    );
+    const data = await response.json();
+  
+    if (!data.success) {
+      setPointsData({
+        totalPoints: 0,
+        dailyBreakdown: {},
+        isNewUser: true
+      });
+    } else {
+      // Convert dailyPoints array into an object keyed by date
 
-        const totalPoints: any = Object.values(dailyBreakdown)
-          .reduce((sum: any, points: any) => sum + (points as number), 0);
+      let totalPoints = 0
 
-        setPointsData({
-          totalPoints,
-          dailyBreakdown,
-          lastUpdated: data.data.lastUpdated,
-          status: data.data.status,
-          isNewUser: false
-        });
-      }
-    } catch (err) {
-      console.error('Error fetching points:', err);
-      setError(true);
-    } finally {
-      setLoading(false);
+      const dailyBreakdown: Record<string, number> = {};
+      data.dailyPoints.forEach((entry: any) => { 
+        const key = entry.date; // "2025-09-11"
+        const value = entry[key]; // 52537
+        dailyBreakdown[entry.date] = value;
+        totalPoints+=value
+      });
+
+      setPointsData({
+        totalPoints,
+        dailyBreakdown,
+        isNewUser: false
+      });
     }
-  };
+  } catch (err) {
+    console.error('Error fetching points:', err);
+    setError(true);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
