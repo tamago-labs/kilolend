@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 
+
 // Main modal container
 export const Container = styled.div`
   display: flex;
@@ -144,6 +145,26 @@ export const AgentPersonality = styled.div`
   font-size: 12px;
   color: #06C755;
   font-weight: 500;
+`;
+
+export const AgentBadges = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+`;
+
+export const Badge = styled.span`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  background: rgba(6, 199, 85, 0.1);
+  color: #06C755;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  border: 1px solid rgba(6, 199, 85, 0.2);
+  white-space: nowrap;
 `;
 
 export const CustomSection = styled.div`
@@ -293,9 +314,9 @@ export const ChatHeader = styled.div`
 export const ChatMessages = styled.div`
   flex: 1;
   overflow-y: auto;
-  padding: 0 4px;
-  min-height: 300px;
-  max-height: 400px;
+  padding: 16px 4px 0;
+  min-height: 350px;
+  max-height: 450px;
 
   &::-webkit-scrollbar {
     width: 6px;
@@ -321,15 +342,22 @@ export const MessageBubble = styled.div<{ $isUser: boolean }>`
 `;
 
 export const MessageAvatar = styled.div`
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: #06C755;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 18px;
   flex-shrink: 0;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
 `;
 
 export const MessageContent = styled.div<{ $isUser: boolean }>`
@@ -353,12 +381,14 @@ export const ChatInputContainer = styled.div`
 
 export const ChatInput = styled.input`
   flex: 1;
-  padding: 12px 16px;
+  padding: 16px 20px;
   border: 2px solid #e2e8f0;
-  border-radius: 24px;
-  font-size: 14px;
+  border-radius: 16px;
+  font-size: 16px;
   font-family: inherit;
   transition: border-color 0.2s ease;
+  height: 56px;
+  box-sizing: border-box;
 
   &:focus {
     outline: none;
@@ -371,18 +401,20 @@ export const ChatInput = styled.input`
 `;
 
 export const SendButton = styled.button<{ $disabled?: boolean }>`
-  width: 48px;
-  height: 48px;
+  
+  width: 56px;
+  height: 56px;
   border: none;
   background: ${({ $disabled }) => ($disabled ? '#94a3b8' : '#06C755')};
   color: white;
-  border-radius: 50%;
+  border-radius: 16px;
   cursor: ${({ $disabled }) => ($disabled ? 'not-allowed' : 'pointer')};
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: 600;
 
   &:hover:not(:disabled) {
     background: #059212;
@@ -397,13 +429,14 @@ export const ChatActions = styled.div`
 `;
 
 export const ActionButton = styled.button<{ $variant?: 'secondary' }>`
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 500;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s ease;
-  border: 1px solid;
+  border: 2px solid;
+  flex: 1;
 
   ${({ $variant }) =>
     $variant === 'secondary'
@@ -425,6 +458,7 @@ export const ActionButton = styled.button<{ $variant?: 'secondary' }>`
     &:hover {
       background: #059212;
       border-color: #059212;
+      transform: translateY(-1px);
     }
   `}
 `;
@@ -515,24 +549,28 @@ export const StopButton = styled.button`
   background: #ef4444;
   color: white;
   border: none;
-  border-radius: 6px;
-  min-width: 40px;
-  height: 40px;
+  border-radius: 8px;
+  min-width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
+  font-size: 16px;
+  font-weight: 600;
   
   &:hover {
     background: #dc2626;
+    transform: scale(1.05);
   }
 `;
 
 export const InputContainer = styled.div`
   display: flex;
-  gap: 8px;
+  gap: 12px;
   align-items: flex-end;
+  width: 100%;
 `;
 
 export const LimitWarning = styled.div`

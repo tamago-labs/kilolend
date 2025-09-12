@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useRef, useEffect } from 'react';
+import { Send, Pause, ArrowLeft } from 'react-feather';
 import {
   ChatContainer,
   ChatHeader,
@@ -47,7 +48,7 @@ export const ChatStep: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) =>
     messageCount,
     needsClear
   } = useEnhancedAIChat(agent);
-  
+
   const [inputValue, setInputValue] = React.useState('');
   const [showTemplates, setShowTemplates] = React.useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -101,43 +102,38 @@ export const ChatStep: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) =>
 
   const handleReset = () => {
     clearMessages();
-    onReset();
+    // onReset();
   };
 
   return (
     <ChatContainer>
-      <ChatHeader>
-        <AgentAvatar>{agent.avatar}</AgentAvatar>
-        <AgentInfo>
-          <AgentName>{agent.name}</AgentName>
-          <span style={{ fontSize: '12px', color: '#64748b' }}>
-            {agent.personality.charAt(0).toUpperCase() + agent.personality.slice(1)} Assistant
-          </span>
-        </AgentInfo>
-      </ChatHeader>
 
       <ChatMessages>
         {messages.map((message) => (
           <MessageBubble key={message.id} $isUser={message.sender === 'user'}>
             <MessageAvatar>
-              {message.sender === 'user' ? '👤' : agent.avatar}
+              {message.sender === 'user' ? '👤' : (
+                <img src={`./images/icon-${agent.personality}.png`} alt={`${agent.name} Avatar`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              )}
             </MessageAvatar>
             <MessageContent $isUser={message.sender === 'user'}>
-              <MarkdownRenderer 
-                content={message.content} 
+              <MarkdownRenderer
+                content={message.content}
                 isUser={message.sender === 'user'}
               />
             </MessageContent>
           </MessageBubble>
         ))}
-        
+
         {isStreaming && (
           <MessageBubble $isUser={false}>
-            <MessageAvatar>{agent.avatar}</MessageAvatar>
+            <MessageAvatar>
+              <img src={`./images/icon-${agent.personality}.png`} alt={`${agent.name} Avatar`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            </MessageAvatar>
             <TypingIndicator />
           </MessageBubble>
         )}
-        
+
         {error && (
           <MessageBubble $isUser={false}>
             <MessageAvatar>⚠️</MessageAvatar>
@@ -153,26 +149,26 @@ export const ChatStep: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) =>
             </MessageContent>
           </MessageBubble>
         )}
-        
+
         {needsClear && (
           <MessageBubble $isUser={false}>
-            <MessageAvatar>💬</MessageAvatar>
+            <MessageAvatar>⚠️</MessageAvatar>
             <MessageContent $isUser={false}>
-              <div style={{ 
-                color: '#f59e0b', 
-                background: 'rgba(251, 191, 36, 0.1)', 
-                padding: '12px', 
+              <div style={{
+                color: '#f59e0b',
+                background: 'rgba(251, 191, 36, 0.1)',
+                padding: '12px',
                 borderRadius: '8px',
                 border: '1px solid rgba(251, 191, 36, 0.3)'
               }}>
                 <strong>Message Limit Reached</strong>
                 <p style={{ margin: '8px 0', fontSize: '14px' }}>
-                  You've reached the {messageCount}/5 message limit. Please clear the chat to continue our conversation.
+                  You've reached the {messageCount}/10 message limit. Please clear the chat to continue our conversation.
                 </p>
-                <ActionButton 
-                  onClick={handleReset} 
-                  style={{ 
-                    fontSize: '12px', 
+                <ActionButton
+                  onClick={handleReset}
+                  style={{
+                    fontSize: '12px',
                     padding: '6px 12px',
                     background: '#f59e0b',
                     color: 'white',
@@ -185,18 +181,18 @@ export const ChatStep: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) =>
             </MessageContent>
           </MessageBubble>
         )}
-        
+
         <div ref={messagesEndRef} />
       </ChatMessages>
 
       <ChatInputContainer style={{ position: 'relative' }}>
         {/* Input Templates */}
-        <InputTemplates 
+        <InputTemplates
           agent={agent}
           onTemplateSelect={handleTemplateSelect}
           isVisible={showTemplates && canSendMessage}
         />
-        
+
         <InputContainer>
           <ChatInput
             value={inputValue}
@@ -209,15 +205,15 @@ export const ChatStep: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) =>
             }}
             placeholder={needsClear ? "Clear chat to continue..." : showTemplates ? "Choose a template or type your message..." : "Ask about lending, borrowing, portfolio, or market data..."}
             disabled={!canSendMessage}
-            style={{ 
+            style={{
               opacity: canSendMessage ? 1 : 0.6,
               cursor: canSendMessage ? 'text' : 'not-allowed'
             }}
           />
-          
+
           {isStreaming ? (
             <StopButton onClick={handleStopStreaming}>
-              ⏹️
+              <Pause size={20} />
             </StopButton>
           ) : (
             <SendButton
@@ -225,19 +221,19 @@ export const ChatStep: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) =>
               $disabled={!canSendMessage || !inputValue.trim()}
               disabled={!canSendMessage || !inputValue.trim()}
             >
-              {isLoading ? <LoadingSpinner /> : '→'}
+              {isLoading ? <LoadingSpinner /> : <Send size={16} />}
             </SendButton>
           )}
         </InputContainer>
-         
+
       </ChatInputContainer>
 
       <ChatActions>
         <ActionButton $variant="secondary" onClick={onBack}>
-          ← Change Agent
+          Change Agent
         </ActionButton>
         <ActionButton $variant="secondary" onClick={handleReset}>
-          🔄 New Chat
+          Clear Chat
         </ActionButton>
       </ChatActions>
     </ChatContainer>

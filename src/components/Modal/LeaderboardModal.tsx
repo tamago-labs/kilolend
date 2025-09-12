@@ -399,12 +399,12 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: any
               {leaderboardData.data.leaderboard.map((user) => (
                 <TableRow 
                   key={user.address} 
-                  $isMe={user.address.toLowerCase() === account?.toLocaleLowerCase()}
+                  $isMe={user.address.toLowerCase() === account?.toLowerCase()}
                 >
                   <RankCell>{user.rank}</RankCell>
                   <WalletCell $fixed={true}>
                     {formatAddress(user.address)}
-                    {user.address.toLowerCase() === account?.toLocaleLowerCase() && (
+                    {user.address.toLowerCase() === account?.toLowerCase() && (
                       <YouIndicator>⭐</YouIndicator>
                     )}
                   </WalletCell>

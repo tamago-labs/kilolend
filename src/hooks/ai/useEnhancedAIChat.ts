@@ -39,7 +39,7 @@ export const useEnhancedAIChat = (agent: AIAgent): UseEnhancedAIChatResult => {
   const streamControllerRef = useRef<AbortController | null>(null);
 
   // Constants
-  const MAX_MESSAGES = 5; // Maximum user messages before requiring clear
+  const MAX_MESSAGES = 10; // Maximum user messages before requiring clear
 
   // Get KiloLend data
   const { markets } = useContractMarketStore();
