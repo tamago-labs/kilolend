@@ -1,10 +1,10 @@
 import { ethers } from 'ethers';
 import { Wallet } from '@kaiachain/ethers-ext/v6';
-import { KAIA_TESTNET_CONFIG } from './tokenConfig';
+import { KAIA_MAINNET_CONFIG } from './tokenConfig';
 
 // Create provider instance for KAIA testnet
 export const getKaiaProvider = () => {
-  return new ethers.JsonRpcProvider(KAIA_TESTNET_CONFIG.rpcUrl);
+  return new ethers.JsonRpcProvider(KAIA_MAINNET_CONFIG.rpcUrl);
 };
 
 // Format different token amounts based on decimals

@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import { KAIA_TESTNET_CONFIG } from './contractConfig';
+import { KAIA_MAINNET_CONFIG } from './contractConfig';
 
 /**
  * Contract interaction utilities
@@ -7,7 +7,7 @@ import { KAIA_TESTNET_CONFIG } from './contractConfig';
 
 // Get ethers provider
 export const getProvider = () => {
-  return new ethers.JsonRpcProvider(KAIA_TESTNET_CONFIG.rpcUrl);
+  return new ethers.JsonRpcProvider(KAIA_MAINNET_CONFIG.rpcUrl);
 };
 
 // Get signer from window.ethereum if available
@@ -64,7 +64,7 @@ export const checkNetwork = async (): Promise<boolean> => {
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const network = await provider.getNetwork();
-      return network.chainId === BigInt(KAIA_TESTNET_CONFIG.chainId);
+      return network.chainId === BigInt(KAIA_MAINNET_CONFIG.chainId);
     } catch (error) {
       console.error('Error checking network:', error);
       return false;
@@ -73,13 +73,13 @@ export const checkNetwork = async (): Promise<boolean> => {
   return false;
 };
 
-// Switch to Kaia testnet
-export const switchToKaiaTestnet = async (): Promise<boolean> => {
+// Switch to Kaia Mainnet
+export const switchToKaiaMainnet = async (): Promise<boolean> => {
   if (typeof window !== 'undefined' && window.ethereum) {
     try {
       await window.ethereum.request({
         method: 'wallet_switchEthereumChain',
-        params: [{ chainId: `0x${KAIA_TESTNET_CONFIG.chainId.toString(16)}` }],
+        params: [{ chainId: `0x${KAIA_MAINNET_CONFIG.chainId.toString(16)}` }],
       });
       return true;
     } catch (switchError: any) {
@@ -90,11 +90,11 @@ export const switchToKaiaTestnet = async (): Promise<boolean> => {
             method: 'wallet_addEthereumChain',
             params: [
               {
-                chainId: `0x${KAIA_TESTNET_CONFIG.chainId.toString(16)}`,
-                chainName: KAIA_TESTNET_CONFIG.chainName,
-                rpcUrls: [KAIA_TESTNET_CONFIG.rpcUrl],
-                blockExplorerUrls: [KAIA_TESTNET_CONFIG.blockExplorer],
-                nativeCurrency: KAIA_TESTNET_CONFIG.nativeCurrency,
+                chainId: `0x${KAIA_MAINNET_CONFIG.chainId.toString(16)}`,
+                chainName: KAIA_MAINNET_CONFIG.chainName,
+                rpcUrls: [KAIA_MAINNET_CONFIG.rpcUrl],
+                blockExplorerUrls: [KAIA_MAINNET_CONFIG.blockExplorer],
+                nativeCurrency: KAIA_MAINNET_CONFIG.nativeCurrency,
               },
             ],
           });

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useKaiaWalletSdk } from '@/components/Wallet/Sdk/walletSdk.hooks';
-import { KAIA_TESTNET_TOKENS, TokenSymbol } from '@/utils/tokenConfig';
+import { KAIA_MAINNET_TOKENS, TokenSymbol } from '@/utils/tokenConfig';
 import { formatTokenBalance, keiHexToKaiaDecimal, formatBalanceDisplay } from '@/utils/format';
 
 export interface TokenBalance {
@@ -31,7 +31,7 @@ export const useTokenBalances = () => {
   const fetchTokenBalance = useCallback(
     async (
       tokenSymbol: TokenSymbol,
-      tokenConfig: typeof KAIA_TESTNET_TOKENS[TokenSymbol]
+      tokenConfig: typeof KAIA_MAINNET_TOKENS[TokenSymbol]
     ): Promise<TokenBalance> => {
       if (!account) {
         return {
@@ -152,7 +152,7 @@ export const useTokenBalances = () => {
       promises.push(fetchKAIABalance());
 
       // Fetch all ERC20 token balances
-      Object.entries(KAIA_TESTNET_TOKENS).forEach(([symbol, config]) => {
+      Object.entries(KAIA_MAINNET_TOKENS).forEach(([symbol, config]) => {
         promises.push(fetchTokenBalance(symbol as TokenSymbol, config));
       });
 

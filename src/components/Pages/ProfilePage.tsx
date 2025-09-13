@@ -6,7 +6,7 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 import { useModalStore } from '@/stores/modalStore';
-import { PRICE_API_CONFIG, KAIA_TESTNET_TOKENS } from '@/utils/tokenConfig';
+import { PRICE_API_CONFIG, KAIA_MAINNET_TOKENS } from '@/utils/tokenConfig';
 import Blockies from 'react-blockies';
 import { AlertCircle, RefreshCw, HelpCircle, MessageCircle, Settings } from 'react-feather';
 import { liff } from "@/utils/liff";
@@ -490,7 +490,7 @@ export const ProfilePage = () => {
   const { prices, getFormattedPrice, getFormattedChange, isLoading: pricesLoading } = usePriceUpdates({
     symbols: ["MBX", ...apiTokens]
   });
-
+ 
   useEffect(() => {
     if (liff.isInClient()) {
       liff.getProfile().then(
@@ -547,15 +547,15 @@ export const ProfilePage = () => {
             isLoading: false,
             error: null
           } :
-          KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS] ?
+          KAIA_MAINNET_TOKENS[symbol as keyof typeof KAIA_MAINNET_TOKENS] ?
             {
               symbol,
-              name: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].name,
+              name: KAIA_MAINNET_TOKENS[symbol as keyof typeof KAIA_MAINNET_TOKENS].name,
               balance: '0',
               formattedBalance: '0',
-              decimals: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].decimals,
-              icon: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].icon,
-              iconType: KAIA_TESTNET_TOKENS[symbol as keyof typeof KAIA_TESTNET_TOKENS].iconType,
+              decimals: KAIA_MAINNET_TOKENS[symbol as keyof typeof KAIA_MAINNET_TOKENS].decimals,
+              icon: KAIA_MAINNET_TOKENS[symbol as keyof typeof KAIA_MAINNET_TOKENS].icon,
+              iconType: KAIA_MAINNET_TOKENS[symbol as keyof typeof KAIA_MAINNET_TOKENS].iconType,
               isLoading: false,
               error: null
             } : null;
@@ -634,10 +634,7 @@ export const ProfilePage = () => {
               <ProfileInfo>
                 <ProfileName>
                   {lineProfile?.displayName || "Wallet User"}
-                </ProfileName>
-                {/* <WalletAddress $clickable={!!account}>
-                  {account ? formatAddress(account) : formatAddress("0xfffffffffffffffffffff")}
-                </WalletAddress> */}
+                </ProfileName> 
                 <WalletAddress>
                   Click to open details
                 </WalletAddress>
@@ -658,9 +655,7 @@ export const ProfilePage = () => {
               </TotalBalanceSection>
             </ProfileSection>
           </RightSection>
-        )
-
-        } 
+        )  } 
       </OverviewContainer>
           {!account && (
           <InfoMessage>
@@ -674,9 +669,9 @@ export const ProfilePage = () => {
         <SectionHeader>
           <SectionTitle>Available Tokens</SectionTitle>
           <HeaderActions>
-            <FaucetButton onClick={handleOpenFaucet}>
+            {/* <FaucetButton onClick={handleOpenFaucet}>
               Get Test Tokens
-            </FaucetButton>
+            </FaucetButton> */}
             <RefreshButton onClick={handleRefresh} $loading={isLoading}>
               <RefreshCw size={16} />
               Refresh

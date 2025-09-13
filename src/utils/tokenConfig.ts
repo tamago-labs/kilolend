@@ -1,3 +1,40 @@
+ 
+export const KAIA_MAINNET_TOKENS = {
+  USDT: {
+    address: '0xd077A400968890Eacc75cdc901F0356c943e4fDb',
+    name: 'Tether USD',
+    symbol: 'USDT',
+    decimals: 6,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png',
+    iconType: 'image' as const
+  }, 
+  SIX: {
+    address: '0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435',
+    name: 'SIX Protocol',
+    symbol: 'SIX',
+    decimals: 18,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3327.png',
+    iconType: 'image' as const
+  },
+  BORA: {
+    address: '0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa',
+    name: 'BORA',
+    symbol: 'BORA',
+    decimals: 18,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3801.png',
+    iconType: 'image' as const
+  },
+  MBX: {
+    address: '0xD068c52d81f4409B9502dA926aCE3301cc41f623',
+    name: 'MARBLEX',
+    symbol: 'MBX',
+    decimals: 18,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png',
+    iconType: 'image' as const
+  }
+} as const;
+
+
 // Token configuration for KAIA Testnet
 export const KAIA_TESTNET_TOKENS = {
   USDT: {
@@ -74,11 +111,11 @@ export const KAIA_TESTNET_TOKENS = {
   }
 } as const;
 
-export type TokenSymbol = keyof typeof KAIA_TESTNET_TOKENS;
+export type TokenSymbol = keyof typeof KAIA_MAINNET_TOKENS;
 
-export const TOKEN_LIST = Object.values(KAIA_TESTNET_TOKENS);
+export const TOKEN_LIST = Object.values(KAIA_MAINNET_TOKENS);
 
-export const getTokenBySymbol = (symbol: TokenSymbol) => KAIA_TESTNET_TOKENS[symbol];
+export const getTokenBySymbol = (symbol: TokenSymbol) => KAIA_MAINNET_TOKENS[symbol];
 
 export const getTokenByAddress = (address: string) => {
   return TOKEN_LIST.find(token => token.address.toLowerCase() === address.toLowerCase());
@@ -135,5 +172,17 @@ export const KAIA_TESTNET_CONFIG = {
   }
 };
 
+export const KAIA_MAINNET_CONFIG = {
+  chainId: 8217,
+  name: 'KAIA Mainet',
+  rpcUrl: 'https://public-en.node.kaia.io',
+  blockExplorer: 'https://kaiascan.io',
+  nativeCurrency: {
+    name: 'KAIA',
+    symbol: 'KAIA', 
+    decimals: 18
+  }
+}
+
 // Block explorer URL
-export const KAIA_SCAN_URL = 'https://kairos.kaiascan.io';
+export const KAIA_SCAN_URL = 'https://kaiascan.io';

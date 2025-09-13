@@ -11,27 +11,39 @@ export const KAIA_TESTNET_CONFIG = {
   }
 };
 
-// Smart Contract Addresses on Kaia Kairos Testnet
+export const KAIA_MAINNET_CONFIG = {
+  chainId: 8217,
+  chainName: 'Kaia Mainnet',
+  rpcUrl: 'https://public-en.node.kaia.io',
+  blockExplorer: 'https://kaiascan.io',
+  nativeCurrency: {
+    name: 'KAIA',
+    symbol: 'KAIA', 
+    decimals: 18
+  }
+}
+
+// Smart Contract Addresses on Kaia
 export const CONTRACT_ADDRESSES = {
   // Main Contracts
-  Comptroller: '0xA4d31FAD3D2b0b2777F639e6FBe125368Fd4d845',
-  KiloOracle: '0xF0b8eaEeBe416Ec43f79b0c83CCc5670d2b7C3Db',
-  StablecoinJumpRateModel: '0x216ecf2825a654849D4076f7A616B9Caaf0C6E04',
-  VolatileRateModel: '0x1C0bf077BFCfC103B375dDe63F9f2FbF6eA7d8a0',
-  CollateralRateModel: '0x0213468b5ED54826b363bbC4A90BBc0A5f972c39',
+  Comptroller: '0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2',
+  KiloOracle: '0xBB265F42Cce932c5e383536bDf50B82e08eaf454',
+  StablecoinJumpRateModel: '0x792ecD8E829ca66DE9a744F7a6C17F4B76FE932e',
+  VolatileRateModel: '0x741AD28811a05845D1de298860F796a54CaE2130',
+  CollateralRateModel: '0x0FB331ed4abE0A2D7da880c6D81C42436B5abAC6',
   
   // cToken Market Contracts
-  cUSDT: '0x3466441C38D2F76405085b730268240E4F2d0D25', // Stablecoin
-  cSIX: '0x772195938d86fcf500dF18563876d7Cefcf47e4D',  // Volatile
-  cBORA: '0x260fC7251fAe677B6254773d347121862336fb9f', // Volatile
-  cMBX: '0x10bB22532eC21Fd25719565f440b0322c010bDF3',  // Volatile
-  cKAIA: '0x307992307C89216b1079C7c5Cbc4F51005b1472D', // Collateral Only
+  cUSDT: '0x498823F094f6F2121CcB4e09371a57A96d619695', // Stablecoin
+  cSIX: '0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c',  // Volatile
+  cBORA: '0x7a937C07d49595282c711FBC613c881a83B9fDFD', // Volatile
+  cMBX: '0xE321e20F0244500A194543B1EBD8604c02b8fA85',  // Volatile
+  cKAIA: '0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3', // Collateral Only
   
-  // Underlying Token Contracts (will be fetched from cTokens)
-  USDT: '0x5F7392Ec616F829Ab54092e7F167F518835Ac740', // 6 decimals
-  SIX: '0xe438E6157Ad6e38A8528fd68eBf5d8C4F57420eC',  // 18 decimals
-  BORA: '0xFdB35092c0cf5e1A5175308CB312613972C3DF3D', // 18 decimals
-  MBX: '0xCeB75a9a4Af613afd42BD000893eD16fB1F0F057',  // 18 decimals
+  // Underlying Token Contracts 
+  USDT: '0xd077A400968890Eacc75cdc901F0356c943e4fDb', // 6 decimals
+  SIX: '0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435',  // 18 decimals
+  BORA: '0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa', // 18 decimals
+  MBX: '0xD068c52d81f4409B9502dA926aCE3301cc41f623',  // 18 decimals
   KAIA: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',   // Native KAIA
 };
 

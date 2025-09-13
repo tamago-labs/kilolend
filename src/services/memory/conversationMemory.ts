@@ -111,7 +111,7 @@ export class ConversationMemoryService {
   private memories: Map<string, ConversationMemory> = new Map();
   
   private constructor() {
-    this.loadFromStorage();
+    // this.loadFromStorage();
   }
   
   static getInstance(): ConversationMemoryService {
@@ -383,28 +383,28 @@ export class ConversationMemoryService {
     return 'night';
   }
   
-  private loadFromStorage(): void {
-    try {
-      const contextData = localStorage.getItem('kilolend_conversation_contexts');
-      const memoryData = localStorage.getItem('kilolend_conversation_memories');
+  // private loadFromStorage(): void {
+  //   try {
+  //     const contextData = localStorage.getItem('kilolend_conversation_contexts');
+  //     const memoryData = localStorage.getItem('kilolend_conversation_memories');
       
-      if (contextData) {
-        const contexts = JSON.parse(contextData);
-        Object.entries(contexts).forEach(([key, value]) => {
-          this.contexts.set(key, value as ConversationContext);
-        });
-      }
+  //     if (contextData) {
+  //       const contexts = JSON.parse(contextData);
+  //       Object.entries(contexts).forEach(([key, value]) => {
+  //         this.contexts.set(key, value as ConversationContext);
+  //       });
+  //     }
       
-      if (memoryData) {
-        const memories = JSON.parse(memoryData);
-        Object.entries(memories).forEach(([key, value]) => {
-          this.memories.set(key, value as ConversationMemory);
-        });
-      }
-    } catch (error) {
-      console.warn('Failed to load conversation memory from storage:', error);
-    }
-  }
+  //     if (memoryData) {
+  //       const memories = JSON.parse(memoryData);
+  //       Object.entries(memories).forEach(([key, value]) => {
+  //         this.memories.set(key, value as ConversationMemory);
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.warn('Failed to load conversation memory from storage:', error);
+  //   }
+  // }
   
   private saveToStorage(): void {
     try {

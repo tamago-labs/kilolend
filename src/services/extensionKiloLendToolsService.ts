@@ -409,7 +409,7 @@ export class ExtensionKiloLendToolsService {
   }
 
   // Public interface methods
-  getAvailableTools(): AdvancedKiloLendTool[] {
+  getAvailableTools(): ExtensionKiloLendTool[] {
     return Array.from(this.tools.values());
   }
 

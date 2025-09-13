@@ -5,7 +5,7 @@ export {
   getContract,
   parseTokenAmount,
   checkNetwork,
-  switchToKaiaTestnet,
+  switchToKaiaMainnet,
   estimateGas,
   getGasPrice,
   waitForTransaction,
@@ -13,16 +13,13 @@ export {
   isValidAddress,
   formatWei,
   TransactionStatus
-} from './contractUtils';
-import { ethers } from 'ethers';
+} from './contractUtils'; 
 
 export type { TransactionResult } from './contractUtils';
-
-// export { formatTokenAmount } from './contractUtils';
+ 
 
 // Contract addresses and config
-export {
-  KAIA_TESTNET_CONFIG,
+export { 
   CONTRACT_ADDRESSES,
   MARKET_CONFIG
 } from './contractConfig';
@@ -66,18 +63,7 @@ export const parseContractError = (error: any): string => {
   // Return the original message if no pattern matches
   return message;
 };
-
-// Helper to format contract call results
-// export const formatContractResult = (result: any, decimals: number = 18): string => {
-//   try {
-//     if (typeof result === 'bigint' || (result && result._isBigNumber)) {
-//       return formatTokenAmount(BigInt(result.toString()), decimals);
-//     }
-//     return result.toString();
-//   } catch {
-//     return '0';
-//   }
-// };
+ 
 
 // Helper to validate transaction parameters
 export const validateTransactionParams = (
@@ -110,10 +96,5 @@ export const formatAPY = (rate: number, decimals: number = 2): string => {
 // Helper to calculate USD values
 export const calculateUSDValue = (amount: string, price: number): number => {
   return parseFloat(amount) * price;
-};
-
-// Helper to determine if a token can be used as collateral
-export const isCollateralToken = (tokenSymbol: string): boolean => {
-  return ['wKAIA', 'stKAIA'].includes(tokenSymbol.toUpperCase());
 };
  

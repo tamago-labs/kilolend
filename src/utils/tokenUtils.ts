@@ -4,8 +4,6 @@ import { MARKET_CONFIG, MarketId } from './contractConfig';
  * Utility functions for handling token amounts and decimals
  */
 
-  
-
 // Format amount for display based on token decimals
 export const formatTokenAmount = (amount: string, marketId: MarketId): string => {
   const config = MARKET_CONFIG[marketId];
