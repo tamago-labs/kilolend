@@ -16,6 +16,7 @@ export class BackendAwsCdkStack extends cdk.Stack {
   public readonly pricesTable: dynamodb.Table;
   public readonly leaderboardTable: dynamodb.Table;
   public readonly userPointsTable: dynamodb.Table;
+  public readonly inviteTable: dynamodb.Table;
   public readonly cluster: ecs.Cluster;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -66,7 +67,7 @@ export class BackendAwsCdkStack extends cdk.Stack {
     });
 
     const taskDef = new ecs.FargateTaskDefinition(this, 'KilolendBotsTaskDef', {
-      cpu: 1024,            // total CPU shared by all containers
+      cpu: 1024, // total CPU shared by all containers
       memoryLimitMiB: 2048, // total memory pool
       executionRole,
       taskRole,
@@ -82,13 +83,13 @@ export class BackendAwsCdkStack extends cdk.Stack {
         NODE_ENV: 'production',
         AWS_REGION: this.region,
         BOT_TYPE: 'oracle',
-        RPC_URL: "https://public-en-kairos.node.kaia.io",
+        RPC_URL: "https://public-en.node.kaia.io",
         PRIVATE_KEY: "",
-        ORACLE_ADDRESS: "0xF0b8eaEeBe416Ec43f79b0c83CCc5670d2b7C3Db",
-        USDT_ADDRESS: "0x5F7392Ec616F829Ab54092e7F167F518835Ac740",
-        SIX_ADDRESS: "0xe438E6157Ad6e38A8528fd68eBf5d8C4F57420eC",
-        BORA_ADDRESS: "0xFdB35092c0cf5e1A5175308CB312613972C3DF3D",
-        MBX_ADDRESS: "0xCeB75a9a4Af613afd42BD000893eD16fB1F0F057",
+        ORACLE_ADDRESS: "0xBB265F42Cce932c5e383536bDf50B82e08eaf454",
+        USDT_ADDRESS: "0xd077A400968890Eacc75cdc901F0356c943e4fDb",
+        SIX_ADDRESS: "0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435",
+        BORA_ADDRESS: "0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa",
+        MBX_ADDRESS: "0xD068c52d81f4409B9502dA926aCE3301cc41f623",
         UPDATE_INTERVAL_MINUTES: "120",
         PRICE_API_URL: "https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices"
       },
@@ -105,33 +106,34 @@ export class BackendAwsCdkStack extends cdk.Stack {
     // Liquidation Bot
     taskDef.addContainer('LiquidationBot', {
       image: ecs.ContainerImage.fromRegistry(
-        '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/kilolend-liquidation-bot:latest',
+        '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/liquidation-bot:latest',
       ),
       essential: true,
       environment: {
         NODE_ENV: 'production',
         AWS_REGION: this.region,
         BOT_TYPE: 'liquidation',
-        RPC_URL: 'https://public-en-kairos.node.kaia.io',
+        RPC_URL: "https://public-en.node.kaia.io",
+        API_BASE_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod',
         PRIVATE_KEY: '', 
-        COMPTROLLER_ADDRESS: '0xA4d31FAD3D2b0b2777F639e6FBe125368Fd4d845',
-        ORACLE_ADDRESS: '0xF0b8eaEeBe416Ec43f79b0c83CCc5670d2b7C3Db', 
-        CUSDT_ADDRESS: '0x3466441C38D2F76405085b730268240E4F2d0D25',
-        CSIX_ADDRESS: '0x772195938d86fcf500dF18563876d7Cefcf47e4D',
-        CBORA_ADDRESS: '0x260fC7251fAe677B6254773d347121862336fb9f',
-        CMBX_ADDRESS: '0x10bB22532eC21Fd25719565f440b0322c010bDF3',
-        CKAIA_ADDRESS: '0x307992307C89216b1079C7c5Cbc4F51005b1472D', 
-        USDT_ADDRESS: '0x5F7392Ec616F829Ab54092e7F167F518835Ac740',
-        SIX_ADDRESS: '0xe438E6157Ad6e38A8528fd68eBf5d8C4F57420eC',
-        BORA_ADDRESS: '0xFdB35092c0cf5e1A5175308CB312613972C3DF3D',
-        MBX_ADDRESS: '0xCeB75a9a4Af613afd42BD000893eD16fB1F0F057', 
+        COMPTROLLER_ADDRESS: '0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2',
+        ORACLE_ADDRESS: '0xBB265F42Cce932c5e383536bDf50B82e08eaf454', 
+        CUSDT_ADDRESS: '0x498823F094f6F2121CcB4e09371a57A96d619695',
+        CSIX_ADDRESS: '0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c',
+        CBORA_ADDRESS: '0x7a937C07d49595282c711FBC613c881a83B9fDFD',
+        CMBX_ADDRESS: '0xE321e20F0244500A194543B1EBD8604c02b8fA85',
+        CKAIA_ADDRESS: '0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3', 
+        USDT_ADDRESS: '0xd077A400968890Eacc75cdc901F0356c943e4fDb',
+        SIX_ADDRESS: '0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435',
+        BORA_ADDRESS: '0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa',
+        MBX_ADDRESS: '0xD068c52d81f4409B9502dA926aCE3301cc41f623', 
         CHECK_INTERVAL_SECONDS: '600',
         MIN_PROFIT_USD: '10',
         MAX_GAS_PRICE_GWEI: '50',
         LIQUIDATION_INCENTIVE: '0.08',
         CLOSE_FACTOR: '0.5', 
-        MAX_LIQUIDATION_USD: '5000',
-        MIN_COLLATERAL_USD: '100',
+        MAX_LIQUIDATION_USD: '100',
+        MIN_COLLATERAL_USD: '10',
       },
       logging: ecs.LogDrivers.awsLogs({
         streamPrefix: 'liquidation-bot',
@@ -142,7 +144,6 @@ export class BackendAwsCdkStack extends cdk.Stack {
         }),
       }),
     });
-    
 
     // Points Bot
     taskDef.addContainer('PointBot', {
@@ -154,18 +155,18 @@ export class BackendAwsCdkStack extends cdk.Stack {
         NODE_ENV: 'production',
         AWS_REGION: this.region,
         BOT_TYPE: 'points',
-        RPC_URL: 'https://public-en-kairos.node.kaia.io', 
-        PRICE_API_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices',
-        API_BASE_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod', 
-        CUSDT_ADDRESS: '0x3466441C38D2F76405085b730268240E4F2d0D25',
-        CSIX_ADDRESS: '0x772195938d86fcf500dF18563876d7Cefcf47e4D',
-        CBORA_ADDRESS: '0x260fC7251fAe677B6254773d347121862336fb9f',
-        CMBX_ADDRESS: '0x10bB22532eC21Fd25719565f440b0322c010bDF3',
-        CKAIA_ADDRESS: '0x307992307C89216b1079C7c5Cbc4F51005b1472D', 
-        USDT_ADDRESS: '0x5F7392Ec616F829Ab54092e7F167F518835Ac740',
-        SIX_ADDRESS: '0xe438E6157Ad6e38A8528fd68eBf5d8C4F57420eC',
-        BORA_ADDRESS: '0xFdB35092c0cf5e1A5175308CB312613972C3DF3D',
-        MBX_ADDRESS: '0xCeB75a9a4Af613afd42BD000893eD16fB1F0F057',
+        RPC_URL: 'https://public-en.node.kaia.io', 
+        API_BASE_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod',
+        API_KEY: "",
+        CUSDT_ADDRESS: '0x498823F094f6F2121CcB4e09371a57A96d619695',
+        CSIX_ADDRESS: '0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c',
+        CBORA_ADDRESS: '0x7a937C07d49595282c711FBC613c881a83B9fDFD',
+        CMBX_ADDRESS: '0xE321e20F0244500A194543B1EBD8604c02b8fA85',
+        CKAIA_ADDRESS: '0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3',
+        USDT_ADDRESS: '0xd077A400968890Eacc75cdc901F0356c943e4fDb',
+        SIX_ADDRESS: '0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435',
+        BORA_ADDRESS: '0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa',
+        MBX_ADDRESS: '0xD068c52d81f4409B9502dA926aCE3301cc41f623',
       },
       logging: ecs.LogDrivers.awsLogs({
         streamPrefix: 'point-bot',
@@ -176,6 +177,7 @@ export class BackendAwsCdkStack extends cdk.Stack {
         }),
       }),
     });
+
     // Service to run all together
     new ecs.FargateService(this, 'KilolendBotsService', {
       cluster: this.cluster,
@@ -229,27 +231,28 @@ export class BackendAwsCdkStack extends cdk.Stack {
 
     // DynamoDB Table for user total KILO points
     this.userPointsTable = new dynamodb.Table(this, 'UserPointsTable', {
-      tableName: 'kilo-user-points',
+      tableName: 'kilo-user-points-2',
       partitionKey: {
         name: 'userAddress',    // User wallet address
+        type: dynamodb.AttributeType.STRING,
+      },
+      sortKey: {
+        name: 'date',           // YYYY-MM-DD
         type: dynamodb.AttributeType.STRING,
       },
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY
     });
 
-    // GSI for ranking users by total points
-    this.userPointsTable.addGlobalSecondaryIndex({
-      indexName: 'TotalPointsIndex',
+    // DynamoDB Table for invite multipliers
+    this.inviteTable = new dynamodb.Table(this, 'InviteTable', {
+      tableName: 'kilo-invite-multipliers',
       partitionKey: {
-        name: 'status',         // Always "active" for all users
+        name: 'userAddress',    // User wallet address
         type: dynamodb.AttributeType.STRING,
       },
-      sortKey: {
-        name: 'totalKilo',      // Sort by total KILO descending
-        type: dynamodb.AttributeType.NUMBER,
-      },
-      projectionType: dynamodb.ProjectionType.ALL,
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      removalPolicy: cdk.RemovalPolicy.DESTROY
     });
 
     // IAM Role for Lambda functions with access to all tables
@@ -280,6 +283,8 @@ export class BackendAwsCdkStack extends cdk.Stack {
                 `${this.leaderboardTable.tableArn}/index/*`,
                 this.userPointsTable.tableArn,
                 `${this.userPointsTable.tableArn}/index/*`,
+                this.inviteTable.tableArn,
+                `${this.inviteTable.tableArn}/index/*`,
               ],
             }),
           ],
@@ -293,11 +298,26 @@ export class BackendAwsCdkStack extends cdk.Stack {
       handler: 'price-fetcher.handler',
       code: lambda.Code.fromAsset('lambda'),
       timeout: cdk.Duration.minutes(5),
-      memorySize: 512,
+      memorySize: 256,
       role: lambdaRole,
       logGroup: lambdaLogGroup,
       environment: {
         PRICES_TABLE_NAME: this.pricesTable.tableName
+      },
+    });
+
+    // Point Snapshot Lambda Function (scheduled to run every hour)
+    const pointSnapshotFunction = new lambda.Function(this, 'KiloPointSnapshotFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'point-snapshot.handler',
+      code: lambda.Code.fromAsset('lambda'),
+      timeout: cdk.Duration.minutes(5),
+      memorySize: 256,
+      role: lambdaRole,
+      logGroup: lambdaLogGroup,
+      environment: {
+        LEADERBOARD_TABLE_NAME: this.leaderboardTable.tableName,
+        USER_POINTS_TABLE_NAME: this.userPointsTable.tableName
       },
     });
 
@@ -330,6 +350,21 @@ export class BackendAwsCdkStack extends cdk.Stack {
       },
     });
 
+    // Invite API Lambda Function
+    const inviteApiFunction = new lambda.Function(this, 'InviteApiFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'invite-api.handler',
+      code: lambda.Code.fromAsset('lambda'),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      role: lambdaRole,
+      logGroup: lambdaLogGroup,
+      environment: {
+        INVITE_TABLE_NAME: this.inviteTable.tableName,
+        API_KEY: ''
+      },
+    });
+
     // EventBridge Rule to trigger price fetcher every hour
     const priceScheduleRule = new events.Rule(this, 'PriceScheduleRule', {
       ruleName: 'crypto-price-fetcher-schedule',
@@ -339,6 +374,20 @@ export class BackendAwsCdkStack extends cdk.Stack {
 
     // Add the Lambda function as a target to the EventBridge rule
     priceScheduleRule.addTarget(new targets.LambdaFunction(priceFetcherFunction));
+
+    // EventBridge Rule to trigger point snapshot every hour
+    const snapshotScheduleRule = new events.Rule(this, 'PointSnapshotRule', {
+      ruleName: 'point-snapshot-schedule',
+      description: 'Trigger point snapshot for user table every 15 minutes',
+      schedule: events.Schedule.rate(cdk.Duration.minutes(15)),
+    });
+
+    // Add the Lambda function as a target to the EventBridge rule
+    snapshotScheduleRule.addTarget(new targets.LambdaFunction(pointSnapshotFunction));
+
+    // ========================================
+    // API Gateway with API Key Authentication
+    // ========================================
 
     // API Gateway
     this.api = new apigateway.RestApi(this, 'CryptoPriceApi', {
@@ -351,12 +400,45 @@ export class BackendAwsCdkStack extends cdk.Stack {
       },
     });
 
+    // Create API Key for bot authentication
+    const apiKey = new apigateway.ApiKey(this, 'KiloLendBotApiKey', {
+      apiKeyName: 'kilolend-bot-key',
+      description: 'API Key for KiloLend bots to access protected endpoints',
+    });
+
+    // Create Usage Plan
+    const usagePlan = new apigateway.UsagePlan(this, 'KiloLendUsagePlan', {
+      name: 'kilolend-bot-usage-plan',
+      description: 'Usage plan for KiloLend bots',
+      throttle: {
+        rateLimit: 100,  // requests per second
+        burstLimit: 200, // burst capacity
+      },
+      quota: {
+        limit: 10000,    // requests per period
+        period: apigateway.Period.DAY,
+      },
+      apiStages: [
+        {
+          api: this.api,
+          stage: this.api.deploymentStage,
+        },
+      ],
+    });
+
+    // Associate API Key with Usage Plan
+    usagePlan.addApiKey(apiKey);
+
     // API Gateway Integration
     const priceApiIntegration = new apigateway.LambdaIntegration(priceApiFunction, {
       requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
     });
 
     const leaderboardApiIntegration = new apigateway.LambdaIntegration(leaderboardApiFunction, {
+      requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
+    });
+
+    const inviteApiIntegration = new apigateway.LambdaIntegration(inviteApiFunction, {
       requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
     });
 
@@ -371,8 +453,10 @@ export class BackendAwsCdkStack extends cdk.Stack {
 
     // Leaderboard endpoints
     const leaderboardResource = this.api.root.addResource('leaderboard');
-    leaderboardResource.addMethod('GET', leaderboardApiIntegration); // GET /leaderboard - get today's leaderboard
-    leaderboardResource.addMethod('POST', leaderboardApiIntegration); // POST /leaderboard - store daily summary
+    leaderboardResource.addMethod('GET', leaderboardApiIntegration); // GET /leaderboard - get today's leaderboard (public)
+    leaderboardResource.addMethod('POST', leaderboardApiIntegration, {
+      apiKeyRequired: true, // Require API key for POST requests
+    }); // POST /leaderboard - store daily summary (protected)
 
     const dailyLeaderboardResource = leaderboardResource.addResource('{date}');
     dailyLeaderboardResource.addMethod('GET', leaderboardApiIntegration); // GET /leaderboard/2025-09-09
@@ -382,13 +466,17 @@ export class BackendAwsCdkStack extends cdk.Stack {
     const userPointsResource = usersResource.addResource('{userAddress}');
     userPointsResource.addMethod('GET', leaderboardApiIntegration); // GET /users/{address} - get user points
 
-    // const pointsResource = userPointsResource.addResource('points');
-    // pointsResource.addMethod('POST', leaderboardApiIntegration); // POST /users/{address}/points - add points
+    // Get all users endpoints
+    const allResource = this.api.root.addResource('all');
+    allResource.addMethod('GET', leaderboardApiIntegration); // GET /all - get all user wallets
 
-    // Manual trigger endpoint for testing
-    // const triggerResource = this.api.root.addResource('trigger');
-    // const triggerIntegration = new apigateway.LambdaIntegration(priceFetcherFunction);
-    // triggerResource.addMethod('POST', triggerIntegration); // POST /trigger - manual price fetch
+    // Invite endpoints
+    const inviteResource = this.api.root.addResource('invite');
+    const inviteUserResource = inviteResource.addResource('{userAddress}');
+    inviteUserResource.addMethod('GET', inviteApiIntegration); // GET /invite/{address} - get user invite multiplier
+    inviteUserResource.addMethod('POST', inviteApiIntegration, {
+      apiKeyRequired: true, // Require API key for POST requests
+    }); // POST /invite/{address} - update invite multiplier (protected)
 
     // Output important information
     new cdk.CfnOutput(this, 'ApiUrl', {
@@ -424,6 +512,26 @@ export class BackendAwsCdkStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'LeaderboardApiFunctionName', {
       value: leaderboardApiFunction.functionName,
       description: 'Leaderboard API Lambda Function Name',
+    });
+
+    new cdk.CfnOutput(this, 'InviteApiFunctionName', {
+      value: inviteApiFunction.functionName,
+      description: 'Invite API Lambda Function Name',
+    });
+
+    new cdk.CfnOutput(this, 'InviteTableName', {
+      value: this.inviteTable.tableName,
+      description: 'DynamoDB Table Name for Invite Multipliers',
+    });
+
+    new cdk.CfnOutput(this, 'ApiKeyId', {
+      value: apiKey.keyId,
+      description: 'API Key ID for KiloLend bots',
+    });
+
+    new cdk.CfnOutput(this, 'UsagePlanId', {
+      value: usagePlan.usagePlanId,
+      description: 'Usage Plan ID for KiloLend bots',
     });
   }
 }
