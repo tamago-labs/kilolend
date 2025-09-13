@@ -1,5 +1,6 @@
 const { ethers } = require('ethers');
 const dotenv = require('dotenv');
+const axios = require('axios');
 
 // Load environment variables
 dotenv.config();
@@ -46,6 +47,10 @@ class LiquidationBot {
     this.comptrollerAddress = process.env.COMPTROLLER_ADDRESS;
     this.oracleAddress = process.env.ORACLE_ADDRESS;
     this.checkInterval = parseInt(process.env.CHECK_INTERVAL_SECONDS) * 1000;
+    
+    // API configuration
+    this.apiBaseUrl = process.env.API_BASE_URL;
+    this.timeout = 10000; // 10 second timeout
     
     // Configuration
     this.minProfitUSD = parseFloat(process.env.MIN_PROFIT_USD);
@@ -133,6 +138,9 @@ class LiquidationBot {
       // Check wallet balance
       await this.checkWalletBalance();
       
+      // Test API connection
+      await this.testAPIConnection();
+      
       // Start monitoring
       this.startMonitoring();
       
@@ -166,6 +174,51 @@ class LiquidationBot {
       }
     } catch (error) {
       console.error('❌ Failed to check wallet balance:', error.message);
+    }
+  }
+
+  /**
+   * Test API connection
+   * Called during bot initialization
+   */
+  async testAPIConnection() {
+    try {
+      if (!this.apiBaseUrl) {
+        console.log('⚠️  API not configured (API_BASE_URL missing)');
+        console.log('💡 Add API_BASE_URL to .env to enable user fetching from API');
+        return false;
+      }
+
+      console.log('🔍 Testing API connection...');
+      
+      const response = await axios.get(
+        `${this.apiBaseUrl}/all`,
+        {
+          timeout: 5000 // Shorter timeout for connection test
+        }
+      );
+
+      if (response.data && response.data.success) {
+        const userCount = response.data.data ? response.data.data.length : 0;
+        console.log('✅ API connection successful');
+        console.log(`📍 API URL: ${this.apiBaseUrl}`);
+        console.log(`👥 Found ${userCount} users in system`);
+        return true;
+      } else {
+        console.log('⚠️  API connection successful but unexpected response format');
+        return false;
+      }
+
+    } catch (error) {
+      if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+        console.log('❌ API connection failed - API server not reachable');
+        console.log(`📍 Attempted URL: ${this.apiBaseUrl}`);
+      } else {
+        console.log('❌ API connection test failed:', error.message);
+      }
+      
+      console.log('💡 Bot will continue with fallback addresses');
+      return false;
     }
   }
 
@@ -483,21 +536,66 @@ class LiquidationBot {
     }
   }
 
+  /**
+   * Get all users from the API
+   * Used to fetch active users from the system for liquidation monitoring
+   */
+  async getAllUsers() {
+    try {
+      if (!this.apiBaseUrl) {
+        console.warn('⚠️  API_BASE_URL not configured');
+        return [];
+      }
+
+      console.log('🔍 Fetching all users from API...');
+      
+      const response = await axios.get(
+        `${this.apiBaseUrl}/all`,
+        {
+          timeout: this.timeout
+        }
+      );
+
+      if (response.data && response.data.success && response.data.data) {
+        const users = response.data.data.map(user => user.userAddress);
+        console.log(`✅ Found ${users.length} users in the system`);
+        return users;
+      } else {
+        console.log('⚠️  No users found or invalid response format');
+        return [];
+      }
+
+    } catch (error) {
+      console.error('❌ Error fetching all users:', error.message);
+      if (error.response) {
+        console.error('📍 Response status:', error.response.status);
+        console.error('📍 Response data:', error.response.data);
+      }
+      return [];
+    }
+  }
+
   async scanForBorrowers() {
     try {
-      // This is a simplified approach. In practice, you'd want to:
-      // 1. Listen to Borrow events to track active borrowers
-      // 2. Maintain a database of borrowers
-      // 3. Use a more efficient method to scan accounts
-      
       console.log('🔍 Scanning for potential liquidation targets...');
       
-      // For now, we'll scan known borrowers from our set
       const liquidationOpportunities = [];
       
-      // TODO: Fetch dynamically from API
-      this.addBorrower("0x1ecFDe4511a27f23B8cAE67354D41a487BAfA725")
-      this.addBorrower("0x5b5c658E328eF106d0922D8Cc8B547e02CD67332")
+      // Fetch users from API if available
+      const apiUsers = await this.getAllUsers();
+      
+      if (apiUsers.length > 0) {
+        console.log(`📊 Scanning ${apiUsers.length} users from API...`);
+        // Add all API users to our borrowers set for monitoring
+        apiUsers.forEach(user => this.addBorrower(user));
+      } else {
+        console.log('⚠️  No users from API, using fallback addresses...');
+        // Fallback to hardcoded addresses if API is unavailable
+        this.addBorrower("0x1ecFDe4511a27f23B8cAE67354D41a487BAfA725");
+        this.addBorrower("0x5b5c658E328eF106d0922D8Cc8B547e02CD67332");
+      }
+
+      console.log(`🎯 Monitoring ${this.borrowers.size} total addresses for liquidation opportunities...`);
 
       for (const borrower of this.borrowers) {
         const opportunity = await this.findLiquidationOpportunity(borrower);
@@ -545,8 +643,12 @@ class LiquidationBot {
 
   // Add a borrower to our tracking set (this would typically be called when processing Borrow events)
   addBorrower(address) {
-    this.borrowers.add(address.toLowerCase());
-    console.log(`➕ Added borrower to watchlist: ${address}`);
+    const normalizedAddress = address.toLowerCase();
+    if (!this.borrowers.has(normalizedAddress)) {
+      this.borrowers.add(normalizedAddress);
+      console.log(`➕ Added new borrower to watchlist: ${address}`);
+    }
+    // If already exists, don't log to avoid spam
   }
 
   // Remove a borrower (when they fully repay)
