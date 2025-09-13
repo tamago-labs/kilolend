@@ -83,7 +83,7 @@ const slides = [
     subtitle: (
       <>
         Supply <HighlightText>USDT</HighlightText> and earn a stable
-        <HighlightText> 3% APY</HighlightText> plus daily KILO points
+        <HighlightText> 2% APY</HighlightText> plus daily KILO points
       </>
     )
   },
