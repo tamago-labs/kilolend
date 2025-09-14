@@ -74,3 +74,9 @@ export const validateDecimalPlaces = (
 
   return { isValid: true };
 };
+
+export function truncateToDecimals(value: string | number, decimals: number): string {
+  const [intPart, decPart = ""] = String(value).split(".");
+  if (decPart.length === 0) return intPart;
+  return `${intPart}.${decPart.slice(0, decimals)}`;
+}

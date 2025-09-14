@@ -1,5 +1,5 @@
 'use client';
- 
+
 import { useState, useEffect } from 'react';
 import { BaseModal } from '../BaseModal';
 import { ChevronRight } from 'react-feather';
@@ -11,22 +11,23 @@ import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
 import { useUserPositions } from '@/hooks/useUserPositions';
 import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
 import { useTokenApproval } from '@/hooks/useTokenApproval';
-import { 
+import {
   SupplyAssetSelection,
   SupplyAmountInput,
   SupplyTransactionPreview,
   SupplySuccess
 } from '../Steps';
-import { 
-    Container,
-    StepProgress,
-    StepDot,
-    StepContent,
-    NavigationContainer,
-    NavButton,
-    ErrorMessage,
-    ApprovalMessage
+import {
+  Container,
+  StepProgress,
+  StepDot,
+  StepContent,
+  NavigationContainer,
+  NavButton,
+  ErrorMessage,
+  ApprovalMessage
 } from "./styled"
+import { truncateToDecimals } from "@/utils/tokenUtils"
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -50,7 +51,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const { account } = useWalletAccountStore();
   const { supply } = useMarketContract();
   const { enterMarkets, isMarketEntered } = useComptrollerContract();
-  const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances(); 
+  const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances();
   const { refreshPositions } = useUserPositions();
   const { checkAllowance, ensureApproval } = useTokenApproval();
 
@@ -91,7 +92,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
           if (marketAddress) {
             const isEntered = await isMarketEntered(account, marketAddress);
             setIsMarketAlreadyEntered(isEntered);
-            
+
             // If market is already entered, don't need to enable collateral
             if (isEntered) {
               setEnableAsCollateral(false);
@@ -109,13 +110,13 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     checkMarketStatus();
   }, [selectedAsset, account, isMarketEntered]);
 
-  const handleAssetSelect = (asset: any) => { 
+  const handleAssetSelect = (asset: any) => {
     setSelectedAsset(asset);
     setAmount('');
     setSelectedQuickAmount(null);
     setNeedsApproval(false);
-  }; 
-  
+  };
+
   const handleQuickAmount = (percentage: number) => {
     if (selectedAsset) {
       const balance = parseFloat(userBalances[selectedAsset.symbol] || '0');
@@ -128,7 +129,13 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const handleMaxAmount = () => {
     if (selectedAsset) {
       const balance = userBalances[selectedAsset.symbol] || '0';
-      setAmount(balance);
+      const decimals = selectedAsset.decimals || 18;
+      const safeDecimals = Math.min(decimals, 4);
+
+      // Truncate to allowed decimals
+      const safeBalance = truncateToDecimals(balance, safeDecimals);
+
+      setAmount(safeBalance);
       setSelectedQuickAmount(100);
     }
   };
@@ -158,28 +165,28 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     if (!selectedAsset || !amount || !account) return;
 
     setIsTransacting(true);
-    
+
     try {
       // Step 1: Handle approval if needed
       if (needsApproval) {
         setIsApproving(true);
         console.log(`Token approval needed for ${selectedAsset.symbol}`);
-        
+
         const approvalResult = await ensureApproval(selectedAsset.id, amount);
-        
+
         if (!approvalResult.success) {
           throw new Error(approvalResult.error || 'Token approval failed');
         }
-        
+
         console.log(`Token approval successful for ${selectedAsset.symbol}`);
         setIsApproving(false);
         setNeedsApproval(false);
       }
-      
+
       // Step 2: Execute supply transaction
       console.log(`Starting supply transaction for ${amount} ${selectedAsset.symbol}`);
       const supplyResult = await supply(selectedAsset.id, amount);
-      
+
       if (supplyResult.status !== 'confirmed') {
         throw new Error(supplyResult.error || 'Supply transaction failed');
       }
@@ -190,16 +197,16 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       if (enableAsCollateral && !isMarketAlreadyEntered && selectedAsset.marketAddress) {
         setIsEnteringMarket(true);
         console.log(`Entering market for ${selectedAsset.symbol} to enable as collateral`);
-        
+
         const enterResult = await enterMarkets([selectedAsset.marketAddress]);
-        
+
         if (enterResult.status === 'confirmed') {
           console.log(`Market entry successful for ${selectedAsset.symbol}`);
         } else {
           console.warn(`Market entry failed for ${selectedAsset.symbol}:`, enterResult.error);
           // Don't fail the entire transaction for market entry failure
         }
-        
+
         setIsEnteringMarket(false);
       }
 
@@ -211,7 +218,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
 
       setTransactionResult(supplyResult);
       setCurrentStep(4);
-      
+
     } catch (error) {
       console.error('Supply process failed:', error);
       setTransactionResult({
@@ -235,7 +242,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
 
   const getConfirmButtonText = () => {
     if (isTransacting) return getTransactionStatusText();
-    
+
     if (needsApproval && enableAsCollateral && !isMarketAlreadyEntered) {
       return 'Approve, Supply & Enable Collateral';
     } else if (needsApproval) {
@@ -357,7 +364,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
               This asset will be enabled as collateral, allowing you to borrow against it. You can disable this later if needed.
             </ApprovalMessage>
           )}
-          
+
           {renderStepContent()}
         </StepContent>
 
