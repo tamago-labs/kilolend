@@ -10,6 +10,7 @@ import { PRICE_API_CONFIG, KAIA_MAINNET_TOKENS } from '@/utils/tokenConfig';
 import Blockies from 'react-blockies';
 import { AlertCircle, RefreshCw, HelpCircle, MessageCircle, Settings } from 'react-feather';
 import { liff } from "@/utils/liff";
+import { ExternalLink } from 'react-feather';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -199,6 +200,19 @@ const SectionTitle = styled.h3`
 
   @media (max-width: 480px) {
     font-size: 16px;
+  }
+`;
+
+const SectionTitle2 = styled.h2`
+  font-size: 20px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 20px;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+    margin-bottom: 16px;
   }
 `;
 
@@ -470,6 +484,91 @@ const MessageText = styled.span`
   font-size: 14px;
 `;
 
+// External Links Section Styles
+const ExternalLinksSection = styled.div`
+  margin-bottom: 32px;
+`;
+
+const LinksContainer = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
+`;
+
+const LinksGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+
+  @media (max-width: 480px) {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+`;
+
+const LinkItem = styled.a`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 16px;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.2s;
+  cursor: pointer;
+  
+  &:hover {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+  }
+`;
+
+
+const LinkTitle = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 4px;
+  text-align: center;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+  }
+`;
+
+const LinkDescription = styled.div`
+  font-size: 12px;
+  color: #64748b;
+  text-align: center;
+  line-height: 1.3;
+
+  @media (max-width: 480px) {
+    font-size: 11px;
+  }
+`;
+
+const ExternalLinkIndicator = styled.div`
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 16px;
+  height: 16px;
+  color: #94a3b8;
+`;
+
 interface LineProfile {
   displayName: string;
   pictureUrl: string;
@@ -490,7 +589,7 @@ export const ProfilePage = () => {
   const { prices, getFormattedPrice, getFormattedChange, isLoading: pricesLoading } = usePriceUpdates({
     symbols: ["MBX", ...apiTokens]
   });
- 
+
   useEffect(() => {
     if (liff.isInClient()) {
       liff.getProfile().then(
@@ -602,6 +701,17 @@ export const ProfilePage = () => {
     }
   };
 
+  const handleExternalLink = (url: string, name: string) => {
+    if (liff.isInClient()) {
+      liff.openWindow({
+        url: url,
+        external: true,
+      });
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
   const formatAddress = (address: string) => {
     return `${address.slice(0, 8)}...${address.slice(-6)}`;
   };
@@ -616,31 +726,31 @@ export const ProfilePage = () => {
       {/* Profile Section */}
 
       <OverviewContainer>
-        <LeftSection> 
-          { (lineProfile || account) && (
-            <ProfileSection 
-            $clickable={!!account} 
-            onClick={handleProfileClick}
-            title={account ? "Click to view wallet address and QR code" : ""}
-          >
-            <ProfileHeader>
-              <ProfileAvatar>
-                {lineProfile?.pictureUrl ? (
-                  <LineProfilePicture src={lineProfile.pictureUrl} alt="Profile" />
-                ) : (
-                  <Blockies seed={account || "1234"} size={8} scale={8} />
-                )}
-              </ProfileAvatar>
-              <ProfileInfo>
-                <ProfileName>
-                  {lineProfile?.displayName || "Wallet User"}
-                </ProfileName> 
-                <WalletAddress>
-                  Click to open details
-                </WalletAddress>
-              </ProfileInfo>
-            </ProfileHeader>
-          </ProfileSection>
+        <LeftSection>
+          {(lineProfile || account) && (
+            <ProfileSection
+              $clickable={!!account}
+              onClick={handleProfileClick}
+              title={account ? "Click to view wallet address and QR code" : ""}
+            >
+              <ProfileHeader>
+                <ProfileAvatar>
+                  {lineProfile?.pictureUrl ? (
+                    <LineProfilePicture src={lineProfile.pictureUrl} alt="Profile" />
+                  ) : (
+                    <Blockies seed={account || "1234"} size={8} scale={8} />
+                  )}
+                </ProfileAvatar>
+                <ProfileInfo>
+                  <ProfileName>
+                    {lineProfile?.displayName || "Wallet User"}
+                  </ProfileName>
+                  <WalletAddress>
+                    Click to open details
+                  </WalletAddress>
+                </ProfileInfo>
+              </ProfileHeader>
+            </ProfileSection>
           )}
 
         </LeftSection>
@@ -655,14 +765,14 @@ export const ProfilePage = () => {
               </TotalBalanceSection>
             </ProfileSection>
           </RightSection>
-        )  } 
-      </OverviewContainer>
-          {!account && (
-          <InfoMessage>
-            <AlertCircle size={16} color="#3b82f6" />
-            <MessageText style={{ color: '#1e40af' }}>Please connect your wallet to access full function</MessageText>
-          </InfoMessage>
         )}
+      </OverviewContainer>
+      {!account && (
+        <InfoMessage>
+          <AlertCircle size={16} color="#3b82f6" />
+          <MessageText style={{ color: '#1e40af' }}>Please connect your wallet to access full function</MessageText>
+        </InfoMessage>
+      )}
 
       {/* Tokens Section */}
       <TokensSection>
@@ -745,7 +855,7 @@ export const ProfilePage = () => {
       </TokensSection>
 
       {/* Support Section */}
-      <SupportSection>
+      {/* <SupportSection>
         <SectionTitle>Need Help?</SectionTitle>
         <SupportButtons>
           <SupportButton $primary onClick={() => openModal('faq')}>
@@ -755,9 +865,45 @@ export const ProfilePage = () => {
           <SupportButton onClick={() => alert('Email to support@tamagolabs.com')}>
             <MessageCircle size={16} />
             Send Feedback
-          </SupportButton> 
+          </SupportButton>
         </SupportButtons>
-      </SupportSection> 
+      </SupportSection> */}
+
+      {/* External Links Section */}
+      <ExternalLinksSection>
+        <SectionTitle2>Resources</SectionTitle2>
+        <LinksContainer>
+          <LinksGrid>
+            <LinkItem
+              as="div"
+              onClick={() => handleExternalLink('https://github.com/tamago-labs/kilolend', 'GitHub')}
+              style={{ position: 'relative' }}
+            >
+              <ExternalLinkIndicator>
+                <ExternalLink size={16} />
+              </ExternalLinkIndicator>
+              <LinkTitle>GitHub</LinkTitle>
+              <LinkDescription>
+                View source code and all contract addresses
+              </LinkDescription>
+            </LinkItem>
+
+            <LinkItem
+              as="div"
+              onClick={() => handleExternalLink('https://dune.com/pisuthd/kilolend-protocol-analytics', 'Dune Analytics')}
+              style={{ position: 'relative' }}
+            >
+              <ExternalLinkIndicator>
+                <ExternalLink size={16} />
+              </ExternalLinkIndicator>
+              <LinkTitle>Dashboard</LinkTitle>
+              <LinkDescription>
+                Explore metrics and analytics on Dune
+              </LinkDescription>
+            </LinkItem>
+          </LinksGrid>
+        </LinksContainer>
+      </ExternalLinksSection>
     </PageContainer>
   );
 };
