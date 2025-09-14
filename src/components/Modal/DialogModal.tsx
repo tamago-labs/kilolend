@@ -1,23 +1,7 @@
 'use client';
 
-import styled, { keyframes } from 'styled-components';
+import styled from 'styled-components';
 import { ReactNode, useEffect } from 'react';
-
-const fadeIn = keyframes`
-  from { opacity: 0; }
-  to { opacity: 1; }
-`;
-
-const scaleUp = keyframes`
-  from {
-    transform: scale(0.95);
-    opacity: 0;
-  }
-  to {
-    transform: scale(1);
-    opacity: 1;
-  }
-`;
 
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   position: fixed;
@@ -29,8 +13,7 @@ const ModalOverlay = styled.div<{ $isOpen: boolean }>`
   justify-content: center;
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
   visibility: ${({ $isOpen }) => ($isOpen ? 'visible' : 'hidden')};
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-  animation: ${({ $isOpen }) => ($isOpen ? fadeIn : 'none')} 0.3s ease;
+  transition: opacity 0.2s ease, visibility 0.2s ease;
   backdrop-filter: blur(4px);
 `;
 
@@ -44,10 +27,9 @@ const DialogContainer = styled.div<{ $isOpen: boolean }>`
   flex-direction: column;
   overflow: hidden;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  transform: scale(${({ $isOpen }) => ($isOpen ? 1 : 0.95)});
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
-  transition: transform 0.25s ease, opacity 0.25s ease;
-  animation: ${({ $isOpen }) => ($isOpen ? scaleUp : 'none')} 0.25s ease;
+  transform: scale(1); /* no scaling animation */
+  transition: opacity 0.2s ease;
 `;
 
 const DialogHeader = styled.div`
@@ -80,10 +62,6 @@ const CloseButton = styled.button`
 
   &:hover {
     background: #e2e8f0;
-    transform: scale(1.05);
-  }
-  &:active {
-    transform: scale(0.95);
   }
 `;
 
