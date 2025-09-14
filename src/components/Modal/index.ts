@@ -8,3 +8,4 @@ export { LeaderboardModal } from './LeaderboardModal';
 export { GlobalModalManager } from './GlobalModalManager';
 export { InviteModal } from './InviteModal';
 export { AIChatModal } from './AIChatModal';
+export { WelcomeModal } from './WelcomeModal';

@@ -5,7 +5,8 @@ import { useModalStore } from '@/stores/modalStore';
 import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
 import { TokenPriceSwiper, WelcomeSwiper } from '@/components/Swiper';
 import RandomIcon from "@/components/RandomIcon"
-
+import { WelcomeModal } from '../Modal/WelcomeModal';
+import { useWelcomeModal } from '../Modal/WelcomeModal/useWelcomeModal';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -183,10 +184,17 @@ interface HomePageProps {
 }
 
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
+  // Use the welcome modal hook instead of useState
+  const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
+
   const { openModal } = useModalStore();
-  
+
   // Initialize market data and real-time prices
   useMarketDataWithPrices();
+
+  const handleWelcomeClose = () => {
+    markAsShown(); // This will set localStorage and hide modal
+  };
 
   const handleAskAI = () => {
     openModal('ai-chat-new');
@@ -221,7 +229,12 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   };
 
   return (
-    <PageContainer>
+    <PageContainer> 
+      <WelcomeModal
+        isOpen={showWelcome}
+        onClose={handleWelcomeClose}
+      />
+
       {/* Top Cards Section */}
       <TopCardsContainer>
         {/* AI Assistant Welcome Card with Swiper */}
@@ -239,9 +252,6 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
       <ActionsSection>
         <SectionTitle>Quick Actions</SectionTitle>
         <IconGrid>
-
- 
-
           <IconButton onClick={handleSupply}>
             <IconCircle $index="3">
               <IconImage
@@ -264,10 +274,10 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
           <IconButton onClick={handleAskAI}>
             <IconCircle $index="5">
-              <RandomIcon/>
+              <RandomIcon />
             </IconCircle>
             <IconLabel>Ask AI</IconLabel>
-          </IconButton> 
+          </IconButton>
 
           <IconButton onClick={handleLearn}>
             <IconCircle $index="6">
@@ -319,7 +329,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <IconLabel>Send</IconLabel>
           </IconButton>
         </IconGrid>
-      </ActionsSection> 
+      </ActionsSection>
     </PageContainer>
   );
 };
