@@ -1,5 +1,6 @@
 import { ethers } from 'ethers';
 import { KAIA_MAINNET_CONFIG } from './contractConfig';
+import { safeParseTokenAmount } from './tokenUtils';
 
 /**
  * Contract interaction utilities
@@ -48,14 +49,49 @@ export const getContract = async (
   }
 };
 
-// Parse units based on decimals
+/**
+ * Safe parse units based on decimals - replaces the original parseTokenAmount
+ * This prevents precision errors by using our enhanced safeParseTokenAmount
+ */
 export const parseTokenAmount = (amount: string, decimals: number): bigint => {
-  return ethers.parseUnits(amount, decimals);
+  return safeParseTokenAmount(amount, decimals);
 };
 
-// Format units based on decimals
+/**
+ * Format units based on decimals
+ */
 export const formatTokenAmount = (amount: bigint, decimals: number): string => {
-  return ethers.formatUnits(amount, decimals);
+  try {
+    return ethers.formatUnits(amount, decimals);
+  } catch (error) {
+    console.error('Error formatting token amount:', error);
+    return '0';
+  }
+};
+
+/**
+ * Safe version of ethers.parseUnits that handles edge cases
+ */
+export const safeParseUnits = (value: string, decimals: number): bigint => {
+  try {
+    // Use our enhanced safe parsing
+    return safeParseTokenAmount(value, decimals);
+  } catch (error) {
+    console.error('Error in safeParseUnits:', error);
+    throw new Error(`Cannot parse amount: ${value} with ${decimals} decimals`);
+  }
+};
+
+/**
+ * Safe version of ethers.formatUnits that handles edge cases
+ */
+export const safeFormatUnits = (value: bigint, decimals: number): string => {
+  try {
+    return ethers.formatUnits(value, decimals);
+  } catch (error) {
+    console.error('Error in safeFormatUnits:', error);
+    return '0';
+  }
 };
 
 // Check if user is connected to correct network
@@ -124,7 +160,8 @@ export const estimateGas = async (
     return gasEstimate * BigInt(120) / BigInt(100);
   } catch (error) {
     console.error('Error estimating gas:', error);
-    throw error;
+    // Return a reasonable default gas limit
+    return BigInt(600000);
   }
 };
 
@@ -172,11 +209,17 @@ export const isValidAddress = (address: string): boolean => {
   }
 };
 
-// Convert wei to human readable format
+// Convert wei to human readable format with safe parsing
 export const formatWei = (wei: bigint, decimals: number = 18, precision: number = 4): string => {
-  const formatted = ethers.formatUnits(wei, decimals);
-  const num = parseFloat(formatted);
-  return num.toFixed(precision);
+  try {
+    const formatted = ethers.formatUnits(wei, decimals);
+    const num = parseFloat(formatted);
+    if (isNaN(num)) return '0';
+    return num.toFixed(precision);
+  } catch (error) {
+    console.error('Error formatting wei:', error);
+    return '0';
+  }
 };
 
 // Transaction status enum
@@ -193,7 +236,6 @@ export interface TransactionResult {
   receipt?: ethers.TransactionReceipt;
   error?: string;
 }
- 
 
 declare global {
   interface Window {

@@ -27,7 +27,7 @@ import {
   ErrorMessage,
   ApprovalMessage
 } from "./styled"
-import { truncateToDecimals } from "@/utils/tokenUtils"
+import { truncateToSafeDecimals } from "@/utils/tokenUtils"
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -120,8 +120,13 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const handleQuickAmount = (percentage: number) => {
     if (selectedAsset) {
       const balance = parseFloat(userBalances[selectedAsset.symbol] || '0');
-      const quickAmount = (balance * percentage / 100).toString();
-      setAmount(quickAmount);
+      const quickAmount = (balance * percentage / 100);
+      const decimals = selectedAsset.decimals || 18;
+      
+      // Use safe decimal truncation to prevent precision errors
+      const safeAmount = truncateToSafeDecimals(quickAmount.toString(), decimals);
+      
+      setAmount(safeAmount);
       setSelectedQuickAmount(percentage);
     }
   };
@@ -130,10 +135,9 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     if (selectedAsset) {
       const balance = userBalances[selectedAsset.symbol] || '0';
       const decimals = selectedAsset.decimals || 18;
-      const safeDecimals = Math.min(decimals, 4);
-
-      // Truncate to allowed decimals
-      const safeBalance = truncateToDecimals(balance, safeDecimals);
+      
+      // Use safe decimal truncation to prevent precision errors
+      const safeBalance = truncateToSafeDecimals(balance, decimals);
 
       setAmount(safeBalance);
       setSelectedQuickAmount(100);

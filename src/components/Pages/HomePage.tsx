@@ -7,8 +7,6 @@ import { TokenPriceSwiper, WelcomeSwiper } from '@/components/Swiper';
 import RandomIcon from "@/components/RandomIcon"
 import { WelcomeModal } from '../Modal/WelcomeModal';
 import { useWelcomeModal } from '../Modal/WelcomeModal/useWelcomeModal';
-import { ExternalLink } from 'react-feather';
-import { liff } from "@/utils/liff";
 
 const PageContainer = styled.div`
   flex: 1;
@@ -181,7 +179,6 @@ const IconImage = styled.img`
   }
 `;
 
-
 interface HomePageProps {
   onAIDealsGenerated?: (userQuery: string) => void;
 }
@@ -229,17 +226,6 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
   const handleSend = () => {
     openModal('send');
-  };
-
-  const handleExternalLink = (url: string, name: string) => { 
-    if (liff.isInClient()) {
-      liff.openWindow({
-        url: url,
-        external: true,
-      });
-    } else {
-      window.open(url, '_blank');
-    }
   };
 
   return (
@@ -345,7 +331,6 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           </IconButton>
         </IconGrid>
       </ActionsSection>
- 
     </PageContainer>
   );
 };
