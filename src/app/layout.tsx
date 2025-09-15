@@ -5,6 +5,8 @@ import {Bootstrap} from "@/components/Bootstrap/Bootstrap";
 import {QueryClientProvider} from "@tanstack/react-query";
 import {queryClient} from "@/components/Query/QueryClient.hooks";
 import StyledComponentsRegistry from "@/components/StyledComponentsRegistry";
+import { GoogleAnalytics } from '@next/third-parties/google'
+
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -37,6 +39,7 @@ export default function RootLayout({
           </QueryClientProvider>
         </StyledComponentsRegistry>
       </body>
+       <GoogleAnalytics gaId="G-QNBVXZZR9E" />
     </html>
   );
 }

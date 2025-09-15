@@ -6,3 +6,5 @@ old/
 cert/
 # Local Netlify folder
 .netlify
+
+payroll/
