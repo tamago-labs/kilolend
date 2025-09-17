@@ -901,6 +901,35 @@ export const ProfilePage = () => {
                 Explore metrics and analytics on Dune
               </LinkDescription>
             </LinkItem>
+
+            <LinkItem
+        as="div"
+        onClick={() => handleExternalLink('https://docs.kilolend.xyz', 'Documentation')}
+        style={{ position: 'relative' }}
+      >
+        <ExternalLinkIndicator>
+          <ExternalLink size={16} />
+        </ExternalLinkIndicator>
+        <LinkTitle>Documentation</LinkTitle>
+        <LinkDescription>
+          Complete protocol guide and technical docs
+        </LinkDescription>
+      </LinkItem>
+
+      <LinkItem
+        as="div"
+        onClick={() => handleExternalLink('https://lin.ee/r8bOhDU', 'LINE Official')}
+        style={{ position: 'relative' }}
+      >
+        <ExternalLinkIndicator>
+          <ExternalLink size={16} />
+        </ExternalLinkIndicator>
+        <LinkTitle>LINE Official</LinkTitle>
+        <LinkDescription>
+          Follow our official LINE account for updates
+        </LinkDescription>
+      </LinkItem>
+
           </LinksGrid>
         </LinksContainer>
       </ExternalLinksSection>
