@@ -71,7 +71,7 @@ export interface ContractUserState {
     receipt?: any
   ) => void;
   setLoading: (loading: boolean) => void;
-  calculatePortfolioStats: () => void;
+  calculatePortfolioStats: (data: any) => void;
   clearUserData: () => void;
   refreshAllPositions: () => void;
 }
@@ -102,26 +102,25 @@ export const useContractUserStore = create<ContractUserState>((set, get) => ({
       const updatedPositions =
         existingIndex >= 0
           ? state.positions.map((pos, idx) =>
-              idx === existingIndex
-                ? { ...pos, ...positionData, lastUpdated: Date.now() }
-                : pos
-            )
+            idx === existingIndex
+              ? { ...pos, ...positionData, lastUpdated: Date.now() }
+              : pos
+          )
           : [
-              ...state.positions,
-              {
-                ...positionData,
-                id: `pos_${Date.now()}_${Math.random()
-                  .toString(36)
-                  .substr(2, 9)}`,
-                timestamp: Date.now(),
-                lastUpdated: Date.now(),
-              },
-            ];
+            ...state.positions,
+            {
+              ...positionData,
+              id: `pos_${Date.now()}_${Math.random()
+                .toString(36)
+                .substr(2, 9)}`,
+              timestamp: Date.now(),
+              lastUpdated: Date.now(),
+            },
+          ];
 
       return { positions: updatedPositions, lastUpdate: Date.now() };
     });
 
-    get().calculatePortfolioStats();
   },
 
   /**
@@ -147,14 +146,14 @@ export const useContractUserStore = create<ContractUserState>((set, get) => ({
       const updatedTransactions = state.transactions.map((tx) =>
         tx.id === id
           ? {
-              ...tx,
-              status,
-              ...(receipt && {
-                gasUsed: receipt.gasUsed?.toString(),
-                gasPrice: receipt.gasPrice?.toString(),
-                blockNumber: receipt.blockNumber,
-              }),
-            }
+            ...tx,
+            status,
+            ...(receipt && {
+              gasUsed: receipt.gasUsed?.toString(),
+              gasPrice: receipt.gasPrice?.toString(),
+              blockNumber: receipt.blockNumber,
+            }),
+          }
           : tx
       );
 
@@ -170,41 +169,41 @@ export const useContractUserStore = create<ContractUserState>((set, get) => ({
   /**
    * Calculate aggregated portfolio statistics
    */
-  calculatePortfolioStats: () => {
-    const { positions } = get();
+  calculatePortfolioStats: (portfolioData: any) => {
+    // const { positions } = get();
 
-    let totalSupplied = 0;
-    let totalBorrowed = 0;
-    let totalCollateralValue = 0;
-    let suppliedEarnings = 0;
-    let borrowedCosts = 0;
+    // let totalSupplied = 0;
+    // let totalBorrowed = 0;
+    // let totalCollateralValue = 0;
+    // let suppliedEarnings = 0;
+    // let borrowedCosts = 0;
 
-    positions.forEach((position: any) => {
-      if (position.type === 'supply') {
-        totalSupplied += position.usdValue;
-        suppliedEarnings += (position.usdValue * position.apy) / 100;
-      } else if (position.type === 'borrow') {
-        totalBorrowed += position.usdValue;
-        borrowedCosts += (position.usdValue * position.apy) / 100;
-      }
+    // positions.forEach((position: any) => {
+    //   if (position.type === 'supply') {
+    //     totalSupplied += position.usdValue;
+    //     suppliedEarnings += (position.usdValue * position.apy) / 100;
+    //   } else if (position.type === 'borrow') {
+    //     totalBorrowed += position.usdValue;
+    //     borrowedCosts += (position.usdValue * position.apy) / 100;
+    //   }
 
-      if (position.collateralValue) {
-        totalCollateralValue += parseFloat(position.collateralValue);
-      }
-    });
+    //   if (position.collateralValue) {
+    //     totalCollateralValue += parseFloat(position.collateralValue);
+    //   }
+    // });
 
-    const netEarnings = suppliedEarnings - borrowedCosts;
-    const netAPY = totalSupplied > 0 ? (netEarnings / totalSupplied) * 100 : 0;
+    // const netEarnings = suppliedEarnings - borrowedCosts;
+    // const netAPY = totalSupplied > 0 ? (netEarnings / totalSupplied) * 100 : 0;
 
-    const healthFactor =
-      totalBorrowed > 0 ? (totalCollateralValue * 0.8) / totalBorrowed : 999;
+    // const healthFactor =
+    //   totalBorrowed > 0 ? (totalCollateralValue * 0.8) / totalBorrowed : 999;
 
     set({
-      totalSupplied,
-      totalBorrowed,
-      totalCollateralValue,
-      netAPY,
-      healthFactor,
+      totalSupplied: portfolioData.totalSupplied,
+      totalBorrowed: portfolioData.totalBorrowed,
+      totalCollateralValue: portfolioData.totalCollateralValue,
+      // netAPY,
+      healthFactor: portfolioData.healthFactor,
       lastUpdate: Date.now(),
     });
   },

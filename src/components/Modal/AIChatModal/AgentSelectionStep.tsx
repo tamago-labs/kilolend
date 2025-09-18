@@ -30,9 +30,7 @@ const getAgentBadges = (agent: AgentPreset): string[] => {
   const { personality, defaultPreferences } = agent;
   const badges = [];
 
-  console.log("agent: ", agent)
-
-
+  
   // Communication style badge
   switch (defaultPreferences.communicationStyle) {
     case 'friendly':

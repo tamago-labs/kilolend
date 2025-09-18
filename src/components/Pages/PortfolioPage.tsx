@@ -334,8 +334,7 @@ export const PortfolioPage = () => {
 
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
-  const { getUserPosition } = useMarketContract();
-  const { balances } = useMarketTokenBalances();
+  const { getUserPosition } = useMarketContract(); 
   const { calculateBorrowingPower } = useBorrowingPower();
   const { openModal } = useModalStore();
 

@@ -79,11 +79,7 @@ const getAgentTemplates = (agent: AIAgent) => {
     marketData: {
       text: "What are the current market rates?",
       description: "Get real-time APY rates and market statistics"
-    },
-    // portfolio: {
-    //   text: "Analyze my portfolio risk",
-    //   description: "Check portfolio health and liquidation risks"
-    // },
+    }, 
     // yields: {
     //   text: "Find the best yield opportunities",
     //   description: "Discover optimal strategies for earning"
@@ -92,10 +88,15 @@ const getAgentTemplates = (agent: AIAgent) => {
       text: "What happens if I supply 1000 USDT?",
       description: "Simulate position changes and impacts"
     },
+    portfolio: {
+      text: "Analyze my portfolio risk",
+      description: "Check portfolio health and liquidation risks"
+    },
     basic:  {
       text: "Explain how DeFi lending works",
       description: "Learn the fundamentals of decentralized lending"
     },
+    
   };
   
   const personalityTemplates = {
