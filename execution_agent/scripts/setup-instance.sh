@@ -5,9 +5,9 @@ echo "🚀 Setting up KiloLend Nitro Enclave Instance..."
  
 
 # Install Node.js 18
-echo "📦 Installing Node.js 18..."
-curl -sL https://rpm.nodesource.com/setup_18.x | sudo bash -
-sudo yum install -y nodejs
+# echo "📦 Installing Node.js 18..."
+# curl -sL https://rpm.nodesource.com/setup_18.x | sudo bash -
+# sudo yum install -y nodejs
 
 # Verify allocator status
 echo "✅ Checking allocator status..."

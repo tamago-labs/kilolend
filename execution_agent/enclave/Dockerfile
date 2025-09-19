@@ -18,12 +18,8 @@ COPY app.py .
 RUN useradd -m -u 1000 enclave
 USER enclave
 
-# Expose port
+# Expose port (though vsock doesn't use traditional networking)
 EXPOSE 5000
-
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD python -c "import socket; s=socket.socket(); s.connect(('localhost', 5000)); s.close()"
 
 # Run the application
 CMD ["python", "-u", "app.py"]
