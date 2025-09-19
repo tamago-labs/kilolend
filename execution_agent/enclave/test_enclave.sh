@@ -17,8 +17,8 @@ def test_enclave_connection(enclave_cid=None):
             if result.returncode == 0:
                 import json as json_module
                 enclaves = json_module.loads(result.stdout)
-                if enclaves['Enclaves']:
-                    enclave_cid = enclaves['Enclaves'][0]['EnclaveCID']
+                if enclaves and isinstance(enclaves, list):
+                    enclave_cid = enclaves[0]['EnclaveCID']
                     print(f"🔍 Detected enclave CID: {enclave_cid}")
                 else:
                     print("❌ No running enclaves found")

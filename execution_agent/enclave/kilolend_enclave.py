@@ -65,29 +65,24 @@ class KiloLendEnclave:
         logger.info(f"📞 Connection from CID {remote_cid}:{remote_port}")
         
         try:
-            # Receive data
             data = b""
             while True:
                 chunk = client.recv(4096)
                 if not chunk:
-                    break
+                    break  # end of stream
                 data += chunk
-                
-                # Check if we have complete JSON (ends with newline)
-                if data.endswith(b'\n'):
-                    break
-            
+
             if data:
                 request_data = data.decode().strip()
                 logger.info(f"📥 Received request: {request_data[:100]}...")
-                
+
                 response = self.process_execution_request(request_data)
-                
-                # Send response
+
+                # Send response and close
                 response_json = json.dumps(response) + '\n'
                 client.sendall(response_json.encode())
                 logger.info("📤 Response sent successfully")
-            
+
         except Exception as e:
             logger.error(f"❌ Request processing error: {e}")
             error_response = {
@@ -99,7 +94,6 @@ class KiloLendEnclave:
                 client.sendall((json.dumps(error_response) + '\n').encode())
             except:
                 pass
-        
         finally:
             client.close()
     

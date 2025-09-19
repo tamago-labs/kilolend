@@ -1,22 +1,10 @@
-FROM python:3.9-alpine
-
-# Install minimal required packages
-RUN apk add --no-cache \
-    gcc \
-    musl-dev \
-    libffi-dev
+FROM python:3.7.9-alpine3.12
 
 # Create application directory
 WORKDIR /app
 
 # Copy enclave application
-COPY kilolend_enclave.py /app/kilolend_enclave.py
-
-# Set executable permissions
-RUN chmod +x kilolend_enclave.py
-
-# Expose the vsock port (for documentation)
-EXPOSE 5005
+COPY kilolend_enclave.py .
 
 # Run the enclave server
-CMD ["python3", "kilolend_enclave.py"]
+CMD ["/usr/local/bin/python3", "kilolend_enclave.py"]
