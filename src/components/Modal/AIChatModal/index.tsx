@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { BaseModal } from '../BaseModal';
 import { AgentSelectionStep } from './AgentSelectionStep';
 import { ChatStep } from './ChatStep';
+import { ChatStepWithExecution } from "./ChatStepWithExecution"
 import { Container, StepContent, ErrorMessage } from './styled';
 import { AgentPreset, AIAgent } from '@/types/aiAgent';
 import { useMarketContract } from '@/hooks/useMarketContract';
@@ -112,7 +113,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
 
     } catch (error) {
       console.error('Error fetching positions for AI:', error);
-    } 
+    }
   }, [account, markets, getUserPosition, calculateBorrowingPower, userStore]);
 
   // Add this useEffect to fetch when modal opens:
@@ -142,30 +143,6 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
     setCurrentStep(2);
   };
 
-  const handleCustomPromptSelect = () => {
-    if (!customPrompt.trim()) return;
-
-    setSelectedAgent(null);
-    setError(null);
-
-    // Create custom AI agent and go directly to chat
-    const aiAgent: AIAgent = {
-      id: `custom_${Date.now()}`,
-      name: 'Custom Agent',
-      personality: 'custom',
-      systemPrompt: customPrompt,
-      avatar: '🤖',
-      createdAt: new Date(),
-      isActive: true,
-      preferences: {
-        riskTolerance: 'medium',
-        focusAreas: ['general'],
-        communicationStyle: 'friendly'
-      }
-    };
-    setFinalAgent(aiAgent);
-    setCurrentStep(2);
-  };
 
   const handleBackToAgentSelection = () => {
     setCurrentStep(1);
@@ -180,6 +157,8 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
     setError(null);
   };
 
+  console.log(":finalAgent", finalAgent)
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
@@ -188,18 +167,26 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
             selectedAgent={selectedAgent}
             customPrompt={customPrompt}
             onAgentSelect={handleAgentSelect}
-            onCustomPromptChange={setCustomPrompt}
-            onCustomPromptSelect={handleCustomPromptSelect}
           />
         );
 
       case 2:
         return finalAgent ? (
-          <ChatStep
-            agent={finalAgent}
-            onBack={handleBackToAgentSelection}
-            onReset={handleReset}
-          />
+          finalAgent.name !== "Secured D" ?
+            (
+              <ChatStep
+                agent={finalAgent}
+                onBack={handleBackToAgentSelection}
+                onReset={handleReset}
+              />
+            ) :
+            (
+              <ChatStepWithExecution
+                agent={finalAgent}
+                onBack={handleBackToAgentSelection}
+                onReset={handleReset}
+              />
+            ) 
         ) : null;
 
       default:

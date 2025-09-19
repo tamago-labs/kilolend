@@ -26,7 +26,7 @@ import {
 import MarkdownRenderer from './MarkdownRenderer';
 import InputTemplates from './InputTemplates';
 import type { AIAgent } from '@/types/aiAgent';
-import { useEnhancedAIChat } from '@/hooks/ai/useEnhancedAIChat';
+import { useExecutionAIChat } from '@/hooks/ai/useExecutionAIChat';
 
 interface ChatStepProps {
   agent: AIAgent;
@@ -34,7 +34,7 @@ interface ChatStepProps {
   onReset: () => void;
 }
 
-export const ChatStep: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) => {
+export const ChatStepWithExecution: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) => {
   const {
     messages,
     isLoading,
@@ -47,7 +47,7 @@ export const ChatStep: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) =>
     canSendMessage,
     messageCount,
     needsClear
-  } = useEnhancedAIChat(agent);
+  } = useExecutionAIChat(agent);
 
   const [inputValue, setInputValue] = React.useState('');
   const [showTemplates, setShowTemplates] = React.useState(false);
@@ -106,8 +106,7 @@ export const ChatStep: React.FC<ChatStepProps> = ({ agent, onBack, onReset }) =>
   };
 
   return (
-    <ChatContainer>
-
+    <ChatContainer> 
       <ChatMessages>
         {messages.map((message) => (
           <MessageBubble key={message.id} $isUser={message.sender === 'user'}>

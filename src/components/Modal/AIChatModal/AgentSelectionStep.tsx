@@ -22,15 +22,13 @@ interface AgentSelectionStepProps {
   selectedAgent: AgentPreset | null;
   customPrompt: string;
   onAgentSelect: (agent: AgentPreset) => void;
-  onCustomPromptChange: (prompt: string) => void;
-  onCustomPromptSelect: () => void;
 }
 
 const getAgentBadges = (agent: AgentPreset): string[] => {
   const { personality, defaultPreferences } = agent;
   const badges = [];
 
-  
+
   // Communication style badge
   switch (defaultPreferences.communicationStyle) {
     case 'friendly':
@@ -82,12 +80,9 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
   selectedAgent,
   customPrompt,
   onAgentSelect,
-  onCustomPromptChange,
-  onCustomPromptSelect
 }) => {
   return (
     <>
-      {/* <SectionTitle>Choose Your Agent</SectionTitle> */} 
       <AgentGrid>
         {AGENT_PRESETS.slice(0, 3).map((agent) => {
           const badges = getAgentBadges(agent);
@@ -103,6 +98,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
               <AgentInfo>
                 <AgentName>{agent.name}</AgentName>
                 <AgentBadges>
+                  <Badge>Advisory Agent</Badge>
                   {badges.map((badge, index) => (
                     <Badge key={index}>{badge}</Badge>
                   ))}
@@ -111,6 +107,59 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
             </AgentCard>
           );
         })}
+
+        <AgentCard
+          $selected={selectedAgent?.id === "secured"}
+          onClick={() => onAgentSelect({
+            id: 'secured',
+            name: 'Secured D',
+            image: "./images/icon-robot.png",
+            description: '',
+            personality: 'robot',
+            avatar: ' ',
+            systemPrompt: `You are Secured D, a friendly and precise robotic assistant for KiloLend on the KAIA blockchain. Your personality is logical, structured, and focused on safely executing transactions while guiding users step by step.
+
+            PERSONALITY TRAITS:
+            - Use clear, concise, and precise language
+            - Maintain a friendly and approachable tone, but with robotic efficiency
+            - Prioritize safety, stability, and correct execution
+            - Provide step-by-step guidance for transactions
+            - Remind users of risks and confirm their actions
+            
+            KILOLEND CONTEXT:
+            - Available assets: USDT (stable), MBX (gaming), BORA (gaming), SIX (utility), KAIA (collateral only)
+            - Recommend starting with USDT for safety
+            - Explain collateral, health factors, and liquidation clearly
+            - Suggest conservative collateral ratios (health factor > 2.5)
+            - Able to execute transactions on behalf of users (with their approval)
+            
+            COMMUNICATION STYLE:
+            - Polite, professional, robotic yet approachable
+            - Provide instructions clearly, in numbered steps if needed
+            - Use phrases like "Action confirmed," "Processing safely," "Transaction executed," "Please review before confirming"
+            - Always verify user understanding before executing
+            `,
+            defaultPreferences: {
+              riskTolerance: 'low',
+              focusAreas: ['stable_returns', 'beginner_friendly', 'safety'],
+              communicationStyle: 'friendly'
+            }
+          })}
+        >
+          <AgentAvatar>
+            <img src="./images/icon-robot.png" alt="Agent Avatar" />
+          </AgentAvatar>
+          <AgentInfo>
+            <AgentName>Secured D</AgentName>
+            <AgentBadges>
+              <Badge>Execution Agent</Badge>
+            </AgentBadges>
+          </AgentInfo>
+          <AgentPersonality>
+            Restricted Users
+          </AgentPersonality>
+        </AgentCard>
+
       </AgentGrid>
 
       <InfoBox>
@@ -122,45 +171,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
           <li><strong>Real-time data access:</strong> Portfolio analysis, market rates, and KILO points (requires wallet connection)</li>
           <li><strong>Responses may not always be accurate</strong> Please verify important information before acting</li>
         </ul>
-      </InfoBox>
-
-      {/*<CustomSection>
-        <SectionTitle>Or Create Custom Agent</SectionTitle>
-        <CustomPromptInput
-          value={customPrompt}
-          onChange={(e) => onCustomPromptChange(e.target.value)}
-          placeholder="Describe your ideal AI assistant... For example: 'You are a conservative DeFi advisor who focuses on safety and explains everything in simple terms. Always prioritize capital preservation over high yields and provide detailed risk assessments.'"
-          rows={4}
-          onKeyPress={(e) => {
-            if (e.key === 'Enter' && e.shiftKey && customPrompt.trim()) {
-              onCustomPromptSelect();
-            }
-          }}
-        />
-        {customPrompt.trim() && (
-          <div style={{ marginTop: '12px', textAlign: 'center' }}>
-            <button
-              onClick={onCustomPromptSelect}
-              style={{
-                background: '#06C755',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '10px 20px',
-                cursor: 'pointer',
-                fontSize: '14px',
-                fontWeight: '500'
-              }}
-            >
-              Start Chat with Custom Agent
-            </button>
-            <div style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-              Or press Shift + Enter
-            </div>
-          </div>
-        )}
-      </CustomSection>*/}
-
+      </InfoBox> 
     </>
   );
 };
