@@ -1,25 +1,22 @@
-FROM python:3.9-slim
+FROM python:3.9-alpine
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install minimal required packages
+RUN apk add --no-cache \
     gcc \
-    && rm -rf /var/lib/apt/lists/*
+    musl-dev \
+    libffi-dev
 
+# Create application directory
 WORKDIR /app
 
-# Copy requirements first for better caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Copy enclave application
+COPY kilolend_enclave.py /app/kilolend_enclave.py
 
-# Copy application
-COPY app.py .
+# Set executable permissions
+RUN chmod +x kilolend_enclave.py
 
-# Create non-root user for security
-RUN useradd -m -u 1000 enclave
-USER enclave
+# Expose the vsock port (for documentation)
+EXPOSE 5005
 
-# Expose port (though vsock doesn't use traditional networking)
-EXPOSE 5000
-
-# Run the application
-CMD ["python", "-u", "app.py"]
+# Run the enclave server
+CMD ["python3", "kilolend_enclave.py"]
