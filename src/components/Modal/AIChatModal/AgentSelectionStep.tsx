@@ -108,7 +108,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
           );
         })}
 
-        <AgentCard
+        {/* <AgentCard
           $selected={selectedAgent?.id === "secured"}
           onClick={() => onAgentSelect({
             id: 'secured',
@@ -158,7 +158,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
           <AgentPersonality>
             Restricted Users
           </AgentPersonality>
-        </AgentCard>
+        </AgentCard> */}
 
       </AgentGrid>
 

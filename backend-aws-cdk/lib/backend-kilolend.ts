@@ -478,6 +478,92 @@ export class BackendAwsCdkStack extends cdk.Stack {
       apiKeyRequired: true, // Require API key for POST requests
     }); // POST /invite/{address} - update invite multiplier (protected)
 
+    // ========================================
+    // EXECUTION TASK SUBMISSION API (EXPERIMENT)
+    // ========================================
+
+    // Task Submission Lambda Function
+    const taskSubmissionFunction = new lambda.Function(this, 'TaskSubmissionFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'task-submission.handler',
+      code: lambda.Code.fromAsset('lambda'),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      role: lambdaRole, // Use your existing lambda role
+      logGroup: lambdaLogGroup, // Use your existing log group
+      environment: {
+        USER_POINTS_TABLE_NAME: this.userPointsTable.tableName, // Use existing table
+      },
+    });
+
+    // Task Status Check Lambda Function
+    const taskStatusFunction = new lambda.Function(this, 'TaskStatusFunction', {
+      runtime: lambda.Runtime.NODEJS_18_X,
+      handler: 'task-status.handler',
+      code: lambda.Code.fromAsset('lambda'),
+      timeout: cdk.Duration.seconds(30),
+      memorySize: 256,
+      role: lambdaRole, // Use your existing lambda role
+      logGroup: lambdaLogGroup,
+      environment: {
+        USER_POINTS_TABLE_NAME: this.userPointsTable.tableName,
+      },
+    });
+
+    // API Gateway Integration
+    const taskSubmissionIntegration = new apigateway.LambdaIntegration(taskSubmissionFunction, {
+      requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
+    });
+
+    const taskStatusIntegration = new apigateway.LambdaIntegration(taskStatusFunction, {
+      requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
+    });
+
+    // Add API endpoints to your existing API
+    // Execution endpoints
+    const executeResource = this.api.root.addResource('execute');
+    
+    // POST /execute - Submit execution task
+    executeResource.addMethod('POST', taskSubmissionIntegration, {
+      requestValidator: new apigateway.RequestValidator(this, 'TaskSubmissionValidator', {
+        restApi: this.api,
+        validateRequestBody: true,
+        validateRequestParameters: true,
+      }),
+      requestModels: {
+        'application/json': new apigateway.Model(this, 'TaskSubmissionModel', {
+          restApi: this.api,
+          contentType: 'application/json',
+          schema: {
+            type: apigateway.JsonSchemaType.OBJECT,
+            properties: {
+              userAddress: { type: apigateway.JsonSchemaType.STRING },
+              action: { 
+                type: apigateway.JsonSchemaType.STRING,
+                enum: ['supply', 'withdraw', 'borrow', 'repay']
+              },
+              asset: { 
+                type: apigateway.JsonSchemaType.STRING,
+                enum: ['USDT', 'MBX', 'BORA', 'SIX', 'KAIA']
+              },
+              amount: { type: apigateway.JsonSchemaType.STRING },
+              maxGasPrice: { type: apigateway.JsonSchemaType.STRING },
+            },
+            required: ['userAddress', 'action', 'asset', 'amount'],
+          },
+        }),
+      },
+    });
+
+    // GET /execute/{taskId} - Check task status
+    const taskStatusResource = executeResource.addResource('{taskId}');
+    taskStatusResource.addMethod('GET', taskStatusIntegration);
+
+    // GET /execute/user/{userAddress} - Get user's execution history
+    const userTasksResource = executeResource.addResource('user').addResource('{userAddress}');
+    userTasksResource.addMethod('GET', taskStatusIntegration);
+
+
     // Output important information
     new cdk.CfnOutput(this, 'ApiUrl', {
       value: this.api.url,

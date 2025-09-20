@@ -8,7 +8,7 @@
 
 - LINE Mini Dapp: https://liff.line.me/2007932254-AVnKMMp9
 - Web Access: https://kilolend.xyz/
-- YouTube Demo: https://youtu.be/8NqQgKn2Rg0
+- YouTube Demo: https://youtu.be/rGSsaTShwN0
 - Presentation: https://docsend.com/view/xk2hitgw5vk25y5g
 - Dune Analytics: https://dune.com/pisuthd/kilolend-protocol-analytics
 
