@@ -1,6 +1,6 @@
 # KiloLend
 
-**KiloLend** is a stablecoin-focused decentralized lending protocol on **LINE Mini Dapp** that integrates an intelligent AI agent with a distinct character to help onboard new Web3 users. Interest rates adjust dynamically based on market utilization and the risk model assigned to each asset class, supported by real-time oracles like **Pyth** and **Orakl**, while the AI powered by the **AWS Bedrock** AI engine using the **Claude 4** model.
+**KiloLend** is a stablecoin-focused decentralized lending protocol on **LINE Mini Dapp** that integrates an intelligent AI agent with a distinct character to help onboard new Web3 users. Interest rates adjust dynamically based on market utilization and the risk model assigned to each asset class, supported by real-time oracles like **Pyth** and **Orakl**, while the AI powered by the **AWS Bedrock AI engine** using the **Claude 4** model and operates within a secure TEE environment inside **AWS Nitro Enclaves**.
 
 <img width="1920" height="1080" alt="Kilolend - KRW Stablecoin Hackathon  (1)" src="https://github.com/user-attachments/assets/e609d4b4-1ba4-4373-9160-1ccd26802615" />
 
@@ -139,6 +139,9 @@ The AI maintains context across chat sessions and adapts responses based on pref
 
 ### Secure Transaction Execution
 
+<img width="1277" height="300" alt="encalve drawio" src="https://github.com/user-attachments/assets/36257d2f-d477-41b6-90da-5f757e07a31c" />
+
+
 This is an experimental feature available only to whitelisted users during the beta testing phase that allows execute transactions securely on behalf of users through AWS Nitro Enclaves, providing hardware-level security similar to Phala TEE but on AWS infrastructure. Access will be gradually expanded based on testing results and user feedback. 
 
 **How it works:**
@@ -147,11 +150,9 @@ This is an experimental feature available only to whitelisted users during the b
 - Private keys never leave the secure enclave, ensuring maximum security
 - Complete audit trail and cryptographic verification of execution environment
 
-**Security Features:**
-- Hardware-level isolation for private key protection
-- No network access from the enclave environment
-- Cryptographically verifiable execution environment
-- Complete transaction audit trail
+KiloLend leverages hardware-level isolation to ensure private key protection, with no network access permitted from within the enclave environment. Transactions are executed in a cryptographically verifiable environment, and every action is recorded through a complete audit trail, ensuring full transparency and accountability.
+
+The current version separates the AI agent on the client side while tasks are executed in the TEE environment. In future versions, the AI agent will be fully integrated within the TEE, enabling secure and autonomous transaction execution. 
 
 ## How to Test
 
