@@ -410,7 +410,7 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: any
                   </WalletCell>
                   <KiloCell>{formatKilo(user.kiloReward)}</KiloCell>
                   {/* <TableCell>{user.share.toFixed(2)}</TableCell>  */}
-                  <TableCell>{user.multiplier}x</TableCell> 
+                  <TableCell> {parseFloat(Number(user.multiplier).toFixed(4))}x</TableCell> 
                   <TableCell>{user.basePoints.toFixed(2)}</TableCell> 
                   <TableCell>{user.baseTVL.toFixed(2)}</TableCell> 
                   <TableCell>

@@ -5,6 +5,7 @@ import styled, { keyframes } from 'styled-components';
 import { useState, useEffect } from 'react';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { AlertCircle, RefreshCw, HelpCircle, MessageCircle, Settings } from 'react-feather';
+import { ethers } from "ethers";
 
 const pulse = keyframes`
   0%, 100% {
@@ -438,8 +439,6 @@ interface KiloPointsModalProps {
 export const KiloPointsModal = ({ isOpen, onClose }: KiloPointsModalProps) => {
 
   const { account } = useWalletAccountStore();
-
-
   const [pointsData, setPointsData] = useState<PointsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -456,8 +455,10 @@ export const KiloPointsModal = ({ isOpen, onClose }: KiloPointsModalProps) => {
 
   try { 
 
+    const parsedAddress= ethers.getAddress(account)
+
     const response = await fetch(
-      `https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/users/${account}`
+      `https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/users/${parsedAddress}`
     );
     const data = await response.json();
   
