@@ -105,7 +105,7 @@ export const DialogModal = ({ isOpen, onClose, title, children }: DialogModalPro
     };
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   return (
     <ModalOverlay $isOpen={isOpen} onClick={handleOverlayClick}>

@@ -17,6 +17,8 @@ import { LeaderboardModal } from './LeaderboardModal';
 import { KiloPointsModal } from "./KiloModal"
 import { InviteModal } from './InviteModal';
 import { AIChatModal } from './AIChatModal';
+import { SwapModal } from './SwapModal';
+import { BoostModal } from './BoostModal';
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -236,6 +238,20 @@ export const GlobalModalManager = () => {
         return (
           <LeaderboardModal
             isOpen={isOpen}
+            onClose={closeModal}
+          />
+        );
+      case 'swap':
+        return (
+          <SwapModal
+            // isOpen={isOpen}
+            onClose={closeModal}
+          />
+        );
+      case 'boost':
+        return (
+          <BoostModal
+            // isOpen={isOpen}
             onClose={closeModal}
           />
         );

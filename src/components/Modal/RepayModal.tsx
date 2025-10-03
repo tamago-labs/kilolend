@@ -348,7 +348,7 @@ export const RepayModal = ({
     };
 
     checkApprovalNeeded();
-  }, [market, amount, checkAllowance]);
+  }, [market, amount]);
 
   // Calculate repay data when amount changes
   useEffect(() => {
@@ -381,7 +381,7 @@ export const RepayModal = ({
     };
 
     calculateRepayData();
-  }, [amount, market, account, calculateBorrowingPower, maxDebtAmount]);
+  }, [amount, market, account, maxDebtAmount]);
 
   const handleQuickAmount = (percentage: number) => {
     const quickAmount = (maxRepayAmount * percentage / 100).toString();

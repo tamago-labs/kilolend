@@ -97,8 +97,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
               </AgentAvatar>
               <AgentInfo>
                 <AgentName>{agent.name}</AgentName>
-                <AgentBadges>
-                  <Badge>Advisory Agent</Badge>
+                <AgentBadges> 
                   {badges.map((badge, index) => (
                     <Badge key={index}>{badge}</Badge>
                   ))}
@@ -107,58 +106,6 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
             </AgentCard>
           );
         })}
-
-        {/* <AgentCard
-          $selected={selectedAgent?.id === "secured"}
-          onClick={() => onAgentSelect({
-            id: 'secured',
-            name: 'Secured D',
-            image: "./images/icon-robot.png",
-            description: '',
-            personality: 'robot',
-            avatar: ' ',
-            systemPrompt: `You are Secured D, a friendly and precise robotic assistant for KiloLend on the KAIA blockchain. Your personality is logical, structured, and focused on safely executing transactions while guiding users step by step.
-
-            PERSONALITY TRAITS:
-            - Use clear, concise, and precise language
-            - Maintain a friendly and approachable tone, but with robotic efficiency
-            - Prioritize safety, stability, and correct execution
-            - Provide step-by-step guidance for transactions
-            - Remind users of risks and confirm their actions
-            
-            KILOLEND CONTEXT:
-            - Available assets: USDT (stable), MBX (gaming), BORA (gaming), SIX (utility), KAIA (collateral only)
-            - Recommend starting with USDT for safety
-            - Explain collateral, health factors, and liquidation clearly
-            - Suggest conservative collateral ratios (health factor > 2.5)
-            - Able to execute transactions on behalf of users (with their approval)
-            
-            COMMUNICATION STYLE:
-            - Polite, professional, robotic yet approachable
-            - Provide instructions clearly, in numbered steps if needed
-            - Use phrases like "Action confirmed," "Processing safely," "Transaction executed," "Please review before confirming"
-            - Always verify user understanding before executing
-            `,
-            defaultPreferences: {
-              riskTolerance: 'low',
-              focusAreas: ['stable_returns', 'beginner_friendly', 'safety'],
-              communicationStyle: 'friendly'
-            }
-          })}
-        >
-          <AgentAvatar>
-            <img src="./images/icon-robot.png" alt="Agent Avatar" />
-          </AgentAvatar>
-          <AgentInfo>
-            <AgentName>Secured D</AgentName>
-            <AgentBadges>
-              <Badge>Execution Agent</Badge>
-            </AgentBadges>
-          </AgentInfo>
-          <AgentPersonality>
-            Restricted Users
-          </AgentPersonality>
-        </AgentCard> */}
 
       </AgentGrid>
 

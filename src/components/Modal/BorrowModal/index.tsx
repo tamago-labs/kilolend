@@ -110,7 +110,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
       }
     };
     loadMaxBorrowData();
-  }, [selectedAsset, account, calculateMaxBorrowAmount]);
+  }, [selectedAsset, account]);
 
   const handleAssetSelect = (asset: any) => {
     setSelectedAsset(asset);
@@ -212,17 +212,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
     if (isLoadingBorrowData) {
       return <LoadingMessage>Loading borrowing power data...</LoadingMessage>;
     }
-
-    // Debug logging for borrowing power data
-    // if (borrowingPowerData) {
-    //   console.log('Current borrowing power data:', {
-    //     totalCollateralValue: borrowingPowerData.totalCollateralValue,
-    //     totalBorrowValue: borrowingPowerData.totalBorrowValue,
-    //     borrowingPowerRemaining: borrowingPowerData.borrowingPowerRemaining,
-    //     healthFactor: borrowingPowerData.healthFactor,
-    //     enteredMarkets: borrowingPowerData.enteredMarkets?.length || 0
-    //   });
-    // }
+ 
  
     switch (currentStep) {
       case 1:

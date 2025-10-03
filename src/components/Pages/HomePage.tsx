@@ -111,7 +111,7 @@ const IconButton = styled.div`
   transition: all 0.2s;
   padding: 12px 8px;
   border-radius: 12px;
-
+ 
   @media (max-width: 480px) {
     padding: 4px 6px;
     border-radius: 8px;
@@ -119,27 +119,30 @@ const IconButton = styled.div`
 `;
 
 const gradients = [
-  "linear-gradient(135deg, #ff6363, #ff3d3d)", // red
-  "linear-gradient(135deg, #ffb347, #ffcc33)", // yellow-orange
-  "linear-gradient(135deg, #6a5acd, #483d8b)", // slate purple
-  "linear-gradient(135deg, #20c997, #17a2b8)", // teal
-  "linear-gradient(135deg, #ff6f91, #ff4477)", // rose
-  "linear-gradient(135deg, #ffa07a, #ff6347)", // coral
-  "linear-gradient(135deg, #d3d3d3, #a9a9a9)", // light-gray
-  "linear-gradient(135deg, #2c2c54, #1e1e3f)", // dark-blue
+  "linear-gradient(135deg, #ff6363, #ff3d3d)", // 0 - red (Invite)
+  "linear-gradient(135deg, #ffb347, #ffcc33)", // 1 - yellow-orange (Leaderboard)
+  "linear-gradient(135deg, #6a5acd, #483d8b)", // 2 - slate purple (Borrow)
+  "linear-gradient(135deg, #20c997, #17a2b8)", // 3 - teal (Supply)
+  "linear-gradient(135deg, #ff6f91, #ff4477)", // 4 - rose (Send)
+  "linear-gradient(135deg, #ffa07a, #ff6347)", // 5 - coral (Ask AI)
+  "linear-gradient(135deg, #d3d3d3, #a9a9a9)", // 6 - light-gray (FAQ)
+  "linear-gradient(135deg, #2c2c54, #1e1e3f)", // 7 - dark-blue (KILO)
+  "linear-gradient(135deg, #a855f7, #ec4899)", // 8 - purple-pink (BOOST) 
+  "linear-gradient(135deg, #06b6d4, #3b82f6)", // 9 - cyan-blue (SWAP) 
 ];
 
 const IconCircle = styled.div<{ $index?: any; }>`
   width: 100%;
-  aspect-ratio: 1 / 1; /* keep perfect square */
+  aspect-ratio: 1 / 1;
   border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: clamp(24px, 4vw, 40px); /* scale with screen size */
+  font-size: clamp(24px, 4vw, 40px);
   margin-bottom: 8px;
   transition: all 0.2s;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
 
   background: ${({ $index }: any) => gradients[Number($index)! % gradients.length]};
 
@@ -148,6 +151,19 @@ const IconCircle = styled.div<{ $index?: any; }>`
     margin-bottom: 6px;
     border-radius: 8px;
   }
+`;
+
+const APYBadge = styled.div`
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background: #10b981;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 3px 6px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 `;
 
 const IconLabel = styled.span`
@@ -184,16 +200,14 @@ interface HomePageProps {
 }
 
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
-  // Use the welcome modal hook instead of useState
   const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
-
   const { openModal } = useModalStore();
 
   // Initialize market data and real-time prices
   useMarketDataWithPrices();
 
   const handleWelcomeClose = () => {
-    markAsShown(); // This will set localStorage and hide modal
+    markAsShown();
   };
 
   const handleAskAI = () => {
@@ -228,9 +242,16 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     openModal('send');
   };
 
+  const handleBoost = () => {
+    openModal('boost');
+  };
+
+  const handleSwap = () => {
+    openModal('swap');
+  };
+
   return (
     <PageContainer>
-      {/* New Welcome Modal with show once a day logic */}
       <WelcomeModal
         isOpen={showWelcome}
         onClose={handleWelcomeClose}
@@ -238,12 +259,10 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
 
       {/* Top Cards Section */}
       <TopCardsContainer>
-        {/* AI Assistant Welcome Card with Swiper */}
         <Card $gradient onClick={handleAskAI}>
           <WelcomeSwiper />
         </Card>
 
-        {/* Token Price Card with Swiper */}
         <Card>
           <TokenPriceSwiper />
         </Card>
@@ -253,6 +272,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
       <ActionsSection>
         <SectionTitle>Quick Actions</SectionTitle>
         <IconGrid>
+          {/* Row 1 */}
           <IconButton onClick={handleSupply}>
             <IconCircle $index="3">
               <IconImage
@@ -280,15 +300,19 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <IconLabel>Ask AI</IconLabel>
           </IconButton>
 
-          <IconButton onClick={handleLearn}>
-            <IconCircle $index="6">
+          {/* Boost with APY badge */}
+          <IconButton onClick={handleBoost}>
+            <IconCircle $index="9">
               <IconImage
-                src="./images/icon-faq.png"
-                alt="LEARN"
+                src="./images/icon-rocket.png"
+                alt="BOOST"
               />
+              {/* <APYBadge>+1.5x</APYBadge> */}
             </IconCircle>
-            <IconLabel>FAQ</IconLabel>
+            <IconLabel>Boost</IconLabel>
           </IconButton>
+
+          {/* Row 2 */}
 
           <IconButton onClick={handleKilo}>
             <IconCircle $index="7">
@@ -320,6 +344,20 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             <IconLabel>Leaderboard</IconLabel>
           </IconButton>
 
+
+          {/* Swap */}
+          <IconButton onClick={handleSwap}>
+            <IconCircle $index="5">
+              <IconImage
+                src="./images/icon-trade.png"
+                alt="SWAP"
+              />
+            </IconCircle>
+            <IconLabel>Swap</IconLabel>
+          </IconButton>
+
+
+          {/* Row 3 */}
           <IconButton onClick={handleSend}>
             <IconCircle $index="4">
               <IconImage
@@ -329,6 +367,18 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
             </IconCircle>
             <IconLabel>Send</IconLabel>
           </IconButton>
+
+          <IconButton onClick={handleLearn}>
+            <IconCircle $index="6">
+              <IconImage
+                src="./images/icon-faq.png"
+                alt="LEARN"
+              />
+            </IconCircle>
+            <IconLabel>FAQ</IconLabel>
+          </IconButton>
+
+
         </IconGrid>
       </ActionsSection>
     </PageContainer>

@@ -25,6 +25,8 @@ export type ModalType =
   | 'feedback'
   | 'faucet'
   | 'send'
+  | 'boost'      // NEW
+  | 'swap'       // NEW
   | null;
 
 interface ModalData {

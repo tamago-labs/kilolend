@@ -277,13 +277,11 @@ export const WelcomeModal = ({ isOpen, onClose }: WelcomeModalProps) => {
     >
       <WelcomeContent>
         <HeroSection>
-          <HeroContent>
-            {/* <WelcomeTitle>KiloLend</WelcomeTitle> */}
+          <HeroContent> 
             <WelcomeSubtitle>
               The first AI-powered DeFi lending on LINE
             </WelcomeSubtitle> 
-            <KiloAnnouncement>
-              {/* <AnnouncementEmoji>🎉</AnnouncementEmoji> */}
+            <KiloAnnouncement> 
               <AnnouncementText>
                 Now live on KAIA Mainnet. Get ready for KILO Points starting 17 Sep.
               </AnnouncementText>

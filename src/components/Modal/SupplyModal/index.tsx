@@ -81,7 +81,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     };
 
     checkApprovalNeeded();
-  }, [selectedAsset, amount, checkAllowance]);
+  }, [selectedAsset, amount]);
 
   // Check if market is already entered when asset is selected
   useEffect(() => {
@@ -108,7 +108,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     };
 
     checkMarketStatus();
-  }, [selectedAsset, account, isMarketEntered]);
+  }, [selectedAsset, account]);
 
   const handleAssetSelect = (asset: any) => {
     setSelectedAsset(asset);

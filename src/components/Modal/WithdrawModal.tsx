@@ -342,7 +342,7 @@ export const WithdrawModal = ({
     };
 
     calculateWithdrawData();
-  }, [amount, market, account, calculateBorrowingPower, maxWithdrawAmount]);
+  }, [amount, market, account, maxWithdrawAmount]);
 
   const handleQuickAmount = (percentage: number) => {
     const quickAmount = (maxWithdrawAmount * percentage / 100).toString();
