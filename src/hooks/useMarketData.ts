@@ -102,7 +102,7 @@ export const useMarketData = () => {
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [fetchAllMarketData]);
+  }, []);
 
   return {
     isLoading,

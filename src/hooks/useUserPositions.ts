@@ -285,7 +285,7 @@ export const useUserPositions = () => {
     return () => {
       clearCurrentInterval();
     };
-  }, [clearCurrentInterval]);
+  }, []);
 
   const totals = calculateTotals();
 

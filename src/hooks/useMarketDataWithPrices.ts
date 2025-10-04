@@ -23,7 +23,7 @@ export const useMarketDataWithPrices = () => {
       // console.log('Updating market store with real prices:', priceData.prices);
       updatePriceData(priceData.prices);
     }
-  }, [priceData.prices, updatePriceData]);
+  }, [priceData.prices]);
 
   return {
     // Market data

@@ -230,7 +230,7 @@ export const useMarketTokenBalances = () => {
     return () => {
       clearCurrentInterval();
     };
-  }, [clearCurrentInterval]);
+  }, []);
 
   return {
     balances,
