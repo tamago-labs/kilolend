@@ -12,7 +12,7 @@ import "@kaiachain/contracts/KIP/token/KIP7/IKIP7.sol";
  * @dev 
  *  - Extends core ERC4626 concepts (shares/assets, deposits, withdrawals)
  *    while adding custom mechanics for:
- *      • Time-locked deposits (15/30 days)
+ *      • Time-locked deposits (15 days) for bot-flow
  *      • Early withdrawal penalties
  *      • Bot can withdraw funds to manage externally
  *      • Deposit caps per user and per vault
@@ -80,7 +80,6 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
 
     uint256 public minDeposit;
     bool public isPaused;
-    uint256 public performanceFee;
     uint256 public accumulatedFees;
     address public feeRecipient;
     uint256 public earlyWithdrawalPenalty;
@@ -172,7 +171,6 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         maxDepositPerUser = 1000 * (10 ** _assetDecimals);       // 1,000 KAIA per user
         maxTotalDeposits = 500_000 * (10 ** _assetDecimals);    // 500,000 KAIA total
         
-        performanceFee = 1000;
         earlyWithdrawalPenalty = 500; // 5% 
         feeRecipient = msg.sender;
         botAddress = msg.sender;
@@ -219,7 +217,7 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         if (isPaused) revert VaultPaused();
         if (msg.value == 0) revert ZeroAmount();
         if (beneficiary == address(0)) revert InvalidBeneficiary();
-        if (lockDurationDays != 15 && lockDurationDays != 30) revert InvalidLockDuration();
+        if (lockDurationDays != 15) revert InvalidLockDuration();
         
         uint256 lockBlocks = lockDurationDays * 1 days / 1 seconds;
         return _processDeposit(msg.sender, beneficiary, msg.value, lockBlocks, true);
@@ -232,7 +230,7 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         if (isPaused) revert VaultPaused();
         if (assets == 0) revert ZeroAmount();
         if (beneficiary == address(0)) revert InvalidBeneficiary();
-        if (lockDurationDays != 15 && lockDurationDays != 30) revert InvalidLockDuration();
+        if (lockDurationDays != 15) revert InvalidLockDuration();
         
         uint256 lockBlocks = lockDurationDays * 1 days / 1 seconds;
         IKIP7(asset).transferFrom(msg.sender, address(this), assets);
@@ -420,14 +418,7 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     function updateManagedAssets(uint256 newTotal) external onlyOwner {
         uint256 oldTotal = totalManagedAssets;
         int256 profitLoss = int256(newTotal) - int256(oldTotal);
-        
-        if (profitLoss > 0 && performanceFee > 0) {
-            uint256 profit = uint256(profitLoss);
-            uint256 fee = (profit * performanceFee) / 10000;
-            accumulatedFees += fee;
-            newTotal -= fee;
-        }
-        
+
         totalManagedAssets = newTotal;
         emit AssetsUpdated(oldTotal, newTotal, profitLoss);
     }
@@ -542,7 +533,7 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     }
     
     function _validateAndConvertLockDuration(uint256 days_) internal pure returns (uint256 blocks) {
-        if (days_ != 0 && days_ != 15 && days_ != 30) revert InvalidLockDuration();
+        if (days_ != 0 && days_ != 15) revert InvalidLockDuration();
         return days_ * 1 days / 1 seconds;
     }
     

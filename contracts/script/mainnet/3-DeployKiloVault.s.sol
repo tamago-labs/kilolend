@@ -57,8 +57,7 @@ contract DeployKiloVault is Script {
         console.log("- Decimals:", vault.assetDecimals());
         console.log("- Min Deposit:", vault.minDeposit() / 1e18, "KAIA");
         console.log("- Max Per User:", vault.maxDepositPerUser() / 1e18, "KAIA");
-        console.log("- Max Total:", vault.maxTotalDeposits() / 1e18, "KAIA");
-        console.log("- Performance Fee:", vault.performanceFee() / 100, "%");
+        console.log("- Max Total:", vault.maxTotalDeposits() / 1e18, "KAIA"); 
         console.log("- Early Penalty:", vault.earlyWithdrawalPenalty() / 100, "%");
         console.log("- Bot Address:", vault.botAddress(), "(needs to be configured)");
         console.log("- Owner:", vault.owner());

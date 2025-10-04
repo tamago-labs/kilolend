@@ -64,8 +64,7 @@ contract ConfigureKiloVault is Script {
         console.log("- Max Per User:", vault.maxDepositPerUser() / 1e18, "KAIA");
         console.log("- Max Total:", vault.maxTotalDeposits() / 1e18, "KAIA");
         console.log("- Min Deposit:", vault.minDeposit() / 1e18, "KAIA");
-        console.log("- Early Penalty:", vault.earlyWithdrawalPenalty() / 100, "%");
-        console.log("- Performance Fee:", vault.performanceFee() / 100, "%");
+        console.log("- Early Penalty:", vault.earlyWithdrawalPenalty() / 100, "%"); 
         console.log("- Is Paused:", vault.isPaused());
         console.log("- Owner:", vault.owner());
         console.log("");

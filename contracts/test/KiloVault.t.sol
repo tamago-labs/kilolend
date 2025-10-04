@@ -75,8 +75,7 @@ contract KiloVaultTest is Test {
     function testDefaultConfiguration() public {
         assertEq(vault.minDeposit(), 10 ether);
         assertEq(vault.maxDepositPerUser(), 1000 ether);
-        assertEq(vault.maxTotalDeposits(), 500_000 ether);
-        assertEq(vault.performanceFee(), 1000); // 10%
+        assertEq(vault.maxTotalDeposits(), 500_000 ether); 
         assertEq(vault.earlyWithdrawalPenalty(), 500); // 5%
         assertFalse(vault.isPaused());
     }
@@ -126,24 +125,13 @@ contract KiloVaultTest is Test {
         
         vm.stopPrank();
     }
-    
-    function testUserDeposit30DayLock() public {
-        vm.startPrank(user1);
-        
-        uint256 depositAmount = 100 ether;
-        vault.depositNative{value: depositAmount}(30);
-        
-        (,,, uint256 lockDuration,,,,,) = vault.getUserDeposit(user1, 0);
-        assertEq(lockDuration, 30 days);
-        
-        vm.stopPrank();
-    }
+
     
     function testRevertInvalidLockDuration() public {
         vm.startPrank(user1);
         
         vm.expectRevert(KiloVault.InvalidLockDuration.selector);
-        vault.depositNative{value: 100 ether}(10); // Invalid: only 0, 15, 30 allowed
+        vault.depositNative{value: 100 ether}(10); // Invalid: only 0, 15 allowed
         
         vm.stopPrank();
     }
@@ -175,11 +163,8 @@ contract KiloVaultTest is Test {
         // Deposit 2: 15-day lock
         vault.depositNative{value: 75 ether}(15);
         
-        // Deposit 3: 30-day lock
-        vault.depositNative{value: 100 ether}(30);
-        
-        assertEq(vault.getUserDepositCount(user1), 3);
-        assertEq(vault.userTotalDeposits(user1), 225 ether);
+        assertEq(vault.getUserDepositCount(user1), 2);
+        assertEq(vault.userTotalDeposits(user1), 125 ether);
         
         vm.stopPrank();
     }
@@ -202,23 +187,13 @@ contract KiloVaultTest is Test {
         
         vm.stopPrank();
     }
-    
-    function testBotDepositOnBehalf30Day() public {
-        vm.startPrank(bot);
-        
-        vault.botDepositNativeOnBehalf{value: 50 ether}(user1, 30);
-        
-        (,,, uint256 lockDuration,,,,, ) = vault.getUserDeposit(user1, 0);
-        assertEq(lockDuration, 30 days);
-        
-        vm.stopPrank();
-    }
+
     
     function testRevertBotDepositNoLock() public {
         vm.startPrank(bot);
         
         vm.expectRevert(KiloVault.InvalidLockDuration.selector);
-        vault.botDepositNativeOnBehalf{value: 50 ether}(user1, 0); // Bot must use 15 or 30
+        vault.botDepositNativeOnBehalf{value: 50 ether}(user1, 0); // Bot must use 15
         
         vm.stopPrank();
     }
@@ -400,9 +375,7 @@ contract KiloVaultTest is Test {
         // Bot makes profit
         vault.updateManagedAssets(120 ether);
         
-        // Check that fee was taken (10% of 20 ether profit = 2 ether)
-        assertEq(vault.accumulatedFees(), 2 ether);
-        assertEq(vault.totalManagedAssets(), 118 ether); // 120 - 2
+        assertEq(vault.totalManagedAssets(), 120 ether);
     }
     
     // ========================================================================
