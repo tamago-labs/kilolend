@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useKaiaWalletSdk } from '@/components/Wallet/Sdk/walletSdk.hooks';
-import { KAIA_TESTNET_TOKENS } from '@/utils/tokenConfig';
+import { KAIA_MAINNET_TOKENS, KAIA_TESTNET_TOKENS } from '@/utils/tokenConfig';
 import { ethers } from 'ethers';
 import { useAppStore } from '@/stores/appStore';
 
@@ -19,6 +19,10 @@ export const useSendTransaction = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { gasLimit } = useAppStore();
+  
+  // Determine which network we're on based on environment
+  const isMainnet = process.env.NEXT_PUBLIC_CHAIN_ID === '8217';
+  const TOKENS = isMainnet ? KAIA_MAINNET_TOKENS : KAIA_TESTNET_TOKENS;
 
   const sendTokens = useCallback(async ({
     tokenSymbol,
@@ -47,7 +51,7 @@ export const useSendTransaction = () => {
         await sendTransaction([transaction]);
       } else {
         // ERC-20 token transfer
-        const tokenConfig = KAIA_TESTNET_TOKENS[tokenSymbol as keyof typeof KAIA_TESTNET_TOKENS];
+        const tokenConfig = TOKENS[tokenSymbol as keyof typeof TOKENS];
         if (!tokenConfig) {
           throw new Error('Token configuration not found');
         }
@@ -81,7 +85,7 @@ export const useSendTransaction = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [account, sendTransaction, gasLimit]);
+  }, [account, sendTransaction, gasLimit, TOKENS]);
 
   const resetError = useCallback(() => {
     setError(null);
