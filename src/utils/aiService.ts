@@ -148,7 +148,7 @@ AVAILABLE MARKETS:
 - MBX: MARBLEX gaming token with medium volatility
 - BORA: Gaming ecosystem token with growth potential
 - SIX: SIX Network utility token
-- KAIA: Native Kaia token (collateral only)
+- KAIA: Native Kaia token
 
 ANALYSIS FRAMEWORK:
 1. Risk Assessment: Match user risk tolerance with appropriate pools

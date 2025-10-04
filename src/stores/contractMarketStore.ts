@@ -140,7 +140,7 @@ const initialContractMarkets: ContractMarket[] = [
     symbol: 'KAIA',
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
     iconType: 'image' as const,
-    description: 'Native KAIA token - collateral only',
+    description: 'Native KAIA token',
     marketAddress: '0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3',
     tokenAddress: '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE',
     decimals: 18,
@@ -152,7 +152,7 @@ const initialContractMarkets: ContractMarket[] = [
     price: 0.15,
     priceChange24h: -1.2,
     isActive: true,
-    isCollateralOnly: true
+    isCollateralOnly: false
   }
 ];
 

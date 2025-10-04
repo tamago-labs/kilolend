@@ -185,13 +185,7 @@ export const SupplyAmountInput = ({
         <StatRow>
           <StatLabel>Available Balance</StatLabel>
           <StatValue>{userBalance} {selectedAsset.symbol}</StatValue>
-        </StatRow>
-       {/* <StatRow>
-          <StatLabel>Asset Type</StatLabel>
-          <StatValue>
-            {selectedAsset.isCollateralOnly ? 'Collateral Only' : 'Lending Asset'}
-          </StatValue>
-        </StatRow>*/}
+        </StatRow> 
         <StatRow>
           <StatLabel>{selectedAsset.symbol} Price</StatLabel>
           <StatValue>${selectedAsset.price.toFixed(4)}</StatValue>

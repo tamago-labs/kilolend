@@ -359,7 +359,7 @@ AVAILABLE MARKETS:
 - MBX: MARBLEX gaming token (6.9% APY supply)
 - BORA: Gaming ecosystem token (7.8% APY supply)  
 - SIX: SIX Network utility token (8.1% APY supply)
-- KAIA: Native Kaia token (collateral only)
+- KAIA: Native Kaia token (native token)
 
 CURRENT MARKET CONDITIONS:
 ${globalMarketData.length > 0 ? this.formatMarketData() : 'Market data loading...'}

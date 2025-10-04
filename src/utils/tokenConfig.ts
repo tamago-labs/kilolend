@@ -176,6 +176,7 @@ export const KAIA_MAINNET_CONFIG = {
   chainId: 8217,
   name: 'KAIA Mainet',
   rpcUrl: 'https://public-en.node.kaia.io',
+  // rpcUrl: "https://rpc.ankr.com/kaia",
   blockExplorer: 'https://kaiascan.io',
   nativeCurrency: {
     name: 'KAIA',

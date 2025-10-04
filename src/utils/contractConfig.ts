@@ -14,6 +14,7 @@ export const KAIA_TESTNET_CONFIG = {
 export const KAIA_MAINNET_CONFIG = {
   chainId: 8217,
   chainName: 'Kaia Mainnet',
+  // rpcUrl: "https://rpc.ankr.com/kaia",
   rpcUrl: 'https://public-en.node.kaia.io',
   blockExplorer: 'https://kaiascan.io',
   nativeCurrency: {
@@ -110,8 +111,8 @@ export const MARKET_CONFIG = {
     tokenAddress: CONTRACT_ADDRESSES.KAIA,
     decimals: 18,
     isActive: true,
-    isCollateralOnly: true,
-    description: 'Native KAIA token - collateral only',
+    isCollateralOnly: false,
+    description: 'Native KAIA token',
     interestModel: 'Collateral'
   }
 };

@@ -156,9 +156,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
     setFinalAgent(null);
     setError(null);
   };
-
-  console.log(":finalAgent", finalAgent)
-
+ 
   const renderStepContent = () => {
     switch (currentStep) {
       case 1:
