@@ -525,11 +525,11 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           <IconButton onClick={handleBuy}>
             <IconCircle $index="10">
               <IconImage
-                src="./images/icon-buy.png"
+                src="./images/icon-credit-card.png"
                 alt="BUY"
               />
             </IconCircle>
-            <IconLabel>Buy Crypto</IconLabel>
+            <IconLabel>Starter Package</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleLearn}>
