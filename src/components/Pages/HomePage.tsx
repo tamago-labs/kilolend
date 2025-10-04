@@ -129,6 +129,7 @@ const gradients = [
   "linear-gradient(135deg, #2c2c54, #1e1e3f)", // 7 - dark-blue (KILO)
   "linear-gradient(135deg, #a855f7, #ec4899)", // 8 - purple-pink (BOOST) 
   "linear-gradient(135deg, #06b6d4, #3b82f6)", // 9 - cyan-blue (SWAP) 
+  "linear-gradient(135deg, #10b981, #059669)", //  10 - Green
 ];
 
 const IconCircle = styled.div<{ $index?: any; }>`
@@ -199,7 +200,7 @@ interface HomePageProps {
   onAIDealsGenerated?: (userQuery: string) => void;
 }
 
-export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
+export const HomePageOLD = ({ onAIDealsGenerated }: HomePageProps) => {
   // Use the welcome modal hook instead of useState
   const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
 
@@ -243,6 +244,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const handleSend = () => {
     openModal('send');
   };
+
 
 
   return (
@@ -349,7 +351,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   );
 };
 
-export const HomePageNEW = ({ onAIDealsGenerated }: HomePageProps) => {
+export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
   const { openModal } = useModalStore();
 
@@ -400,6 +402,10 @@ export const HomePageNEW = ({ onAIDealsGenerated }: HomePageProps) => {
     openModal('swap');
   };
 
+  const handleBuy = () => {
+    openModal("buy")
+  }
+
   return (
     <PageContainer>
       <WelcomeModal
@@ -443,14 +449,7 @@ export const HomePageNEW = ({ onAIDealsGenerated }: HomePageProps) => {
             <IconLabel>Borrow</IconLabel>
           </IconButton>
 
-          <IconButton onClick={handleAskAI}>
-            <IconCircle $index="5">
-              <RandomIcon />
-            </IconCircle>
-            <IconLabel>Ask AI</IconLabel>
-          </IconButton>
-
-          {/* Boost with APY badge */}
+           {/* Boost with APY badge */}
           <IconButton onClick={handleBoost}>
             <IconCircle $index="9">
               <IconImage
@@ -460,6 +459,13 @@ export const HomePageNEW = ({ onAIDealsGenerated }: HomePageProps) => {
               {/* <APYBadge>+1.5x</APYBadge> */}
             </IconCircle>
             <IconLabel>Boost</IconLabel>
+          </IconButton>
+
+          <IconButton onClick={handleAskAI}>
+            <IconCircle $index="5">
+              <RandomIcon />
+            </IconCircle>
+            <IconLabel>Ask AI</IconLabel>
           </IconButton>
 
           {/* Row 2 */}
@@ -494,6 +500,16 @@ export const HomePageNEW = ({ onAIDealsGenerated }: HomePageProps) => {
             <IconLabel>Leaderboard</IconLabel>
           </IconButton>
 
+          <IconButton onClick={handleSend}>
+            <IconCircle $index="4">
+              <IconImage
+                src="./images/icon-send.png"
+                alt="SEND"
+              />
+            </IconCircle>
+            <IconLabel>Send</IconLabel>
+          </IconButton>
+          {/* Row 3 */}
 
           {/* Swap */}
           <IconButton onClick={handleSwap}>
@@ -506,16 +522,14 @@ export const HomePageNEW = ({ onAIDealsGenerated }: HomePageProps) => {
             <IconLabel>Swap</IconLabel>
           </IconButton>
 
-
-          {/* Row 3 */}
-          <IconButton onClick={handleSend}>
-            <IconCircle $index="4">
+          <IconButton onClick={handleBuy}>
+            <IconCircle $index="10">
               <IconImage
-                src="./images/icon-send.png"
-                alt="SEND"
+                src="./images/icon-buy.png"
+                alt="BUY"
               />
             </IconCircle>
-            <IconLabel>Send</IconLabel>
+            <IconLabel>Buy Crypto</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleLearn}>
