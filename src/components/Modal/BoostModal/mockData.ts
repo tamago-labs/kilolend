@@ -1,153 +1,336 @@
 /**
- * Mock data for Boost Vault UI
- * Based on realistic stKAIA leverage strategy
+ * Mock data for AI Boost Vaults
+ * Three vault strategies with distinct risk/return profiles
  */
 
-export interface VaultMockData {
-  // Asset info
-  baseAsset: string;
-  stakingAPY: number;
-  borrowAPY: number;
-  
-  // Vault strategy
+export interface VaultStrategy {
+  id: string;
+  name: string;
+  asset: string;
+  description: string;
+  strategy: string;
+  riskLevel: 'Low' | 'Medium' | 'Medium-High' | 'High';
+  baseAPY: number;
+  boostedAPY: number;
   leverageRatio: number;
   targetHealthFactor: number;
-  isActive: boolean;
-  isProfitable: boolean;
-  
-  // APY calculations
-  grossEarnings: number;
-  borrowCosts: number;
-  netAPY: number;
-  boostMultiplier: number;
-  
-  // Vault stats
-  totalValueLocked: string;
+  minDeposit: string;
+  withdrawalTime: string;
+  tvl: string;
   totalUsers: number;
-  avgHealthFactor: number;
-  
-  // User position (null if not deposited)
-  userDeposit: string | null;
-  userShares: string | null;
-  currentValue: string | null;
-  profitLoss: string | null;
+  icon: string;
+  image: string;
 }
 
-export const MOCK_VAULT_DATA: VaultMockData = {
-  // Asset info
-  baseAsset: 'stKAIA',
-  stakingAPY: 5.5,        // stKAIA staking rewards (realistic)
-  borrowAPY: 3.8,         // Optimistic USDT borrow rate
-  
-  // Vault strategy
-  leverageRatio: 2.5,
-  targetHealthFactor: 1.5,
-  isActive: true,
-  isProfitable: true,
-  
-  // APY calculations
-  // Gross = stakingAPY × leverageRatio = 5.5 × 2.5 = 13.75
-  grossEarnings: 13.75,
-  // Borrow = borrowAPY × (leverageRatio - 1) = 3.8 × 1.5 = 5.7
-  borrowCosts: 5.7,
-  // Net = gross - borrow = 13.75 - 5.7 = 8.05
-  netAPY: 8.05,
-  // Boost = net / base = 8.05 / 5.5 = 1.46
-  boostMultiplier: 1.46,
-  
-  // Vault stats
-  totalValueLocked: '87,450',
-  totalUsers: 34,
-  avgHealthFactor: 1.52,
-  
-  // User position (empty for first-time users)
-  userDeposit: null,
-  userShares: null,
-  currentValue: null,
-  profitLoss: null,
-};
+export const VAULT_STRATEGIES: VaultStrategy[] = [
+  {
+    id: 'kaia-leverage',
+    name: 'KAIA Leverage Vault',
+    asset: 'KAIA',
+    description: 'DeFi leverage loop strategy for maximum yields',
+    strategy: 'KAIA → Stake to stKAIA → Supply to KiloLend → Borrow USDT → Swap to stKAIA (via Swapscanner) → Repeat until Health Factor ≈ 1.5 → AI auto-rebalances',
+    riskLevel: 'Medium-High',
+    baseAPY: 4.5,
+    boostedAPY: 19.2,
+    leverageRatio: 2.5,
+    targetHealthFactor: 1.5,
+    minDeposit: '10 KAIA',
+    withdrawalTime: '1-2 hours',
+    tvl: '$56,567',
+    totalUsers: 1542,
+    icon: '🚀',
+    image:"https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png"
+  },
+  {
+    id: 'usdt-treasury',
+    name: 'USDT Stability Vault',
+    asset: 'USDT',
+    description: 'US Treasury-backed yields with low risk',
+    strategy: 'USDT → Bridge via Chainlink CCIP → Ethereum → Convert to USDY (Ondo Finance) → Earn U.S. Treasury yields → Borrow USDT → Reinvest',
+    riskLevel: 'Low',
+    baseAPY: 3.8,
+    boostedAPY: 8.1,
+    leverageRatio: 1.5,
+    targetHealthFactor: 2.0,
+    minDeposit: '100 USDT',
+    withdrawalTime: '24-48 hours',
+    tvl: '$145,120',
+    totalUsers: 2341,
+    icon: '🏛️',
+    image : "https://s2.coinmarketcap.com/static/img/coins/64x64/825.png"
+  },
+  {
+    id: 'jpyc-nikkei',
+    name: 'JPYC Japan Vault',
+    asset: 'JPYC',
+    description: 'Tokenized Japanese equities for diversified growth',
+    strategy: 'JPYC → Tokenized Nikkei 225 stocks → Supply as collateral → Borrow JPYC/USDT → Reinvest → AI manages leverage and risk',
+    riskLevel: 'Medium',
+    baseAPY: 6.5,
+    boostedAPY: 11.7,
+    leverageRatio: 1.8,
+    targetHealthFactor: 1.6,
+    minDeposit: '¥10,000',
+    withdrawalTime: '2-4 hours',
+    tvl: '¥12,450,000',
+    totalUsers: 834,
+    icon: '🗾',
+    image:"https://s2.coinmarketcap.com/static/img/coins/64x64/20648.png"
+  }
+];
 
-// Mock data for user with existing position
-export const MOCK_VAULT_DATA_WITH_POSITION: VaultMockData = {
-  ...MOCK_VAULT_DATA,
-  
-  // User has deposited
-  userDeposit: '1000.00',     // Initial KAIA deposit
-  userShares: '987.50',        // kKAIA shares received
-  currentValue: '1024.30',    // Current value in KAIA
-  profitLoss: '+24.30',       // Profit in KAIA
-};
-
-// Mock bot activity logs
 export interface BotActivity {
   timestamp: number;
   action: string;
   reasoning: string;
-  healthFactor: number;
-  txHash: string;
+  status: 'success' | 'pending' | 'warning' | 'info';
+  txHash?: string;
 }
 
-export const MOCK_BOT_ACTIVITY: BotActivity[] = [
+// KAIA Vault Activities
+export const KAIA_VAULT_ACTIVITY: BotActivity[] = [
   {
-    timestamp: Date.now() - 300000, // 5 min ago
-    action: 'leverage_success',
-    reasoning: 'HF = 1.62 > 1.6 and 500 KAIA available. Safe to leverage more.',
-    healthFactor: 1.52,
-    txHash: '0xabc123def456...',
+    timestamp: Date.now() - 180000, // 3 min ago
+    action: 'Leverage Complete',
+    reasoning: 'Achieved 2.3x leverage with Health Factor: 1.52. Position stable and profitable.',
+    status: 'success',
+    txHash: '0xabc123...def456'
+  },
+  {
+    timestamp: Date.now() - 600000, // 10 min ago
+    action: 'Swap Executed',
+    reasoning: 'Swapped 350 USDT → 345.2 stKAIA on DragonSwap. Slippage: 0.12%',
+    status: 'success',
+    txHash: '0x789xyz...123abc'
   },
   {
     timestamp: Date.now() - 900000, // 15 min ago
-    action: 'health_check',
-    reasoning: 'Current HF: 1.58, Vault Balance: 450 KAIA',
-    healthFactor: 1.58,
-    txHash: 'N/A',
+    action: 'USDT Borrowed',
+    reasoning: 'Borrowed 350 USDT at 3.8% APY. LTV: 70%, Health Factor: 1.58',
+    status: 'success',
+    txHash: '0xdef456...abc789'
+  },
+  {
+    timestamp: Date.now() - 1200000, // 20 min ago
+    action: 'stKAIA Supplied',
+    reasoning: 'Supplied 500 stKAIA to lending protocol. Starting leverage loop #1',
+    status: 'success',
+    txHash: '0x456def...789xyz'
   },
   {
     timestamp: Date.now() - 1800000, // 30 min ago
-    action: 'leverage_success',
-    reasoning: 'Leverage loop complete. New HF: 1.56',
-    healthFactor: 1.56,
-    txHash: '0x789xyz123abc...',
+    action: 'Health Check',
+    reasoning: 'Current HF: 1.54 - Optimal range. APY tracking at 9.1%',
+    status: 'info'
   },
   {
     timestamp: Date.now() - 3600000, // 1 hour ago
-    action: 'monitor',
-    reasoning: 'All good! HF = 1.54, in optimal range [1.45, 1.6]',
-    healthFactor: 1.54,
-    txHash: 'N/A',
+    action: 'Monitoring Active',
+    reasoning: 'All positions stable. Total vault value: $1.23M across 1,542 users',
+    status: 'info'
   },
   {
     timestamp: Date.now() - 7200000, // 2 hours ago
-    action: 'startup',
-    reasoning: 'Bot initialized and ready',
-    healthFactor: 0,
-    txHash: 'N/A',
-  },
+    action: 'Rebalance Check',
+    reasoning: 'Market conditions favorable. No rebalancing needed.',
+    status: 'info'
+  }
 ];
 
-/**
- * Calculate leveraged APY
- * Formula: (supplyAPY × leverage) - (borrowAPY × (leverage - 1))
- */
-export function calculateLeveragedAPY(
-  supplyAPY: number,
-  borrowAPY: number,
-  leverageRatio: number
-): {
-  grossEarnings: number;
-  borrowCosts: number;
-  netAPY: number;
-  boostMultiplier: number;
-} {
-  const grossEarnings = supplyAPY * leverageRatio;
-  const borrowCosts = borrowAPY * (leverageRatio - 1);
-  const netAPY = grossEarnings - borrowCosts;
-  const boostMultiplier = netAPY / supplyAPY;
-  
-  return {
-    grossEarnings,
-    borrowCosts,
-    netAPY,
-    boostMultiplier,
-  };
+// USDT Vault Activities
+export const USDT_VAULT_ACTIVITY: BotActivity[] = [
+  {
+    timestamp: Date.now() - 300000, // 5 min ago
+    action: 'Yield Distribution',
+    reasoning: 'Monthly yield distributed: $142.50 across vault participants',
+    status: 'success'
+  },
+  {
+    timestamp: Date.now() - 1800000, // 30 min ago
+    action: 'NAV Updated',
+    reasoning: 'Net Asset Value per share: $1.0042. Weekly growth: +0.42%',
+    status: 'info'
+  },
+  {
+    timestamp: Date.now() - 3600000, // 1 hour ago
+    action: 'Treasury Yield Accrued',
+    reasoning: 'Daily yield from US Treasury: $384.20 (4.8% annualized)',
+    status: 'success'
+  },
+  {
+    timestamp: Date.now() - 5400000, // 1.5 hours ago
+    action: 'Compliance Check',
+    reasoning: 'Ondo Finance regulatory compliance: PASSED. All holdings verified.',
+    status: 'success'
+  },
+  {
+    timestamp: Date.now() - 7200000, // 2 hours ago
+    action: 'USDY Conversion',
+    reasoning: 'Converted 10,000 USDT → 9,998 USDY. Fee: 0.02%',
+    status: 'success',
+    txHash: '0xusdy12...3456ab'
+  },
+  {
+    timestamp: Date.now() - 10800000, // 3 hours ago
+    action: 'KYC Verified',
+    reasoning: 'New user KYC verification completed for USDY access',
+    status: 'success'
+  },
+  {
+    timestamp: Date.now() - 14400000, // 4 hours ago
+    action: 'Portfolio Review',
+    reasoning: 'US Treasury allocation: 100% short-term bills (90-180 days maturity)',
+    status: 'info'
+  }
+];
+
+// JPYC Vault Activities
+export const JPYC_VAULT_ACTIVITY: BotActivity[] = [
+  {
+    timestamp: Date.now() - 240000, // 4 min ago
+    action: 'Dividend Received',
+    reasoning: 'Sony Q4 dividend: ¥125,000. Total quarterly dividends: ¥342,000',
+    status: 'success'
+  },
+  {
+    timestamp: Date.now() - 900000, // 15 min ago
+    action: 'Portfolio Rebalanced',
+    reasoning: 'Shifted 5% from tech to financials. Nikkei tracking optimization.',
+    status: 'success',
+    txHash: '0xjpyc89...45def2'
+  },
+  {
+    timestamp: Date.now() - 1800000, // 30 min ago
+    action: 'Stock Purchase',
+    reasoning: 'Bought 25 tokenized Toyota shares @ ¥2,850 each',
+    status: 'success',
+    txHash: '0xtoyota...abc123'
+  },
+  {
+    timestamp: Date.now() - 3600000, // 1 hour ago
+    action: 'Nikkei Update',
+    reasoning: 'Nikkei 225 +1.8% today. Portfolio tracking: +1.6% (slight underperformance)',
+    status: 'info'
+  },
+  {
+    timestamp: Date.now() - 5400000, // 1.5 hours ago
+    action: 'Earnings Alert',
+    reasoning: 'Mitsubishi Q3 earnings beat estimates by 12%. Stock +3.2%',
+    status: 'success'
+  },
+  {
+    timestamp: Date.now() - 7200000, // 2 hours ago
+    action: 'Currency Hedge',
+    reasoning: 'JPY/USD volatility detected. Applied 10% hedge via futures.',
+    status: 'warning'
+  },
+  {
+    timestamp: Date.now() - 10800000, // 3 hours ago
+    action: 'Portfolio Value',
+    reasoning: 'Total vault value: ¥892.45M. YTD return: +11.2%',
+    status: 'info'
+  }
+];
+
+export interface UserPosition {
+  vaultId: string;
+  depositIndex: number;
+  shares: string;
+  assets: string;
+  deposited: string;
+  currentValue: string;
+  profitLoss: string;
+  profitLossPercentage: number;
+  depositedAt: number;
+  unlockBlock: number;
+  lockDuration: number;
+  isLocked: boolean;
+  canWithdraw: boolean;
+  daysRemaining?: number;
+}
+
+export interface WithdrawalRequest {
+  id: number;
+  vaultId: string;
+  vaultName: string;
+  amount: string;
+  status: 'pending' | 'processing' | 'ready' | 'claimed';
+  requestedAt: number;
+  estimatedReady?: number;
+  txHash?: string;
+}
+
+// Mock user positions
+export const MOCK_USER_POSITIONS: UserPosition[] = [
+  {
+    vaultId: 'kaia-leverage',
+    depositIndex: 0,
+    shares: '100.00',
+    assets: '100.00',
+    deposited: '100.00',
+    currentValue: '102.43',
+    profitLoss: '+2.43',
+    profitLossPercentage: 2.43,
+    depositedAt: Date.now() - 86400000 * 10, // 10 days ago
+    unlockBlock: Date.now() / 1000 + 86400 * 5, // 5 days from now
+    lockDuration: 15,
+    isLocked: true,
+    canWithdraw: false,
+    daysRemaining: 5
+  },
+  {
+    vaultId: 'usdt-treasury',
+    depositIndex: 0,
+    shares: '500.00',
+    assets: '500.00',
+    deposited: '500.00',
+    currentValue: '502.10',
+    profitLoss: '+2.10',
+    profitLossPercentage: 0.42,
+    depositedAt: Date.now() - 86400000 * 16, // 16 days ago
+    unlockBlock: Date.now() / 1000 - 86400, // Already unlocked
+    lockDuration: 15,
+    isLocked: true,
+    canWithdraw: true,
+    daysRemaining: 0
+  }
+];
+
+// Mock withdrawal requests
+export const MOCK_WITHDRAWAL_REQUESTS: WithdrawalRequest[] = [
+  {
+    id: 1,
+    vaultId: 'kaia-leverage',
+    vaultName: 'KAIA Leverage Vault',
+    amount: '50.00 KAIA',
+    status: 'processing',
+    requestedAt: Date.now() - 3600000, // 1 hour ago
+    estimatedReady: Date.now() + 3600000, // 1 hour from now
+  },
+  {
+    id: 2,
+    vaultId: 'usdt-treasury',
+    vaultName: 'USDT Stability Vault',
+    amount: '200.00 USDT',
+    status: 'ready',
+    requestedAt: Date.now() - 86400000 * 2, // 2 days ago
+    txHash: '0xready123...abc456'
+  }
+];
+
+export function getVaultActivity(vaultId: string): BotActivity[] {
+  switch (vaultId) {
+    case 'kaia-leverage':
+      return KAIA_VAULT_ACTIVITY;
+    case 'usdt-treasury':
+      return USDT_VAULT_ACTIVITY;
+    case 'jpyc-nikkei':
+      return JPYC_VAULT_ACTIVITY;
+    default:
+      return [];
+  }
+}
+
+export function getVaultById(vaultId: string): VaultStrategy | undefined {
+  return VAULT_STRATEGIES.find(v => v.id === vaultId);
 }

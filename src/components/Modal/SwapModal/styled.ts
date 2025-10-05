@@ -58,8 +58,8 @@ export const NavButton = styled.button<{ $primary?: boolean; $fullWidth?: boolea
     border-color: #06C755;
     
     &:hover {
-      background: #059669;
-      border-color: #059669;
+      background: #059212;
+      border-color: #059212;
       transform: translateY(-1px);
     }
     

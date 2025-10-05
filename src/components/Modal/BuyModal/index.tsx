@@ -345,37 +345,37 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
               <S.UnlockDate>{getUnlockDate()}</S.UnlockDate>
             </S.UnlockDateBox>
 
-            {/* <S.TimelineBox>
+            <S.TimelineBox>
               <S.TimelineTitle>What Happens Next</S.TimelineTitle>
               <S.TimelineStep>
                 <S.TimelineNumber>1</S.TimelineNumber>
                 <S.TimelineText>
-                  <strong>Payment Processing</strong><br />
-                  Your credit card payment is being processed (1-2 minutes)
+                  <strong>Check Your Position</strong><br />
+                  Tap the vault icon to view your active position
                 </S.TimelineText>
               </S.TimelineStep>
               <S.TimelineStep>
                 <S.TimelineNumber>2</S.TimelineNumber>
                 <S.TimelineText>
-                  <strong>KAIA Credited</strong><br />
-                  {selectedPackage.kaia} KAIA will be credited to your wallet
+                  <strong>Monitor AI-Managed Vault</strong><br />
+                  Vault is managed by AI and can monitor its activity
                 </S.TimelineText>
               </S.TimelineStep>
               <S.TimelineStep>
                 <S.TimelineNumber>3</S.TimelineNumber>
                 <S.TimelineText>
-                  <strong>Auto-Deposit to AI Boost</strong><br />
-                  Funds automatically deposited and locked for {LOCK_DAYS} days
+                  <strong>Withdraw to LINE Wallet</strong><br />
+                  You can initiate a withdrawal request after the lockup
                 </S.TimelineText>
               </S.TimelineStep>
               <S.TimelineStep>
                 <S.TimelineNumber>4</S.TimelineNumber>
                 <S.TimelineText>
-                  <strong>Start Earning</strong><br />
-                  Earn {APY}% APY until {getUnlockDate()}
+                  <strong>AI Approval</strong><br />
+                  The AI will process your request
                 </S.TimelineText>
               </S.TimelineStep>
-            </S.TimelineBox> */}
+            </S.TimelineBox>
 
             {/* <S.InfoBanner $type="success">
               <CheckCircle size={16} />

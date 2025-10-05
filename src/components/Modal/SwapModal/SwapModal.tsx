@@ -423,7 +423,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
       case 1:
         return (
           <>
-            <InfoBanner $type="warning">
+            <InfoBanner $type="info">
             <AlertCircle size={16} />
             <div>
             <strong>Powered by Swapscanner:</strong> This swap is processed externally. No KILO points will be earned.

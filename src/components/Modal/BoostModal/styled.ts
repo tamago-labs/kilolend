@@ -1,16 +1,39 @@
 import styled from 'styled-components';
 
-// Main Container (same as Supply/Borrow)
 export const Container = styled.div`
-  height: 100%;
   display: flex;
   flex-direction: column;
+  gap: 24px;
+`;
+
+export const TabContainer = styled.div`
+  display: flex;
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid #e2e8f0;
+`;
+
+export const Tab = styled.button<{ $active: boolean }>`
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: ${props => props.$active ? '#06C755' : 'transparent'};
+  color: ${props => props.$active ? 'white' : '#64748b'};
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+
+  &:hover {
+    background: ${props => props.$active ? '#06C755' : '#f1f5f9'};
+  }
 `;
 
 export const StepProgress = styled.div`
   display: flex;
   justify-content: center;
-  margin-bottom: 24px;
   padding: 0 20px;
 `;
 
@@ -56,9 +79,9 @@ export const NavButton = styled.button<{ $primary?: boolean }>`
     color: white;
     border-color: #06C755;
     
-    &:hover {
-      background: #059212;
-      border-color: #059212;
+    &:hover:not(:disabled) {
+      background: #059669;
+      border-color: #059669;
       transform: translateY(-1px);
     }
     
@@ -80,59 +103,25 @@ export const NavButton = styled.button<{ $primary?: boolean }>`
   `}
 `;
 
-// Tabs for Step 1
-export const TabContainer = styled.div`
-  display: flex;
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 4px;
-  border: 1px solid #e2e8f0;
-  margin-bottom: 20px;
-`;
-
-export const Tab = styled.button<{ $active: boolean }>`
-  flex: 1;
-  padding: 12px;
-  border: none;
-  background: ${props => props.$active ? '#06C755' : 'transparent'};
-  color: ${props => props.$active ? 'white' : '#64748b'};
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  border-radius: 8px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-
-  &:hover {
-    background: ${props => props.$active ? '#06C755' : '#f1f5f9'};
-  }
-`;
-
-// Vault Selection
+// Vault Cards
 export const VaultGrid = styled.div`
-  display: grid;
-  gap: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 `;
 
-export const VaultCard = styled.div<{ $selected?: boolean; $disabled?: boolean }>`
+export const VaultCard = styled.div<{ $selected?: boolean }>`
   background: ${props => props.$selected ? '#f0fdf4' : 'white'};
   border: 2px solid ${props => props.$selected ? '#06C755' : '#e2e8f0'};
-  border-radius: 16px;
-  padding: 20px;
-  cursor: ${props => props.$disabled ? 'not-allowed' : 'pointer'};
+  border-radius: 12px;
+  padding: 16px;
+  cursor: pointer;
   transition: all 0.2s;
-  opacity: ${props => props.$disabled ? 0.5 : 1};
-  
-  ${props => !props.$disabled && `
-    &:hover {
-      transform: translateY(-2px);
-      border-color: ${props.$selected ? '#06C755' : '#cbd5e1'};
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    }
-  `}
+
+  &:hover {
+    transform: translateY(-1px);
+    border-color: ${props => props.$selected ? '#06C755' : '#cbd5e1'};
+  }
 `;
 
 export const VaultHeader = styled.div`
@@ -143,14 +132,8 @@ export const VaultHeader = styled.div`
 `;
 
 export const VaultIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #06C755, #059669);
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
+  font-size: 32px;
+  flex-shrink: 0;
 `;
 
 export const VaultInfo = styled.div`
@@ -158,94 +141,160 @@ export const VaultInfo = styled.div`
 `;
 
 export const VaultName = styled.div`
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: #1e293b;
-  margin-bottom: 4px;
 `;
 
 export const VaultAsset = styled.div`
-  font-size: 14px;
+  font-size: 12px;
   color: #64748b;
+  margin-top: 2px;
 `;
 
-export const VaultAPY = styled.div`
-  display: flex;
-  align-items: center;
+export const VaultStats = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 12px;
-  padding: 12px;
-  background: #f0fdf4;
-  border-radius: 8px;
   margin-bottom: 12px;
 `;
 
-export const APYItem = styled.div`
-  flex: 1;
+export const VaultStat = styled.div`
   text-align: center;
+  padding: 8px;
+  background: #f8fafc;
+  border-radius: 8px;
 `;
 
-export const APYLabel = styled.div`
+export const StatLabel = styled.div`
   font-size: 11px;
-  color: #166534;
+  color: #64748b;
   margin-bottom: 4px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-weight: 500;
 `;
 
-export const APYValue = styled.div<{ $boosted?: boolean }>`
-  font-size: ${props => props.$boosted ? '20px' : '16px'};
+export const StatValue = styled.div<{ $highlight?: boolean }>`
+  font-size: 16px;
   font-weight: 700;
-  color: ${props => props.$boosted ? '#059669' : '#166534'};
+  color: ${props => props.$highlight ? '#06C755' : '#1e293b'};
+`;
+
+export const VaultDescription = styled.div`
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  margin-bottom: 8px;
 `;
 
 export const VaultStrategy = styled.div`
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 10px;
   line-height: 1.5;
 `;
 
-export const ComingSoonBadge = styled.div`
-  display: inline-block;
-  background: #f1f5f9;
-  color: #64748b;
+export const RiskBadge = styled.div<{ $risk: string }>`
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 6px;
   font-size: 11px;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 6px;
-  text-transform: uppercase;
+  background: ${props => {
+    switch (props.$risk) {
+      case 'Low': return '#dcfce7';
+      case 'Medium': return '#fef3c7';
+      case 'Medium-High': return '#fed7aa';
+      case 'High': return '#fecaca';
+      default: return '#f3f4f6';
+    }
+  }};
+  color: ${props => {
+    switch (props.$risk) {
+      case 'Low': return '#166534';
+      case 'Medium': return '#92400e';
+      case 'Medium-High': return '#9a3412';
+      case 'High': return '#991b1b';
+      default: return '#374151';
+    }
+  }};
 `;
 
-// Step 2: Amount Input
-export const InputSection = styled.div`
-  margin-bottom: 20px;
+export const SectionTitle = styled.h4`
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 12px 0;
 `;
 
-export const InputLabel = styled.label`
+export const InfoBanner = styled.div<{ $type: 'info' | 'warning' | 'success' }>`
+  background: ${props => {
+    switch (props.$type) {
+      case 'warning': return '#fffbeb';
+      case 'success': return '#f0fdf4';
+      default: return '#f0f9ff';
+    }
+  }};
+  border: 1px solid ${props => {
+    switch (props.$type) {
+      case 'warning': return '#fbbf24';
+      case 'success': return '#86efac';
+      default: return '#bae6fd';
+    }
+  }};
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 12px;
+  color: ${props => {
+    switch (props.$type) {
+      case 'warning': return '#92400e';
+      case 'success': return '#166534';
+      default: return '#075985';
+    }
+  }};
+  line-height: 1.6;
+  display: flex;
+  gap: 8px;
+
+  svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+`;
+
+// Input Components
+export const InputGroup = styled.div`
+  margin-bottom: 16px;
+`;
+
+export const Label = styled.label`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
   color: #374151;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 `;
 
 export const BalanceText = styled.span`
-  font-size: 13px;
+  font-size: 12px;
   color: #64748b;
   font-weight: 500;
 `;
 
-export const AmountInputWrapper = styled.div`
+export const InputWrapper = styled.div`
   position: relative;
-  margin-bottom: 12px;
 `;
 
-export const AmountInput = styled.input`
+export const Input = styled.input`
   width: 100%;
-  padding: 20px 80px 20px 20px;
-  font-size: 24px;
-  font-weight: 700;
+  padding: 16px 80px 16px 16px;
+  font-size: 18px;
+  font-weight: 600;
   border: 2px solid #e5e7eb;
   border-radius: 12px;
   outline: none;
@@ -261,91 +310,113 @@ export const AmountInput = styled.input`
   }
 `;
 
-export const InputTokenLabel = styled.div`
+export const InputLabel = styled.div`
   position: absolute;
-  right: 20px;
+  right: 16px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #64748b;
 `;
 
-export const QuickAmountButtons = styled.div`
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 16px;
+export const MaxButton = styled.button`
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: #06C755;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:disabled {
+    color: #94a3b8;
+    cursor: not-allowed;
+  }
 `;
 
-export const QuickAmountButton = styled.button<{ $selected?: boolean }>`
-  padding: 10px;
-  background: ${props => props.$selected ? '#06C755' : 'white'};
-  color: ${props => props.$selected ? 'white' : '#64748b'};
-  border: 2px solid ${props => props.$selected ? '#06C755' : '#e2e8f0'};
-  border-radius: 8px;
-  font-size: 14px;
+export const ExpectedResults = styled.div`
+  background: #f0fdf4;
+  border: 2px solid #86efac;
+  border-radius: 12px;
+  padding: 16px;
+`;
+
+export const ResultRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+
+  &:last-child {
+    margin-bottom: 0;
+    padding-top: 12px;
+    border-top: 1px solid #86efac;
+  }
+`;
+
+export const ResultLabel = styled.div`
+  font-size: 12px;
+  color: #166534;
+  font-weight: 500;
+`;
+
+export const ResultValue = styled.div<{ $large?: boolean; $highlight?: boolean; $profit?: boolean; $loss?: boolean }>`
+  font-size: ${props => props.$large ? '20px' : '16px'};
+  font-weight: 700;
+  color: ${props => {
+    if (props.$highlight) return '#06C755';
+    if (props.$profit) return '#16a34a';
+    if (props.$loss) return '#dc2626';
+    return '#166534';
+  }};
+`;
+
+export const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary' }>`
+  width: 100%;
+  background: ${props => props.$variant === 'secondary' ? 'white' : '#06C755'};
+  color: ${props => props.$variant === 'secondary' ? '#64748b' : 'white'};
+  border: 2px solid ${props => props.$variant === 'secondary' ? '#e2e8f0' : '#06C755'};
+  padding: 18px;
+  border-radius: 12px;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-
-  &:hover {
-    border-color: #06C755;
-    background: ${props => props.$selected ? '#059669' : '#f0fdf4'};
-  }
-`;
-
-export const InfoBanner = styled.div<{ $type: 'info' | 'success' | 'warning' }>`
-  background: ${props => 
-    props.$type === 'success' ? '#f0fdf4' :
-    props.$type === 'warning' ? '#fffbeb' : '#f0f9ff'
-  };
-  border: 1px solid ${props =>
-    props.$type === 'success' ? '#86efac' :
-    props.$type === 'warning' ? '#fbbf24' : '#bae6fd'
-  };
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 13px;
-  color: ${props =>
-    props.$type === 'success' ? '#166534' :
-    props.$type === 'warning' ? '#92400e' : '#075985'
-  };
-  line-height: 1.6;
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  margin-bottom: 16px;
-
-  svg {
-    flex-shrink: 0;
-    margin-top: 2px;
-  }
-`;
-
-// Activity Feed in Step 2
-export const ActivitySection = styled.div`
-  margin-top: 20px;
-  margin-bottom: 20px;
-`;
-
-export const ActivityTitle = styled.div`
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 12px;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    background: ${props => props.$variant === 'secondary' ? '#f8fafc' : '#059669'};
+    border-color: ${props => props.$variant === 'secondary' ? '#cbd5e1' : '#059669'};
+  }
+
+  &:disabled {
+    background: #94a3b8;
+    border-color: #94a3b8;
+    color: white;
+    cursor: not-allowed;
+    transform: none;
+    opacity: 0.6;
+  }
 `;
 
+// Activity Feed
 export const ActivityFeed = styled.div`
-  background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  max-height: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
   overflow-y: auto;
-
+  
   &::-webkit-scrollbar {
     width: 4px;
   }
@@ -360,32 +431,33 @@ export const ActivityFeed = styled.div`
   }
 `;
 
-export const ActivityItem = styled.div`
-  padding: 12px;
-  border-bottom: 1px solid #f1f5f9;
-
-  &:last-child {
-    border-bottom: none;
-  }
+export const ActivityItem = styled.div<{ $status: string }>`
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid ${props => {
+    switch (props.$status) {
+      case 'success': return '#06C755';
+      case 'warning': return '#f59e0b';
+      case 'pending': return '#3b82f6';
+      default: return '#64748b';
+    }
+  }};
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 12px;
 `;
 
 export const ActivityHeader = styled.div`
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   margin-bottom: 4px;
 `;
 
-export const ActivityAction = styled.div<{ $status: 'pending' | 'success' | 'failed' }>`
-  font-size: 12px;
+export const ActivityAction = styled.div`
   font-weight: 600;
-  color: ${props =>
-    props.$status === 'success' ? '#059669' :
-    props.$status === 'failed' ? '#dc2626' : '#f59e0b'
-  };
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  color: #1e293b;
+  font-size: 13px;
 `;
 
 export const ActivityTime = styled.div`
@@ -393,53 +465,66 @@ export const ActivityTime = styled.div`
   color: #94a3b8;
 `;
 
-export const ActivityDetails = styled.div`
-  font-size: 11px;
+export const ActivityReason = styled.div`
   color: #64748b;
-  line-height: 1.4;
+  line-height: 1.5;
 `;
 
 export const ActivityLink = styled.a`
-  font-size: 11px;
   color: #06C755;
   text-decoration: none;
+  font-size: 12px;
   font-weight: 500;
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: 4px;
+  margin-top: 6px;
 
   &:hover {
     text-decoration: underline;
   }
 `;
 
-export const EmptyActivity = styled.div`
-  padding: 24px;
-  text-align: center;
-  color: #94a3b8;
-  font-size: 13px;
-`;
-
-// Withdraw: Position List
+// Positions List
 export const PositionsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 350px;
+  overflow-y: auto;
+  
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 2px;
+  }
 `;
 
-export const PositionCard = styled.div<{ $selected?: boolean }>`
+export const PositionCard = styled.div<{ $canWithdraw?: boolean; $selected?: boolean }>`
   background: ${props => props.$selected ? '#f0fdf4' : 'white'};
-  border: 2px solid ${props => props.$selected ? '#06C755' : '#e2e8f0'};
+  border: 2px solid ${props => 
+    props.$selected ? '#06C755' : 
+    props.$canWithdraw ? '#86efac' : '#e2e8f0'
+  };
   border-radius: 12px;
-  padding: 16px;
-  cursor: pointer;
+  padding: 14px;
+  cursor: ${props => props.$canWithdraw ? 'pointer' : 'default'};
   transition: all 0.2s;
+  opacity: ${props => props.$canWithdraw ? 1 : 0.7};
 
-  &:hover {
-    border-color: #06C755;
-    transform: translateY(-1px);
-  }
+  ${props => props.$canWithdraw && `
+    &:hover {
+      transform: translateY(-1px);
+      border-color: #06C755;
+    }
+  `}
 `;
 
 export const PositionHeader = styled.div`
@@ -449,13 +534,13 @@ export const PositionHeader = styled.div`
   margin-bottom: 12px;
 `;
 
-export const PositionAmount = styled.div`
-  font-size: 18px;
+export const PositionVault = styled.div`
+  font-size: 15px;
   font-weight: 700;
   color: #1e293b;
 `;
 
-export const PositionStatus = styled.div<{ $unlocked?: boolean }>`
+export const PositionStatus = styled.div<{ $locked?: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -463,92 +548,123 @@ export const PositionStatus = styled.div<{ $unlocked?: boolean }>`
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 6px;
-  background: ${props => props.$unlocked ? '#dcfce7' : '#fef3c7'};
-  color: ${props => props.$unlocked ? '#166534' : '#92400e'};
+  background: ${props => props.$locked ? '#fef3c7' : '#dcfce7'};
+  color: ${props => props.$locked ? '#92400e' : '#166534'};
 `;
 
-export const PositionDetails = styled.div`
+export const PositionStats = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
+  margin-bottom: 8px;
+`;
+
+export const PositionStat = styled.div`
+  text-align: center;
+  background: #f8fafc;
+  padding: 8px;
+  border-radius: 6px;
+`;
+
+export const PositionStatLabel = styled.div`
+  font-size: 10px;
+  color: #64748b;
+  margin-bottom: 2px;
+  font-weight: 500;
+`;
+
+export const PositionStatValue = styled.div<{ $profit?: boolean; $loss?: boolean }>`
+  font-size: 14px;
+  font-weight: 700;
+  color: ${props => {
+    if (props.$profit) return '#16a34a';
+    if (props.$loss) return '#dc2626';
+    return '#1e293b';
+  }};
+`;
+
+export const PositionInfo = styled.div`
   font-size: 12px;
   color: #64748b;
-`;
-
-export const PositionDetailItem = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  align-items: center;
+  gap: 4px;
 `;
 
-export const PositionDetailLabel = styled.span`
-  font-size: 11px;
-  color: #94a3b8;
-`;
-
-export const PositionDetailValue = styled.span`
-  font-size: 13px;
-  font-weight: 600;
-  color: #1e293b;
-`;
-
-// Review & Confirm
-export const ReviewSection = styled.div`
-  margin-bottom: 20px;
-`;
-
-export const ReviewTitle = styled.h4`
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0 0 12px 0;
-`;
-
-export const SummaryBox = styled.div`
-  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-  border: 2px solid #86efac;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
-`;
-
-export const SummaryRow = styled.div`
+// Withdrawal Requests Table
+export const RequestsHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 12px;
+  margin-top: 12px;
+`;
 
-  &:last-child {
-    margin-bottom: 0;
-    padding-top: 12px;
-    border-top: 1px solid #86efac;
+export const RequestToggle = styled.div`
+  display: flex;
+  gap: 8px;
+`;
+
+export const ToggleButton = styled.button<{ $active?: boolean }>`
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 2px solid ${props => props.$active ? '#06C755' : '#e2e8f0'};
+  background: ${props => props.$active ? '#f0fdf4' : 'white'};
+  color: ${props => props.$active ? '#06C755' : '#64748b'};
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    border-color: #06C755;
+    background: ${props => props.$active ? '#f0fdf4' : '#f8fafc'};
   }
 `;
 
-export const SummaryLabel = styled.div`
-  font-size: 13px;
-  color: #166534;
-  font-weight: 500;
-`;
-
-export const SummaryValue = styled.div<{ $large?: boolean }>`
-  font-size: ${props => props.$large ? '20px' : '16px'};
-  font-weight: 700;
-  color: #166534;
-`;
-
-export const StrategySteps = styled.div`
-  background: white;
+export const RequestsTable = styled.div`
   border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 16px;
-  margin-bottom: 16px;
+  border-radius: 8px;
+  overflow: hidden;
 `;
 
-export const StrategyStep = styled.div`
+export const TableRow = styled.div<{ $header?: boolean; $clickable?: boolean }>`
+  display: grid;
+  grid-template-columns: 60px 1fr 100px 80px 80px;
+  gap: 8px;
+  padding: 12px;
+  font-size: 13px;
+  border-bottom: 1px solid #e2e8f0;
+  background: ${props => props.$header ? '#f8fafc' : 'white'};
+  font-weight: ${props => props.$header ? 600 : 400};
+  color: ${props => props.$header ? '#64748b' : '#1e293b'};
+  cursor: ${props => props.$clickable ? 'pointer' : 'default'};
+  transition: background 0.2s;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  ${props => props.$clickable && `
+    &:hover {
+      background: #f8fafc;
+    }
+  `}
+`;
+
+export const TableCell = styled.div`
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  align-items: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+export const RequestCard = styled.div<{ $status?: string }>`
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px;
   margin-bottom: 12px;
 
   &:last-child {
@@ -556,83 +672,78 @@ export const StrategyStep = styled.div`
   }
 `;
 
-export const StepNumber = styled.div`
-  width: 28px;
-  height: 28px;
-  background: #06C755;
-  color: white;
-  border-radius: 50%;
+export const RequestHeader = styled.div`
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  font-weight: 700;
-  flex-shrink: 0;
+  margin-bottom: 8px;
 `;
 
-export const StepText = styled.div`
-  flex: 1;
-  font-size: 14px;
-  color: #475569;
-  line-height: 1.5;
-  padding-top: 4px;
-`;
-
-export const RiskBox = styled.div`
-  background: #fffbeb;
-  border: 1px solid #fbbf24;
-  border-radius: 8px;
-  padding: 12px;
-`;
-
-export const RiskTitle = styled.div`
+export const RequestId = styled.div`
   font-size: 13px;
   font-weight: 600;
-  color: #92400e;
-  margin-bottom: 8px;
-  display: flex;
+  color: #64748b;
+`;
+
+export const RequestStatus = styled.div<{ $status: string }>`
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: ${props => {
+    switch (props.$status) {
+      case 'ready': return '#dcfce7';
+      case 'processing': return '#fef3c7';
+      case 'claimed': return '#f3f4f6';
+      default: return '#f3f4f6';
+    }
+  }};
+  color: ${props => {
+    switch (props.$status) {
+      case 'ready': return '#166534';
+      case 'processing': return '#92400e';
+      case 'claimed': return '#64748b';
+      default: return '#64748b';
+    }
+  }};
 `;
 
-export const RiskList = styled.ul`
-  margin: 0;
-  padding-left: 20px;
+export const RequestAmount = styled.div`
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin-bottom: 8px;
+`;
+
+export const RequestInfo = styled.div`
   font-size: 12px;
-  color: #92400e;
-  line-height: 1.6;
+  color: #64748b;
+  line-height: 1.5;
 `;
 
-// Success
-export const SuccessContainer = styled.div`
+export const EmptyState = styled.div`
   text-align: center;
-  padding: 20px 0;
+  padding: 60px 20px;
+  color: #64748b;
 `;
 
-export const SuccessIcon = styled.div`
-  width: 80px;
-  height: 80px;
-  background: linear-gradient(135deg, #06C755, #059669);
-  border-radius: 50%;
+export const EmptyStateIcon = styled.div`
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.3;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 20px;
-  font-size: 40px;
 `;
 
-export const SuccessTitle = styled.h3`
-  font-size: 22px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 8px 0;
-`;
-
-export const SuccessMessage = styled.p`
+export const EmptyStateText = styled.div`
   font-size: 14px;
-  color: #64748b;
-  margin: 0 0 24px 0;
-  line-height: 1.5;
+  line-height: 1.6;
+  max-width: 300px;
+  margin: 0 auto;
 `;
 
 export const ErrorMessage = styled.div`
@@ -640,14 +751,63 @@ export const ErrorMessage = styled.div`
   border: 1px solid #ef4444;
   border-radius: 8px;
   padding: 12px 16px;
-  margin-bottom: 16px;
   color: #dc2626;
   font-size: 14px;
   display: flex;
   align-items: center;
   gap: 8px;
+`;
 
-  svg {
-    flex-shrink: 0;
+// Activity Tab Filter
+export const FilterContainer = styled.div`
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+`;
+
+export const FilterSelect = styled.select`
+  flex: 1;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  background: white;
+  color: #1e293b;
+  cursor: pointer;
+  outline: none;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: #cbd5e1;
   }
+
+  &:focus {
+    border-color: #06C755;
+  }
+`;
+
+
+export const TokenIcon = styled.div`
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+  @media (max-width: 480px) {
+    width: 36px;
+    height: 36px;
+    margin-right: 10px;
+  }
+`;
+
+export const TokenIconImage = styled.img`
+  width: 75%;
+  height: 75%;
+  object-fit: contain;
 `;
