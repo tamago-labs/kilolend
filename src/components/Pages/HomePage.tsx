@@ -458,7 +458,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               />
               {/* <APYBadge>+1.5x</APYBadge> */}
             </IconCircle>
-            <IconLabel>Boost</IconLabel>
+            <IconLabel>AI Vault</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleAskAI}>

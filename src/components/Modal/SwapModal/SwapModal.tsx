@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { BaseModal } from '../BaseModal';
-import { ChevronRight, AlertCircle, Info, TrendingUp, RefreshCw, CheckCircle, ExternalLink } from 'react-feather';
+import { ChevronRight, AlertCircle, Info, TrendingUp, RefreshCw, CheckCircle, ExternalLink, ArrowDown, Repeat } from 'react-feather';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { KAIA_SCAN_URL } from '@/utils/tokenConfig';
 import { liff } from '@/utils/liff';
@@ -27,6 +27,7 @@ import {
   BalanceUSD,
   SwapDirectionButton,
   SelectedTokenBox,
+  SelectTokenButton,
   ChangeButton,
   InputSection,
   InputLabel,
@@ -422,12 +423,11 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
       case 1:
         return (
           <>
-            <InfoBanner $type="info">
-              <Info size={16} />
-              <div>
-                Powered by <strong>DragonSwap</strong> (Uniswap V2 on KAIA).
-                Select which tokens you want to swap.
-              </div>
+            <InfoBanner $type="warning">
+            <AlertCircle size={16} />
+            <div>
+            <strong>Powered by Swapscanner:</strong> This swap is processed externally. No KILO points will be earned for this transaction.
+            </div>
             </InfoBanner>
 
             <TokenSection>
@@ -446,14 +446,15 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
                   </ChangeButton>
                 </SelectedTokenBox>
               ) : (
-                <NavButton onClick={() => setSelectingToken('from')}>
+                <SelectTokenButton onClick={() => setSelectingToken('from')}>
                   Select Token
-                </NavButton>
+                </SelectTokenButton>
               )}
             </TokenSection>
 
             <SwapDirectionButton onClick={handleSwapDirection}>
-              ⇅
+              
+              <Repeat/>
             </SwapDirectionButton>
 
             <TokenSection>
@@ -472,9 +473,9 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
                   </ChangeButton>
                 </SelectedTokenBox>
               ) : (
-                <NavButton onClick={() => setSelectingToken('to')}>
+                <SelectTokenButton onClick={() => setSelectingToken('to')}>
                   Select Token
-                </NavButton>
+                </SelectTokenButton>
               )}
             </TokenSection>
           </>
@@ -599,7 +600,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
               </TransactionLink>
             )}
 
-            <NavButton $primary onClick={onClose}>
+            <NavButton $primary $fullWidth onClick={onClose}>
               Close
             </NavButton>
           </SuccessContainer>
@@ -625,7 +626,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
   }, []);
 
   return (
-    <BaseModal isOpen={true} onClose={onClose} title="🔄 Swap Tokens">
+    <BaseModal isOpen={true} onClose={onClose} title="Swap Tokens">
       <Container>
         {!selectingToken && (
           <StepProgress>
@@ -664,12 +665,11 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
             >
               {currentStep === 2 ? (
                 isSwapping ? (
-                  <>
-                    <RefreshCw size={16} className="spin" />
+                  <> 
                     Swapping...
                   </>
                 ) : (
-                  '🔄 Confirm Swap'
+                  'Confirm Swap'
                 )
               ) : (
                 <>
