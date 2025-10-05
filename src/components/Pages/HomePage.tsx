@@ -458,7 +458,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               />
               {/* <APYBadge>+1.5x</APYBadge> */}
             </IconCircle>
-            <IconLabel>AI Vault</IconLabel>
+            <IconLabel>Vault</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleAskAI}>
@@ -525,7 +525,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           <IconButton onClick={handleBuy}>
             <IconCircle $index="10">
               <IconImage
-                src="./images/icon-credit-card.png"
+                src="./images/icon-kilo.png"
                 alt="BUY"
               />
             </IconCircle>
