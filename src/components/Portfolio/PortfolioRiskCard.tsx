@@ -267,12 +267,13 @@ export const PortfolioRiskCard = ({
       <MetricSection>
         <MetricHeader>
           <MetricLabel>Health Factor</MetricLabel>
-          {/* <MetricValue $color="#f59e0b">
-            {borrowingPowerData?.liquidationThreshold || '80'}%
-          </MetricValue> */}
-          <HealthFactorValue $healthy={isHealthy}>
+          <MetricValue $color={
+            portfolioStats.healthFactor > 1.5 ? '#059212' :
+            portfolioStats.healthFactor > 1.3 ? '#f59e0b' :
+            portfolioStats.healthFactor > 1.2 ? '#ef4444' : '#991b1b'
+          }>
             {portfolioStats.healthFactor > 999 ? '∞' : portfolioStats.healthFactor.toFixed(2)}
-          </HealthFactorValue>
+          </MetricValue>
         </MetricHeader>
       </MetricSection>
  
