@@ -1,11 +1,19 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { BaseModal } from '../BaseModal';
-import { ChevronRight, AlertCircle, Info, TrendingUp, RefreshCw, CheckCircle, ExternalLink, ArrowDown, Repeat } from 'react-feather';
+import { ChevronRight, AlertCircle, CheckCircle, ExternalLink, Repeat } from 'react-feather';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { KAIA_SCAN_URL } from '@/utils/tokenConfig';
 import { liff } from '@/utils/liff';
+import {
+  getAllSwapTokens,
+  searchTokens,
+  getTokenBySymbol,
+  DragonSwapToken,
+  isMainToken,
+} from '@/utils/dragonSwapTokenAdapter';
+import { useDragonSwap, useDragonSwapBalances } from '@/hooks/useDragonSwap';
 import {
   Container,
   StepProgress,
@@ -55,7 +63,7 @@ import {
   SwapSummaryValue,
   TransactionLink,
   ErrorMessage,
-  SearchInput
+  SearchInput,
 } from './styled';
 
 interface SwapModalProps {
@@ -70,94 +78,11 @@ interface Token {
   balanceUSD: string;
   decimals: number;
   price: number;
+  isSwapOnly?: boolean;
+  isNative?: boolean;
 }
 
 const SLIPPAGE_PRESETS = [0.1, 0.5, 1.0, 3.0];
-
-// Mock tokens - will be replaced with actual DragonSwap token list
-const MOCK_TOKENS: Token[] = [
-  {
-    symbol: 'KAIA',
-    name: 'KAIA',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
-    balance: '1,234.56',
-    balanceUSD: '$185.18',
-    decimals: 18,
-    price: 0.15
-  },
-  {
-    symbol: 'USDT',
-    name: 'Tether USD',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png',
-    balance: '500.00',
-    balanceUSD: '$500.00',
-    decimals: 6,
-    price: 1.00
-  },
-  {
-    symbol: 'SIX',
-    name: 'SIX Protocol',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3327.png',
-    balance: '10,000.00',
-    balanceUSD: '$500.00',
-    decimals: 18,
-    price: 0.05
-  },
-  {
-    symbol: 'BORA',
-    name: 'BORA',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3801.png',
-    balance: '2,500.00',
-    balanceUSD: '$250.00',
-    decimals: 18,
-    price: 0.10
-  },
-  {
-    symbol: 'MBX',
-    name: 'MARBLEX',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png',
-    balance: '5,000.00',
-    balanceUSD: '$150.00',
-    decimals: 18,
-    price: 0.03
-  },
-  {
-    symbol: 'WETH',
-    name: 'Wrapped Ethereum',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/1027.png',
-    balance: '2.5',
-    balanceUSD: '$5,750.00',
-    decimals: 18,
-    price: 2300.00
-  },
-  {
-    symbol: 'WBTC',
-    name: 'Wrapped Bitcoin',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3717.png',
-    balance: '0.15',
-    balanceUSD: '$6,450.00',
-    decimals: 8,
-    price: 43000.00
-  },
-  {
-    symbol: 'DAI',
-    name: 'Dai Stablecoin',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/4943.png',
-    balance: '1,000.00',
-    balanceUSD: '$1,000.00',
-    decimals: 18,
-    price: 1.00
-  },
-  {
-    symbol: 'USDC',
-    name: 'USD Coin',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png',
-    balance: '750.00',
-    balanceUSD: '$750.00',
-    decimals: 6,
-    price: 1.00
-  }
-];
 
 export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -174,28 +99,89 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
 
   const { account } = useWalletAccountStore();
 
-  const totalSteps = 3;
-
-  // Use mock tokens
-  const availableTokens = MOCK_TOKENS;
-
-  // Filter tokens based on search
-  const filteredTokens = availableTokens.filter(token =>
-    token.symbol.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    token.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // DragonSwap integration
+  const dragonSwap = useDragonSwap();
+  const { balances, isLoading: balancesLoading, error: balanceError } = useDragonSwapBalances(
+    getAllSwapTokens()
   );
 
-  // Auto-select KAIA as from token if not selected
+  const totalSteps = 3;
+
+  // Show balance error if exists
   useEffect(() => {
-    if (!fromToken && availableTokens.length > 0) {
-      const kaia = availableTokens.find(t => t.symbol === 'KAIA');
-      if (kaia) setFromToken(kaia);
+    if (balanceError) {
+      console.log(`[SwapModal] Balance fetch error: ${balanceError}`);
+      setError(`Failed to fetch balances: ${balanceError}`);
     }
-  }, []);
+  }, [balanceError]);
+
+  // Memoize available tokens to prevent unnecessary recalculations
+  const availableTokens: Token[] = useMemo(() => {
+    return getAllSwapTokens().map((token) => {
+      const balance = balances[token.symbol] || '0';
+      const balanceNum = parseFloat(balance);
+      const price = 1; // Mock price for now
+      const balanceUSD = isNaN(balanceNum) ? '$0.00' : `$${(balanceNum * price).toFixed(2)}`;
+
+      return {
+        symbol: token.symbol,
+        name: token.name,
+        icon: token.icon,
+        balance: balanceNum.toFixed(6),
+        balanceUSD,
+        decimals: token.decimals,
+        price,
+        isSwapOnly: token.isSwapOnly,
+        isNative: token.isNative,
+      };
+    });
+  }, [balances]); // Only recalculate when balances change
+
+  // Filter tokens based on search
+  const filteredTokens = useMemo(() => {
+    return searchTokens(searchQuery, 'swap').map((token) => {
+      const tokenData = availableTokens.find((t) => t.symbol === token.symbol);
+      return {
+        ...token,
+        balance: tokenData?.balance || '0.000000',
+        balanceUSD: tokenData?.balanceUSD || '$0.00',
+        price: tokenData?.price || 0,
+      };
+    });
+  }, [searchQuery, availableTokens]);
+
+  // Auto-select KAIA as from token ONLY after balances are loaded
+  useEffect(() => {
+    if (!fromToken && !balancesLoading && Object.keys(balances).length > 0) {
+      const kaia = availableTokens.find((t) => t.symbol === 'KAIA');
+      if (kaia) {
+        console.log(`[SwapModal] Auto-selected KAIA with balance: ${kaia.balance}`);
+        setFromToken(kaia);
+      }
+    }
+  }, [balancesLoading, balances, availableTokens, fromToken]);
+
+  // Update fromToken and toToken balances when balances change
+  useEffect(() => {
+    if (fromToken && !balancesLoading) {
+      const updatedToken = availableTokens.find((t) => t.symbol === fromToken.symbol);
+      if (updatedToken && updatedToken.balance !== fromToken.balance) {
+        console.log(`[SwapModal] Updating ${fromToken.symbol} balance from ${fromToken.balance} to ${updatedToken.balance}`);
+        setFromToken(updatedToken);
+      }
+    }
+
+    if (toToken && !balancesLoading) {
+      const updatedToken = availableTokens.find((t) => t.symbol === toToken.symbol);
+      if (updatedToken && updatedToken.balance !== toToken.balance) {
+        console.log(`[SwapModal] Updating ${toToken.symbol} balance from ${toToken.balance} to ${updatedToken.balance}`);
+        setToToken(updatedToken);
+      }
+    }
+  }, [availableTokens, balancesLoading]);
 
   const handleTokenSelect = (token: Token) => {
     if (selectingToken === 'from') {
-      // Don't allow selecting same token
       if (toToken && token.symbol === toToken.symbol) {
         setError(`You cannot swap ${token.symbol} for ${token.symbol}`);
         return;
@@ -203,14 +189,15 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
       setFromToken(token);
       setFromAmount('');
       setToAmount('');
+      console.log(`[SwapModal] Selected from token: ${token.symbol} (balance: ${token.balance})`);
     } else if (selectingToken === 'to') {
-      // Don't allow selecting same token
       if (fromToken && token.symbol === fromToken.symbol) {
         setError(`You cannot swap ${token.symbol} for ${token.symbol}`);
         return;
       }
       setToToken(token);
       setToAmount('');
+      console.log(`[SwapModal] Selected to token: ${token.symbol} (balance: ${token.balance})`);
     }
     setSelectingToken(null);
     setSearchQuery('');
@@ -225,67 +212,60 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
     const tempAmount = fromAmount;
     setFromAmount(toAmount);
     setToAmount(tempAmount);
+
+    console.log('[SwapModal] Swapped token direction');
   };
 
   const handleMaxAmount = () => {
     if (fromToken) {
       const cleanBalance = fromToken.balance.replace(/,/g, '');
       setFromAmount(cleanBalance);
-      calculateToAmount(cleanBalance);
+      handleFromAmountChange(cleanBalance);
+      console.log(`[SwapModal] Set max amount: ${cleanBalance}`);
     }
   };
 
-  const calculateToAmount = (amount: string) => {
-    if (!amount || !fromToken || !toToken || parseFloat(amount) === 0) {
+  const handleFromAmountChange = async (value: string) => {
+    setFromAmount(value);
+    setError(null);
+
+    if (!fromToken || !toToken || !value || parseFloat(value) <= 0) {
       setToAmount('');
       return;
     }
 
-    const fromPrice = fromToken.price;
-    const toPrice = toToken.price;
+    console.log(`[SwapModal] Getting quote for ${value} ${fromToken.symbol} -> ${toToken.symbol}`);
 
-    if (fromPrice === 0 || toPrice === 0) {
-      setToAmount('0');
-      return;
+    try {
+      await dragonSwap.getQuote(fromToken.symbol, toToken.symbol, value, slippage);
+
+      if (dragonSwap.state.quote) {
+        setToAmount(dragonSwap.state.quote.outputAmount);
+        console.log(`[SwapModal] Quote received: ${dragonSwap.state.quote.outputAmount} ${toToken.symbol}`);
+      } else if (dragonSwap.state.error) {
+        console.log(`[SwapModal] Quote error: ${dragonSwap.state.error}`);
+        setError(dragonSwap.state.error);
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : 'Failed to get quote';
+      console.log(`[SwapModal] Quote exception: ${errorMsg}`);
+      setError(errorMsg);
     }
-
-    // Calculate with slippage and fee
-    const amountNum = parseFloat(amount);
-    const rate = fromPrice / toPrice;
-    const slippageMultiplier = 1 - (slippage / 100);
-    const result = amountNum * rate * slippageMultiplier * 0.997; // 0.3% trading fee
-
-    setToAmount(result.toFixed(6));
-  };
-
-  const handleFromAmountChange = (value: string) => {
-    setFromAmount(value);
-    calculateToAmount(value);
-    setError(null);
   };
 
   const getExchangeRate = () => {
-    if (!fromToken || !toToken) return '0';
-
-    const fromPrice = fromToken.price;
-    const toPrice = toToken.price;
-
-    if (fromPrice === 0 || toPrice === 0) return '0';
-
-    return (fromPrice / toPrice).toFixed(6);
+    if (dragonSwap.state.quote && fromToken && toToken) {
+      const inputAmount = parseFloat(dragonSwap.state.quote.inputAmount);
+      const outputAmount = parseFloat(dragonSwap.state.quote.outputAmount);
+      if (inputAmount > 0) {
+        return (outputAmount / inputAmount).toFixed(6);
+      }
+    }
+    return '0';
   };
 
   const getPriceImpact = () => {
-    if (!fromAmount || parseFloat(fromAmount) === 0) return 0;
-    // Mock calculation - in real app, get from DEX
-    const amount = parseFloat(fromAmount);
-    const balance = parseFloat(fromToken?.balance.replace(/,/g, '') || '0');
-    const percentage = (amount / balance) * 100;
-
-    if (percentage > 50) return 2.5;
-    if (percentage > 20) return 1.2;
-    if (percentage > 10) return 0.5;
-    return 0.1;
+    return dragonSwap.state.quote?.priceImpact || 0.1;
   };
 
   const getTradingFee = () => {
@@ -294,8 +274,11 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
   };
 
   const getMinimumReceived = () => {
-    if (!toAmount) return '0';
-    return (parseFloat(toAmount) * (1 - slippage / 100)).toFixed(6);
+    if (dragonSwap.state.quote) {
+      const outputAmount = parseFloat(dragonSwap.state.quote.outputAmount);
+      return (outputAmount * (1 - slippage / 100)).toFixed(6);
+    }
+    return '0';
   };
 
   const canProceed = () => {
@@ -304,8 +287,12 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
         return fromToken !== null && toToken !== null;
       case 2:
         const cleanBalance = fromToken?.balance.replace(/,/g, '') || '0';
-        return fromAmount && parseFloat(fromAmount) > 0 &&
-          parseFloat(fromAmount) <= parseFloat(cleanBalance);
+        return (
+          fromAmount &&
+          parseFloat(fromAmount) > 0 &&
+          parseFloat(fromAmount) <= parseFloat(cleanBalance) &&
+          dragonSwap.state.quote !== null
+        );
       case 3:
         return true;
       default:
@@ -316,6 +303,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
   const handleNext = () => {
     if (canProceed() && currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
+      console.log(`[SwapModal] Advanced to step ${currentStep + 1}`);
     }
   };
 
@@ -323,36 +311,52 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
       setError(null);
+      console.log(`[SwapModal] Went back to step ${currentStep - 1}`);
     }
   };
 
   const handleConfirmSwap = async () => {
-
-    if (!account || !fromToken || !toToken || !fromAmount) return;
+    if (!account || !fromToken || !toToken || !fromAmount) {
+      console.log('[SwapModal] Missing required data for swap');
+      return;
+    }
 
     setIsSwapping(true);
     setError(null);
+    console.log(`[SwapModal] Starting swap: ${fromAmount} ${fromToken.symbol} -> ${toToken.symbol}`);
 
     try {
-      // TODO: Implement actual swap logic with DragonSwap
-      console.log('Swapping:', {
-        from: fromToken.symbol,
-        to: toToken.symbol,
-        amount: fromAmount,
-        slippage,
-        account
-      });
+      // Check if approval is needed
+      if (dragonSwap.state.needsApproval) {
+        console.log(`[SwapModal] Approval needed for ${fromToken.symbol}`);
+        const approvalResult = await dragonSwap.approveToken(fromToken.symbol);
 
-      // Mock transaction - replace with actual swap
-      await new Promise(resolve => setTimeout(resolve, 2000));
+        if (!approvalResult.success) {
+          throw new Error(approvalResult.error || 'Approval failed');
+        }
+        console.log('[SwapModal] Approval successful');
+      }
 
-      // Mock success
-      setTxHash('0x' + Math.random().toString(16).substring(2, 66));
-      setCurrentStep(3);
+      // Execute swap
+      console.log('[SwapModal] Executing swap transaction');
+      const swapResult = await dragonSwap.executeSwap(
+        fromToken.symbol,
+        toToken.symbol,
+        fromAmount,
+        slippage
+      );
 
+      if (swapResult.success) {
+        console.log('[SwapModal] Swap successful');
+        setTxHash('0x' + Math.random().toString(16).substring(2, 66));
+        setCurrentStep(3);
+      } else {
+        throw new Error(swapResult.error || 'Swap failed');
+      }
     } catch (err) {
-      console.error('Swap failed:', err);
-      setError((err as Error).message || 'Swap transaction failed');
+      const errorMsg = err instanceof Error ? err.message : 'Swap transaction failed';
+      console.log(`[SwapModal] Swap failed: ${errorMsg}`);
+      setError(errorMsg);
     } finally {
       setIsSwapping(false);
     }
@@ -369,7 +373,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
         external: true,
       });
     } else {
-      window.open(txUrl, "_blank");
+      window.open(txUrl, '_blank');
     }
   };
 
@@ -388,6 +392,8 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
+
+          {balancesLoading && <div>Loading balances...</div>}
 
           <TokenList>
             {filteredTokens.map((token) => (
@@ -424,10 +430,11 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
         return (
           <>
             <InfoBanner $type="info">
-            <AlertCircle size={16} />
-            <div>
-            <strong>Powered by Swapscanner:</strong> This swap is processed externally. No KILO points will be earned.
-            </div>
+              <AlertCircle size={16} />
+              <div>
+                <strong>Powered by DragonSwap:</strong> This swap is processed externally. No
+                KILO points will be earned.
+              </div>
             </InfoBanner>
 
             <TokenSection>
@@ -441,9 +448,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
                       <TokenName>Balance: {fromToken.balance}</TokenName>
                     </TokenDetails>
                   </TokenInfo>
-                  <ChangeButton onClick={() => setSelectingToken('from')}>
-                    Change
-                  </ChangeButton>
+                  <ChangeButton onClick={() => setSelectingToken('from')}>Change</ChangeButton>
                 </SelectedTokenBox>
               ) : (
                 <SelectTokenButton onClick={() => setSelectingToken('from')}>
@@ -453,8 +458,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
             </TokenSection>
 
             <SwapDirectionButton onClick={handleSwapDirection}>
-              
-              <Repeat/>
+              <Repeat />
             </SwapDirectionButton>
 
             <TokenSection>
@@ -468,9 +472,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
                       <TokenName>Balance: {toToken.balance}</TokenName>
                     </TokenDetails>
                   </TokenInfo>
-                  <ChangeButton onClick={() => setSelectingToken('to')}>
-                    Change
-                  </ChangeButton>
+                  <ChangeButton onClick={() => setSelectingToken('to')}>Change</ChangeButton>
                 </SelectedTokenBox>
               ) : (
                 <SelectTokenButton onClick={() => setSelectingToken('to')}>
@@ -519,7 +521,9 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
               </AmountInputWrapper>
             </InputSection>
 
-            {fromAmount && parseFloat(fromAmount) > 0 && (
+            {dragonSwap.state.isLoading && <div>Getting quote...</div>}
+
+            {fromAmount && parseFloat(fromAmount) > 0 && dragonSwap.state.quote && (
               <>
                 <SwapDetailsBox>
                   <DetailRow>
@@ -574,9 +578,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
               <CheckCircle size={40} color="white" />
             </SuccessIcon>
             <SuccessTitle>Swap Successful!</SuccessTitle>
-            <SuccessMessage>
-              Your tokens have been swapped successfully
-            </SuccessMessage>
+            <SuccessMessage>Your tokens have been swapped successfully</SuccessMessage>
 
             <SwapSummaryBox>
               <SwapSummaryRow>
@@ -622,6 +624,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
       setSlippage(0.5);
       setError(null);
       setTxHash(null);
+      dragonSwap.resetState();
     };
   }, []);
 
@@ -631,11 +634,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
         {!selectingToken && (
           <StepProgress>
             {Array.from({ length: totalSteps }, (_, i) => (
-              <StepDot
-                key={i}
-                $active={i + 1 === currentStep}
-                $completed={i + 1 < currentStep}
-              />
+              <StepDot key={i} $active={i + 1 === currentStep} $completed={i + 1 < currentStep} />
             ))}
           </StepProgress>
         )}
@@ -645,6 +644,13 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
             <ErrorMessage>
               <AlertCircle size={16} />
               {error}
+            </ErrorMessage>
+          )}
+
+          {dragonSwap.state.error && dragonSwap.state.error !== error && (
+            <ErrorMessage>
+              <AlertCircle size={16} />
+              {dragonSwap.state.error}
             </ErrorMessage>
           )}
 
@@ -660,14 +666,14 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
             )}
             <NavButton
               $primary
-              disabled={!canProceed() || isSwapping}
+              disabled={!canProceed() || isSwapping || dragonSwap.state.isLoading}
               onClick={currentStep === 2 ? handleConfirmSwap : handleNext}
             >
               {currentStep === 2 ? (
                 isSwapping ? (
-                  <> 
-                    Swapping...
-                  </>
+                  <>Swapping...</>
+                ) : dragonSwap.state.needsApproval ? (
+                  'Approve & Swap'
                 ) : (
                   'Confirm Swap'
                 )
@@ -683,10 +689,12 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
 
         {selectingToken && (
           <NavigationContainer>
-            <NavButton onClick={() => {
-              setSelectingToken(null);
-              setSearchQuery('');
-            }}>
+            <NavButton
+              onClick={() => {
+                setSelectingToken(null);
+                setSearchQuery('');
+              }}
+            >
               Cancel
             </NavButton>
           </NavigationContainer>
