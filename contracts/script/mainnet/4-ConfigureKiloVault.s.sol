@@ -68,6 +68,5 @@ contract ConfigureKiloVault is Script {
         console.log("- Is Paused:", vault.isPaused());
         console.log("- Owner:", vault.owner());
         console.log("");
-        
     }
 }

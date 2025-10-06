@@ -16,6 +16,7 @@ import "@kaiachain/contracts/KIP/token/KIP7/IKIP7.sol";
  *      • Early withdrawal penalties
  *      • Bot can withdraw funds to manage externally
  *      • Deposit caps per user and per vault
+ *      • Admin/Bot can extend lock periods for special cases
  *  - Custom deposit/withdraw flow (via request queue) replaces standard ERC4626 `withdraw/redeem`.
  *  - Shares represent proportional ownership of `totalManagedAssets`.
  *  - `sharePrice()` returns the current exchange rate between shares and assets.
@@ -32,6 +33,9 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     
     /// @notice Base precision
     uint256 public constant BASE = 1e18;
+    
+    /// @notice Default lock duration for bot deposits (15 days)
+    uint256 public constant BOT_LOCK_DURATION = 15 days;
 
     // ========================================================================
     // STRUCTS
@@ -46,6 +50,7 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         address beneficiary;
         bool isBotDeposit;
         uint256 depositBlock;
+        uint256 lastExtendedBlock;  // Track when lock was last extended
     }
     
     struct WithdrawalRequest {
@@ -77,6 +82,10 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     /// @notice Track total user deposits (before leverage)
     mapping(address => uint256) public userTotalDeposits;
     mapping(address => DepositInfo[]) public userDeposits;
+    
+    /// @notice Track bot deposit index for each user
+    mapping(address => uint256) public userBotDepositIndex;
+    mapping(address => bool) public hasBotDeposit;
 
     uint256 public minDeposit;
     bool public isPaused;
@@ -103,6 +112,22 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         uint256 lockDuration,
         uint256 unlockBlock,
         bool isBotDeposit
+    );
+    
+    event DepositMerged(
+        address indexed beneficiary,
+        uint256 depositIndex,
+        uint256 addedAssets,
+        uint256 addedShares,
+        uint256 newUnlockBlock
+    );
+    
+    event LockExtended(
+        address indexed user,
+        uint256 depositIndex,
+        uint256 oldUnlockBlock,
+        uint256 newUnlockBlock,
+        uint256 extensionDays
     );
     
     event WithdrawalRequested(
@@ -143,6 +168,8 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     error NotRequestOwner();
     error RequestNotProcessed();
     error RequestAlreadyClaimed();
+    error CannotExtendUnlockedDeposit();
+    error InvalidExtensionDays();
     
     // ========================================================================
     // MODIFIERS
@@ -184,58 +211,121 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     // USER DEPOSIT FUNCTIONS
     // ========================================================================
 
-    function depositNative(uint256 lockDurationDays) external payable nonReentrant returns (uint256 depositIndex) {
+    /**
+     * @notice User deposits native tokens directly
+     */
+    function depositNative() external payable nonReentrant returns (uint256 depositIndex) {
         if (!isNative) revert InvalidAddress();
         if (isPaused) revert VaultPaused();
         if (msg.value == 0) revert ZeroAmount();
         if (msg.value < minDeposit) revert BelowMinDeposit();
         
-        uint256 lockBlocks = _validateAndConvertLockDuration(lockDurationDays);
-        return _processDeposit(msg.sender, msg.sender, msg.value, lockBlocks, false);
+        return _processDeposit(msg.sender, msg.sender, msg.value, 0, false);
     }
 
-    function deposit(uint256 assets, uint256 lockDurationDays) external nonReentrant returns (uint256 depositIndex) {
+    /**
+     * @notice User deposits ERC20 tokens directly
+     */
+    function deposit(uint256 assets) external nonReentrant returns (uint256 depositIndex) {
         if (isNative) revert InvalidAddress();
         if (isPaused) revert VaultPaused();
         if (assets == 0) revert ZeroAmount();
         if (assets < minDeposit) revert BelowMinDeposit();
         
-        uint256 lockBlocks = _validateAndConvertLockDuration(lockDurationDays);
         IKIP7(asset).transferFrom(msg.sender, address(this), assets);
         
-        return _processDeposit(msg.sender, msg.sender, assets, lockBlocks, false);
+        return _processDeposit(msg.sender, msg.sender, assets, 0, false);
     }
 
     // ========================================================================
     // BOT DEPOSIT ON-BEHALF FUNCTIONS
     // ========================================================================
     
-    function botDepositNativeOnBehalf(address beneficiary, uint256 lockDurationDays) 
+    /**
+     * @notice Bot deposits native tokens on behalf of user (Starter Package)
+     * @dev Auto-merges with existing bot deposit and extends lock to 15 days
+     * @param beneficiary The user who will receive the shares
+     */
+    function botDepositNativeOnBehalf(address beneficiary) 
         external payable onlyBot nonReentrant returns (uint256 depositIndex) 
     {
         if (!isNative) revert InvalidAddress();
         if (isPaused) revert VaultPaused();
         if (msg.value == 0) revert ZeroAmount();
         if (beneficiary == address(0)) revert InvalidBeneficiary();
-        if (lockDurationDays != 15) revert InvalidLockDuration();
         
-        uint256 lockBlocks = lockDurationDays * 1 days / 1 seconds;
-        return _processDeposit(msg.sender, beneficiary, msg.value, lockBlocks, true);
+        uint256 lockBlocks = BOT_LOCK_DURATION / 1 seconds;
+        
+        // Check if user has existing bot deposit
+        if (hasBotDeposit[beneficiary]) {
+            return _mergeBotDeposit(beneficiary, msg.value, lockBlocks);
+        } else {
+            return _createBotDeposit(beneficiary, msg.value, lockBlocks);
+        }
     }
     
-    function botDepositOnBehalf(address beneficiary, uint256 assets, uint256 lockDurationDays) 
+    /**
+     * @notice Bot deposits ERC20 tokens on behalf of user (Starter Package)
+     * @dev Auto-merges with existing bot deposit and extends lock to 15 days
+     * @param beneficiary The user who will receive the shares
+     * @param assets Amount of tokens to deposit
+     */
+    function botDepositOnBehalf(address beneficiary, uint256 assets) 
         external onlyBot nonReentrant returns (uint256 depositIndex) 
     {
         if (isNative) revert InvalidAddress();
         if (isPaused) revert VaultPaused();
         if (assets == 0) revert ZeroAmount();
         if (beneficiary == address(0)) revert InvalidBeneficiary();
-        if (lockDurationDays != 15) revert InvalidLockDuration();
         
-        uint256 lockBlocks = lockDurationDays * 1 days / 1 seconds;
         IKIP7(asset).transferFrom(msg.sender, address(this), assets);
         
-        return _processDeposit(msg.sender, beneficiary, assets, lockBlocks, true);
+        uint256 lockBlocks = BOT_LOCK_DURATION / 1 seconds;
+        
+        // Check if user has existing bot deposit
+        if (hasBotDeposit[beneficiary]) {
+            return _mergeBotDeposit(beneficiary, assets, lockBlocks);
+        } else {
+            return _createBotDeposit(beneficiary, assets, lockBlocks);
+        }
+    }
+
+    // ========================================================================
+    // LOCK EXTENSION FUNCTIONS
+    // ========================================================================
+    
+    /**
+     * @notice Admin or Bot can extend lock period for a user's deposit
+     * @dev Can be used for special promotions or incentives
+     * @param user Address of the user
+     * @param depositIndex Index of the deposit to extend
+     * @param extensionDays Number of days to extend the lock
+     */
+    function extendLockPeriod(
+        address user,
+        uint256 depositIndex,
+        uint256 extensionDays
+    ) external onlyBot {
+        if (user == address(0)) revert InvalidAddress();
+        if (extensionDays == 0) revert InvalidExtensionDays();
+        
+        DepositInfo[] storage deposits = userDeposits[user];
+        if (depositIndex >= deposits.length) revert InvalidDepositIndex();
+        
+        DepositInfo storage depositInfo = deposits[depositIndex];
+        
+        // Can only extend locked deposits
+        if (!depositInfo.isLockedDeposit) revert CannotExtendUnlockedDeposit();
+        
+        uint256 oldUnlockBlock = depositInfo.unlockBlock;
+        uint256 extensionBlocks = extensionDays * 1 days / 1 seconds;
+        uint256 newUnlockBlock = depositInfo.unlockBlock + extensionBlocks;
+        
+        depositInfo.unlockBlock = newUnlockBlock;
+        depositInfo.lockDuration += extensionBlocks;
+        depositInfo.lastExtendedBlock = block.number;
+        
+        emit LockExtended(user, depositIndex, oldUnlockBlock, newUnlockBlock, extensionDays);
     }
 
     // ========================================================================
@@ -254,7 +344,6 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     {
         if (amount == 0) revert ZeroAmount();
         
-        // Transfer to bot
         if (isNative) {
             payable(msg.sender).transfer(amount);
         } else {
@@ -298,11 +387,11 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         DepositInfo[] storage deposits = userDeposits[msg.sender];
         if (depositIndex >= deposits.length) revert InvalidDepositIndex();
         
-        DepositInfo storage deposit = deposits[depositIndex];
-        if (deposit.shares < shares) revert InsufficientShares();
+        DepositInfo storage depositInfo = deposits[depositIndex];
+        if (depositInfo.shares < shares) revert InsufficientShares();
         
         uint256 assets = _calculateAssets(shares);
-        bool isEarly = deposit.isLockedDeposit && block.number < deposit.unlockBlock;
+        bool isEarly = depositInfo.isLockedDeposit && block.number < depositInfo.unlockBlock;
         
         uint256 penalty = 0;
         if (isEarly) {
@@ -312,11 +401,11 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         }
         
         _burn(msg.sender, shares);
-        deposit.shares -= shares;
+        depositInfo.shares -= shares;
+        depositInfo.assets = (depositInfo.assets * depositInfo.shares) / (depositInfo.shares + shares); // Proportional reduction
         totalManagedAssets -= (assets + penalty);
         
-        // Update user total deposits
-        userTotalDeposits[msg.sender] -= deposit.assets;
+        userTotalDeposits[msg.sender] -= (assets + penalty);
         
         requestId = nextRequestId++;
         
@@ -440,19 +529,21 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         address beneficiary,
         bool isBotDeposit,
         uint256 depositBlock,
-        bool canWithdraw
+        bool canWithdraw,
+        uint256 lastExtendedBlock
     ) {
-        DepositInfo memory deposit = userDeposits[user][index];
+        DepositInfo memory depositInfo = userDeposits[user][index];
         return (
-            deposit.shares,
-            deposit.assets,
-            deposit.unlockBlock,
-            deposit.lockDuration,
-            deposit.isLockedDeposit,
-            deposit.beneficiary,
-            deposit.isBotDeposit,
-            deposit.depositBlock,
-            block.number >= deposit.unlockBlock
+            depositInfo.shares,
+            depositInfo.assets,
+            depositInfo.unlockBlock,
+            depositInfo.lockDuration,
+            depositInfo.isLockedDeposit,
+            depositInfo.beneficiary,
+            depositInfo.isBotDeposit,
+            depositInfo.depositBlock,
+            block.number >= depositInfo.unlockBlock,
+            depositInfo.lastExtendedBlock
         );
     }
     
@@ -492,6 +583,61 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     // INTERNAL FUNCTIONS
     // ========================================================================
     
+    /**
+     * @notice Create a new bot deposit for a user
+     */
+    function _createBotDeposit(
+        address beneficiary,
+        uint256 assets,
+        uint256 lockBlocks
+    ) internal returns (uint256 depositIndex) {
+        depositIndex = _processDeposit(msg.sender, beneficiary, assets, lockBlocks, true);
+        
+        // Track that this user has a bot deposit
+        hasBotDeposit[beneficiary] = true;
+        userBotDepositIndex[beneficiary] = depositIndex;
+        
+        return depositIndex;
+    }
+    
+    /**
+     * @notice Merge new assets into existing bot deposit and extend lock
+     */
+    function _mergeBotDeposit(
+        address beneficiary,
+        uint256 newAssets,
+        uint256 lockBlocks
+    ) internal returns (uint256 depositIndex) {
+        // Check deposit caps
+        if (userTotalDeposits[beneficiary] + newAssets > maxDepositPerUser) {
+            revert ExceedsMaxDepositPerUser();
+        }
+        if (totalManagedAssets + newAssets > maxTotalDeposits) {
+            revert ExceedsMaxTotalDeposits();
+        }
+        
+        depositIndex = userBotDepositIndex[beneficiary];
+        DepositInfo storage depositInfo = userDeposits[beneficiary][depositIndex];
+        
+        // Calculate new shares
+        uint256 newShares = _calculateShares(newAssets);
+        
+        // Update deposit
+        depositInfo.shares += newShares;
+        depositInfo.assets += newAssets;
+        depositInfo.unlockBlock = block.number + lockBlocks; // EXTEND LOCK TO 15 DAYS FROM NOW
+        depositInfo.lastExtendedBlock = block.number;
+        
+        // Update global state
+        totalManagedAssets += newAssets;
+        userTotalDeposits[beneficiary] += newAssets;
+        _mint(beneficiary, newShares);
+        
+        emit DepositMerged(beneficiary, depositIndex, newAssets, newShares, depositInfo.unlockBlock);
+        
+        return depositIndex;
+    }
+    
     function _processDeposit(
         address depositor,
         address beneficiary,
@@ -524,17 +670,13 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
             isLockedDeposit: lockBlocks > 0,
             beneficiary: beneficiary,
             isBotDeposit: isBotDeposit,
-            depositBlock: block.number
+            depositBlock: block.number,
+            lastExtendedBlock: 0
         }));
         
         emit Deposit(depositor, beneficiary, depositIndex, assets, shares, lockBlocks, unlockBlock, isBotDeposit);
         
         return depositIndex;
-    }
-    
-    function _validateAndConvertLockDuration(uint256 days_) internal pure returns (uint256 blocks) {
-        if (days_ != 0 && days_ != 15) revert InvalidLockDuration();
-        return days_ * 1 days / 1 seconds;
     }
     
     function _calculateShares(uint256 assets) internal view returns (uint256) {

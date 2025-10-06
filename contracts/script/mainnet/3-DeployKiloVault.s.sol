@@ -6,7 +6,7 @@ import "../../src/KiloVault.sol";
 
 /**
  * @title Deploy KiloVault - Mainnet
- * @notice Deploys KiloVault on Kaia Mainnet
+ * @notice Deploys KiloVault on Kaia Mainnet with updated auto-merge functionality
  * @dev Usage: forge script script/mainnet/3-DeployKiloVault.s.sol:DeployKiloVault --rpc-url $MAINNET_RPC_URL --private-key $PRIVATE_KEY --broadcast -vvvv
  * 
  */
@@ -19,7 +19,7 @@ contract DeployKiloVault is Script {
         address deployer = vm.addr(deployerPrivateKey);
         
         console.log("===========================================");
-        console.log("Deploying KiloVault - MAINNET");
+        console.log("Deploying KiloVault v2 - MAINNET");
         console.log("===========================================");
         console.log("Network: Kaia Mainnet");
         console.log("Chain ID:", block.chainid);
@@ -32,8 +32,6 @@ contract DeployKiloVault is Script {
         console.log("WARNING: You are about to deploy to MAINNET");
         console.log("Press Ctrl+C to cancel, or wait 5 seconds to continue...");
         console.log("");
-        
-        // Note: In actual deployment, you might want to add a confirmation step
         
         vm.startBroadcast(deployerPrivateKey);
         
@@ -63,6 +61,12 @@ contract DeployKiloVault is Script {
         console.log("- Owner:", vault.owner());
         console.log("");
         
+        console.log("Features:");
+        console.log("- Bot Deposits: Auto-merge with 15-day lock extension");
+        console.log("- Direct Deposits: No lock period");
+        console.log("- Lock Extension: Enabled for admin/bot");
+        console.log("");
+        
         vm.stopBroadcast();
         
         // Save deployment info
@@ -80,9 +84,16 @@ contract DeployKiloVault is Script {
         console.log("3. Verify contract on KaiaScan:");
         console.log("   https://kaiascan.io/address/", address(vault));
         console.log("");
-        console.log("4. Test with SMALL amounts first");
+        console.log("4. Test with SMALL amounts first:");
+        console.log("   - Test bot deposit (auto-merge)");
+        console.log("   - Test direct deposit (no lock)");
+        console.log("   - Test withdrawal flow");
         console.log("");
-        console.log("5. Set up monitoring dashboard");
+        console.log("5. Update frontend:");
+        console.log("   - Remove lock period selectors for direct deposits");
+        console.log("   - Handle bot deposit auto-merge in Buy modal");
+        console.log("");
+        console.log("6. Set up monitoring dashboard");
         console.log("");
         console.log("===========================================");
         console.log("DO NOT use until bot address is configured!");
@@ -98,11 +109,17 @@ contract DeployKiloVault is Script {
             '  "vault": "', vm.toString(vault), '",\n',
             '  "deployer": "', vm.toString(deployer), '",\n',
             '  "timestamp": ', vm.toString(block.timestamp), ',\n',
-            '  "blockNumber": ', vm.toString(block.number), '\n',
+            '  "blockNumber": ', vm.toString(block.number), ',\n',
+            '  "features": {\n',
+            '    "autoMerge": true,\n',
+            '    "noLockDirectDeposits": true,\n',
+            '    "lockExtension": true,\n',
+            '    "defaultLockDays": 15\n',
+            '  }\n',
             '}'
         ));
         
-        vm.writeFile("deployments/mainnet-kilovault.json", json);
-        console.log("Deployment info saved to: deployments/mainnet-kilovault.json");
+        vm.writeFile("deployments/mainnet-kilovault-v2.json", json);
+        console.log("Deployment info saved to: deployments/mainnet-kilovault-v2.json");
     }
 }
