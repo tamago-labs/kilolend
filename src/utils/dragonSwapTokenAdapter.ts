@@ -3,7 +3,7 @@ import { KAIA_MAINNET_TOKENS } from './tokenConfig';
 // DragonSwap tokens - verified KAIA Mainnet tokens with proper checksums
 const DRAGONSWAP_ADDITIONAL_TOKENS = {
   weth: {
-    address: '0x98A8345bB9D3DDa9d808Ca1c9142a28F6b0430E1',
+    address: '0x98a8345bb9d3dda9d808ca1c9142a28f6b0430e1',
     name: 'Wrapped Ether',
     symbol: 'WETH',
     decimals: 18,
@@ -56,21 +56,12 @@ const DRAGONSWAP_ADDITIONAL_TOKENS = {
     iconType: 'image' as const,
     isSwapOnly: true
   },
-  usdt_e: {
-    address: '0x9025095263d1E548dc890A7589A4C78038aC40ab',
-    name: 'Tether USD (Stargate)',
-    symbol: 'USDT(Stargate)',
-    decimals: 6,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png',
-    iconType: 'image' as const,
-    isSwapOnly: true
-  },
-  usdc_e: {
-    address: '0xE2053BCf56D2030d2470Fb454574237cF9ee3D4B',
-    name: 'Bridged USDC (Stargate)',
-    symbol: 'USDC(Stargate)',
-    decimals: 6,
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png',
+  wkaia: {
+    address: '0x98a8345bb9d3dda9d808ca1c9142a28f6b0430e1',
+    name: 'Wrapped KAIA',
+    symbol: 'WKAIA',
+    decimals: 18,
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
     iconType: 'image' as const,
     isSwapOnly: true
   }

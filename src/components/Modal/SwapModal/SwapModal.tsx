@@ -90,7 +90,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
   const [toToken, setToToken] = useState<Token | null>(null);
   const [fromAmount, setFromAmount] = useState('');
   const [toAmount, setToAmount] = useState('');
-  const [slippage, setSlippage] = useState(0.5);
+  const [slippage, setSlippage] = useState(1);
   const [selectingToken, setSelectingToken] = useState<'from' | 'to' | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSwapping, setIsSwapping] = useState(false);
@@ -180,6 +180,25 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
     }
   }, [availableTokens, balancesLoading]);
 
+  // Update toAmount when quote changes
+  useEffect(() => {
+    if (dragonSwap.state.quote && fromToken && toToken && fromAmount) {
+      const newToAmount = dragonSwap.state.quote.outputAmount;
+      console.log(`[SwapModal] Updating toAmount from quote: ${newToAmount} ${toToken.symbol}`);
+      setToAmount(newToAmount);
+    } else if (!fromAmount || parseFloat(fromAmount) <= 0) {
+      setToAmount('');
+    }
+  }, [dragonSwap.state.quote, fromToken, toToken, fromAmount]);
+
+  // Refetch quote when slippage changes
+  useEffect(() => {
+    if (fromToken && toToken && fromAmount && parseFloat(fromAmount) > 0) {
+      console.log(`[SwapModal] Slippage changed to ${slippage}%, refetching quote`);
+      handleFromAmountChange(fromAmount);
+    }
+  }, [slippage]);
+
   const handleTokenSelect = (token: Token) => {
     if (selectingToken === 'from') {
       if (toToken && token.symbol === toToken.symbol) {
@@ -238,14 +257,9 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
 
     try {
       await dragonSwap.getQuote(fromToken.symbol, toToken.symbol, value, slippage);
-
-      if (dragonSwap.state.quote) {
-        setToAmount(dragonSwap.state.quote.outputAmount);
-        console.log(`[SwapModal] Quote received: ${dragonSwap.state.quote.outputAmount} ${toToken.symbol}`);
-      } else if (dragonSwap.state.error) {
-        console.log(`[SwapModal] Quote error: ${dragonSwap.state.error}`);
-        setError(dragonSwap.state.error);
-      }
+      
+      // The toAmount will be updated by the useEffect hook watching dragonSwap.state.quote
+      console.log(`[SwapModal] Quote request sent for ${value} ${fromToken.symbol} -> ${toToken.symbol}`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to get quote';
       console.log(`[SwapModal] Quote exception: ${errorMsg}`);
@@ -621,7 +635,7 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
       setToToken(null);
       setFromAmount('');
       setToAmount('');
-      setSlippage(0.5);
+      setSlippage(1);
       setError(null);
       setTxHash(null);
       dragonSwap.resetState();
