@@ -184,7 +184,9 @@ export const PortfolioRiskCard = ({
   isLoading = false
 }: PortfolioRiskCardProps) => {
   const isHealthy = portfolioStats.healthFactor > 1.5;
-  const isAtRisk = portfolioStats.healthFactor <= 1.2 && portfolioStats.healthFactor > 0;
+  const isWarning = portfolioStats.healthFactor > 1.3 && portfolioStats.healthFactor <= 1.5;
+  const isDanger = portfolioStats.healthFactor > 1.2 && portfolioStats.healthFactor <= 1.3;
+  const isCritical = portfolioStats.healthFactor <= 1.2 && portfolioStats.healthFactor > 0;
 
   const borrowingPowerUsed = borrowingPowerData ?
     parseFloat(borrowingPowerData.borrowingPowerUsed) :
@@ -273,21 +275,29 @@ export const PortfolioRiskCard = ({
           </HealthFactorValue>
         </MetricHeader>
       </MetricSection>
-
-      {/* <MetricSection>
-        <MetricHeader>
-          <MetricLabel>Liquidation Threshold</MetricLabel>
-          <MetricValue $color="#f59e0b">
-            {borrowingPowerData?.liquidationThreshold || '80'}%
-          </MetricValue>
-        </MetricHeader>
-      </MetricSection> */}
+ 
 
       {/* Risk Warnings */}
-      {isAtRisk && (
+      {isCritical && (
         <RiskWarning>
           <WarningText>
-            ⚠️ Your health factor is critical. Consider repaying debt or adding more collateral to avoid liquidation.
+            🚨 Your health factor is critical. Your position is at immediate risk of liquidation! Consider repaying debt or adding more collateral immediately.
+          </WarningText>
+        </RiskWarning>
+      )}
+
+      {isDanger && (
+        <RiskWarning style={{ background: '#fef3c7', borderColor: '#f59e0b' }}>
+          <WarningText style={{ color: '#92400e' }}>
+            ⚠️ Your health factor is in the danger zone. Monitor your position closely and consider adding collateral or repaying debt.
+          </WarningText>
+        </RiskWarning>
+      )}
+
+      {isWarning && (
+        <RiskWarning style={{ background: '#fffbeb', borderColor: '#f59e0b' }}>
+          <WarningText style={{ color: '#92400e' }}>
+            ⚡ Your health factor is in the warning range. Keep monitoring your position and be prepared to act if market conditions change.
           </WarningText>
         </RiskWarning>
       )}
