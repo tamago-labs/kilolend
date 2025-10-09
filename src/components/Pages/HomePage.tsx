@@ -447,25 +447,22 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               />
             </IconCircle>
             <IconLabel>Borrow</IconLabel>
-          </IconButton>
-
-           {/* Boost with APY badge */}
-          <IconButton onClick={handleBoost}>
-            <IconCircle $index="9">
-              <IconImage
-                src="./images/icon-rocket.png"
-                alt="BOOST"
-              />
-              {/* <APYBadge>+1.5x</APYBadge> */}
-            </IconCircle>
-            <IconLabel>Vault</IconLabel>
-          </IconButton>
-
+          </IconButton> 
           <IconButton onClick={handleAskAI}>
             <IconCircle $index="5">
               <RandomIcon />
             </IconCircle>
             <IconLabel>Ask AI</IconLabel>
+          </IconButton>
+
+           <IconButton onClick={handleLearn}>
+            <IconCircle $index="6">
+              <IconImage
+                src="./images/icon-faq.png"
+                alt="LEARN"
+              />
+            </IconCircle>
+            <IconLabel>FAQ</IconLabel>
           </IconButton>
 
           {/* Row 2 */}
@@ -512,7 +509,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           {/* Row 3 */}
 
           {/* Swap */}
-          <IconButton onClick={handleSwap}>
+          {/*<IconButton onClick={handleSwap}>
             <IconCircle $index="5">
               <IconImage
                 src="./images/icon-trade.png"
@@ -520,9 +517,9 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               />
             </IconCircle>
             <IconLabel>Swap</IconLabel>
-          </IconButton>
+          </IconButton>*/}
 
-          <IconButton onClick={handleBuy}>
+          {/*<IconButton onClick={handleBuy}>
             <IconCircle $index="10">
               <IconImage
                 src="./images/icon-kilo.png"
@@ -530,17 +527,21 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
               />
             </IconCircle>
             <IconLabel>Starter Package</IconLabel>
+          </IconButton>*/}
+
+          {/* Boost with APY badge */}
+          <IconButton onClick={handleBoost}>
+            <IconCircle $index="9">
+              <IconImage
+                src="./images/icon-boost.png"
+                alt="BOOST"
+              />
+              {/* <APYBadge>+1.5x</APYBadge> */}
+            </IconCircle>
+            <IconLabel>AI Vault</IconLabel>
           </IconButton>
 
-          <IconButton onClick={handleLearn}>
-            <IconCircle $index="6">
-              <IconImage
-                src="./images/icon-faq.png"
-                alt="LEARN"
-              />
-            </IconCircle>
-            <IconLabel>FAQ</IconLabel>
-          </IconButton>
+         
 
 
         </IconGrid>

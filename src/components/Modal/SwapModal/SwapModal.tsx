@@ -547,6 +547,12 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
                     </DetailValue>
                   </DetailRow>
                   <DetailRow>
+                    <DetailLabel>Route Type</DetailLabel>
+                    <DetailValue>
+                      {dragonSwap.state.quote.route.isV3 ? `V3 (Fee: ${(dragonSwap.state.quote.route.fees?.[0] || 0) / 10000}%)` : 'V2'}
+                    </DetailValue>
+                  </DetailRow>
+                  <DetailRow>
                     <DetailLabel>Price Impact</DetailLabel>
                     <DetailValue $warning={getPriceImpact() > 1}>
                       ~{getPriceImpact().toFixed(2)}%
@@ -564,7 +570,88 @@ export const SwapModal: React.FC<SwapModalProps> = ({ onClose }) => {
                       {getMinimumReceived()} {toToken.symbol}
                     </DetailValue>
                   </DetailRow>
+                  {dragonSwap.state.quote.route.poolAddress && (
+                    <DetailRow>
+                      <DetailLabel>Pool Address</DetailLabel>
+                      <DetailValue style={{ fontSize: '11px', fontFamily: 'monospace' }}>
+                        {dragonSwap.state.quote.route.poolAddress.slice(0, 6)}...{dragonSwap.state.quote.route.poolAddress.slice(-4)}
+                      </DetailValue>
+                    </DetailRow>
+                  )}
+                  {dragonSwap.state.quote.liquidityUSD && (
+                    <DetailRow>
+                      <DetailLabel>Pool Liquidity</DetailLabel>
+                      <DetailValue>
+                        ~${dragonSwap.state.quote.liquidityUSD.toFixed(0)}
+                      </DetailValue>
+                    </DetailRow>
+                  )}
+                  {dragonSwap.state.quote.route.pool?.apr && (
+                    <DetailRow>
+                      <DetailLabel>Pool APR</DetailLabel>
+                      <DetailValue>
+                        ~{dragonSwap.state.quote.route.pool.apr.toFixed(2)}%
+                      </DetailValue>
+                    </DetailRow>
+                  )}
+                  {dragonSwap.state.quote.route.pool?.volumeUSD && (
+                    <DetailRow>
+                      <DetailLabel>Pool Volume (24h)</DetailLabel>
+                      <DetailValue>
+                        ~${dragonSwap.state.quote.route.pool.volumeUSD.toFixed(0)}
+                      </DetailValue>
+                    </DetailRow>
+                  )}
                 </SwapDetailsBox>
+
+                {/* Available Pools Section */}
+                {dragonSwap.state.availablePools.length > 0 && (
+                  <div style={{ marginTop: '16px' }}>
+                    <SectionTitle style={{ fontSize: '14px', marginBottom: '8px' }}>
+                      Available Pools ({dragonSwap.state.availablePools.length})
+                    </SectionTitle>
+                    <div style={{ maxHeight: '150px', overflowY: 'auto', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '8px' }}>
+                      {dragonSwap.state.availablePools.map((pool, index) => (
+                        <div
+                          key={pool.id}
+                          style={{
+                            padding: '8px',
+                            marginBottom: index < dragonSwap.state.availablePools.length - 1 ? '8px' : '0',
+                            backgroundColor: pool.id === dragonSwap.state.quote?.route.poolAddress ? '#f0f9ff' : '#f8fafc',
+                            borderRadius: '6px',
+                            border: pool.id === dragonSwap.state.quote?.route.poolAddress ? '1px solid #0ea5e9' : '1px solid #e2e8f0',
+                            fontSize: '12px'
+                          }}
+                        >
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <strong>{pool.version}</strong>
+                              {pool.fee && <span style={{ marginLeft: '8px', color: '#64748b' }}>Fee: {pool.fee / 10000}%</span>}
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ color: '#059669', fontWeight: 'bold' }}>
+                                ${pool.liquidityUSD.toFixed(0)}
+                              </div>
+                              {pool.apr > 0 && (
+                                <div style={{ color: '#64748b', fontSize: '11px' }}>
+                                  APR: {pool.apr.toFixed(2)}%
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div style={{ marginTop: '4px', color: '#64748b', fontSize: '11px' }}>
+                            {pool.token0.symbol} / {pool.token1.symbol}
+                          </div>
+                          {pool.id === dragonSwap.state.quote?.route.poolAddress && (
+                            <div style={{ marginTop: '4px', color: '#0ea5e9', fontSize: '11px', fontWeight: 'bold' }}>
+                              ✓ Selected Pool
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <SlippageSettings>
                   <SlippageTitle>Slippage Tolerance</SlippageTitle>
