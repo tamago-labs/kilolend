@@ -533,7 +533,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           <IconButton onClick={handleBoost}>
             <IconCircle $index="9">
               <IconImage
-                src="./images/icon-boost.png"
+                src="./images/icon-rocket.png"
                 alt="BOOST"
               />
               {/* <APYBadge>+1.5x</APYBadge> */}
