@@ -299,6 +299,7 @@ All smart contracts are deployed on **KAIA Mainnet** and verified through **Kaia
 - **cBORA (Volatile):** [0x7a937C07d49595282c711FBC613c881a83B9fDFD](https://www.kaiascan.io/address/0x7a937C07d49595282c711FBC613c881a83B9fDFD)  
 - **cMBX (Volatile):** [0xE321e20F0244500A194543B1EBD8604c02b8fA85](https://www.kaiascan.io/address/0xE321e20F0244500A194543B1EBD8604c02b8fA85)  
 - **cKAIA (Collateral Only):** [0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3](https://www.kaiascan.io/address/0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3)  
+- **cStKAIA:** [0x0BC926EF3856542134B06DCf53c86005b08B9625](https://www.kaiascan.io/address/0x0BC926EF3856542134B06DCf53c86005b08B9625) 
 
 
 
