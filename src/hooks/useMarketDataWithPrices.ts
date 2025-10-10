@@ -14,8 +14,9 @@ export const useMarketDataWithPrices = () => {
 
   // Get real-time price data
   const priceData = usePriceUpdates({
-    symbols: ['USDT', 'SIX', 'BORA', 'MBX', 'KAIA'], // All tokens we support
+    symbols: ['USDT', 'SIX', 'BORA', 'MBX', 'KAIA', 'STAKED_KAIA'], // All tokens we support
   });
+
 
   // Update market store with real price data when prices change
   useEffect(() => {
