@@ -8,6 +8,14 @@ export const KAIA_MAINNET_TOKENS = {
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png',
     iconType: 'image' as const
   }, 
+  STAKED_KAIA: {
+    address: '0x42952b873ed6f7f0a7e4992e2a9818e3a9001995',
+    name: 'Lair Staked KAIA',
+    symbol: 'stKAIA',
+    decimals: 18,
+    icon: 'https://assets.coingecko.com/coins/images/40001/standard/token_stkaia.png',
+    iconType: 'image' as const
+  },
   SIX: {
     address: '0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435',
     name: 'SIX Protocol',
@@ -137,11 +145,11 @@ export const FAUCET_CONFIG = {
 // Price API configuration
 export const PRICE_API_CONFIG = {
   endpoint: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices',
-  supportedTokens: ['KAIA', 'USDT', 'MARBLEX', 'BORA', 'SIX'] as const,
+  supportedTokens: ['KAIA', 'USDT', 'STAKED_KAIA' , 'MARBLEX', 'BORA', 'SIX'] as const,
   // Map API symbols to our token symbols
   symbolMapping: {
     'MARBLEX': 'MBX' // API uses MARBLEX, we use MBX
-  }
+  },
 };
 
 // ERC20 ABI for token interactions

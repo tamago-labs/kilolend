@@ -105,6 +105,11 @@ const tokenConfig = [
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png'
   },
   {
+    symbol: 'STAKED_KAIA',
+    name: 'stKAIA price',
+    icon: 'https://assets.coingecko.com/coins/images/40001/standard/token_stkaia.png'
+  },
+  {
     symbol: 'MBX',
     name: 'MARBLEX price',
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png'
