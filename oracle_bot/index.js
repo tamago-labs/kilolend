@@ -28,6 +28,7 @@ class OracleBot {
       'BORA': process.env.BORA_ADDRESS,
       'SIX': process.env.SIX_ADDRESS,
       'MARBLEX': process.env.MBX_ADDRESS,  // API returns MARBLEX but we call it MBX
+      'STAKED_KAIA': process.env.STAKED_KAIA_ADDRESS,  // New stKAIA token
       'KAIA': ethers.ZeroAddress, // Native KAIA
       'USDT': process.env.USDT_ADDRESS
     };
@@ -77,7 +78,7 @@ class OracleBot {
   validateConfig() {
     const required = [
       'RPC_URL', 'PRIVATE_KEY', 'ORACLE_ADDRESS', 'PRICE_API_URL',
-      'BORA_ADDRESS', 'SIX_ADDRESS', 'MBX_ADDRESS', 'USDT_ADDRESS'
+      'BORA_ADDRESS', 'SIX_ADDRESS', 'MBX_ADDRESS', 'STAKED_KAIA_ADDRESS', 'USDT_ADDRESS'
     ];
 
     for (const key of required) {

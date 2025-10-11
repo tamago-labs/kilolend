@@ -153,6 +153,26 @@ const initialContractMarkets: ContractMarket[] = [
     priceChange24h: -1.2,
     isActive: true,
     isCollateralOnly: false
+  },
+  {
+    id: 'staked-kaia',
+    name: 'Lair Staked KAIA',
+    symbol: 'stKAIA',
+    icon: 'https://assets.coingecko.com/coins/images/40001/standard/token_stkaia.png',
+    iconType: 'image' as const,
+    description: 'Lair Staked KAIA',
+    marketAddress: '0x0BC926EF3856542134B06DCf53c86005b08B9625',
+    tokenAddress: '0x42952b873ed6f7f0a7e4992e2a9818e3a9001995',
+    decimals: 18,
+    supplyAPY: 0.0,
+    borrowAPR: 0.0,
+    totalSupply: 0,
+    totalBorrow: 0,
+    utilization: 0,
+    price: 0.14,
+    priceChange24h: 0.1,
+    isActive: true,
+    isCollateralOnly: false
   }
 ];
 
@@ -207,8 +227,12 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
   updatePriceData: (prices: any) => {
     set((state) => {
       const updatedMarkets = state.markets.map(market => {
-        const symbolToCheck = market.symbol.toUpperCase();
+        let symbolToCheck = market.symbol.toUpperCase();
         
+        if (symbolToCheck === "STKAIA") { 
+          symbolToCheck = "STAKED_KAIA"
+        }
+
         // Get real price from the prices data
         let newPrice = market.price; // Keep existing as fallback
         let priceChange24h = market.priceChange24h;
@@ -217,7 +241,7 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
           newPrice = prices[symbolToCheck].price;
           priceChange24h = prices[symbolToCheck].change24h || 0;
         }
-        
+
         return {
           ...market,
           price: newPrice,

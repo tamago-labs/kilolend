@@ -92,14 +92,38 @@ const LastUpdatedText = styled.div`
   }
 `;
 
-import { getMainTokens } from '@/utils/dragonSwapTokenAdapter';
-
-// Get main tokens for display (your tokens + KAIA)
-const tokenConfig = getMainTokens().map(token => ({
-  symbol: token.symbol,
-  name: `${token.name} price`,
-  icon: token.icon
-}));
+const tokenConfig = [
+  {
+    symbol: 'KAIA',
+    name: 'KAIA price',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png'
+  },
+  {
+    symbol: 'USDT',
+    name: 'USDT price',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png'
+  },
+  {
+    symbol: 'STAKED_KAIA',
+    name: 'stKAIA price',
+    icon: 'https://assets.coingecko.com/coins/images/40001/standard/token_stkaia.png'
+  },
+  {
+    symbol: 'MBX',
+    name: 'MARBLEX price',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png'
+  },
+  {
+    symbol: 'BORA',
+    name: 'BORA price',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3801.png'
+  },
+  {
+    symbol: 'SIX',
+    name: 'SIX price',
+    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3327.png'
+  }
+];
 
 const formatLastUpdated = (date: Date | null): string => {
   if (!date) return '';
