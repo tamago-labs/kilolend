@@ -92,7 +92,6 @@ const LastUpdatedText = styled.div`
   }
 `;
 
-// Updated token configuration with new order: KAIA -> USDT -> MBX -> BORA -> SIX
 const tokenConfig = [
   {
     symbol: 'KAIA',

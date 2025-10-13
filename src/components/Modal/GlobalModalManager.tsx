@@ -19,6 +19,7 @@ import { InviteModal } from './InviteModal';
 import { AIChatModal } from './AIChatModal';
 import { SwapModal } from './SwapModal';
 import { BoostModal } from './BoostModal';
+import { BuyModal } from "./BuyModal"
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -237,6 +238,13 @@ export const GlobalModalManager = () => {
       case 'leaderboard':
         return (
           <LeaderboardModal
+            isOpen={isOpen}
+            onClose={closeModal}
+          />
+        );
+      case 'buy':
+        return (
+          <BuyModal
             isOpen={isOpen}
             onClose={closeModal}
           />

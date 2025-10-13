@@ -3,7 +3,7 @@ export const KAIA_MAINNET_TOKENS = {
   USDT: {
     address: '0xd077A400968890Eacc75cdc901F0356c943e4fDb',
     name: 'Tether USD',
-    symbol: 'USDT',
+    symbol: 'USD₮',
     decimals: 6,
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png',
     iconType: 'image' as const

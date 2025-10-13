@@ -42,11 +42,13 @@ const PreviewValue = styled.span<{ $danger?: boolean }>`
   color: ${({ $danger }) => $danger ? '#dc2626' : '#1e293b'};
 `;
 
-const RiskSection = styled.div<{ $level: 'low' | 'medium' | 'high' }>`
+const RiskSection = styled.div<{ $level: 'low' | 'medium' | 'high' | 'critical' }>`
   background: ${({ $level }) => 
+    $level === 'critical' ? '#7f1d1d' :
     $level === 'high' ? '#fef2f2' : 
     $level === 'medium' ? '#fef3c7' : '#f0fdf4'};
   border: 1px solid ${({ $level }) => 
+    $level === 'critical' ? '#991b1b' :
     $level === 'high' ? '#ef4444' : 
     $level === 'medium' ? '#f59e0b' : '#22c55e'};
   border-radius: 12px;
@@ -54,19 +56,21 @@ const RiskSection = styled.div<{ $level: 'low' | 'medium' | 'high' }>`
   margin-bottom: 16px;
 `;
 
-const RiskTitle = styled.div<{ $level: 'low' | 'medium' | 'high' }>`
+const RiskTitle = styled.div<{ $level: 'low' | 'medium' | 'high' | 'critical' }>`
   font-size: 14px;
   font-weight: 600;
   color: ${({ $level }) => 
+    $level === 'critical' ? '#fef2f2' :
     $level === 'high' ? '#dc2626' : 
     $level === 'medium' ? '#92400e' : '#166534'};
   margin-bottom: 8px;
 `;
 
-const RiskText = styled.p<{ $level: 'low' | 'medium' | 'high' }>`
+const RiskText = styled.p<{ $level: 'low' | 'medium' | 'high' | 'critical' }>`
   margin: 0;
   font-size: 14px;
   color: ${({ $level }) => 
+    $level === 'critical' ? '#fef2f2' :
     $level === 'high' ? '#dc2626' : 
     $level === 'medium' ? '#92400e' : '#166534'};
   line-height: 1.4;
@@ -81,10 +85,11 @@ const HealthFactorBar = styled.div`
   overflow: hidden;
 `;
 
-const HealthFactorFill = styled.div<{ $percentage: number; $level: 'low' | 'medium' | 'high' }>`
+const HealthFactorFill = styled.div<{ $percentage: number; $level: 'low' | 'medium' | 'high' | 'critical' }>`
   height: 100%;
   width: ${({ $percentage }) => Math.min($percentage, 100)}%;
   background: ${({ $level }) => 
+    $level === 'critical' ? '#991b1b' :
     $level === 'high' ? '#ef4444' : 
     $level === 'medium' ? '#f59e0b' : '#22c55e'};
   transition: all 0.3s ease;
@@ -145,8 +150,9 @@ export const BorrowTransactionPreview = ({
     (newTotalBorrowValueUSD / totalCollateralValue) * 100 : 0;
   
   // Determine risk level based on health factor and utilization
-  let riskLevel: 'low' | 'medium' | 'high' = 'low';
-  if (newHealthFactor < 1.2 || utilizationAfter > 80) riskLevel = 'high';
+  let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
+  if (newHealthFactor < 1.2 || utilizationAfter > 80) riskLevel = 'critical';
+  else if (newHealthFactor < 1.3 || utilizationAfter > 70) riskLevel = 'high';
   else if (newHealthFactor < 1.5 || utilizationAfter > 60) riskLevel = 'medium';
 
   // Calculate yearly interest
@@ -229,17 +235,21 @@ export const BorrowTransactionPreview = ({
           />
         </HealthFactorBar>
         <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px' }}>
-          {`Safe: > 1.5 • Risky: 1.2-1.5 • Danger: < 1.2`}
+          {`Safe: > 1.5 • Warning: 1.3-1.5 • Danger: 1.2-1.3 • Critical: < 1.2`}
         </div>
       </div>
 
       <RiskSection $level={riskLevel}>
         <RiskTitle $level={riskLevel}>
-          {riskLevel === 'high' ? '⚠️ High Risk' : 
+          {riskLevel === 'critical' ? '🚨 CRITICAL RISK' :
+           riskLevel === 'high' ? '⚠️ High Risk' : 
            riskLevel === 'medium' ? '⚡ Medium Risk' : 
            '✅ Low Risk'}
         </RiskTitle>
         <RiskText $level={riskLevel}>
+          {riskLevel === 'critical' && 
+            `Your health factor will be ${newHealthFactor.toFixed(2)}, which is critically low. Your position is at immediate risk of liquidation! Borrow this amount only if you can add collateral immediately.`
+          }
           {riskLevel === 'high' && 
             `Your health factor will be ${newHealthFactor.toFixed(2)}, which is dangerously low. Your position will be at high risk of liquidation. Consider borrowing less or supplying more collateral.`
           }

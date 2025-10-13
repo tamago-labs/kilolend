@@ -33,6 +33,20 @@ const SectionLabel = styled.label`
   margin-bottom: 12px;
 `;
 
+
+const DisclaimerSection = styled.div` 
+  padding: 20px; 
+  text-align: center;
+  background: linear-gradient(135deg, #fff7ed, #ffedd5); /* warm orange gradient */
+  border-radius: 8px;
+  border: 1px solid #f97316; /* orange border */
+`;
+
+const DisclaimerText = styled.p`
+  font-size: 14px;
+  color: #b45309; /* deep orange for readability */ 
+`;
+
 const BalanceInfo = styled.div`
   display: flex;
   justify-content: space-between;
@@ -513,23 +527,6 @@ export const SendModal = ({ isOpen, onClose }: SendModalProps) => {
   const isQRAvailable = liff.isInClient();
   const canSend = amount && recipient && selectedTokenInfo && !isLoading && account;
  
-
-  // Show no tokens available if no supported tokens with balance
-  if (availableTokens.length === 0) {
-    return (
-      <BaseModal isOpen={isOpen} onClose={handleCloseModal} title="Send Tokens">
-        <ModalContainer>
-          <ConnectWalletPrompt> 
-            <ConnectTitle>No Tokens Available</ConnectTitle>
-            <ConnectDescription>
-              You don't have any tokens with sufficient balance to send. Get some tokens first!
-            </ConnectDescription>
-          </ConnectWalletPrompt>
-        </ModalContainer>
-      </BaseModal>
-    );
-  }
-
   // Show success screen after transaction
   if (isSuccess) {
     return (
@@ -576,6 +573,14 @@ export const SendModal = ({ isOpen, onClose }: SendModalProps) => {
   return (
     <BaseModal isOpen={isOpen} onClose={handleCloseModal} title="Send Tokens">
       <ModalContainer>
+
+        {availableTokens.length === 0 && (
+          <DisclaimerSection>
+          <DisclaimerText>
+            <b>No Tokens Available:</b> You don't have any tokens with sufficient balance to send.
+          </DisclaimerText>
+        </DisclaimerSection>)}
+
         {/* Token Selection */}
         <SectionContainer>
           <BalanceInfo>

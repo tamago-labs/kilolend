@@ -3,14 +3,14 @@ const { DynamoDBClient, PutItemCommand } = require("@aws-sdk/client-dynamodb");
 const dynamoClient = new DynamoDBClient({});
 
 // Token configuration
-const TOKENS = [
-  { symbol: "BTC", id: 1 },
-  { symbol: "ETH", id: 1027 },
-  { symbol: "KAIA", id: 32880 },
-  { symbol: "SOMNIA", id: 37637 },
+const TOKENS = [ 
+  { symbol: "KAIA", id: 32880 }, 
   { symbol: "BORA", id: 3801 },
   { symbol: "MARBLEX", id: 18895 },
-  { symbol: "SIX", id: 3327 }
+  { symbol: "SIX", id: 3327 },
+  { symbol: "BTC", id: 1 },
+  { symbol: "ETH", id: 1027 },
+  { symbol: "SOMNIA", id: 37637 },
 ];
 
 // CoinGecko token configuration

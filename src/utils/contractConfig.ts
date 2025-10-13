@@ -113,10 +113,23 @@ export const MARKET_CONFIG = {
     isActive: true,
     isCollateralOnly: false,
     description: 'Native KAIA token',
-    interestModel: 'Collateral'
+    interestModel: 'Stablecoin'
+  },
+  "staked-kaia": {
+    id: 'staked-kaia',
+    name: 'Lair Staked KAIA',
+    symbol: 'stKAIA',
+    icon: 'https://assets.coingecko.com/coins/images/40001/standard/token_stkaia.png',
+    marketAddress: "0x0BC926EF3856542134B06DCf53c86005b08B9625",
+    tokenAddress: "0x42952b873ed6f7f0a7e4992e2a9818e3a9001995",
+    decimals: 18,
+    isActive: true,
+    isCollateralOnly: false,
+    description: 'Lair Staked KAIA',
+    interestModel: 'Stablecoin'
   }
 };
  
- 
+
 export type MarketId = keyof typeof MARKET_CONFIG;
 export type ContractName = keyof typeof CONTRACT_ADDRESSES;

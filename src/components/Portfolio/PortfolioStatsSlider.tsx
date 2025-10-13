@@ -246,8 +246,12 @@ export const PortfolioStatsSlider = ({
     {
       value: portfolioStats.healthFactor > 999 ? '∞' : portfolioStats.healthFactor.toFixed(2),
       label: 'Health Factor',
-      subtext: portfolioStats.healthFactor > 1.5 ? 'Safe position' : 'At risk',
-      color: portfolioStats.healthFactor > 1.5 ? '#059212' : '#dc2626'
+      subtext: portfolioStats.healthFactor > 1.5 ? 'Safe position' : 
+               portfolioStats.healthFactor > 1.3 ? 'Warning' :
+               portfolioStats.healthFactor > 1.2 ? 'Danger' : 'Critical',
+      color: portfolioStats.healthFactor > 1.5 ? '#059212' : 
+             portfolioStats.healthFactor > 1.3 ? '#f59e0b' :
+             portfolioStats.healthFactor > 1.2 ? '#ef4444' : '#991b1b'
     },
     {
       value: `${utilization.toFixed(1)}%`,
