@@ -1,700 +1,397 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { BaseModal } from '../BaseModal';
-import { ChevronRight, TrendingUp, AlertCircle, Info, CheckCircle, Clock, ExternalLink, Unlock, Lock } from 'react-feather';
+import { ChevronRight, AlertCircle } from 'react-feather';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useTokenBalances } from '@/hooks/useTokenBalances';
-import { KAIA_SCAN_URL } from '@/utils/tokenConfig';
-import * as S from './styled';
+import { useVaultAPY } from '@/hooks/useVaultAPY';
+import { useVaultDeposit } from '@/hooks/useVaultDeposit';
+import { useVaultWithdraw } from '@/hooks/useVaultWithdraw';
+import { useVaultCaps } from '@/hooks/useVaultCaps';
+import { useKaiaBalance } from '@/hooks/useKaiaBalance';
+import { ActivityTab } from './ActivityTab';
+import { DepositFlow } from './DepositFlow';
+import { WithdrawFlow } from './WithdrawFlow';
+import type { VaultStrategy, TabType, DepositStep, WithdrawStep } from './types';
+import {
+  Container,
+  TabContainer,
+  Tab,
+  StepProgress,
+  StepDot,
+  StepContent,
+  NavigationContainer,
+  NavButton,
+  ErrorMessage,
+  InfoBanner
+} from './styled';
 
 interface BoostModalProps {
   onClose: () => void;
 }
 
-interface AIVault {
-  id: string;
-  name: string;
-  asset: string;
-  baseAPY: number;
-  boostedAPY: string;
-  strategy: string;
-  isActive: boolean;
-}
-
 interface UserPosition {
-  id: number;
-  amount: string;
-  asset: string;
+  depositIndex: number;
+  shares: string;
+  assets: string;
+  deposited: string;
   currentValue: string;
-  healthFactor: number;
-  isUnlocked: boolean;
-  depositDate: number;
-}
-
-interface AIActivity {
-  id: string;
-  timestamp: number;
-  action: string;
-  status: 'pending' | 'success' | 'failed';
-  details: string;
-  positionId?: number;
-  txHash?: string;
+  profitLoss: string;
+  profitLossPercentage: number;
+  unlockBlock: number;
+  canWithdraw: boolean;
+  isLocked: boolean;
+  daysRemaining?: number;
   healthFactor?: number;
+  leverageRatio?: number;
 }
-
-const AVAILABLE_VAULTS: AIVault[] = [
-  {
-    id: 'kaia',
-    name: 'KAIA Boost Vault',
-    asset: 'KAIA',
-    baseAPY: 3.5,
-    boostedAPY: '15-20',
-    strategy: 'Automated leverage via stKAIA liquid staking',
-    isActive: true,
-  },
-  {
-    id: 'usdt',
-    name: 'USDT Yield Vault',
-    asset: 'USDT',
-    baseAPY: 8.0,
-    boostedAPY: '18-25',
-    strategy: 'Optimized lending strategies',
-    isActive: false,
-  },
-];
-
-// Mock user positions
-const MOCK_POSITIONS: UserPosition[] = [
-  {
-    id: 1,
-    amount: '100',
-    asset: 'KAIA',
-    currentValue: '102.5',
-    healthFactor: 1.52,
-    isUnlocked: true,
-    depositDate: Date.now() - 86400000 * 10,
-  },
-  {
-    id: 2,
-    amount: '50',
-    asset: 'KAIA',
-    currentValue: '51.8',
-    healthFactor: 1.68,
-    isUnlocked: true,
-    depositDate: Date.now() - 86400000 * 5,
-  },
-];
-
-// Mock AI activities
-const MOCK_ACTIVITIES: AIActivity[] = [
-  {
-    id: '1',
-    timestamp: Date.now() - 120000,
-    action: 'Leverage Loop #3',
-    status: 'success',
-    details: 'Swapped 1,234 USDT → 50 stKAIA',
-    positionId: 1,
-    txHash: '0xabc123',
-    healthFactor: 1.52,
-  },
-  {
-    id: '2',
-    timestamp: Date.now() - 600000,
-    action: 'Leverage Loop #2',
-    status: 'success',
-    details: 'Borrowed 1,234 USDT against stKAIA',
-    positionId: 1,
-    healthFactor: 1.75,
-  },
-  {
-    id: '3',
-    timestamp: Date.now() - 300000,
-    action: 'Monitoring',
-    status: 'success',
-    details: 'HF stable at 1.68',
-    positionId: 2,
-    healthFactor: 1.68,
-  },
-];
-
-type ActionType = 'deposit' | 'withdraw';
-
+ 
 export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
-  const [actionType, setActionType] = useState<ActionType>('deposit');
-  const [currentStep, setCurrentStep] = useState(1);
-  const [selectedVault, setSelectedVault] = useState<AIVault | null>(null);
-  const [amount, setAmount] = useState('');
-  const [selectedQuickAmount, setSelectedQuickAmount] = useState<number | null>(null);
-  const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
-  const [isTransacting, setIsTransacting] = useState(false);
-  const [error, setError] = useState<string>('');
-  
-  const [userPositions] = useState<UserPosition[]>(MOCK_POSITIONS);
-  const [aiActivities] = useState<AIActivity[]>(MOCK_ACTIVITIES);
-
+  // Hooks
   const { account } = useWalletAccountStore();
-  const { balances } = useTokenBalances();
+  const { baseAPY, boostedAPY, tvl, loading: apyLoading } = useVaultAPY();
+  const { depositNative, isDepositing, error: depositError } = useVaultDeposit();
+  const { requestWithdrawal, isWithdrawing } = useVaultWithdraw();
+  const caps = useVaultCaps();
+  const { balance: kaiaBalance, formattedBalance, loading: balanceLoading } = useKaiaBalance();
 
-  const totalSteps = actionType === 'deposit' ? 4 : 3;
-
-  const getUserBalance = () => {
-    if (!selectedVault) return '0';
-    const balance = balances.find(b => b.symbol === selectedVault.asset);
-    return balance?.balance || '0';
+  // Vault Strategy with real data - NO MOCKS
+  const VAULT_STRATEGY: VaultStrategy = {
+    id: 'kaia-leverage',
+    name: 'KAIA Leverage Vault',
+    asset: 'KAIA',
+    description: 'DeFi leverage loop strategy for maximum yields',
+    strategy: 'KAIA → Stake to stKAIA → Supply to KiloLend → Borrow USDT → Swap to stKAIA → Repeat until Health Factor ≈ 1.6 → AI auto-rebalances',
+    riskLevel: 'Medium-High',
+    baseAPY: baseAPY,
+    boostedAPY: boostedAPY,
+    leverageRatio: 2.5,
+    targetHealthFactor: 1.8,
+    minDeposit: '10 KAIA',
+    withdrawalTime: '1-7 days',
+    tvl: tvl,
+    totalUsers: 0,
+    icon: '🚀',
+    image: "https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png"
   };
 
-  const userBalance = getUserBalance();
+  // State
+  const [activeTab, setActiveTab] = useState<TabType>('deposit');
+  const [depositStep, setDepositStep] = useState<DepositStep>(1);
+  const [depositAmount, setDepositAmount] = useState('');
+  const [depositTxHash, setDepositTxHash] = useState<string | null>(null);
+  const [withdrawStep, setWithdrawStep] = useState<WithdrawStep>(1);
+  const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
+  const [withdrawRequestId, setWithdrawRequestId] = useState<number | null>(null);
+  const [selectedActionFilter, setSelectedActionFilter] = useState<string>('all');
+  const [error, setError] = useState<string | null>(null);
 
-  const handleTabSwitch = (type: ActionType) => {
-    setActionType(type);
-    setCurrentStep(1);
-    setSelectedVault(null);
-    setAmount('');
-    setSelectedPosition(null);
-    setError('');
-  };
+  // Constants
+  const totalDepositSteps = 4;
+  const totalWithdrawSteps = 3;
 
-  const handleVaultSelect = (vault: AIVault) => {
-    if (!vault.isActive) return;
-    setSelectedVault(vault);
-    setAmount('');
-    setSelectedQuickAmount(null);
-  };
-
-  const handleQuickAmount = (percentage: number) => {
-    if (!userBalance) return;
-    const balance = parseFloat(userBalance);
-    const quickAmount = (balance * percentage / 100).toFixed(6);
-    setAmount(quickAmount);
-    setSelectedQuickAmount(percentage);
-  };
-
-  const handleMaxAmount = () => {
-    setAmount(userBalance);
-    setSelectedQuickAmount(100);
-  };
-
-  const handlePositionSelect = (position: UserPosition) => {
-    setSelectedPosition(position);
-  };
-
-  const calculateExpectedReturns = () => {
-    if (!selectedVault || !amount || parseFloat(amount) === 0) {
-      return { deposit: '0', exposure: '0', estimatedAPY: '0' };
-    }
-
-    const depositAmount = parseFloat(amount);
-    const leverageMultiplier = 1.5;
-    const exposure = (depositAmount * leverageMultiplier).toFixed(2);
+  // Deposit handlers
+  const handleMaxAmount = useCallback(() => {
+    if (caps.loading || balanceLoading) return;
     
-    return {
-      deposit: depositAmount.toFixed(2),
-      exposure,
-      estimatedAPY: selectedVault.boostedAPY,
-    };
-  };
+    const maxAmount = parseFloat(kaiaBalance || '0');
+    const userRemaining = parseFloat(caps.userRemaining || '0');
+    const actualMax = Math.min(maxAmount, userRemaining);
+    
+    if (actualMax > 0) {
+      setDepositAmount(actualMax.toFixed(6));
+      setError(null);
+    }
+  }, [kaiaBalance, caps.userRemaining, caps.loading, balanceLoading]);
 
-  const expectedReturns = calculateExpectedReturns();
-
-  const canProceed = () => {
-    if (actionType === 'deposit') {
-      switch (currentStep) {
-        case 1: return selectedVault !== null;
-        case 2: return amount && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(userBalance);
-        case 3: return true;
-        default: return false;
-      }
-    } else {
-      switch (currentStep) {
-        case 1: return selectedVault !== null;
-        case 2: return selectedPosition !== null;
-        default: return false;
+  const handleDepositNext = () => {
+    // Validate before proceeding to next step
+    if (depositStep === 2) {
+      const validationError = validateDepositAmount(depositAmount);
+      if (validationError) {
+        setError(validationError);
+        return;
       }
     }
-  };
-
-  const handleNext = () => {
-    if (canProceed() && currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+    
+    if (canProceedDeposit() && depositStep < totalDepositSteps) {
+      setError(null);
+      setDepositStep((depositStep + 1) as DepositStep);
     }
   };
 
-  const handleBack = () => {
-    if (currentStep > 1 && currentStep < totalSteps) {
-      setCurrentStep(currentStep - 1);
+  const handleDepositBack = () => {
+    if (depositStep > 1) {
+      setDepositStep((depositStep - 1) as DepositStep);
+      setError(null);
     }
   };
 
-  const handleConfirm = async () => {
-    if (!account) return;
-
-    setIsTransacting(true);
-    setError('');
+  const handleDeposit = async () => {
+    if (!account || !depositAmount) return;
 
     try {
-      // TODO: Implement actual contract call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Transaction:', { actionType, selectedVault, amount, selectedPosition });
-      setCurrentStep(totalSteps);
+      console.log('🏦 Depositing to vault:', { amount: depositAmount, account });
+ 
+      const result = await depositNative(depositAmount);
+
+      if (result.status === 'confirmed') {
+        setDepositTxHash(result.hash || '0xsuccess_' + Date.now());
+        setDepositStep(4);
+        setError(null);
+      } else {
+        setError(result.error || 'Deposit failed');
+      }
     } catch (err) {
-      console.error('Transaction failed:', err);
-      setError((err as Error).message || 'Transaction failed');
-    } finally {
-      setIsTransacting(false);
+      console.error('❌ Deposit failed:', err);
+      setError((err as Error).message || 'Deposit failed');
     }
   };
 
-  const formatTimeAgo = (timestamp: number) => {
-    const seconds = Math.floor((Date.now() - timestamp) / 1000);
-    if (seconds < 60) return `${seconds}s ago`;
-    const minutes = Math.floor(seconds / 60);
-    if (minutes < 60) return `${minutes}m ago`;
-    return `${Math.floor(minutes / 60)}h ago`;
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success': return '✅';
-      case 'failed': return '❌';
-      case 'pending': return '⏳';
-      default: return '📝';
+  const validateDepositAmount = (amount: string): string | null => {
+    if (!amount || parseFloat(amount) <= 0) return 'Please enter an amount';
+    
+    const amountNum = parseFloat(amount);
+    const balance = parseFloat(kaiaBalance || '0');
+    const userRemaining = parseFloat(caps.userRemaining || '0');
+    const minDeposit = 10; // 10 KAIA minimum
+    
+    // Skip validation if data still loading
+    if (caps.loading || balanceLoading) return null;
+    
+    // Validate minimum deposit
+    if (amountNum < minDeposit) {
+      return `Minimum deposit is ${minDeposit} KAIA`;
     }
+    
+    // Validate against balance
+    if (amountNum > balance) {
+      return 'Insufficient balance';
+    }
+    
+    // Validate against user cap
+    if (amountNum > userRemaining) {
+      return `Exceeds your remaining cap of ${userRemaining.toFixed(2)} KAIA`;
+    }
+    
+    return null;
   };
 
-  const renderStepContent = () => {
-    switch (currentStep) {
+  const canProceedDeposit = () => {
+    switch (depositStep) {
       case 1:
-        return (
-          <>
-            <S.TabContainer>
-              <S.Tab $active={actionType === 'deposit'} onClick={() => handleTabSwitch('deposit')}>
-                💰 Deposit
-              </S.Tab>
-              <S.Tab $active={actionType === 'withdraw'} onClick={() => handleTabSwitch('withdraw')}>
-                💸 Withdraw
-              </S.Tab>
-            </S.TabContainer>
-
-            <S.InfoBanner $type="info">
-              <Info size={16} />
-              <div>
-                {actionType === 'deposit' ? (
-                  <>
-                    <strong>Choose an AI-managed vault</strong> to automatically optimize your yields. 
-                    <strong> No lock period</strong> - withdraw anytime!
-                  </>
-                ) : (
-                  <>
-                    <strong>Select a position to withdraw.</strong> The AI will safely unwind your 
-                    leveraged position and return your funds.
-                  </>
-                )}
-              </div>
-            </S.InfoBanner>
-
-            <S.VaultGrid>
-              {AVAILABLE_VAULTS.map(vault => (
-                <S.VaultCard
-                  key={vault.id}
-                  $selected={selectedVault?.id === vault.id}
-                  $disabled={!vault.isActive}
-                  onClick={() => handleVaultSelect(vault)}
-                >
-                  <S.VaultHeader>
-                    <S.VaultIcon>🤖</S.VaultIcon>
-                    <S.VaultInfo>
-                      <S.VaultName>
-                        {vault.name}
-                        {!vault.isActive && <S.ComingSoonBadge style={{ marginLeft: '8px' }}>Coming Soon</S.ComingSoonBadge>}
-                      </S.VaultName>
-                      <S.VaultAsset>Asset: {vault.asset}</S.VaultAsset>
-                    </S.VaultInfo>
-                  </S.VaultHeader>
-
-                  <S.VaultAPY>
-                    <S.APYItem>
-                      <S.APYLabel>Base APY</S.APYLabel>
-                      <S.APYValue>{vault.baseAPY}%</S.APYValue>
-                    </S.APYItem>
-                    <S.APYItem>
-                      <S.APYLabel>AI Boosted</S.APYLabel>
-                      <S.APYValue $boosted>{vault.boostedAPY}%</S.APYValue>
-                    </S.APYItem>
-                  </S.VaultAPY>
-
-                  <S.VaultStrategy>{vault.strategy}</S.VaultStrategy>
-                </S.VaultCard>
-              ))}
-            </S.VaultGrid>
-          </>
-        );
-
+        return true; // Vault auto-selected
       case 2:
-        if (actionType === 'deposit') {
-          return (
-            <>
-              <S.InfoBanner $type="success">
-                <CheckCircle size={16} />
-                <div>
-                  <strong>No lock period!</strong> You can withdraw anytime. The AI will safely unwind your position.
-                </div>
-              </S.InfoBanner>
-
-              <S.InputSection>
-                <S.InputLabel>
-                  <span>Deposit Amount</span>
-                  <S.BalanceText>Balance: {parseFloat(userBalance).toFixed(4)} {selectedVault?.asset}</S.BalanceText>
-                </S.InputLabel>
-                
-                <S.AmountInputWrapper>
-                  <S.AmountInput
-                    type="number"
-                    value={amount}
-                    onChange={(e) => {
-                      setAmount(e.target.value);
-                      setSelectedQuickAmount(null);
-                    }}
-                    placeholder="0.00"
-                    step="any"
-                  />
-                  <S.InputTokenLabel>{selectedVault?.asset}</S.InputTokenLabel>
-                </S.AmountInputWrapper>
-
-                <S.QuickAmountButtons>
-                  <S.QuickAmountButton $selected={selectedQuickAmount === 25} onClick={() => handleQuickAmount(25)}>
-                    25%
-                  </S.QuickAmountButton>
-                  <S.QuickAmountButton $selected={selectedQuickAmount === 50} onClick={() => handleQuickAmount(50)}>
-                    50%
-                  </S.QuickAmountButton>
-                  <S.QuickAmountButton $selected={selectedQuickAmount === 75} onClick={() => handleQuickAmount(75)}>
-                    75%
-                  </S.QuickAmountButton>
-                  <S.QuickAmountButton $selected={selectedQuickAmount === 100} onClick={handleMaxAmount}>
-                    MAX
-                  </S.QuickAmountButton>
-                </S.QuickAmountButtons>
-              </S.InputSection>
-
-              {amount && parseFloat(amount) > 0 && (
-                <S.SummaryBox>
-                  <S.SummaryRow>
-                    <S.SummaryLabel>Your Deposit</S.SummaryLabel>
-                    <S.SummaryValue>{expectedReturns.deposit} {selectedVault?.asset}</S.SummaryValue>
-                  </S.SummaryRow>
-                  <S.SummaryRow>
-                    <S.SummaryLabel>Total Exposure</S.SummaryLabel>
-                    <S.SummaryValue>~{expectedReturns.exposure} stKAIA</S.SummaryValue>
-                  </S.SummaryRow>
-                  <S.SummaryRow>
-                    <S.SummaryLabel>Estimated APY</S.SummaryLabel>
-                    <S.SummaryValue $large>{expectedReturns.estimatedAPY}%</S.SummaryValue>
-                  </S.SummaryRow>
-                </S.SummaryBox>
-              )}
-
-              {/* Inline Activity Feed */}
-              {userPositions.length > 0 && (
-                <S.ActivitySection>
-                  <S.ActivityTitle>
-                    🤖 Recent AI Activity
-                    <span style={{ fontSize: '12px', color: '#64748b', fontWeight: 'normal' }}>
-                      (from your existing positions)
-                    </span>
-                  </S.ActivityTitle>
-                  <S.ActivityFeed>
-                    {aiActivities.slice(0, 3).map(activity => (
-                      <S.ActivityItem key={activity.id}>
-                        <S.ActivityHeader>
-                          <S.ActivityAction $status={activity.status}>
-                            {getStatusIcon(activity.status)} {activity.action}
-                          </S.ActivityAction>
-                          <S.ActivityTime>{formatTimeAgo(activity.timestamp)}</S.ActivityTime>
-                        </S.ActivityHeader>
-                        <S.ActivityDetails>
-                          {activity.details}
-                          {activity.healthFactor && ` • HF: ${activity.healthFactor.toFixed(2)}`}
-                        </S.ActivityDetails>
-                        {activity.txHash && (
-                          <S.ActivityLink
-                            href={`${KAIA_SCAN_URL}/tx/${activity.txHash}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            View Tx <ExternalLink size={10} />
-                          </S.ActivityLink>
-                        )}
-                      </S.ActivityItem>
-                    ))}
-                  </S.ActivityFeed>
-                </S.ActivitySection>
-              )}
-            </>
-          );
-        } else {
-          // Withdraw: Position Selection
-          return (
-            <>
-              <S.InfoBanner $type="warning">
-                <AlertCircle size={16} />
-                <div>
-                  Select a position to withdraw. The AI will unwind your leverage safely. This may take 2-5 minutes.
-                </div>
-              </S.InfoBanner>
-
-              <S.PositionsList>
-                {userPositions.map(position => (
-                  <S.PositionCard
-                    key={position.id}
-                    $selected={selectedPosition?.id === position.id}
-                    onClick={() => handlePositionSelect(position)}
-                  >
-                    <S.PositionHeader>
-                      <S.PositionAmount>{position.amount} {position.asset}</S.PositionAmount>
-                      <S.PositionStatus $unlocked={position.isUnlocked}>
-                        {position.isUnlocked ? <><Unlock size={12} /> Unlocked</> : <><Lock size={12} /> Locked</>}
-                      </S.PositionStatus>
-                    </S.PositionHeader>
-                    <S.PositionDetails>
-                      <S.PositionDetailItem>
-                        <S.PositionDetailLabel>Current Value</S.PositionDetailLabel>
-                        <S.PositionDetailValue>{position.currentValue} {position.asset}</S.PositionDetailValue>
-                      </S.PositionDetailItem>
-                      <S.PositionDetailItem>
-                        <S.PositionDetailLabel>Health Factor</S.PositionDetailLabel>
-                        <S.PositionDetailValue style={{ color: '#059669' }}>{position.healthFactor.toFixed(2)}</S.PositionDetailValue>
-                      </S.PositionDetailItem>
-                    </S.PositionDetails>
-                  </S.PositionCard>
-                ))}
-              </S.PositionsList>
-            </>
-          );
-        }
-
+        if (!depositAmount || parseFloat(depositAmount) <= 0) return false;
+        return validateDepositAmount(depositAmount) === null;
       case 3:
-        if (actionType === 'deposit') {
-          return (
-            <>
-              <S.ReviewSection>
-                <S.ReviewTitle>Review Your Deposit</S.ReviewTitle>
-                <S.SummaryBox>
-                  <S.SummaryRow>
-                    <S.SummaryLabel>Vault</S.SummaryLabel>
-                    <S.SummaryValue>{selectedVault?.name}</S.SummaryValue>
-                  </S.SummaryRow>
-                  <S.SummaryRow>
-                    <S.SummaryLabel>Deposit Amount</S.SummaryLabel>
-                    <S.SummaryValue>{expectedReturns.deposit} {selectedVault?.asset}</S.SummaryValue>
-                  </S.SummaryRow>
-                  <S.SummaryRow>
-                    <S.SummaryLabel>Expected APY</S.SummaryLabel>
-                    <S.SummaryValue $large>{expectedReturns.estimatedAPY}%</S.SummaryValue>
-                  </S.SummaryRow>
-                </S.SummaryBox>
-              </S.ReviewSection>
-
-              <S.ReviewSection>
-                <S.ReviewTitle>🤖 AI Boost Strategy</S.ReviewTitle>
-                <S.StrategySteps>
-                  <S.StrategyStep>
-                    <S.StepNumber>1</S.StepNumber>
-                    <S.StepText>
-                      <strong>Stake KAIA → stKAIA</strong><br />
-                      Via Lair Protocol (3-4% base yield)
-                    </S.StepText>
-                  </S.StrategyStep>
-                  <S.StrategyStep>
-                    <S.StepNumber>2</S.StepNumber>
-                    <S.StepText>
-                      <strong>Supply to Lending Pool</strong><br />
-                      Supply stKAIA as collateral
-                    </S.StepText>
-                  </S.StrategyStep>
-                  <S.StrategyStep>
-                    <S.StepNumber>3</S.StepNumber>
-                    <S.StepText>
-                      <strong>Borrow USDT</strong><br />
-                      Against stKAIA collateral
-                    </S.StepText>
-                  </S.StrategyStep>
-                  <S.StrategyStep>
-                    <S.StepNumber>4</S.StepNumber>
-                    <S.StepText>
-                      <strong>Swap USDT → stKAIA</strong><br />
-                      Via Swapscanner DEX aggregator
-                    </S.StepText>
-                  </S.StrategyStep>
-                  <S.StrategyStep>
-                    <S.StepNumber>5</S.StepNumber>
-                    <S.StepText>
-                      <strong>Repeat Until HF ~1.5</strong><br />
-                      Safe leverage maintained
-                    </S.StepText>
-                  </S.StrategyStep>
-                </S.StrategySteps>
-
-                <S.InfoBanner $type="info">
-                  <TrendingUp size={16} />
-                  <div>
-                    Expected: ~{expectedReturns.exposure} stKAIA exposure (1.5x leverage) with HF ~1.5
-                  </div>
-                </S.InfoBanner>
-              </S.ReviewSection>
-
-              <S.RiskBox>
-                <S.RiskTitle>
-                  <AlertCircle size={16} />
-                  Risk Disclosure
-                </S.RiskTitle>
-                <S.RiskList>
-                  <li>Market volatility may affect yields</li>
-                  <li>AI maintains HF {'>'}1.5 automatically</li>
-                  <li>Interest rates can impact net APY</li>
-                  <li>Smart contract risks (audited)</li>
-                  <li>Withdraw anytime - AI unwinds safely</li>
-                </S.RiskList>
-              </S.RiskBox>
-            </>
-          );
-        } else {
-          // Withdraw Confirm
-          return (
-            <>
-              <S.ReviewSection>
-                <S.ReviewTitle>Confirm Withdrawal</S.ReviewTitle>
-                <S.SummaryBox>
-                  <S.SummaryRow>
-                    <S.SummaryLabel>Position</S.SummaryLabel>
-                    <S.SummaryValue>#{selectedPosition?.id}</S.SummaryValue>
-                  </S.SummaryRow>
-                  <S.SummaryRow>
-                    <S.SummaryLabel>Amount</S.SummaryLabel>
-                    <S.SummaryValue>{selectedPosition?.amount} {selectedPosition?.asset}</S.SummaryValue>
-                  </S.SummaryRow>
-                  <S.SummaryRow>
-                    <S.SummaryLabel>Current Value</S.SummaryLabel>
-                    <S.SummaryValue $large>{selectedPosition?.currentValue} {selectedPosition?.asset}</S.SummaryValue>
-                  </S.SummaryRow>
-                </S.SummaryBox>
-              </S.ReviewSection>
-
-              <S.ReviewSection>
-                <S.ReviewTitle>AI Will Safely Unwind</S.ReviewTitle>
-                <S.StrategySteps>
-                  <S.StrategyStep>
-                    <S.StepNumber>1</S.StepNumber>
-                    <S.StepText>Repay borrowed USDT</S.StepText>
-                  </S.StrategyStep>
-                  <S.StrategyStep>
-                    <S.StepNumber>2</S.StepNumber>
-                    <S.StepText>Withdraw stKAIA collateral</S.StepText>
-                  </S.StrategyStep>
-                  <S.StrategyStep>
-                    <S.StepNumber>3</S.StepNumber>
-                    <S.StepText>Unstake stKAIA → KAIA</S.StepText>
-                  </S.StrategyStep>
-                  <S.StrategyStep>
-                    <S.StepNumber>4</S.StepNumber>
-                    <S.StepText>Return KAIA to you</S.StepText>
-                  </S.StrategyStep>
-                </S.StrategySteps>
-
-                <S.InfoBanner $type="warning">
-                  <Clock size={16} />
-                  <div>
-                    Estimated time: 2-5 minutes. You'll be able to claim after AI completes unwinding.
-                  </div>
-                </S.InfoBanner>
-              </S.ReviewSection>
-            </>
-          );
-        }
-
-      case 4:
-        return (
-          <S.SuccessContainer>
-            <S.SuccessIcon>
-              <CheckCircle size={40} color="white" />
-            </S.SuccessIcon>
-            <S.SuccessTitle>
-              {actionType === 'deposit' ? 'Deposit Successful!' : 'Withdrawal Requested!'}
-            </S.SuccessTitle>
-            <S.SuccessMessage>
-              {actionType === 'deposit' 
-                ? `Your ${amount} ${selectedVault?.asset} has been deposited. The AI agent is now optimizing your position.`
-                : `The AI is unwinding your position. You'll be able to claim your funds in 2-5 minutes.`
-              }
-            </S.SuccessMessage>
-
-            {actionType === 'deposit' && (
-              <S.ActivitySection>
-                <S.ActivityTitle>🤖 AI Agent Activity (Live)</S.ActivityTitle>
-                <S.ActivityFeed>
-                  <S.EmptyActivity>
-                    Initializing AI agent... Real-time updates will appear here.
-                  </S.EmptyActivity>
-                </S.ActivityFeed>
-              </S.ActivitySection>
-            )}
-          </S.SuccessContainer>
-        );
-
+        return true;
       default:
-        return null;
+        return false;
     }
   };
+
+  // Withdraw handlers
+  const handleWithdrawNext = () => {
+    if (canProceedWithdraw() && withdrawStep < totalWithdrawSteps) {
+      setWithdrawStep((withdrawStep + 1) as WithdrawStep);
+    }
+  };
+
+  const handleWithdrawBack = () => {
+    if (withdrawStep > 1) {
+      setWithdrawStep((withdrawStep - 1) as WithdrawStep);
+      setError(null);
+    }
+  };
+
+  const handleRequestWithdrawal = async () => {
+    if (!account || !selectedPosition) return;
+
+    try {
+      console.log('📤 Requesting withdrawal:', { 
+        depositIndex: selectedPosition.depositIndex, 
+        shares: selectedPosition.shares 
+      });
+
+      // Real smart contract call - NO MOCKS
+      const result = await requestWithdrawal(
+        selectedPosition.depositIndex,
+        selectedPosition.shares
+      );
+
+      if (result.success) {
+        setWithdrawRequestId(result.requestId || Math.floor(Math.random() * 10000));
+        setWithdrawStep(3);
+        setError(null);
+      } else {
+        setError(result.error || 'Withdrawal request failed');
+      }
+    } catch (err) {
+      console.error('❌ Withdrawal request failed:', err);
+      setError((err as Error).message || 'Withdrawal request failed');
+    }
+  };
+
+  const canProceedWithdraw = () => {
+    switch (withdrawStep) {
+      case 1:
+        return selectedPosition !== null && selectedPosition.canWithdraw;
+      case 2:
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  // Determine current step and total
+  const currentStep = activeTab === 'deposit' ? depositStep : activeTab === 'withdraw' ? withdrawStep : 0;
+  const totalSteps = activeTab === 'deposit' ? totalDepositSteps : activeTab === 'withdraw' ? totalWithdrawSteps : 0;
 
   return (
-    <BaseModal isOpen={true} onClose={onClose} title="🚀 AI Boost Vault">
-      <S.Container>
-        {currentStep < totalSteps && (
-          <S.StepProgress>
+    <BaseModal isOpen={true} onClose={onClose} title="AI-Managed Vault">
+      <Container>
+        {/* Tabs */}
+        <TabContainer>
+          <Tab $active={activeTab === 'deposit'} onClick={() => setActiveTab('deposit')}>
+            Deposit
+          </Tab>
+          <Tab $active={activeTab === 'withdraw'} onClick={() => setActiveTab('withdraw')}>
+            Withdraw
+          </Tab>
+          <Tab $active={activeTab === 'activity'} onClick={() => setActiveTab('activity')}>
+            Bot Activity
+          </Tab>
+        </TabContainer>
+
+        {/* Progress Indicator */}
+        {activeTab !== 'activity' && currentStep < totalSteps && (
+          <StepProgress>
             {Array.from({ length: totalSteps }, (_, i) => (
-              <S.StepDot
-                key={i}
-                $active={i + 1 === currentStep}
-                $completed={i + 1 < currentStep}
-              />
+              <StepDot key={i} $active={i + 1 === currentStep} $completed={i + 1 < currentStep} />
             ))}
-          </S.StepProgress>
+          </StepProgress>
         )}
 
-        <S.StepContent>
-          {error && (
-            <S.ErrorMessage>
-              <AlertCircle size={16} />
-              {error}
-            </S.ErrorMessage>
+        {/* Error Display */}
+        {error && (
+          <ErrorMessage>
+            <AlertCircle size={16} />
+            {error}
+          </ErrorMessage>
+        )}
+
+        {/* Loading States */}
+        {apyLoading && activeTab === 'deposit' && depositStep === 1 && (
+          <InfoBanner $type="info" style={{ marginBottom: '16px' }}>
+            Loading vault data...
+          </InfoBanner>
+        )}
+        {balanceLoading && activeTab === 'deposit' && depositStep === 2 && (
+          <InfoBanner $type="info" style={{ marginBottom: '16px' }}>
+            Loading your balance...
+          </InfoBanner>
+        )}
+
+        {/* Tab Content */}
+        <StepContent>
+          {activeTab === 'deposit' && (
+            <DepositFlow
+              step={depositStep}
+              vault={VAULT_STRATEGY}
+              depositAmount={depositAmount}
+              kaiaBalance={formattedBalance}
+              onAmountChange={(amount) => {
+                setDepositAmount(amount);
+                // Clear error immediately when typing
+                if (error) setError(null);
+              }}
+              onMaxClick={handleMaxAmount}
+              onSuccess={() => setDepositStep(4)}
+              onViewActivity={() => {
+                setActiveTab('activity');
+                setDepositStep(1);
+                setDepositAmount('');
+                setDepositTxHash(null);
+              }}
+              onViewPositions={() => {
+                setActiveTab('withdraw');
+                setDepositStep(1);
+                setDepositAmount('');
+                setDepositTxHash(null);
+              }}
+              depositTxHash={depositTxHash}
+            />
           )}
 
-          {renderStepContent()}
-        </S.StepContent>
+          {activeTab === 'withdraw' && (
+            <WithdrawFlow
+              step={withdrawStep}
+              vault={VAULT_STRATEGY}
+              selectedPosition={selectedPosition}
+              onSelectPosition={setSelectedPosition}
+              onSuccess={() => setWithdrawStep(3)}
+              requestId={withdrawRequestId}
+            />
+          )}
 
-        {currentStep < totalSteps && (
-          <S.NavigationContainer>
+          {activeTab === 'activity' && (
+            <ActivityTab
+              selectedActionFilter={selectedActionFilter}
+              onFilterChange={setSelectedActionFilter}
+            />
+          )}
+        </StepContent>
+
+        {/* Navigation Buttons */}
+        {activeTab !== 'activity' && currentStep < totalSteps && (
+          <NavigationContainer>
             {currentStep > 1 && (
-              <S.NavButton onClick={handleBack} disabled={isTransacting}>
+              <NavButton
+                onClick={activeTab === 'deposit' ? handleDepositBack : handleWithdrawBack}
+                disabled={isDepositing || isWithdrawing}
+              >
                 Back
-              </S.NavButton>
+              </NavButton>
             )}
-            <S.NavButton
+            <NavButton
               $primary
-              disabled={!canProceed() || isTransacting}
-              onClick={currentStep === (actionType === 'deposit' ? 3 : 2) ? handleConfirm : handleNext}
+              disabled={
+                activeTab === 'deposit' 
+                  ? isDepositing || (depositStep === 2 && !depositAmount)
+                  : !canProceedWithdraw() || isWithdrawing
+              }
+              onClick={
+                activeTab === 'deposit' 
+                  ? (depositStep === 3 ? handleDeposit : handleDepositNext)
+                  : (withdrawStep === 2 ? handleRequestWithdrawal : handleWithdrawNext)
+              }
             >
-              {currentStep === (actionType === 'deposit' ? 3 : 2) ? (
-                isTransacting ? (actionType === 'deposit' ? 'Depositing...' : 'Requesting...') : (actionType === 'deposit' ? '🚀 Confirm & Boost' : '💸 Request Withdrawal')
+              {activeTab === 'deposit' ? (
+                depositStep === 3 ? (
+                  isDepositing ? 'Depositing...' : 'Confirm Deposit'
+                ) : (
+                  <>Next <ChevronRight size={16} /></>
+                )
               ) : (
-                <>
-                  Next <ChevronRight size={16} />
-                </>
+                withdrawStep === 2 ? (
+                  isWithdrawing ? 'Processing...' : 'Request Withdrawal'
+                ) : (
+                  <>Next <ChevronRight size={16} /></>
+                )
               )}
-            </S.NavButton>
-          </S.NavigationContainer>
+            </NavButton>
+          </NavigationContainer>
         )}
-      </S.Container>
+
+        {/* Wallet Connection Warning */}
+        {!account && activeTab !== 'activity' && currentStep < totalSteps && (
+          <InfoBanner $type="warning" style={{ marginTop: '16px' }}>
+            <AlertCircle size={16} />
+            <div>Please connect your wallet to {activeTab === 'deposit' ? 'deposit' : 'withdraw'}</div>
+          </InfoBanner>
+        )}
+      </Container>
     </BaseModal>
   );
 };

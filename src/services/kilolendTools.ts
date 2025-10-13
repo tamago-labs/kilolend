@@ -432,141 +432,138 @@ export class KiloLendToolsService {
           }
         }
       },
-      {
-        name: 'execute_secure_transaction',
-        description: 'Execute a transaction (supply, withdraw, borrow, repay) securely via Nitro Enclave',
-        parameters: {
-          type: 'object',
-          properties: {
-            action: {
-              type: 'string',
-              enum: ['supply', 'withdraw', 'borrow', 'repay'],
-              description: 'The action to execute'
-            },
-            asset: {
-              type: 'string',
-              enum: ['USDT', 'MBX', 'BORA', 'SIX', 'KAIA'],
-              description: 'The asset symbol'
-            },
-            amount: {
-              type: 'string',
-              description: 'Amount in token units (e.g., "100.5")'
-            },
-            maxGasPrice: {
-              type: 'string',
-              description: 'Maximum gas price in Gwei (optional, defaults to 50)'
-            }
-          },
-          required: ['action', 'asset', 'amount']
-        },
-        handler: async (params: {
-          action: string;
-          asset: string;
-          amount: string;
-          maxGasPrice?: string;
-        }) => {
-          // Check if user is connected
-          if (!this.userAddress) {
-            return {
-              error: 'No wallet connected',
-              message: 'Please connect your wallet to execute transactions',
-              requiresWalletConnection: true
-            };
-          }
+      // {
+      //   name: 'execute_secure_transaction',
+      //   description: 'Execute a transaction (supply, withdraw, borrow, repay) securely via Nitro Enclave',
+      //   parameters: {
+      //     type: 'object',
+      //     properties: {
+      //       action: {
+      //         type: 'string',
+      //         enum: ['supply', 'withdraw', 'borrow', 'repay'],
+      //         description: 'The action to execute'
+      //       },
+      //       asset: {
+      //         type: 'string',
+      //         enum: ['USDT', 'MBX', 'BORA', 'SIX', 'KAIA'],
+      //         description: 'The asset symbol'
+      //       },
+      //       amount: {
+      //         type: 'string',
+      //         description: 'Amount in token units (e.g., "100.5")'
+      //       },
+      //       maxGasPrice: {
+      //         type: 'string',
+      //         description: 'Maximum gas price in Gwei (optional, defaults to 50)'
+      //       }
+      //     },
+      //     required: ['action', 'asset', 'amount']
+      //   },
+      //   handler: async (params: {
+      //     action: string;
+      //     asset: string;
+      //     amount: string;
+      //     maxGasPrice?: string;
+      //   }) => { 
+      //     if (!this.userAddress) {
+      //       return {
+      //         error: 'No wallet connected',
+      //         message: 'Please connect your wallet to execute transactions',
+      //         requiresWalletConnection: true
+      //       };
+      //     }
+ 
+      //     const validActions = ['supply', 'withdraw', 'borrow', 'repay'];
+      //     const validAssets = ['USDT', 'MBX', 'BORA', 'SIX', 'KAIA'];
 
-          // Validate the request
-          const validActions = ['supply', 'withdraw', 'borrow', 'repay'];
-          const validAssets = ['USDT', 'MBX', 'BORA', 'SIX', 'KAIA'];
+      //     if (!validActions.includes(params.action)) {
+      //       return {
+      //         error: 'Invalid action',
+      //         message: `Action must be one of: ${validActions.join(', ')}`
+      //       };
+      //     }
 
-          if (!validActions.includes(params.action)) {
-            return {
-              error: 'Invalid action',
-              message: `Action must be one of: ${validActions.join(', ')}`
-            };
-          }
+      //     if (!validAssets.includes(params.asset)) {
+      //       return {
+      //         error: 'Invalid asset',
+      //         message: `Asset must be one of: ${validAssets.join(', ')}`
+      //       };
+      //     }
 
-          if (!validAssets.includes(params.asset)) {
-            return {
-              error: 'Invalid asset',
-              message: `Asset must be one of: ${validAssets.join(', ')}`
-            };
-          }
+      //     // Validate amount
+      //     const amount = parseFloat(params.amount);
+      //     if (isNaN(amount) || amount <= 0) {
+      //       return {
+      //         error: 'Invalid amount',
+      //         message: 'Amount must be a positive number'
+      //       };
+      //     }
 
-          // Validate amount
-          const amount = parseFloat(params.amount);
-          if (isNaN(amount) || amount <= 0) {
-            return {
-              error: 'Invalid amount',
-              message: 'Amount must be a positive number'
-            };
-          }
-
-          try {
-            // Submit task to execution API
-            const apiUrl = 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod';
+      //     try {
             
-            const response = await fetch(`${apiUrl}/execute`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                userAddress: this.userAddress,
-                action: params.action,
-                asset: params.asset,
-                amount: params.amount,
-                maxGasPrice: params.maxGasPrice || '50'
-              })
-            });
+      //       const apiUrl = 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod';
+            
+      //       const response = await fetch(`${apiUrl}/execute`, {
+      //         method: 'POST',
+      //         headers: {
+      //           'Content-Type': 'application/json',
+      //         },
+      //         body: JSON.stringify({
+      //           userAddress: this.userAddress,
+      //           action: params.action,
+      //           asset: params.asset,
+      //           amount: params.amount,
+      //           maxGasPrice: params.maxGasPrice || '50'
+      //         })
+      //       });
 
-            if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.error || 'Failed to submit transaction');
-            }
+      //       if (!response.ok) {
+      //         const errorData = await response.json();
+      //         throw new Error(errorData.error || 'Failed to submit transaction');
+      //       }
 
-            const result = await response.json();
+      //       const result = await response.json();
 
-            return {
-              success: true,
-              taskId: result.taskId,
-              status: result.status,
-              action: params.action,
-              asset: params.asset,
-              amount: params.amount,
-              userAddress: this.userAddress,
-              message: '🔐 Transaction submitted for secure execution in Nitro Enclave',
-              estimatedTime: result.estimatedTime || '30-60 seconds',
-              checkStatusUrl: result.checkStatusUrl,
-              nextSteps: [
-                '⚠️ This is an experimental feature available only to whitelisted users',
-                '✅ Your transaction has been submitted to a secure Nitro Enclave',
-                '🔒 The enclave will execute your transaction safely using isolated private keys',
-                '⏱️ Execution typically takes 30-60 seconds',
-                '🔍 You can check the status using the provided task ID',
-                '📝 You will receive the transaction hash once completed'
-              ],
-              securityInfo: {
-                executionEnvironment: 'AWS Nitro Enclave',
-                securityFeatures: [
-                  'Hardware-isolated execution',
-                  'Private keys never leave secure enclave', 
-                  'Cryptographically verifiable environment',
-                  'No network access from enclave'
-                ]
-              }
-            };
+      //       return {
+      //         success: true,
+      //         taskId: result.taskId,
+      //         status: result.status,
+      //         action: params.action,
+      //         asset: params.asset,
+      //         amount: params.amount,
+      //         userAddress: this.userAddress,
+      //         message: '🔐 Transaction submitted for secure execution in Nitro Enclave',
+      //         estimatedTime: result.estimatedTime || '30-60 seconds',
+      //         checkStatusUrl: result.checkStatusUrl,
+      //         nextSteps: [
+      //           '⚠️ This is an experimental feature available only to whitelisted users',
+      //           '✅ Your transaction has been submitted to a secure Nitro Enclave',
+      //           '🔒 The enclave will execute your transaction safely using isolated private keys',
+      //           '⏱️ Execution typically takes 30-60 seconds',
+      //           '🔍 You can check the status using the provided task ID',
+      //           '📝 You will receive the transaction hash once completed'
+      //         ],
+      //         securityInfo: {
+      //           executionEnvironment: 'AWS Nitro Enclave',
+      //           securityFeatures: [
+      //             'Hardware-isolated execution',
+      //             'Private keys never leave secure enclave', 
+      //             'Cryptographically verifiable environment',
+      //             'No network access from enclave'
+      //           ]
+      //         }
+      //       };
 
-          } catch (error: any) {
-            console.error('Transaction execution error:', error);
-            return {
-              error: 'Execution submission failed',
-              message: error.message || 'Failed to submit transaction for execution',
-              suggestion: 'Please try again or contact support if the issue persists'
-            };
-          }
-        }
-      },
-
+      //     } catch (error: any) {
+      //       console.error('Transaction execution error:', error);
+      //       return {
+      //         error: 'Execution submission failed',
+      //         message: error.message || 'Failed to submit transaction for execution',
+      //         suggestion: 'Please try again or contact support if the issue persists'
+      //       };
+      //     }
+      //   }
+      // },
       {
         name: 'check_transaction_status',
         description: 'Check the status of a previously submitted transaction',
@@ -731,10 +728,10 @@ export class KiloLendToolsService {
     const warnings = [];
     const recommendations = [];
 
-    if (portfolio.healthFactor < 1.5) {
+    if (portfolio.healthFactor < 1.3) {
       warnings.push('⚠️ Health factor critically low - liquidation risk!');
       recommendations.push('Add more collateral or repay debt immediately');
-    } else if (portfolio.healthFactor < 2.0) {
+    } else if (portfolio.healthFactor < 1.5) {
       warnings.push('⚠️ Health factor below safe threshold');
       recommendations.push('Consider adding collateral for safety margin');
     }
@@ -744,9 +741,9 @@ export class KiloLendToolsService {
       recommendations.push('Consider spreading investments across multiple assets');
     }
 
-    if (portfolio.netAPY < 2) {
-      recommendations.push('Explore higher-yield opportunities to improve returns');
-    }
+    // if (portfolio.netAPY < 2) {
+    //   recommendations.push('Explore higher-yield opportunities to improve returns');
+    // }
 
     return {
       warnings,
@@ -804,9 +801,9 @@ export class KiloLendToolsService {
   }
 
   private generateSimulationRecommendation(action: string, newHealthFactor: number): string {
-    if (newHealthFactor < 1.5) {
+    if (newHealthFactor < 1.3) {
       return '🚨 This action would put you at high liquidation risk!';
-    } else if (newHealthFactor < 2.0) {
+    } else if (newHealthFactor < 1.6) {
       return '⚠️ This action reduces your safety margin - monitor closely';
     } else if (action === 'supply') {
       return '✅ This supply action improves your portfolio safety';

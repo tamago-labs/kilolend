@@ -348,8 +348,8 @@ export const InfoBanner = styled.div<{ $type: 'info' | 'success' | 'warning' }>`
 `;
 
 export const ExpectedReturns = styled.div`
-  background: #f0fdf4;
-  border: 2px solid #86efac;
+  background: white;
+  border: 2px solid #e2e8f0;
   border-radius: 12px;
   padding: 16px;
 `;
@@ -363,19 +363,19 @@ export const ReturnsRow = styled.div`
   &:last-child {
     margin-bottom: 0;
     padding-top: 12px;
-    border-top: 1px solid #86efac;
+    border-top: 1px solid #e2e8f0;
   }
 `;
 
 export const ReturnLabel = styled.div`
   font-size: 13px;
-  color: #166534;
+  color: #1e293b;
 `;
 
 export const ReturnValue = styled.div<{ $large?: boolean }>`
   font-size: ${props => props.$large ? '20px' : '16px'};
   font-weight: 700;
-  color: #166534;
+  color: #1e293b;
 `;
 
 // Step 3: Success

@@ -622,7 +622,7 @@ export const ProfilePage = () => {
 
   // Create a comprehensive list of all supported tokens (with and without balances)
   const getAllSupportedTokens = () => {
-    const supportedTokenSymbols = ['KAIA', 'USDT', 'MBX', 'BORA', 'SIX'];
+    const supportedTokenSymbols = ['KAIA', 'USDT', 'STAKED_KAIA', 'MBX', 'BORA', 'SIX'];
     const tokensList: any = [];
 
     supportedTokenSymbols.forEach(symbol => {
@@ -778,10 +778,7 @@ export const ProfilePage = () => {
       <TokensSection>
         <SectionHeader>
           <SectionTitle>Available Tokens</SectionTitle>
-          <HeaderActions>
-            {/* <FaucetButton onClick={handleOpenFaucet}>
-              Get Test Tokens
-            </FaucetButton> */}
+          <HeaderActions> 
             <RefreshButton onClick={handleRefresh} $loading={isLoading}>
               <RefreshCw size={16} />
               Refresh
@@ -852,22 +849,7 @@ export const ProfilePage = () => {
             })}
           </TokenList>
         )}
-      </TokensSection>
-
-      {/* Support Section */}
-      {/* <SupportSection>
-        <SectionTitle>Need Help?</SectionTitle>
-        <SupportButtons>
-          <SupportButton $primary onClick={() => openModal('faq')}>
-            <HelpCircle size={16} />
-            Get Support
-          </SupportButton>
-          <SupportButton onClick={() => alert('Email to support@tamagolabs.com')}>
-            <MessageCircle size={16} />
-            Send Feedback
-          </SupportButton>
-        </SupportButtons>
-      </SupportSection> */}
+      </TokensSection> 
 
       {/* External Links Section */}
       <ExternalLinksSection>

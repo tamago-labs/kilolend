@@ -37,8 +37,9 @@ export const NavigationContainer = styled.div`
   margin-top: auto;
 `;
 
-export const NavButton = styled.button<{ $primary?: boolean }>`
-  flex: 1;
+export const NavButton = styled.button<{ $primary?: boolean; $fullWidth?: boolean }>`
+  flex: ${props => props.$fullWidth ? '0 0 100%' : '1'};
+  width: ${props => props.$fullWidth ? '100%' : 'auto'};
   padding: 16px 24px;
   border-radius: 12px;
   font-size: 16px;
@@ -97,8 +98,7 @@ export const SectionTitle = styled.h3`
 export const TokenList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-height: 300px;
+  gap: 8px; 
   overflow-y: auto;
 
   &::-webkit-scrollbar {
@@ -200,13 +200,35 @@ export const SelectedTokenBox = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 12px;
+`;
+
+export const SelectTokenButton = styled.button`
+  width: 100%;
+  background: white;
+  border: 2px solid #e2e8f0;
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &:hover {
+    border-color: #06C755;
+    color: #06C755;
+    background: #f0fdf4;
+  }
 `;
 
 export const ChangeButton = styled.button`
   background: white;
   border: 1px solid #e2e8f0;
-  padding: 6px 12px;
+  padding: 8px 16px;
   border-radius: 8px;
   font-size: 13px;
   font-weight: 600;
@@ -459,25 +481,28 @@ export const SwapSummaryValue = styled.span`
   color: #166534;
 `;
 
-export const TransactionLink = styled.a`
+export const TransactionLink = styled.button`
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 14px;
+  padding: 16px;
   background: white;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
   color: #06C755;
   text-decoration: none;
   font-size: 14px;
   font-weight: 600;
   transition: all 0.2s;
   margin-bottom: 12px;
+  cursor: pointer;
 
   &:hover {
     border-color: #06C755;
     background: #f0fdf4;
+    transform: translateY(-1px);
   }
 `;
 
@@ -507,6 +532,7 @@ export const SearchInput = styled.input`
   outline: none;
   margin-bottom: 12px;
   transition: border-color 0.2s;
+  box-sizing: border-box;
 
   &:focus {
     border-color: #06C755;

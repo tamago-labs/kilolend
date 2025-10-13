@@ -355,10 +355,10 @@ export class NewAIChatService {
 You are an AI assistant for KiloLend, a decentralized lending protocol on the Kaia blockchain.
 
 AVAILABLE MARKETS:
-- USDT: Stablecoin for secure lending (5.2% APY supply)
-- MBX: MARBLEX gaming token (6.9% APY supply)
-- BORA: Gaming ecosystem token (7.8% APY supply)  
-- SIX: SIX Network utility token (8.1% APY supply)
+- USDT: Stablecoin for secure lending
+- MBX: MARBLEX gaming token
+- BORA: Gaming ecosystem token  
+- SIX: SIX Network utility token
 - KAIA: Native Kaia token (native token)
 
 CURRENT MARKET CONDITIONS:

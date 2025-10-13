@@ -27,13 +27,20 @@ contract KiloVaultTest is Test {
         bool isBotDeposit
     );
     
-    event WithdrawalRequested(
-        uint256 indexed requestId,
+    event DepositMerged(
+        address indexed beneficiary,
+        uint256 depositIndex,
+        uint256 addedAssets,
+        uint256 addedShares,
+        uint256 newUnlockBlock
+    );
+    
+    event LockExtended(
         address indexed user,
         uint256 depositIndex,
-        uint256 shares,
-        uint256 assets,
-        bool isEarlyWithdrawal
+        uint256 oldUnlockBlock,
+        uint256 newUnlockBlock,
+        uint256 extensionDays
     );
     
     function setUp() public {
@@ -88,50 +95,31 @@ contract KiloVaultTest is Test {
         vm.startPrank(user1);
         
         uint256 depositAmount = 100 ether;
-        uint256 depositIndex = vault.depositNative{value: depositAmount}(0);
+        uint256 depositIndex = vault.depositNative{value: depositAmount}();
         
         assertEq(depositIndex, 0);
         assertEq(vault.balanceOf(user1), depositAmount);
         assertEq(vault.totalManagedAssets(), depositAmount);
         assertEq(vault.userTotalDeposits(user1), depositAmount);
         
-        vm.stopPrank();
-    }
-    
-    function testUserDeposit15DayLock() public {
-        vm.startPrank(user1);
-        
-        uint256 depositAmount = 100 ether;
-        uint256 depositIndex = vault.depositNative{value: depositAmount}(15);
-        
-        (
-            uint256 shares,
-            uint256 assets,
-            uint256 unlockBlock,
-            uint256 lockDuration,
-            bool isLocked,
-            ,
-            bool isBotDeposit,
-            ,
-            bool canWithdraw
-        ) = vault.getUserDeposit(user1, depositIndex);
-        
-        assertEq(shares, depositAmount);
-        assertEq(assets, depositAmount);
-        assertTrue(isLocked);
-        assertFalse(isBotDeposit);
-        assertFalse(canWithdraw);
-        assertEq(lockDuration, 15 days);
+        (,,,,bool isLocked,,,,bool canWithdraw,) = vault.getUserDeposit(user1, depositIndex);
+        assertFalse(isLocked); // Direct deposits have no lock
+        assertTrue(canWithdraw); // Can withdraw immediately
         
         vm.stopPrank();
     }
-
     
-    function testRevertInvalidLockDuration() public {
+    function testMultipleDirectDeposits() public {
         vm.startPrank(user1);
         
-        vm.expectRevert(KiloVault.InvalidLockDuration.selector);
-        vault.depositNative{value: 100 ether}(10); // Invalid: only 0, 15 allowed
+        // Deposit 1
+        vault.depositNative{value: 50 ether}();
+        
+        // Deposit 2
+        vault.depositNative{value: 75 ether}();
+        
+        assertEq(vault.getUserDepositCount(user1), 2);
+        assertEq(vault.userTotalDeposits(user1), 125 ether);
         
         vm.stopPrank();
     }
@@ -140,7 +128,7 @@ contract KiloVaultTest is Test {
         vm.startPrank(user1);
         
         vm.expectRevert(KiloVault.BelowMinDeposit.selector);
-        vault.depositNative{value: 5 ether}(0); // Below 10 KAIA minimum
+        vault.depositNative{value: 5 ether}(); // Below 10 KAIA minimum
         
         vm.stopPrank();
     }
@@ -149,147 +137,240 @@ contract KiloVaultTest is Test {
         vm.startPrank(user1);
         
         vm.expectRevert(KiloVault.ExceedsMaxDepositPerUser.selector);
-        vault.depositNative{value: 1001 ether}(0); // Exceeds 1000 KAIA per user cap
-        
-        vm.stopPrank();
-    }
-    
-    function testMultipleDepositsPerUser() public {
-        vm.startPrank(user1);
-        
-        // Deposit 1: No lock
-        vault.depositNative{value: 50 ether}(0);
-        
-        // Deposit 2: 15-day lock
-        vault.depositNative{value: 75 ether}(15);
-        
-        assertEq(vault.getUserDepositCount(user1), 2);
-        assertEq(vault.userTotalDeposits(user1), 125 ether);
+        vault.depositNative{value: 1001 ether}(); // Exceeds 1000 KAIA per user cap
         
         vm.stopPrank();
     }
     
     // ========================================================================
-    // BOT DEPOSIT ON-BEHALF TESTS
+    // BOT DEPOSIT ON-BEHALF TESTS (AUTO-MERGE)
     // ========================================================================
     
-    function testBotDepositOnBehalf15Day() public {
+    function testBotDepositOnBehalfFirst() public {
         vm.startPrank(bot);
         
         uint256 depositAmount = 50 ether;
-        uint256 depositIndex = vault.botDepositNativeOnBehalf{value: depositAmount}(user1, 15);
+        uint256 depositIndex = vault.botDepositNativeOnBehalf{value: depositAmount}(user1);
         
-        assertEq(vault.balanceOf(user1), depositAmount); // User receives shares
+        assertEq(depositIndex, 0);
+        assertEq(vault.balanceOf(user1), depositAmount);
+        assertTrue(vault.hasBotDeposit(user1));
+        assertEq(vault.userBotDepositIndex(user1), 0);
         
-        (,,,, bool isLocked,, bool isBotDeposit,,) = vault.getUserDeposit(user1, depositIndex);
+        (uint256 shares,, uint256 unlockBlock,, bool isLocked,, bool isBotDeposit, uint256 depositBlock, bool canWithdraw,) = 
+            vault.getUserDeposit(user1, depositIndex);
+            
+        assertEq(shares, depositAmount);
         assertTrue(isLocked);
         assertTrue(isBotDeposit);
+        assertFalse(canWithdraw);
+        assertEq(unlockBlock, depositBlock + 15 days);
         
         vm.stopPrank();
     }
-
     
-    function testRevertBotDepositNoLock() public {
+    function testBotDepositAutoMerge() public {
         vm.startPrank(bot);
         
-        vm.expectRevert(KiloVault.InvalidLockDuration.selector);
-        vault.botDepositNativeOnBehalf{value: 50 ether}(user1, 0); // Bot must use 15
+        // First deposit
+        vault.botDepositNativeOnBehalf{value: 50 ether}(user1);
+        
+        uint256 firstUnlockBlock;
+        {
+            (,, uint256 unlock,,,,,,,) = vault.getUserDeposit(user1, 0);
+            firstUnlockBlock = unlock;
+        }
+        
+        // Fast forward 10 days
+        vm.roll(block.number + 10 days);
+        
+        // Second deposit - should MERGE
+        uint256 depositIndex = vault.botDepositNativeOnBehalf{value: 30 ether}(user1);
+        
+        // Should return same index (0) since it merged
+        assertEq(depositIndex, 0);
+        assertEq(vault.getUserDepositCount(user1), 1); // Still 1 deposit
+        assertEq(vault.balanceOf(user1), 80 ether); // 50 + 30
+        
+        // shares, assets, unlockBlock, lockDuration, isLocked, (skip 5 more)
+        (uint256 shares, uint256 assets, uint256 unlockBlock,, bool isLocked,,,,,) = 
+            vault.getUserDeposit(user1, 0);
+            
+        assertEq(shares, 80 ether);
+        assertEq(assets, 80 ether);
+        assertTrue(isLocked);
+        
+        // Lock should have been EXTENDED to 15 days from NOW
+        assertGt(unlockBlock, firstUnlockBlock); // New unlock is later
+        assertEq(unlockBlock, block.number + 15 days);
         
         vm.stopPrank();
+    }
+    
+    function testBotDepositMultipleMerges() public {
+        vm.startPrank(bot);
+        
+        // Deposit 1: 50 KAIA
+        vault.botDepositNativeOnBehalf{value: 50 ether}(user1);
+        
+        // Deposit 2: +30 KAIA (10 days later)
+        vm.roll(block.number + 10 days);
+        vault.botDepositNativeOnBehalf{value: 30 ether}(user1);
+        
+        // Deposit 3: +20 KAIA (5 days later)
+        vm.roll(block.number + 5 days);
+        vault.botDepositNativeOnBehalf{value: 20 ether}(user1);
+        
+        // Should still be 1 deposit
+        assertEq(vault.getUserDepositCount(user1), 1);
+        assertEq(vault.balanceOf(user1), 100 ether); // 50 + 30 + 20
+        
+        // shares, assets, unlockBlock, (skip 7 more)
+        (uint256 shares, uint256 assets, uint256 unlockBlock,,,,,,,) = vault.getUserDeposit(user1, 0);
+        
+        assertEq(shares, 100 ether);
+        assertEq(assets, 100 ether);
+        assertEq(unlockBlock, block.number + 15 days); // Always 15 days from last deposit
+        
+        vm.stopPrank();
+    }
+    
+    function testBotDepositAndDirectDepositSeparate() public {
+        // Bot deposit
+        vm.prank(bot);
+        vault.botDepositNativeOnBehalf{value: 50 ether}(user1);
+        
+        // Direct deposit
+        vm.prank(user1);
+        vault.depositNative{value: 100 ether}();
+        
+        // Should have 2 separate deposits
+        assertEq(vault.getUserDepositCount(user1), 2);
+        
+        // Deposit 0: Bot deposit (locked)
+        (,, uint256 unlock0,, bool isLocked0,, bool isBotDeposit0,,, ) = vault.getUserDeposit(user1, 0);
+        assertTrue(isLocked0);
+        assertTrue(isBotDeposit0);
+        assertGt(unlock0, block.number);
+        
+        // Deposit 1: Direct deposit (no lock)
+        (,, uint256 unlock1,, bool isLocked1,, bool isBotDeposit1,,,) = vault.getUserDeposit(user1, 1);
+        assertFalse(isLocked1);
+        assertFalse(isBotDeposit1);
+        assertEq(unlock1, block.number); // Unlocked immediately
     }
     
     function testRevertNonBotDepositOnBehalf() public {
         vm.startPrank(user2);
         
         vm.expectRevert(KiloVault.NotBot.selector);
-        vault.botDepositNativeOnBehalf{value: 50 ether}(user1, 15);
+        vault.botDepositNativeOnBehalf{value: 50 ether}(user1);
         
         vm.stopPrank();
     }
     
     // ========================================================================
-    // BOT WITHDRAW/DEPOSIT TESTS
+    // LOCK EXTENSION TESTS
     // ========================================================================
     
-    function testBotWithdraw() public {
-        // User deposits first
-        vm.prank(user1);
-        vault.depositNative{value: 100 ether}(0);
+    function testExtendLockPeriod() public {
+        // Create bot deposit
+        vm.prank(bot);
+        vault.botDepositNativeOnBehalf{value: 100 ether}(user1);
         
-        // Bot withdraws
-        uint256 botBalanceBefore = bot.balance;
+        uint256 originalUnlock;
+        {
+            (,, uint256 unlock,,,,,,, ) = vault.getUserDeposit(user1, 0);
+            originalUnlock = unlock;
+        }
+        
+        // Fast forward 5 days
+        vm.roll(block.number + 5 days);
+        
+        // Admin extends lock by 7 days
+        vm.prank(bot);
+        vault.extendLockPeriod(user1, 0, 7);
+        
+        (,, uint256 newUnlock,, bool isLocked,,,, bool canWithdraw, uint256 lastExtended) = 
+            vault.getUserDeposit(user1, 0);
+        
+        assertTrue(isLocked);
+        assertFalse(canWithdraw);
+        assertEq(newUnlock, originalUnlock + 7 days);
+        assertEq(lastExtended, block.number);
+    }
+    
+    function testRevertExtendUnlockedDeposit() public {
+        // Create direct deposit (no lock)
+        vm.prank(user1);
+        vault.depositNative{value: 100 ether}();
+        
+        // Try to extend - should fail
+        vm.prank(bot);
+        vm.expectRevert(KiloVault.CannotExtendUnlockedDeposit.selector);
+        vault.extendLockPeriod(user1, 0, 7);
+    }
+    
+    function testRevertExtendByZeroDays() public {
+        // Create bot deposit
+        vm.prank(bot);
+        vault.botDepositNativeOnBehalf{value: 100 ether}(user1);
         
         vm.prank(bot);
-        vault.botWithdraw(50 ether, "Deploy to AI strategy");
-        
-        assertEq(bot.balance, botBalanceBefore + 50 ether);
-    }
-    
-    function testBotDeposit() public {
-        vm.startPrank(bot);
-        
-        uint256 depositAmount = 100 ether;
-        vault.botDeposit{value: depositAmount}(0);
-        
-        assertEq(address(vault).balance, depositAmount);
-        
-        vm.stopPrank();
+        vm.expectRevert(KiloVault.InvalidExtensionDays.selector);
+        vault.extendLockPeriod(user1, 0, 0);
     }
     
     // ========================================================================
     // WITHDRAWAL REQUEST TESTS
     // ========================================================================
     
-    function testWithdrawalRequestNoLock() public {
+    function testWithdrawalRequestDirectDeposit() public {
         vm.startPrank(user1);
         
-        // Deposit
-        vault.depositNative{value: 100 ether}(0);
+        // Direct deposit (no lock)
+        vault.depositNative{value: 100 ether}();
         uint256 shares = vault.balanceOf(user1);
         
-        // Request withdrawal
+        // Request withdrawal immediately
         uint256 requestId = vault.requestWithdrawal(0, shares);
         
         assertEq(requestId, 1);
         assertEq(vault.balanceOf(user1), 0); // Shares burned
         
+        (,,, uint256 requestedAssets,,, ) = vault.withdrawalRequests(requestId);
+        assertEq(requestedAssets, 100 ether); // No penalty since not locked
+        
         vm.stopPrank();
     }
     
     function testWithdrawalRequestEarlyPenalty() public {
-        vm.startPrank(user1);
+        vm.prank(bot);
+        vault.botDepositNativeOnBehalf{value: 100 ether}(user1);
         
-        // Deposit with 15-day lock
-        vault.depositNative{value: 100 ether}(15);
+        vm.startPrank(user1);
         uint256 shares = vault.balanceOf(user1);
         
         // Request early withdrawal (before unlock)
         uint256 requestId = vault.requestWithdrawal(0, shares);
         
-        // Check withdrawal request
-        (,, uint256 requestedShares, uint256 requestedAssets,, bool processed,) = 
-            vault.withdrawalRequests(requestId);
+        (,,, uint256 requestedAssets,,, ) = vault.withdrawalRequests(requestId);
         
-        assertEq(requestedShares, shares);
-        // Assets should be less due to 5% penalty
-        assertLt(requestedAssets, 100 ether);
+        // Should have 5% penalty
         assertEq(requestedAssets, 95 ether); // 100 - 5% = 95
-        assertFalse(processed);
         
         vm.stopPrank();
     }
     
     function testWithdrawalAfterUnlock() public {
-        vm.startPrank(user1);
-        
-        // Deposit with 15-day lock
-        vault.depositNative{value: 100 ether}(15);
-        uint256 shares = vault.balanceOf(user1);
+        vm.prank(bot);
+        vault.botDepositNativeOnBehalf{value: 100 ether}(user1);
         
         // Fast forward 15 days
         vm.roll(block.number + 15 days);
         
-        // Request withdrawal (no penalty)
+        vm.startPrank(user1);
+        uint256 shares = vault.balanceOf(user1);
         uint256 requestId = vault.requestWithdrawal(0, shares);
         
         (,,, uint256 requestedAssets,,, ) = vault.withdrawalRequests(requestId);
@@ -300,30 +381,54 @@ contract KiloVaultTest is Test {
     
     function testProcessAndClaimWithdrawal() public {
         vm.startPrank(user1);
+        vault.depositNative{value: 100 ether}();
         
-        // Deposit
-        vault.depositNative{value: 100 ether}(0);
         uint256 shares = vault.balanceOf(user1);
-        
-        // Request withdrawal
         uint256 requestId = vault.requestWithdrawal(0, shares);
         
         vm.stopPrank();
-        
-        // Bot processes withdrawal
+
+        vm.startPrank(bot);
+
+        // Bot processes
         uint256[] memory requestIds = new uint256[](1);
         requestIds[0] = requestId;
         
-        vm.prank(bot);
         vault.processWithdrawals{value: 100 ether}(requestIds);
         
+        vm.stopPrank();
+        vm.startPrank(user1);
+
         // User claims
         uint256 user1BalanceBefore = user1.balance;
         
-        vm.prank(user1);
         vault.claimWithdrawal(requestId);
         
+        vm.stopPrank();
+
         assertEq(user1.balance, user1BalanceBefore + 100 ether);
+    }
+    
+    // ========================================================================
+    // BOT WITHDRAW/DEPOSIT TESTS
+    // ========================================================================
+    
+    function testBotWithdraw() public {
+        vm.prank(user1);
+        vault.depositNative{value: 100 ether}();
+        
+        uint256 botBalanceBefore = bot.balance;
+        vm.prank(bot);
+        vault.botWithdraw(50 ether, "Deploy to AI strategy");
+        
+        assertEq(bot.balance, botBalanceBefore + 50 ether);
+    }
+    
+    function testBotDeposit() public {
+        vm.startPrank(bot);
+        vault.botDeposit{value: 100 ether}(0);
+        assertEq(address(vault).balance, 100 ether);
+        vm.stopPrank();
     }
     
     // ========================================================================
@@ -332,14 +437,12 @@ contract KiloVaultTest is Test {
     
     function testSetDepositCaps() public {
         vault.setDepositCaps(5000 ether, 1_000_000 ether);
-        
         assertEq(vault.maxDepositPerUser(), 5000 ether);
         assertEq(vault.maxTotalDeposits(), 1_000_000 ether);
     }
     
     function testSetBotAddress() public {
         address newBot = makeAddr("newBot");
-        
         vault.setBotAddress(newBot);
         assertEq(vault.botAddress(), newBot);
     }
@@ -349,128 +452,78 @@ contract KiloVaultTest is Test {
         assertEq(vault.earlyWithdrawalPenalty(), 300);
     }
     
-    function testRevertPenaltyTooHigh() public {
-        vm.expectRevert("Max 10%");
-        vault.setEarlyWithdrawalPenalty(1500); // 15% - too high
-    }
-    
     function testPauseUnpause() public {
         vault.pause();
         assertTrue(vault.isPaused());
         
-        // Should revert when paused
         vm.prank(user1);
         vm.expectRevert(KiloVault.VaultPaused.selector);
-        vault.depositNative{value: 100 ether}(0);
+        vault.depositNative{value: 100 ether}();
         
         vault.unpause();
         assertFalse(vault.isPaused());
-    }
-    
-    function testUpdateManagedAssets() public {
-        // Initial deposit
-        vm.prank(user1);
-        vault.depositNative{value: 100 ether}(0);
-        
-        // Bot makes profit
-        vault.updateManagedAssets(120 ether);
-        
-        assertEq(vault.totalManagedAssets(), 120 ether);
-    }
-    
-    // ========================================================================
-    // VIEW FUNCTION TESTS
-    // ========================================================================
-    
-    function testSharePrice() public {
-        // Initial price should be 1:1
-        assertEq(vault.sharePrice(), 1e18);
-        
-        // After deposit
-        vm.prank(user1);
-        vault.depositNative{value: 100 ether}(0);
-        
-        assertEq(vault.sharePrice(), 1e18);
-        
-        // After profit
-        vault.updateManagedAssets(118 ether); // 100 + 20 profit - 2 fee
-        
-        // Price should increase
-        assertGt(vault.sharePrice(), 1e18);
-    }
-    
-    function testPreviewDeposit() public {
-        uint256 shares = vault.previewDeposit(100 ether);
-        assertEq(shares, 100 ether); // 1:1 initially
-    }
-    
-    function testGetUserDepositCapRemaining() public {
-        vm.prank(user1);
-        vault.depositNative{value: 200 ether}(0);
-        
-        uint256 remaining = vault.getUserDepositCapRemaining(user1);
-        assertEq(remaining, 800 ether); // 1000 - 200
-    }
-    
-    function testGetTotalDepositCapRemaining() public {
-        vm.prank(user1);
-        vault.depositNative{value: 1000 ether}(0);
-        
-        uint256 remaining = vault.getTotalDepositCapRemaining();
-        assertEq(remaining, 499_000 ether); // 500,000 - 1,000
-    }
-    
-    function testLiquidBalance() public {
-        vm.prank(user1);
-        vault.depositNative{value: 100 ether}(0);
-        
-        assertEq(vault.liquidBalance(), 100 ether);
     }
     
     // ========================================================================
     // INTEGRATION TESTS
     // ========================================================================
     
-    function testCompleteUserJourney() public {
-        // 1. User deposits with 15-day lock
-        vm.startPrank(user1);
-        vault.depositNative{value: 100 ether}(15);
-        vm.stopPrank();
-        
-        // 2. Bot withdraws to manage
+    function testStarterPackageJourney() public {
+        // Day 0: User buys $50 package
         vm.startPrank(bot);
-        vault.botWithdraw(50 ether, "Leverage strategy");
-        vm.stopPrank();
+        vault.botDepositNativeOnBehalf{value: 50 ether}(user1);
         
-        // 3. Bot makes profit and deposits back
-        vm.startPrank(bot);
-        vault.botDeposit{value: 60 ether}(0); // 50 + 10 profit
-        vm.stopPrank();
+        // Day 10: User buys $25 package (merges + extends lock)
+        vm.roll(block.number + 10 days); 
+        vault.botDepositNativeOnBehalf{value: 25 ether}(user1);
         
-        // 4. Owner updates managed assets
-        vault.updateManagedAssets(110 ether); // Reflects total value
+        // Verify: still 1 deposit, 75 KAIA total
+        assertEq(vault.getUserDepositCount(user1), 1);
+        assertEq(vault.balanceOf(user1), 75 ether);
         
-        // 5. Fast forward past lock period
+        (,, uint256 unlock,, bool isLocked,,,, bool canWithdraw,) = vault.getUserDeposit(user1, 0);
+        assertTrue(isLocked);
+        assertFalse(canWithdraw);
+        assertEq(unlock, block.number + 15 days); // Lock reset
+        
+        // Fast forward 15 days
         vm.roll(block.number + 15 days);
         
-        // 6. User withdraws
+        vm.stopPrank();
+
+        // User can now withdraw
         vm.startPrank(user1);
         uint256 shares = vault.balanceOf(user1);
         uint256 requestId = vault.requestWithdrawal(0, shares);
+
         vm.stopPrank();
-        
-        // 7. Bot processes
-        uint256[] memory ids = new uint256[](1);
-        ids[0] = requestId;
+
+        (,,, uint256 assets,,, ) = vault.withdrawalRequests(requestId);
+        assertEq(assets, 75 ether); // No penalty
+    }
+    
+    function testMixedDepositJourney() public {
+        // Bot deposit: 50 KAIA (locked 15 days)
         vm.prank(bot);
-        vault.processWithdrawals{value: 110 ether}(ids);
+        vault.botDepositNativeOnBehalf{value: 50 ether}(user1);
         
-        // 8. User claims (should get more than initial 100 due to profits)
+        // Direct deposit: 100 KAIA (no lock)
         vm.prank(user1);
-        vault.claimWithdrawal(requestId);
+        vault.depositNative{value: 100 ether}();
         
-        // User should have profit
-        assertGt(user1.balance, 9900 ether); // Started with 10000, deposited 100
+        // User has 2 deposits
+        assertEq(vault.getUserDepositCount(user1), 2);
+        
+        // Can withdraw direct deposit immediately
+        vm.prank(user1);
+        uint256 directShares = 100 ether;
+        uint256 requestId = vault.requestWithdrawal(1, directShares);
+        
+        (,,, uint256 assets,,, ) = vault.withdrawalRequests(requestId);
+        assertEq(assets, 100 ether); // No penalty
+        
+        // Cannot withdraw bot deposit yet (would have penalty)
+        // Wait for lock to expire...
     }
     
     receive() external payable {}

@@ -67,7 +67,7 @@ export const usePriceUpdates = ({
         if (PRICE_API_CONFIG.symbolMapping[tokenData.symbol as keyof typeof PRICE_API_CONFIG.symbolMapping]) {
           mappedSymbol = PRICE_API_CONFIG.symbolMapping[tokenData.symbol as keyof typeof PRICE_API_CONFIG.symbolMapping];
         }
-        
+
         if (symbols.includes(mappedSymbol)) {
           priceMap[mappedSymbol] = {
             symbol: mappedSymbol,

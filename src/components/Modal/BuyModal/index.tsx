@@ -20,10 +20,10 @@ interface Package {
 }
 
 const PACKAGES: Package[] = [
-  { amount: '$10', fiatAmount: 10, kaia: '50', bonus: null, sku: 'starter_10' },
-  { amount: '$25', fiatAmount: 25, kaia: '125', bonus: '+5 KILO', sku: 'starter_25' },
-  { amount: '$50', fiatAmount: 50, kaia: '250', bonus: '+15 KILO', popular: true, sku: 'starter_50' },
-  { amount: '$100', fiatAmount: 100, kaia: '500', bonus: '+35 KILO', sku: 'starter_100' },
+  { amount: '$10', fiatAmount: 10, kaia: '50', bonus: '+100 KILO', sku: 'starter_10' },
+  { amount: '$25', fiatAmount: 25, kaia: '125', bonus: '+500 KILO', sku: 'starter_25' },
+  { amount: '$50', fiatAmount: 50, kaia: '250', bonus: '+1500 KILO', popular: false, sku: 'starter_50' },
+  { amount: '$100', fiatAmount: 100, kaia: '500', bonus: '+5000 KILO', sku: 'starter_100' },
 ];
 
 const LOCK_DAYS = 15;
@@ -138,25 +138,25 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
               <S.SkipButton onClick={handleSkipIntro}>
                 Skip Intro →
               </S.SkipButton>
-              <S.WelcomeIcon>🚀</S.WelcomeIcon>
+              <S.WelcomeIcon>✨</S.WelcomeIcon>
               <S.WelcomeTitle>Starter Package</S.WelcomeTitle>
               <S.WelcomeSubtitle>
-                Quick start your DeFi journey with guaranteed returns
+                Quick start your DeFi journey on LINE Mini Dapp
               </S.WelcomeSubtitle>
             </S.WelcomeBanner>
 
             <S.InfoCard>
-              <S.InfoTitle>
+              {/* <S.InfoTitle>
                 <Check size={20} color="#06C755" />
                 What You Get
-              </S.InfoTitle>
+              </S.InfoTitle> */}
               <S.BenefitsList>
                 <S.BenefitItem>
                   <S.BenefitIcon>
                     <Check size={14} />
                   </S.BenefitIcon>
                   <span>
-                    <strong>Easy Entry:</strong> Buy KAIA with credit card (no crypto wallet needed initially)
+                    <strong>Easy Entry:</strong> Get KAIA or USDT with credit card (conditions apply)
                   </span>
                 </S.BenefitItem>
                 <S.BenefitItem>
@@ -164,7 +164,7 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
                     <Check size={14} />
                   </S.BenefitIcon>
                   <span>
-                    <strong>Auto-Deposit:</strong> Funds automatically deposited to AI Boost Vault
+                    <strong>Auto-Deposit:</strong> Automatically deposited into a vault
                   </span>
                 </S.BenefitItem>
                 <S.BenefitItem>
@@ -172,7 +172,7 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
                     <Check size={14} />
                   </S.BenefitIcon>
                   <span>
-                    <strong>Guaranteed APY:</strong> Earn {APY}% APY for {LOCK_DAYS} days (locked period)
+                    <strong>15-Day Lockup:</strong> Withdrawals available after the lockup period
                   </span>
                 </S.BenefitItem>
                 <S.BenefitItem>
@@ -180,13 +180,20 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
                     <Check size={14} />
                   </S.BenefitIcon>
                   <span>
-                    <strong>Bonus Rewards:</strong> Get extra KILO points with each package
+                    <strong>Bonus Rewards:</strong> Get extra KILO points
                   </span>
                 </S.BenefitItem>
               </S.BenefitsList>
             </S.InfoCard>
 
-            <S.InfoCard>
+            <S.InfoBanner $type="warning">
+              <AlertCircle size={16} />
+              <div>
+                <strong>Not available yet:</strong> This Starter Package will be available soon. Stay tuned and follow our announcements for updates.
+              </div>
+            </S.InfoBanner>
+
+            {/* <S.InfoCard>
               <S.InfoTitle>
                 <TrendingUp size={20} color="#06C755" />
                 Perfect For
@@ -205,10 +212,10 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
                   <span>Those who want guaranteed fixed returns</span>
                 </S.BenefitItem>
               </S.BenefitsList>
-            </S.InfoCard>
+            </S.InfoCard> */}
 
-            <S.ComparisonBox>
-              <S.ComparisonTitle>📊 Quick Comparison</S.ComparisonTitle>
+            {/* <S.ComparisonBox>
+              <S.ComparisonTitle>Quick Comparison</S.ComparisonTitle>
               <S.ComparisonRow>
                 <S.ComparisonLabel>Payment Method</S.ComparisonLabel>
                 <S.ComparisonValue>Credit Card</S.ComparisonValue>
@@ -225,20 +232,20 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
                 <S.ComparisonLabel>Setup Time</S.ComparisonLabel>
                 <S.ComparisonValue>~2 minutes</S.ComparisonValue>
               </S.ComparisonRow>
-            </S.ComparisonBox>
+            </S.ComparisonBox> */}
           </S.WelcomeContainer>
         );
 
       case 2:
         return (
           <>
-            <S.InfoBanner $type="warning">
+            {/* <S.InfoBanner $type="warning">
               <AlertCircle size={16} />
               <div>
                 <strong>Coming Soon:</strong> Credit card payment integration is under development. 
                 This preview shows how it will work.
               </div>
-            </S.InfoBanner>
+            </S.InfoBanner> */}
 
             <S.PackageSection>
               <S.SectionTitle>Choose Your Package</S.SectionTitle>
@@ -259,8 +266,14 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
             </S.PackageSection>
 
             <S.PackageSection>
-              <S.SectionTitle>Lock Period</S.SectionTitle>
-              <S.LockPeriodBox>
+              {/* <S.SectionTitle>Lock Period</S.SectionTitle> */}
+              <S.InfoBanner $type="warning">
+                  <AlertCircle size={16} />
+                  <span>
+                    <strong>15-Day Lockup:</strong> Withdraw early with a 5% penalty, or wait 15 days to withdraw with no penalty.
+                  </span>
+                </S.InfoBanner>
+              {/* <S.LockPeriodBox>
                 <S.LockPeriodHeader>
                   <S.LockPeriodInfo>
                     <Clock size={20} color="#06C755" />
@@ -279,12 +292,23 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
                     After {LOCK_DAYS} days, withdraw anytime with no penalty.
                   </span>
                 </S.InfoBanner>
-              </S.LockPeriodBox>
+              </S.LockPeriodBox> */}
             </S.PackageSection>
+             {/* <S.InfoBanner $type="info">
+              <Info size={16} />
+              <div>
+                Your KAIA will be automatically deposited into <strong>KAIA Leveraged Vault</strong> and start earning immediately.
+              </div>
+            </S.InfoBanner>
+            <br/> */}
 
             <S.PackageSection>
               <S.SectionTitle>Expected Returns</S.SectionTitle>
               <S.ExpectedReturns>
+                 <S.ReturnsRow>
+                  <S.ReturnLabel>Target Vault</S.ReturnLabel>
+                  <S.ReturnValue>KAIA Leveraged</S.ReturnValue>
+                </S.ReturnsRow>
                 <S.ReturnsRow>
                   <S.ReturnLabel>Your Purchase</S.ReturnLabel>
                   <S.ReturnValue>{returns.principal} KAIA</S.ReturnValue>
@@ -300,12 +324,7 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
               </S.ExpectedReturns>
             </S.PackageSection>
 
-            <S.InfoBanner $type="info">
-              <Info size={16} />
-              <div>
-                Your KAIA will be automatically deposited into AI Boost Vault and start earning immediately.
-              </div>
-            </S.InfoBanner>
+           
           </>
         );
 
@@ -331,40 +350,40 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
               <S.TimelineStep>
                 <S.TimelineNumber>1</S.TimelineNumber>
                 <S.TimelineText>
-                  <strong>Payment Processing</strong><br />
-                  Your credit card payment is being processed (1-2 minutes)
+                  <strong>Check Your Position</strong><br />
+                  Tap the vault icon to view your active position
                 </S.TimelineText>
               </S.TimelineStep>
               <S.TimelineStep>
                 <S.TimelineNumber>2</S.TimelineNumber>
                 <S.TimelineText>
-                  <strong>KAIA Credited</strong><br />
-                  {selectedPackage.kaia} KAIA will be credited to your wallet
+                  <strong>Monitor AI-Managed Vault</strong><br />
+                  Vault is managed by AI and can monitor its activity
                 </S.TimelineText>
               </S.TimelineStep>
               <S.TimelineStep>
                 <S.TimelineNumber>3</S.TimelineNumber>
                 <S.TimelineText>
-                  <strong>Auto-Deposit to AI Boost</strong><br />
-                  Funds automatically deposited and locked for {LOCK_DAYS} days
+                  <strong>Withdraw to LINE Wallet</strong><br />
+                  You can initiate a withdrawal request after the lockup
                 </S.TimelineText>
               </S.TimelineStep>
               <S.TimelineStep>
                 <S.TimelineNumber>4</S.TimelineNumber>
                 <S.TimelineText>
-                  <strong>Start Earning</strong><br />
-                  Earn {APY}% APY until {getUnlockDate()}
+                  <strong>AI Approval</strong><br />
+                  The AI will process your request
                 </S.TimelineText>
               </S.TimelineStep>
             </S.TimelineBox>
 
-            <S.InfoBanner $type="success">
+            {/* <S.InfoBanner $type="success">
               <CheckCircle size={16} />
               <div>
                 You'll receive a notification when your KAIA is deposited and starts earning. 
                 Track your position in the AI Boost section.
               </div>
-            </S.InfoBanner>
+            </S.InfoBanner> */}
           </S.SuccessContainer>
         );
 
@@ -416,7 +435,6 @@ export const BuyModal = ({ isOpen, onClose }: BuyModalProps) => {
                   'Processing...'
                 ) : (
                   <>
-                    <Lock size={16} />
                     Pay {selectedPackage.amount}
                   </>
                 )

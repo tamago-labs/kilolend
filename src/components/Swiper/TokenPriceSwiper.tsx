@@ -92,7 +92,6 @@ const LastUpdatedText = styled.div`
   }
 `;
 
-// Updated token configuration with new order: KAIA -> USDT -> MBX -> BORA -> SIX
 const tokenConfig = [
   {
     symbol: 'KAIA',
@@ -103,6 +102,11 @@ const tokenConfig = [
     symbol: 'USDT',
     name: 'USDT price',
     icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png'
+  },
+  {
+    symbol: 'STAKED_KAIA',
+    name: 'stKAIA price',
+    icon: 'https://assets.coingecko.com/coins/images/40001/standard/token_stkaia.png'
   },
   {
     symbol: 'MBX',
