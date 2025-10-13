@@ -74,7 +74,7 @@ contract DeployAndConfigureKiloVault is Script {
         console.log("Step 2/2: Configuring KiloVault...");
         console.log("");
         
-        // Set bot address (CRITICAL)
+        // Set bot address
         console.log("Setting bot address...");
         vault.setBotAddress(botAddress);
         console.log("Bot address set to:", botAddress);
