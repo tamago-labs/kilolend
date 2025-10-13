@@ -71,6 +71,10 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     uint8 public immutable assetDecimals;
     bool public immutable isNative;
 
+    // NOTE: 'totalManagedAssets' is intended to represent the vault NAV INCLUDING externally
+    // managed positions (staking/lending/borrowing). The bot/strategy MUST call
+    // `notifyStrategyNAV(newTotal)` or owner `updateManagedAssets(newTotal)` after each
+    // rebalance so that `sharePrice()` remains accurate.
     uint256 public totalManagedAssets;
     
     /// @notice Maximum single deposit amount per transaction
@@ -98,6 +102,9 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     mapping(uint256 => WithdrawalRequest) public withdrawalRequests;
     mapping(address => uint256[]) public userRequests;
     uint256[] public pendingRequests;
+
+    uint256 public minBotCooldown = 60;  // seconds
+    uint256 public lastBotAction;
 
     // ========================================================================
     // EVENTS
@@ -148,6 +155,8 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     event EarlyWithdrawalPenaltyUpdated(uint256 newPenalty);
     event AssetsUpdated(uint256 oldTotal, uint256 newTotal, int256 profitLoss);
     event PauseVault(bool paused);
+    event StrategyAction(string action, uint256 beforeNAV, uint256 afterNAV);
+    event FeesClaimed(address to, uint256 amount);
 
     // ========================================================================
     // ERRORS
@@ -178,6 +187,12 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     modifier onlyBot() {
         if (msg.sender != botAddress && msg.sender != owner()) revert NotBot();
         _;
+    }
+
+    modifier botCooldown() {
+        require(block.timestamp >= lastBotAction + minBotCooldown, "Cooldown");
+        _;
+        lastBotAction = block.timestamp;
     }
 
     // ========================================================================
@@ -340,6 +355,7 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
     function botWithdraw(uint256 amount, string calldata reason) 
         external 
         onlyBot 
+        botCooldown
         nonReentrant 
     {
         if (amount == 0) revert ZeroAmount();
@@ -361,6 +377,7 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         external 
         payable 
         onlyBot 
+        botCooldown
         nonReentrant 
     {
         uint256 actualAmount;
@@ -377,38 +394,69 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         emit BotDeposit(actualAmount, totalManagedAssets);
     }
 
+    /**
+     * @dev Updates NAV after off-chain/on-protocol strategy operations complete
+     * to maintain accurate share price calculations
+     * @param newTotal New total managed assets after strategy action
+     */
+    function notifyStrategyNAV(uint256 newTotal) 
+        external 
+        onlyBot 
+        botCooldown 
+        nonReentrant 
+    {
+        uint256 oldTotal = totalManagedAssets;
+        totalManagedAssets = newTotal;
+        emit StrategyAction("nav-update", oldTotal, newTotal);
+    }
+
     // ========================================================================
     // WITHDRAWAL REQUEST FUNCTIONS
     // ========================================================================
     
     function requestWithdrawal(uint256 depositIndex, uint256 shares) external nonReentrant returns (uint256 requestId) {
         if (shares == 0) revert ZeroAmount();
-        
+
         DepositInfo[] storage deposits = userDeposits[msg.sender];
         if (depositIndex >= deposits.length) revert InvalidDepositIndex();
-        
-        DepositInfo storage depositInfo = deposits[depositIndex];
-        if (depositInfo.shares < shares) revert InsufficientShares();
-        
+
+        DepositInfo storage userDeposit = deposits[depositIndex];  // Renamed from 'deposit'
+        if (userDeposit.shares < shares) revert InsufficientShares();
+
+        // Update other references to use userDeposit
+        uint256 sharesBefore = userDeposit.shares;
+        uint256 assetsPortion = (userDeposit.assets * shares) / sharesBefore;
+
+        // Burn shares first
+        _burn(msg.sender, shares);
+
+        // Update deposit record proportionally
+        userDeposit.shares -= shares;
+        userDeposit.assets -= assetsPortion;
+
+        // Compute redeemable assets based on global share price
         uint256 assets = _calculateAssets(shares);
-        bool isEarly = depositInfo.isLockedDeposit && block.number < depositInfo.unlockBlock;
-        
+
+        // Early withdrawal penalty check
+        bool isEarly = userDeposit.isLockedDeposit && block.number < userDeposit.unlockBlock;
         uint256 penalty = 0;
         if (isEarly) {
             penalty = (assets * earlyWithdrawalPenalty) / 10000;
             assets -= penalty;
             accumulatedFees += penalty;
         }
-        
-        _burn(msg.sender, shares);
-        depositInfo.shares -= shares;
-        depositInfo.assets = (depositInfo.assets * depositInfo.shares) / (depositInfo.shares + shares); // Proportional reduction
-        totalManagedAssets -= (assets + penalty);
-        
-        userTotalDeposits[msg.sender] -= (assets + penalty);
-        
+
+        // Update total managed assets
+        totalManagedAssets -= assets;
+
+        // Update user's total deposits proportionally
+        if (userTotalDeposits[msg.sender] > assetsPortion) {
+            userTotalDeposits[msg.sender] -= assetsPortion;
+        } else {
+            userTotalDeposits[msg.sender] = 0;
+        }
+
         requestId = nextRequestId++;
-        
         withdrawalRequests[requestId] = WithdrawalRequest({
             user: msg.sender,
             depositIndex: depositIndex,
@@ -418,12 +466,11 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
             processed: false,
             claimed: false
         });
-        
+
         userRequests[msg.sender].push(requestId);
         pendingRequests.push(requestId);
-        
+
         emit WithdrawalRequested(requestId, msg.sender, depositIndex, shares, assets, isEarly);
-        
         return requestId;
     }
     
@@ -446,7 +493,7 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         emit WithdrawalClaimed(requestId, msg.sender, request.assets);
     }
     
-    function processWithdrawals(uint256[] calldata requestIds) external payable onlyBot nonReentrant {
+    function processWithdrawals(uint256[] calldata requestIds) external payable onlyBot botCooldown nonReentrant {
         uint256 totalNeeded = 0;
         
         for (uint256 i = 0; i < requestIds.length; i++) {
@@ -459,15 +506,20 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
             request.processed = true;
             
             _removeFromPendingQueue(requestIds[i]);
-            
             emit WithdrawalProcessed(requestIds[i], request.assets, 0);
         }
         
         if (isNative) {
             require(msg.value >= totalNeeded, "Insufficient KAIA");
+        } else {
+            // -----------------------------------------------------------
+            // FIX: Ensure the vault actually holds enough ERC20 to honor payouts.
+            // If the strategy hasn't returned funds yet, revert and retry later.
+            // -----------------------------------------------------------
+            uint256 bal = IKIP7(asset).balanceOf(address(this));
+            require(bal >= totalNeeded, "Insufficient ERC20 liquidity");
         }
     }
-    
     // ========================================================================
     // ADMIN FUNCTIONS
     // ========================================================================
@@ -512,6 +564,31 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         emit AssetsUpdated(oldTotal, newTotal, profitLoss);
     }
     
+    function setMinBotCooldown(uint256 secs) external onlyOwner {
+        minBotCooldown = secs;
+    }
+    
+    /**
+     * @notice Allows owner to claim accumulated early withdrawal fees
+     * @dev Fees are already accounted for in accumulatedFees, no NAV adjustment needed
+     * @param amount Amount of fees to claim
+     */
+    function claimFees(uint256 amount) 
+        external 
+        onlyOwner 
+        nonReentrant 
+    {
+        require(amount <= accumulatedFees, "Exceeds fees");
+        accumulatedFees -= amount;
+
+        if (isNative) {
+            payable(feeRecipient).transfer(amount);
+        } else {
+            IKIP7(asset).transfer(feeRecipient, amount);
+        }
+        
+        emit FeesClaimed(feeRecipient, amount);
+    }
     // ========================================================================
     // VIEW FUNCTIONS
     // ========================================================================
@@ -532,7 +609,7 @@ contract KiloVault is KIP7, Ownable, ReentrancyGuard {
         bool canWithdraw,
         uint256 lastExtendedBlock
     ) {
-        DepositInfo memory depositInfo = userDeposits[user][index];
+        DepositInfo memory depositInfo = userDeposits[user][index];  // Renamed from 'deposit'
         return (
             depositInfo.shares,
             depositInfo.assets,
