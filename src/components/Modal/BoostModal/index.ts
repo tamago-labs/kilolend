@@ -1,14 +1,13 @@
 export { BoostModal } from './BoostModal';
-export { 
-  VAULT_STRATEGIES,
-  getVaultActivity,
-  getVaultById,
-  MOCK_USER_POSITIONS,
-  MOCK_WITHDRAWAL_REQUESTS
-} from './mockData';
+export { ActivityTab } from './ActivityTab';
+export { DepositFlow } from './DepositFlow';
+export { WithdrawFlow } from './WithdrawFlow';
+export { TaskDetailsExpander } from './TaskDetailsExpander';
+ 
+
 export type { 
-  VaultStrategy,
-  BotActivity,
-  UserPosition,
-  WithdrawalRequest
-} from './mockData';
+  VaultStrategy, 
+  TabType,
+  DepositStep,
+  WithdrawStep
+} from './types';

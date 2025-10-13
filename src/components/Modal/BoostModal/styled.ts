@@ -414,7 +414,7 @@ export const ActivityFeed = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 300px;
+   
   overflow-y: auto;
   
   &::-webkit-scrollbar {

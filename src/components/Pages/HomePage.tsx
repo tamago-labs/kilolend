@@ -537,6 +537,7 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
                 alt="BOOST"
               />
               {/* <APYBadge>+1.5x</APYBadge> */}
+              <APYBadge>New</APYBadge> 
             </IconCircle>
             <IconLabel>AI Vault</IconLabel>
           </IconButton>
