@@ -46,10 +46,11 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const [enableAsCollateral, setEnableAsCollateral] = useState(true);
   const [isMarketAlreadyEntered, setIsMarketAlreadyEntered] = useState(false);
   const [transactionResult, setTransactionResult] = useState<TransactionResult | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<string | undefined>(undefined);
 
   const { markets } = useContractMarketStore();
   const { account } = useWalletAccountStore();
-  const { supply } = useMarketContract();
+  const { supply, getMarketInfo } = useMarketContract();
   const { enterMarkets, isMarketEntered } = useComptrollerContract();
   const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances();
   const { refreshPositions } = useUserPositions();
@@ -83,7 +84,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     checkApprovalNeeded();
   }, [selectedAsset, amount]);
 
-  // Check if market is already entered when asset is selected
+  // Check if market is already entered and fetch exchange rate when asset is selected
   useEffect(() => {
     const checkMarketStatus = async () => {
       if (selectedAsset && account) {
@@ -107,7 +108,22 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       }
     };
 
+    const fetchExchangeRate = async () => {
+      if (selectedAsset) {
+        try {
+          const marketInfo = await getMarketInfo(selectedAsset.id);
+          if (marketInfo) {
+            setExchangeRate(marketInfo.exchangeRate);
+          }
+        } catch (error) {
+          console.error('Error fetching exchange rate:', error);
+          setExchangeRate(undefined);
+        }
+      }
+    };
+
     checkMarketStatus();
+    fetchExchangeRate();
   }, [selectedAsset, account]);
 
   const handleAssetSelect = (asset: any) => {
@@ -297,6 +313,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
             enableAsCollateral={enableAsCollateral}
             isMarketAlreadyEntered={isMarketAlreadyEntered}
             onCollateralToggle={setEnableAsCollateral}
+            exchangeRate={exchangeRate}
           />
         ) : null;
 

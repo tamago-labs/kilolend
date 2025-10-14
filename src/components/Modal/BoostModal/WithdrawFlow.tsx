@@ -26,7 +26,9 @@ import {
   ResultRow,
   ResultLabel,
   ResultValue,
-  ActionButton
+  ActionButton,
+  TokenIcon,
+  TokenIconImage
 } from './styled';
 
 interface UserPosition {
@@ -97,7 +99,7 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
   const loadPositions = async () => {
     try {
       setLoading(true);
-      
+
       // Get current block for calculating days remaining
       const provider = new ethers.JsonRpcProvider(KAIA_MAINNET_CONFIG.rpcUrl);
       const blockNumber = await provider.getBlockNumber();
@@ -105,7 +107,7 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
 
       // Get user positions from contract - NO MOCKS
       const data = await getUserPositions(account!);
-      
+
       // Transform to UserPosition format
       const transformedPositions: UserPosition[] = data.map((deposit: any, index: number) => {
         const shares = parseFloat(deposit.shares);
@@ -114,9 +116,9 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
         const currentValue = assets; // Current value (could calculate with share price)
         const profitLoss = currentValue - deposited;
         const profitLossPercentage = deposited > 0 ? (profitLoss / deposited) * 100 : 0;
-        
+
         const canWithdraw = deposit.canWithdraw;
-        const daysRemaining = !canWithdraw && deposit.isLocked 
+        const daysRemaining = !canWithdraw && deposit.isLocked
           ? calculateDaysRemaining(deposit.unlockBlock, blockNumber)
           : undefined;
 
@@ -167,14 +169,6 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
     return (
       <>
         <SectionTitle>Select Position to Withdraw</SectionTitle>
-        
-       {/* <InfoBanner $type="warning" style={{ marginBottom: '16px' }}>
-          <AlertCircle size={16} />
-          <div>
-            Withdrawal creates a request. The AI bot will unwind your leveraged position (1-7 days), 
-            then you can claim your funds.
-          </div>
-        </InfoBanner>*/}
 
         {!account ? (
           <EmptyState>
@@ -196,7 +190,7 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
             {positions.map((position) => {
               const hfStatus = getHealthFactorStatus(position.healthFactor || 0);
               const isSelected = selectedPosition?.depositIndex === position.depositIndex;
-              
+
               return (
                 <PositionCard
                   key={position.depositIndex}
@@ -206,7 +200,24 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
                   style={{ cursor: position.canWithdraw ? 'pointer' : 'not-allowed' }}
                 >
                   <PositionHeader>
-                    <PositionVault>{vault.icon} {vault.name}</PositionVault>
+                    <PositionVault>
+                      <div style={{ display: "flex", flexDirection: "row" }}>
+                        <div style={{ width: "32px", height: "32px", marginRight: "3px" }}>
+                          <TokenIconImage
+                            src={"https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png"}
+                            alt={"icon"}
+                            onError={(e) => {
+                              const img = e.target as HTMLImageElement;
+                              img.style.display = 'none';
+                              if (img.parentElement) {
+                                img.parentElement.innerHTML = `<b>${vault.asset.charAt(0)}</b>`;
+                              }
+                            }}
+                          />
+                        </div>
+                        {vault.name}
+                      </div> 
+                    </PositionVault>
                     {!position.canWithdraw && position.daysRemaining && (
                       <PositionStatus $locked={true}>
                         <Clock size={12} style={{ display: 'inline', marginRight: '4px' }} />
@@ -214,7 +225,7 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
                       </PositionStatus>
                     )}
                   </PositionHeader>
-                  
+
                   <PositionStats>
                     <PositionStat>
                       <PositionStatLabel>Deposited</PositionStatLabel>
@@ -226,15 +237,15 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
                     </PositionStat>
                     <PositionStat>
                       <PositionStatLabel>Profit/Loss</PositionStatLabel>
-                      <PositionStatValue 
-                        $profit={position.profitLossPercentage > 0} 
+                      <PositionStatValue
+                        $profit={position.profitLossPercentage > 0}
                         $loss={position.profitLossPercentage < 0}
                       >
                         {position.profitLoss} ({position.profitLossPercentage > 0 ? '+' : ''}{position.profitLossPercentage.toFixed(2)}%)
                       </PositionStatValue>
                     </PositionStat>
                   </PositionStats>
-                  
+
                   {position.healthFactor && (
                     <PositionInfo style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
                       <span>
@@ -257,16 +268,16 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
   // Step 2: Confirm Withdrawal
   if (step === 2 && selectedPosition) {
     const hfStatus = getHealthFactorStatus(selectedPosition.healthFactor || 0);
-    
+
     return (
       <>
         <SectionTitle>Confirm Withdrawal Request</SectionTitle>
-        
+
         <InfoBanner $type="warning" style={{ marginBottom: '16px' }}>
           <AlertCircle size={16} />
           <div>AI bot will unwind your staking position. This process takes 1-7 days.</div>
         </InfoBanner>
-        
+
         <ExpectedResults>
           <ResultRow>
             <ResultLabel>Vault</ResultLabel>
@@ -284,8 +295,8 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
           </ResultRow>
           <ResultRow>
             <ResultLabel>Profit/Loss</ResultLabel>
-            <ResultValue 
-              $profit={selectedPosition.profitLossPercentage > 0} 
+            <ResultValue
+              $profit={selectedPosition.profitLossPercentage > 0}
               $loss={selectedPosition.profitLossPercentage < 0}
             >
               {selectedPosition.profitLoss} ({selectedPosition.profitLossPercentage > 0 ? '+' : ''}{selectedPosition.profitLossPercentage.toFixed(2)}%)
@@ -296,7 +307,7 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
             <ResultValue $large>{selectedPosition.currentValue} KAIA</ResultValue>
           </ResultRow>
         </ExpectedResults>
-        
+
         {/*<div style={{ 
           marginTop: '16px', 
           padding: '12px', 

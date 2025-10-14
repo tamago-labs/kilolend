@@ -17,9 +17,9 @@ import { LeaderboardModal } from './LeaderboardModal';
 import { KiloPointsModal } from "./KiloModal"
 import { InviteModal } from './InviteModal';
 import { AIChatModal } from './AIChatModal';
-import { SwapModal } from './SwapModal';
+// import { SwapModal } from './SwapModal';
 import { BoostModal } from './BoostModal';
-import { BuyModal } from "./BuyModal"
+// import { BuyModal } from "./BuyModal"
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -242,20 +242,20 @@ export const GlobalModalManager = () => {
             onClose={closeModal}
           />
         );
-      case 'buy':
-        return (
-          <BuyModal
-            isOpen={isOpen}
-            onClose={closeModal}
-          />
-        );
-      case 'swap':
-        return (
-          <SwapModal
-            // isOpen={isOpen}
-            onClose={closeModal}
-          />
-        );
+      // case 'buy':
+      //   return (
+      //     <BuyModal
+      //       isOpen={isOpen}
+      //       onClose={closeModal}
+      //     />
+      //   );
+      // case 'swap':
+      //   return (
+      //     <SwapModal
+      //       // isOpen={isOpen}
+      //       onClose={closeModal}
+      //     />
+      //   );
       case 'boost':
         return (
           <BoostModal

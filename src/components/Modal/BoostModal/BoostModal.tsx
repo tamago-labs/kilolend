@@ -391,6 +391,11 @@ export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
             <div>Please connect your wallet to {activeTab === 'deposit' ? 'deposit' : 'withdraw'}</div>
           </InfoBanner>
         )}
+        <InfoBanner $type="warning" > 
+          <div style={{ fontSize: '13px', textAlign: "center" }}>
+            AI-managed vault is in an early stage. Ensure you understand how it works by reading the documentation and use it at your own risk.
+          </div>
+        </InfoBanner>
       </Container>
     </BaseModal>
   );

@@ -231,13 +231,21 @@ export const useMarketContract = (): MarketContractHook => {
         // console.log("value:", value)
 
         // Create contract interface for encoding transaction data
-        const iface = new ethers.Interface(value ? [{
-          "inputs": [],
-          "name": "mint",
-          "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
-          "stateMutability": "payable",
-          "type": "function"
-        }] : CTOKEN_ABI);   
+        // For payable functions (mint, repayBorrow), we need the correct ABI
+        let iface: ethers.Interface;
+        if (value && (methodName === 'mint' || methodName === 'repayBorrow')) {
+          // Use CEther ABI for payable functions
+          const payableAbi = [{
+            "inputs": [],
+            "name": methodName,
+            "outputs": methodName === 'mint' ? [{"internalType": "uint256", "name": "", "type": "uint256"}] : [],
+            "stateMutability": "payable",
+            "type": "function"
+          }];
+          iface = new ethers.Interface(payableAbi);
+        } else {
+          iface = new ethers.Interface(CTOKEN_ABI);
+        }
         const data = iface.encodeFunctionData(methodName, args);
 
         // For native KAIA, we need to send value with the transaction
@@ -319,8 +327,19 @@ export const useMarketContract = (): MarketContractHook => {
 
   const repay = useCallback(
     async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const parsedAmount = parseTokenAmount(amount, MARKET_CONFIG[marketId].decimals);
-      return sendContractTransaction(marketId, 'repayBorrow', [parsedAmount]);
+      const marketConfig = MARKET_CONFIG[marketId];
+      
+      // For native KAIA, we need to send the value with the transaction
+      if (marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
+        // Native KAIA - send value with repayBorrow() call (no parameters)
+        const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
+        const hexValue = '0x' + parsedAmount.toString(16);
+        return sendContractTransaction(marketId, 'repayBorrow', [], hexValue);
+      } else {
+        // ERC20 token - normal repayBorrow with amount parameter
+        const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
+        return sendContractTransaction(marketId, 'repayBorrow', [parsedAmount]);
+      }
     },
     [sendContractTransaction]
   );

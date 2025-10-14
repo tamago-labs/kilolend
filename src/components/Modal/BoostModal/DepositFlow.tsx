@@ -139,6 +139,7 @@ export const DepositFlow: React.FC<DepositFlowProps> = ({
             </VaultStrategyStyled>*/}
           </VaultCard>
         </VaultGrid>
+        
       </>
     );
   }

@@ -125,6 +125,7 @@ interface SupplyTransactionPreviewProps {
   enableAsCollateral?: boolean;
   isMarketAlreadyEntered?: boolean;
   onCollateralToggle?: (enabled: boolean) => void;
+  exchangeRate?: string; // Exchange rate from contract (how many underlying per cToken)
 }
 
 export const SupplyTransactionPreview = ({
@@ -134,10 +135,16 @@ export const SupplyTransactionPreview = ({
   needsApproval = false,
   enableAsCollateral = true,
   isMarketAlreadyEntered = false,
-  onCollateralToggle
+  onCollateralToggle,
+  exchangeRate
 }: SupplyTransactionPreviewProps) => {
   const usdValue = amount && selectedAsset ? parseFloat(amount) * selectedAsset.price : 0;
-  const expectedCTokens = parseFloat(amount || '0') * 5; // Simplified calculation
+  
+  // Calculate expected cTokens correctly using exchange rate
+  // exchangeRate = underlying per cToken, so cTokens = underlying / exchangeRate
+  const expectedCTokens = exchangeRate 
+    ? parseFloat(amount || '0') / parseFloat(exchangeRate)
+    : parseFloat(amount || '0') * 50; // Fallback to ~50x (typical initial exchange rate)
 
   const getCollateralStatus = () => {
     if (isMarketAlreadyEntered) return 'already';
