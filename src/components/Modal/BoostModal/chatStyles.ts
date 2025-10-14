@@ -118,7 +118,7 @@ export const StatusBadge = styled.span<{ $status?: string }>`
   }};
 `;
 
-export const StepsList = styled.ol`
+export const StepsList = styled.div`
   margin: 8px 0 0 0;
   padding-left: 20px;
   line-height: 1.8;

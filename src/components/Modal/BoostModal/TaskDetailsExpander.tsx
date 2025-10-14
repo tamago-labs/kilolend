@@ -52,10 +52,10 @@ export const TaskDetailsExpander: React.FC<TaskDetailsExpanderProps> = ({
     <>
       <TaskExpandButton onClick={onToggle}>
         <span>
-          Task Details
-          <StatusBadge $status={task.status} style={{ marginLeft: '8px' }}>
+          Ongoing Task
+          {/*<StatusBadge $status={task.status} style={{ marginLeft: '8px' }}>
             {task.status.replace(/_/g, ' ')}
-          </StatusBadge>
+          </StatusBadge>*/}
         </span>
         <span style={{ fontSize: '16px' }}>{isExpanded ? <ChevronDown/> : <ChevronUp/>}</span>
       </TaskExpandButton>
@@ -74,10 +74,10 @@ export const TaskDetailsExpander: React.FC<TaskDetailsExpanderProps> = ({
           </div>
           
           <div>
-            <strong>Operator Steps:</strong>
+            <strong>Steps:</strong>
             <StepsList>
               {task.steps.map((step, i) => (
-                <li key={i}>{step}</li>
+                <div key={i}>{step}</div>
               ))}
             </StepsList>
           </div>

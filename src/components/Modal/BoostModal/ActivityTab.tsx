@@ -157,7 +157,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({
                 </ChatText> 
                 {activity.healthFactor && (
                   <MetricBox>
-                    💓 Health Factor: <strong>{activity.healthFactor.toFixed(2)}</strong>
+                    Health Factor: <strong>{activity.healthFactor.toFixed(2)}</strong>
                   </MetricBox>
                 )}
                 
@@ -172,7 +172,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({
                 )}*/}
                 
                 {/* Expandable task details */}
-                {/*{activity.task && (
+                {activity.task && (
                   <TaskDetailsExpander 
                     task={activity.task}
                     isExpanded={isExpanded}
@@ -180,7 +180,7 @@ export const ActivityTab: React.FC<ActivityTabProps> = ({
                       expandedTask === `task-${index}` ? null : `task-${index}`
                     )}
                   />
-                )}*/}
+                )}
               </ChatBubble>
             </ChatMessage>
           );

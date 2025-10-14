@@ -275,7 +275,7 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
 
         <InfoBanner $type="warning" style={{ marginBottom: '16px' }}>
           <AlertCircle size={16} />
-          <div>AI bot will unwind your staking position. This process takes 1-7 days.</div>
+          <div>AI bot will unwind your staking position. This process takes 1-2 days.</div>
         </InfoBanner>
 
         <ExpectedResults>
@@ -338,7 +338,7 @@ export const WithdrawFlow: React.FC<WithdrawFlowProps> = ({
         </EmptyStateText>
         <EmptyStateText>
           Request #{requestId || 'pending'} created. The AI bot is now unwinding your leverage position.
-          You'll be able to claim your funds in 1-7 days.
+          You'll be able to claim your funds in 1-2 days.
         </EmptyStateText>
         <InfoBanner $type="info" style={{ marginTop: '20px' }}>
           <Info size={16} />
