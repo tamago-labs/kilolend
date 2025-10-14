@@ -107,15 +107,17 @@ class TaskManager {
   }
 
   getLeverageUpSteps(params) {
-    const withdrawAmount = params?.withdrawAmount || 100;
-    const borrowAmount = params?.borrowAmount || 70;
+    // Use actual available liquidity for borrow amount
+    // Use actual vault/wallet balances for withdraw amount
+    const borrowAmount = params?.borrowAmount || 'available';
+    const withdrawAmount = params?.withdrawAmount || 'from_vault';
 
     return [
-      `1. Withdraw ${withdrawAmount} KAIA from vault`,
-      `2. Stake ${withdrawAmount} KAIA to get stKAIA via Lair Finance`,
-      `3. Supply ${withdrawAmount} stKAIA to KiloLend as collateral`,
-      `4. Borrow ${borrowAmount} USDT from KiloLend`,
-      `5. Swap ${borrowAmount} USDT to KAIA via DragonSwap`,
+      `1. Withdraw KAIA from vault (if needed)`,
+      `2. Stake KAIA to get stKAIA via Lair Finance`,
+      `3. Supply stKAIA to KiloLend as collateral`,
+      `4. Borrow ${typeof borrowAmount === 'number' ? borrowAmount.toFixed(2) : borrowAmount} USDT from KiloLend`,
+      `5. Swap USDT to KAIA via DragonSwap`,
       `6. Stake swapped KAIA to stKAIA`,
       `7. Verify health factor remains above ${config.RISK_PARAMS.SAFE_HEALTH_FACTOR}`
     ];
@@ -199,10 +201,22 @@ class TaskManager {
   }
 
   calculateLeverageRatio(lendingData) {
-    if (!lendingData || lendingData.totalCollateralETH === 0) {
+    if (!lendingData || !lendingData.totalCollateralUSD || lendingData.totalCollateralUSD === 0) {
       return 1.0;
     }
-    return (lendingData.totalCollateralETH / (lendingData.totalCollateralETH - lendingData.totalDebtETH)).toFixed(2);
+    
+    // Leverage Ratio = Total Assets / Equity
+    // Total Assets = Collateral
+    // Equity = Collateral - Debt
+    const totalAssets = lendingData.totalCollateralUSD;
+    const equity = totalAssets - lendingData.totalDebtUSD;
+    
+    if (equity <= 0) {
+      return 999; // Extremely high leverage (underwater)
+    }
+    
+    const ratio = totalAssets / equity;
+    return parseFloat(ratio.toFixed(2));
   }
 
   generateHash() {

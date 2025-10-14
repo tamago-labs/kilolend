@@ -13,7 +13,7 @@ module.exports = {
 
   // Bot
   BOT_ADDRESS: process.env.BOT_ADDRESS,
-  OPERATION_INTERVAL: parseInt(process.env.OPERATION_INTERVAL_MINUTES || '100') * 60 * 1000,
+  OPERATION_INTERVAL: parseInt(process.env.OPERATION_INTERVAL_MINUTES || '120') * 60 * 1000,
   EMERGENCY_CHECK_INTERVAL: parseInt(process.env.EMERGENCY_CHECK_INTERVAL_MINUTES || '15') * 60 * 1000,
 
   // API
@@ -51,8 +51,8 @@ module.exports = {
     // Get user's entered markets (collateral assets)
     "function getAssetsIn(address account) external view returns (address[])",
 
-    // Get collateral factor for a market
-    "function markets(address cTokenAddress) external view returns (bool isListed, uint256 collateralFactorMantissa, bool isComped)",
+    // Get collateral factor for a market - returns (isListed, collateralFactorMantissa)
+    "function markets(address cTokenAddress) external view returns (bool, uint256)",
 
     // Close factor (max % that can be liquidated)
     "function closeFactorMantissa() external view returns (uint256)",
@@ -64,5 +64,20 @@ module.exports = {
     "function balanceOf(address account) external view returns (uint256)",
     "function decimals() external view returns (uint8)",
     "function symbol() external view returns (string)"
-  ]
+  ],
+
+  CTOKEN_ABI: [
+    // Get account snapshot: (error, cTokenBalance, borrowBalance, exchangeRate)
+    "function getAccountSnapshot(address account) external view returns (uint256, uint256, uint256, uint256)",
+    "function exchangeRateStored() external view returns (uint256)",
+    "function balanceOf(address account) external view returns (uint256)",
+    "function borrowBalanceStored(address account) external view returns (uint256)",
+    "function underlying() external view returns (address)"
+  ],
+
+  // Market addresses (cTokens)
+  MARKETS: {
+    CSTKAIA: '0x0BC926EF3856542134B06DCf53c86005b08B9625',
+    CUSDT: '0x498823F094f6F2121CcB4e09371a57A96d619695'
+  }
 };

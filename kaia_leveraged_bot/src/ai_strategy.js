@@ -41,10 +41,10 @@ class AIStrategy {
           liquidBalance: vault.liquidBalance.toFixed(4)
         } : null,
         lending: lending ? {
-          collateral: lending.totalCollateralETH.toFixed(2),
-          debt: lending.totalDebtETH.toFixed(2),
+          collateral: lending.totalCollateralUSD.toFixed(2),
+          debt: lending.totalDebtUSD.toFixed(2),
           healthFactor: hf.toFixed(4),
-          availableBorrows: lending.availableBorrowsETH.toFixed(2)
+          availableBorrows: lending.availableBorrowsUSD.toFixed(2)
         } : null,
         market: marketData ? {
           kaiaPrice: marketData.prices.KAIA.toFixed(4),
@@ -198,15 +198,22 @@ Respond in JSON format:
 
     if (hf > config.RISK_PARAMS.MAX_HEALTH_FACTOR) {
       console.log('📈 OPPORTUNITY: Can increase leverage');
+      
+      // Calculate actual borrow amount based on available liquidity
+      const availableBorrows = lending?.availableBorrowsUSD || 0;
+      const borrowAmount = availableBorrows * 0.7; // Borrow 70% of available for safety
+      
       return {
         action: 'LEVERAGE_UP',
         confidence: 0.8,
-        reasoning: `Health Factor ${hf.toFixed(4)} is above maximum efficient level ${config.RISK_PARAMS.MAX_HEALTH_FACTOR}. Can safely increase leverage for better returns.`,
+        reasoning: `Health Factor ${hf.toFixed(4)} is above maximum efficient level ${config.RISK_PARAMS.MAX_HEALTH_FACTOR}. Can safely increase leverage for better returns. Available to borrow: ${availableBorrows.toFixed(2)}, will borrow ${borrowAmount.toFixed(2)} (70% of max).`,
         riskLevel: 'MEDIUM',
         expectedHealthFactor: config.RISK_PARAMS.TARGET_HEALTH_FACTOR,
         parameters: {
-          withdrawAmount: 100,
-          borrowAmount: 70
+          borrowAmount: borrowAmount,
+          stakeAmount: 'ALL_KAIA',
+          supplyAmount: 'ALL_STKAIA',
+          swapToKaia: borrowAmount
         }
       };
     }

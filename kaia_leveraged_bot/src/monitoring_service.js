@@ -203,26 +203,37 @@ class MonitoringService {
 
           // Calculate underlying supply balance
           const supplyBalance = (cTokenBalance * exchangeRate) / BigInt(1e18);
-          const supplyBalanceFormatted = parseFloat(ethers.formatEther(supplyBalance));
-          const borrowBalanceFormatted = parseFloat(ethers.formatEther(borrowBalance));
-
-          // Get market collateral factor
-          const marketInfo = await this.contracts.comptroller.markets(cTokenAddress);
-          const collateralFactor = parseFloat(ethers.formatEther(marketInfo[1])); // e.g., 0.85 = 85%
-
-          // Determine asset type and price
+          
+          // Determine asset type, price, and decimals FIRST
           let assetPrice = 0;
           let assetSymbol = 'UNKNOWN';
+          let assetDecimals = 18; // Default to 18
 
-          // Simple address matching (you might need to add more mappings)
-          if (cTokenAddress.toLowerCase().includes('stkaia') ||
-            cTokenAddress === '0x0BC926EF3856542134B06DCf53c86005b08B9625') {
-            assetPrice = prices.stKAIA;
+          // Map cToken addresses to asset types
+          const cTokenLower = cTokenAddress.toLowerCase();
+          if (cTokenLower === config.MARKETS.CSTKAIA.toLowerCase()) {
+            assetPrice = prices.stKAIA || prices.KAIA;
             assetSymbol = 'stKAIA';
-          } else if (cTokenAddress.toLowerCase().includes('usdt')) {
-            assetPrice = prices.USDT;
+            assetDecimals = 18;
+          } else if (cTokenLower === config.MARKETS.CUSDT.toLowerCase()) {
+            assetPrice = prices.USDT || 1.0;
             assetSymbol = 'USDT';
+            assetDecimals = 6; // USDT has 6 decimals!
+          } else {
+            console.warn(`⚠️  Unknown cToken address: ${cTokenAddress}`);
+            assetPrice = 0;
+            assetSymbol = 'UNKNOWN';
+            assetDecimals = 18;
           }
+          
+          // Format with correct decimals
+          const supplyBalanceFormatted = parseFloat(ethers.formatUnits(supplyBalance, assetDecimals));
+          const borrowBalanceFormatted = parseFloat(ethers.formatUnits(borrowBalance, assetDecimals));
+
+          // Get market collateral factor - returns (isListed, collateralFactorMantissa)
+          const marketInfo = await this.contracts.comptroller.markets(cTokenAddress);
+          const isListed = marketInfo[0];
+          const collateralFactor = parseFloat(ethers.formatEther(marketInfo[1])); // e.g., 0.80 = 80%
 
           const supplyValueUSD = supplyBalanceFormatted * assetPrice;
           const borrowValueUSD = borrowBalanceFormatted * assetPrice;
@@ -271,12 +282,12 @@ class MonitoringService {
     console.log('\n📊 POSITION SNAPSHOT');
     console.log('='.repeat(50));
 
-    const [kaiaBalance, stKaiaBalance, usdtBalance, vaultState, healthData] = await Promise.all([
+    const [kaiaBalance, stKaiaBalance, usdtBalance, vaultState, lendingData] = await Promise.all([
       this.getKaiaBalance(),
       this.getStKaiaBalance(),
       this.getUsdtBalance(),
       this.getVaultState(),
-      this.getHealthFactor() // Use simple health factor check
+      this.getLendingAccountDataDetailed() // Get detailed lending data
     ]);
 
     const snapshot = {
@@ -287,7 +298,7 @@ class MonitoringService {
         usdt: usdtBalance
       },
       vault: vaultState,
-      health: healthData
+      lending: lendingData // Changed from 'health' to 'lending'
     };
 
     console.log('💰 Balances:');
@@ -302,15 +313,31 @@ class MonitoringService {
       console.log(`   Share Price: ${vaultState.sharePrice.toFixed(6)}`);
     }
 
-    if (healthData) {
-      console.log('\n💳 Health Status:');
-      console.log(`   Status: ${healthData.status}`);
-      console.log(`   Health Factor: ${healthData.healthFactor.toFixed(4)}`);
-      console.log(`   Available Borrows: $${healthData.liquidity.toFixed(2)}`);
-      console.log(`   Shortfall: $${healthData.shortfall.toFixed(2)}`);
+    if (lendingData) {
+      console.log('\n💳 Lending Position:');
+      console.log(`   Health Factor: ${lendingData.healthFactor.toFixed(4)}`);
+      console.log(`   Total Collateral: ${lendingData.totalCollateralUSD.toFixed(2)}`);
+      console.log(`   Total Debt: ${lendingData.totalDebtUSD.toFixed(2)}`);
+      console.log(`   Available Borrows: ${lendingData.availableBorrowsUSD.toFixed(2)}`);
+      console.log(`   Shortfall: ${lendingData.shortfallUSD.toFixed(2)}`);
 
-      const hfStatus = this.getHealthFactorStatus(healthData.healthFactor);
+      const hfStatus = this.getHealthFactorStatus(lendingData.healthFactor);
       console.log(`   Risk Level: ${hfStatus.emoji} ${hfStatus.label}`);
+
+      if (lendingData.positions && lendingData.positions.length > 0) {
+        console.log('\n   Positions:');
+        lendingData.positions.forEach(pos => {
+          if (pos.supplyBalance > 0 || pos.borrowBalance > 0) {
+            console.log(`     ${pos.assetSymbol}:`);
+            if (pos.supplyBalance > 0) {
+              console.log(`       Supply: ${pos.supplyBalance.toFixed(4)} (${pos.supplyValueUSD.toFixed(2)})`);
+            }
+            if (pos.borrowBalance > 0) {
+              console.log(`       Borrow: ${pos.borrowBalance.toFixed(4)} (${pos.borrowValueUSD.toFixed(2)})`);
+            }
+          }
+        });
+      }
     }
 
     console.log('='.repeat(50));
