@@ -2,6 +2,7 @@
 
 import styled from 'styled-components';
 import { CardSwiper } from './CardSwiper';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
 
 const CardContent = styled.div`
   position: relative;
@@ -68,47 +69,51 @@ const HighlightText2 = styled.span`
   font-weight: 600;
 `;
 
-const slides = [
-  {
-    icon: 'K',
-    title: 'KiloLend',
-    subtitle: (
-      <>
-        The first stablecoin-focused <HighlightText>DeFAI lending</HighlightText> on LINE Mini Dapp
-      </>)
-  },
-  {
-    icon: '🌱',
-    title: 'Start with USDT',
-    subtitle: (
-      <>
-        Supply <HighlightText>USDT</HighlightText> and earn a stable
-        <HighlightText> 2% APY</HighlightText> plus daily KILO points
-      </>
-    )
-  },
-  {
-    icon: '⚡',
-    title: 'AI Assistant',
-    subtitle: (
-      <>
-        Get personalized advice with our <HighlightText>AI lending assistant</HighlightText> to guide smarter moves
-      </>
-    )
-  },
-  {
-    icon: '🎁',
-    title: 'Earn KILO Points',
-    subtitle: (
-      <>
-        <HighlightText>Collect daily points</HighlightText> and boost rewards by
-        <HighlightText> inviting friends</HighlightText>
-      </>
-    )
-  }
-];
-
 export const WelcomeSwiper = () => {
+  const { getMarketById } = useContractMarketStore();
+  const usdtMarket = getMarketById('usdt');
+  const usdtAPY = usdtMarket?.supplyAPY || 2; // Fallback to 2% if not available
+
+  const slides = [
+    {
+      icon: 'K',
+      title: 'KiloLend',
+      subtitle: (
+        <>
+          The first stablecoin-focused <HighlightText>DeFAI lending</HighlightText> on LINE Mini Dapp
+        </>)
+    },
+    {
+      icon: '🌱',
+      title: 'Start with USDT',
+      subtitle: (
+        <>
+          Supply <HighlightText>USDT</HighlightText> and earn a stable
+          <HighlightText> {usdtAPY.toFixed(1)}% APY</HighlightText> plus daily KILO points
+        </>
+      )
+    },
+    {
+      icon: '⚡',
+      title: 'AI Assistant',
+      subtitle: (
+        <>
+          Get personalized advice with our <HighlightText>AI lending assistant</HighlightText> to guide smarter moves
+        </>
+      )
+    },
+    {
+      icon: '🎁',
+      title: 'Earn KILO Points',
+      subtitle: (
+        <>
+          <HighlightText>Collect daily points</HighlightText> and boost rewards by
+          <HighlightText> inviting friends</HighlightText>
+        </>
+      )
+    }
+  ];
+
   const slideElements = slides.map((slide, index) => (
     <CardContent key={index}>
       <CardIcon $white={index !== 0}>

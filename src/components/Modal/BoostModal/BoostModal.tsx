@@ -45,7 +45,7 @@ interface UserPosition {
   healthFactor?: number;
   leverageRatio?: number;
 }
- 
+
 export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
   // Hooks
   const { account } = useWalletAccountStore();
@@ -93,11 +93,11 @@ export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
   // Deposit handlers
   const handleMaxAmount = useCallback(() => {
     if (caps.loading || balanceLoading) return;
-    
+
     const maxAmount = parseFloat(kaiaBalance || '0');
     const userRemaining = parseFloat(caps.userRemaining || '0');
     const actualMax = Math.min(maxAmount, userRemaining);
-    
+
     if (actualMax > 0) {
       setDepositAmount(actualMax.toFixed(6));
       setError(null);
@@ -113,7 +113,7 @@ export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
         return;
       }
     }
-    
+
     if (canProceedDeposit() && depositStep < totalDepositSteps) {
       setError(null);
       setDepositStep((depositStep + 1) as DepositStep);
@@ -128,6 +128,13 @@ export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
   };
 
   const handleDeposit = async () => {
+    // TEMPORARILY DISABLED - Maintenance mode
+    // AI-managed vault is in an early stage. Ensure you understand how it works by reading the documentation and use it at your own risk.
+    setError('Deposits are temporarily disabled for maintenance. Please check back later.');
+    return;
+
+    // Original deposit logic (commented out)
+    /*
     if (!account || !depositAmount) return;
 
     try {
@@ -146,34 +153,35 @@ export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
       console.error('❌ Deposit failed:', err);
       setError((err as Error).message || 'Deposit failed');
     }
+    */
   };
 
   const validateDepositAmount = (amount: string): string | null => {
     if (!amount || parseFloat(amount) <= 0) return 'Please enter an amount';
-    
+
     const amountNum = parseFloat(amount);
     const balance = parseFloat(kaiaBalance || '0');
     const userRemaining = parseFloat(caps.userRemaining || '0');
     const minDeposit = 10; // 10 KAIA minimum
-    
+
     // Skip validation if data still loading
     if (caps.loading || balanceLoading) return null;
-    
+
     // Validate minimum deposit
     if (amountNum < minDeposit) {
       return `Minimum deposit is ${minDeposit} KAIA`;
     }
-    
+
     // Validate against balance
     if (amountNum > balance) {
       return 'Insufficient balance';
     }
-    
+
     // Validate against user cap
     if (amountNum > userRemaining) {
       return `Exceeds your remaining cap of ${userRemaining.toFixed(2)} KAIA`;
     }
-    
+
     return null;
   };
 
@@ -209,9 +217,9 @@ export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
     if (!account || !selectedPosition) return;
 
     try {
-      console.log('📤 Requesting withdrawal:', { 
-        depositIndex: selectedPosition.depositIndex, 
-        shares: selectedPosition.shares 
+      console.log('📤 Requesting withdrawal:', {
+        depositIndex: selectedPosition.depositIndex,
+        shares: selectedPosition.shares
       });
 
       // Real smart contract call - NO MOCKS
@@ -357,12 +365,12 @@ export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
             <NavButton
               $primary
               disabled={
-                activeTab === 'deposit' 
+                activeTab === 'deposit'
                   ? isDepositing || (depositStep === 2 && !depositAmount)
                   : !canProceedWithdraw() || isWithdrawing
               }
               onClick={
-                activeTab === 'deposit' 
+                activeTab === 'deposit'
                   ? (depositStep === 3 ? handleDeposit : handleDepositNext)
                   : (withdrawStep === 2 ? handleRequestWithdrawal : handleWithdrawNext)
               }
@@ -385,15 +393,15 @@ export const BoostModal: React.FC<BoostModalProps> = ({ onClose }) => {
         )}
 
         {/* Wallet Connection Warning */}
-        {!account && activeTab !== 'activity' && currentStep < totalSteps && (
+        {/* {!account && activeTab !== 'activity' && currentStep < totalSteps && (
           <InfoBanner $type="warning" style={{ marginTop: '16px' }}>
             <AlertCircle size={16} />
             <div>Please connect your wallet to {activeTab === 'deposit' ? 'deposit' : 'withdraw'}</div>
           </InfoBanner>
-        )}
-        <InfoBanner $type="warning" > 
+        )} */}
+        <InfoBanner $type="warning" >
           <div style={{ fontSize: '13px', textAlign: "center" }}>
-            AI-managed vault is in an early stage. Ensure you understand how it works by reading the documentation and use it at your own risk.
+            AI-managed vault is temporarily under maintenance for several days. Follow our channels for updates on when it’s back online.
           </div>
         </InfoBanner>
       </Container>

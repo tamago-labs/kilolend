@@ -6,7 +6,7 @@ import { formatActivities } from './apiTransform';
  * Filters by task type (LEVERAGE_UP, REBALANCE, etc) instead of status
  */
 export function useActivityData(selectedFilter: string) {
-  const { data: rawTasks, loading, error } = useBotActivity(50);
+  const { data: rawTasks, loading, error } = useBotActivity(25);
   
   // Transform API data to UI format
   const activities = formatActivities(rawTasks);
