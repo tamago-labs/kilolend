@@ -10,6 +10,7 @@ export interface MarketTokenBalance {
   symbol: string;
   balance: string;
   formattedBalance: string;
+  fullPrecisionBalance: string; // Store full precision for validation
   decimals: number;
   isLoading: boolean;
   error: string | null;
@@ -43,6 +44,7 @@ export const useMarketTokenBalances = () => {
         symbol: MARKET_CONFIG[marketId].symbol,
         balance: '0',
         formattedBalance: '0.00',
+        fullPrecisionBalance: '0', // Store full precision for validation
         decimals: MARKET_CONFIG[marketId].decimals,
         isLoading: false,
         error: 'No wallet connected'
@@ -63,6 +65,7 @@ export const useMarketTokenBalances = () => {
           symbol: marketConfig.symbol,
           balance: formattedBalance,
           formattedBalance: parseFloat(formattedBalance).toFixed(4),
+          fullPrecisionBalance: formattedBalance, // Store full precision for validation
           decimals: marketConfig.decimals,
           isLoading: false,
           error: null
@@ -84,6 +87,7 @@ export const useMarketTokenBalances = () => {
         symbol: marketConfig.symbol,
         balance: formattedBalance,
         formattedBalance: parseFloat(formattedBalance).toFixed(marketConfig.decimals === 6 ? 2 : 4),
+        fullPrecisionBalance: formattedBalance, // Store full precision for validation
         decimals: marketConfig.decimals,
         isLoading: false,
         error: null
@@ -95,6 +99,7 @@ export const useMarketTokenBalances = () => {
         symbol: marketConfig.symbol,
         balance: '0',
         formattedBalance: '0.00',
+        fullPrecisionBalance: '0', // Store full precision for validation
         decimals: marketConfig.decimals,
         isLoading: false,
         error: 'Failed to fetch balance'
@@ -135,6 +140,7 @@ export const useMarketTokenBalances = () => {
             symbol: MARKET_CONFIG[marketId].symbol,
             balance: '0',
             formattedBalance: '0.00',
+            fullPrecisionBalance: '0', // Store full precision for validation
             decimals: MARKET_CONFIG[marketId].decimals,
             isLoading: false,
             error: 'Failed to fetch balance'

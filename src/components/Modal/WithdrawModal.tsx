@@ -7,6 +7,7 @@ import { ChevronRight } from 'react-feather';
 import { useMarketContract, TransactionResult } from '@/hooks/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils";
 
 const Container = styled.div`
   height: 100%;
@@ -305,6 +306,7 @@ export const WithdrawModal = ({
   const [isTransacting, setIsTransacting] = useState(false);
   const [transactionResult, setTransactionResult] = useState<TransactionResult | null>(null);
   const [withdrawData, setWithdrawData] = useState<any>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { account } = useWalletAccountStore();
   const { withdraw } = useMarketContract();
@@ -312,6 +314,21 @@ export const WithdrawModal = ({
 
   const totalSteps = 3;
   const maxWithdrawAmount = parseFloat(maxWithdraw);
+
+  // Validate amount against max withdraw amount
+  useEffect(() => {
+    if (amount && parseFloat(amount) > 0 && maxWithdrawAmount > 0) {
+      const validation = validateAmountAgainstBalance(amount, maxWithdrawAmount.toString(), market?.id || '');
+      
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Invalid amount');
+      } else {
+        setValidationError(null);
+      }
+    } else {
+      setValidationError(null);
+    }
+  }, [amount, maxWithdrawAmount, market?.id]);
 
   // Calculate withdraw data when amount changes
   useEffect(() => {
@@ -346,13 +363,25 @@ export const WithdrawModal = ({
 
   const handleQuickAmount = (percentage: number) => {
     const quickAmount = (maxWithdrawAmount * percentage / 100).toString();
-    setAmount(quickAmount);
+    const decimals = market?.decimals || 18;
+    
+    // Use safe decimal truncation to prevent precision errors
+    const safeAmount = truncateToSafeDecimals(quickAmount, decimals);
+    
+    setAmount(safeAmount);
     setSelectedQuickAmount(percentage);
+    setValidationError(null);
   };
 
   const handleMaxAmount = () => {
-    setAmount(maxWithdrawAmount.toString());
+    const decimals = market?.decimals || 18;
+    
+    // Use safe maximum amount calculation
+    const safeAmount = getSafeMaxAmount(maxWithdrawAmount.toString(), market?.id || '');
+    
+    setAmount(safeAmount);
     setSelectedQuickAmount(100);
+    setValidationError(null);
   };
 
   const canProceed = () => {
@@ -361,7 +390,8 @@ export const WithdrawModal = ({
         return amount && 
                parseFloat(amount) > 0 && 
                parseFloat(amount) <= maxWithdrawAmount &&
-               withdrawData?.canWithdraw;
+               withdrawData?.canWithdraw &&
+               !validationError;
       case 2: 
         return true;
       default: 
@@ -549,6 +579,7 @@ export const WithdrawModal = ({
       setIsTransacting(false);
       setTransactionResult(null);
       setWithdrawData(null);
+      setValidationError(null);
     }
   }, [isOpen]);
 
@@ -573,6 +604,12 @@ export const WithdrawModal = ({
           {transactionResult?.status === 'failed' && transactionResult.error && (
             <ErrorMessage>
               {transactionResult.error}
+            </ErrorMessage>
+          )}
+          
+          {validationError && (
+            <ErrorMessage>
+              {validationError}
             </ErrorMessage>
           )}
           

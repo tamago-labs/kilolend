@@ -15,6 +15,7 @@ import {
   BorrowTransactionPreview,
   BorrowSuccess,
 } from '../Steps';
+import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils"
 import { 
   Container,
   StepProgress,
@@ -44,6 +45,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
   const [maxBorrowData, setMaxBorrowData] = useState<any>(null);
   const [isLoadingBorrowData, setIsLoadingBorrowData] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { markets } = useContractMarketStore();
   const { account } = useWalletAccountStore();
@@ -122,17 +124,46 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
     if (selectedAsset && maxBorrowData) {
       const maxAmount = parseFloat(maxBorrowData.maxBorrowAmount || '0');
       const quickAmount = ((maxAmount * percentage) / 100).toString();
-      setAmount(quickAmount);
+      const decimals = selectedAsset.decimals || 18;
+      
+      // Use safe decimal truncation to prevent precision errors
+      const safeAmount = truncateToSafeDecimals(quickAmount, decimals);
+      
+      setAmount(safeAmount);
       setSelectedQuickAmount(percentage);
+      setValidationError(null);
     }
   };
 
   const handleMaxAmount = () => {
     if (selectedAsset && maxBorrowData) {
-      setAmount(maxBorrowData.maxBorrowAmount || '0');
+      const maxAmount = maxBorrowData.maxBorrowAmount || '0';
+      const decimals = selectedAsset.decimals || 18;
+      
+      // Use safe maximum amount calculation
+      const safeAmount = getSafeMaxAmount(maxAmount, selectedAsset.id);
+      
+      setAmount(safeAmount);
       setSelectedQuickAmount(100);
+      setValidationError(null);
     }
   };
+
+  // Validate amount against max borrow amount
+  useEffect(() => {
+    if (selectedAsset && amount && parseFloat(amount) > 0 && maxBorrowData) {
+      const maxAmount = maxBorrowData.maxBorrowAmount || '0';
+      const validation = validateAmountAgainstBalance(amount, maxAmount, selectedAsset.id);
+      
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Invalid amount');
+      } else {
+        setValidationError(null);
+      }
+    } else {
+      setValidationError(null);
+    }
+  }, [amount, selectedAsset, maxBorrowData]);
 
   const canProceed = () => {
     switch (currentStep) {
@@ -147,7 +178,8 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
           amount &&
           parseFloat(amount) > 0 &&
           maxBorrowData &&
-          parseFloat(amount) <= parseFloat(maxBorrowData.maxBorrowAmount)
+          parseFloat(amount) <= parseFloat(maxBorrowData.maxBorrowAmount) &&
+          !validationError
         );
       case 3:
         return true;
@@ -284,6 +316,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
       setTransactionResult(null);
       setBorrowingPowerData(null);
       setMaxBorrowData(null);
+      setValidationError(null);
     }
   }, [isOpen]);
 
@@ -304,6 +337,9 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
             transactionResult.error && (
               <ErrorMessage>{transactionResult.error}</ErrorMessage>
             )}
+          {validationError && (
+            <ErrorMessage>{validationError}</ErrorMessage>
+          )}
           {renderStepContent()}
         </StepContent>
         {currentStep < 4 && (

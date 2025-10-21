@@ -27,7 +27,7 @@ import {
   ErrorMessage,
   ApprovalMessage
 } from "./styled"
-import { truncateToSafeDecimals } from "@/utils/tokenUtils"
+import { truncateToSafeDecimals, validateAmountAgainstBalance, isAmountExceedingBalance, getSafeMaxAmount } from "@/utils/tokenUtils"
 
 interface SupplyModalProps {
   isOpen: boolean;
@@ -47,6 +47,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const [isMarketAlreadyEntered, setIsMarketAlreadyEntered] = useState(false);
   const [transactionResult, setTransactionResult] = useState<TransactionResult | null>(null);
   const [exchangeRate, setExchangeRate] = useState<string | undefined>(undefined);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { markets } = useContractMarketStore();
   const { account } = useWalletAccountStore();
@@ -64,6 +65,12 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     acc[balance.symbol] = balance.formattedBalance;
     return acc;
   }, {} as Record<string, string>);
+
+  // Get full precision balance for validation
+  const getFullPrecisionBalance = (symbol: string): string => {
+    const balance = Object.values(tokenBalances).find(b => b.symbol === symbol);
+    return balance?.fullPrecisionBalance || '0';
+  };
 
   // Check if approval is needed when amount changes
   useEffect(() => {
@@ -135,8 +142,8 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
 
   const handleQuickAmount = (percentage: number) => {
     if (selectedAsset) {
-      const balance = parseFloat(userBalances[selectedAsset.symbol] || '0');
-      const quickAmount = (balance * percentage / 100);
+      const fullBalance = getFullPrecisionBalance(selectedAsset.symbol);
+      const quickAmount = (parseFloat(fullBalance) * percentage / 100);
       const decimals = selectedAsset.decimals || 18;
       
       // Use safe decimal truncation to prevent precision errors
@@ -144,26 +151,44 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       
       setAmount(safeAmount);
       setSelectedQuickAmount(percentage);
+      setValidationError(null);
     }
   };
 
   const handleMaxAmount = () => {
     if (selectedAsset) {
-      const balance = userBalances[selectedAsset.symbol] || '0';
+      const fullBalance = getFullPrecisionBalance(selectedAsset.symbol);
       const decimals = selectedAsset.decimals || 18;
       
-      // Use safe decimal truncation to prevent precision errors
-      const safeBalance = truncateToSafeDecimals(balance, decimals);
+      // Use safe maximum amount calculation
+      const safeBalance = getSafeMaxAmount(fullBalance, selectedAsset.id);
 
       setAmount(safeBalance);
       setSelectedQuickAmount(100);
+      setValidationError(null);
     }
   };
+
+  // Validate amount against balance
+  useEffect(() => {
+    if (selectedAsset && amount && parseFloat(amount) > 0) {
+      const fullBalance = getFullPrecisionBalance(selectedAsset.symbol);
+      const validation = validateAmountAgainstBalance(amount, fullBalance, selectedAsset.id);
+      
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Invalid amount');
+      } else {
+        setValidationError(null);
+      }
+    } else {
+      setValidationError(null);
+    }
+  }, [amount, selectedAsset]);
 
   const canProceed = () => {
     switch (currentStep) {
       case 1: return selectedAsset !== null;
-      case 2: return amount && parseFloat(amount) > 0;
+      case 2: return amount && parseFloat(amount) > 0 && !validationError;
       case 3: return true;
       default: return false;
     }
@@ -347,6 +372,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       setEnableAsCollateral(true);
       setIsMarketAlreadyEntered(false);
       setTransactionResult(null);
+      setValidationError(null);
     }
   }, [isOpen]);
 
@@ -371,6 +397,12 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
           {transactionResult?.status === 'failed' && transactionResult.error && (
             <ErrorMessage>
               {transactionResult.error}
+            </ErrorMessage>
+          )}
+
+          {validationError && (
+            <ErrorMessage>
+              {validationError}
             </ErrorMessage>
           )}
 

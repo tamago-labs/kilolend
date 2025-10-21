@@ -108,67 +108,8 @@ export const formatTokenAmount = (amount: string, marketId: MarketId): string =>
 };
 
 /**
- * Convert user input to contract-compatible string with precision control
+ * Validate decimal places of user input
  */
-export const parseUserAmount = (amount: string, marketId: MarketId): string => {
-  try {
-    const config = MARKET_CONFIG[marketId];
-    const safeAmount = truncateToSafeDecimals(amount, config.decimals);
-    const numAmount = parseFloat(safeAmount);
-    
-    if (isNaN(numAmount) || numAmount < 0) {
-      throw new Error('Invalid amount');
-    }
-    
-    const contractAmount = numAmount * (10 ** config.decimals);
-    return Math.floor(contractAmount).toString(); // Avoid scientific notation
-  } catch (error) {
-    console.error('Error parsing user amount:', error);
-    throw error;
-  }
-};
-
-/**
- * Format contract amount to display-friendly string
- */
-export const formatContractAmount = (contractAmount: string, marketId: MarketId): string => {
-  try {
-    const config = MARKET_CONFIG[marketId];
-    const numAmount = parseFloat(contractAmount);
-    
-    if (isNaN(numAmount)) return '0';
-    
-    const displayAmount = numAmount / (10 ** config.decimals);
-    return formatTokenAmount(displayAmount.toString(), marketId);
-  } catch (error) {
-    console.error('Error formatting contract amount:', error);
-    return '0';
-  }
-};
-
-/**
- * Get input step size for forms with safe precision
- */
-export const getInputStep = (marketId: MarketId): string => {
-  const config = MARKET_CONFIG[marketId];
-  const maxDecimals = getMaxSafeDecimals(config.decimals);
-  
-  switch (maxDecimals) {
-    case 0:
-      return '1';
-    case 2:
-      return '0.01';
-    case 6:
-      return '0.000001';
-    case 8:
-    default:
-      return '0.00000001';
-  }
-};
-
-
-// Validate decimal places of user input
-
 export const validateDecimalPlaces = (
   amount: string,
   marketId: MarketId
@@ -204,5 +145,100 @@ export const validateDecimalPlaces = (
     };
   }
 };
- 
- 
+
+/**
+ * Validate amount against available balance with precision handling
+ */
+export const validateAmountAgainstBalance = (
+  amount: string,
+  availableBalance: string,
+  marketId: MarketId
+): { isValid: boolean; error?: string; suggestedAmount?: string } => {
+  try {
+    const config = MARKET_CONFIG[marketId];
+    const numAmount = parseFloat(amount);
+    const numBalance = parseFloat(availableBalance);
+    
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return {
+        isValid: false,
+        error: 'Invalid amount'
+      };
+    }
+    
+    if (numAmount > numBalance) {
+      // Calculate suggested amount with proper precision
+      const maxSafeDecimals = getMaxSafeDecimals(config.decimals);
+      const suggestedAmount = truncateToSafeDecimals(availableBalance, config.decimals);
+      
+      return {
+        isValid: false,
+        error: `Insufficient balance. Available: ${suggestedAmount} ${config.symbol}`,
+        suggestedAmount
+      };
+    }
+    
+    return { isValid: true };
+  } catch (error) {
+    return {
+      isValid: false,
+      error: 'Invalid amount format'
+    };
+  }
+};
+
+/**
+ * Check if amount exceeds balance with high precision comparison
+ */
+export const isAmountExceedingBalance = (
+  amount: string,
+  fullPrecisionBalance: string,
+  marketId: MarketId
+): boolean => {
+  try {
+    const config = MARKET_CONFIG[marketId];
+    const amountInSmallestUnit = safeParseTokenAmount(amount, config.decimals);
+    const balanceInSmallestUnit = safeParseTokenAmount(fullPrecisionBalance, config.decimals);
+    
+    return amountInSmallestUnit > balanceInSmallestUnit;
+  } catch (error) {
+    console.error('Error comparing amounts:', error);
+    return false; // Default to not exceeding on error
+  }
+};
+
+/**
+ * Get safe maximum amount for user input
+ */
+export const getSafeMaxAmount = (
+  fullPrecisionBalance: string,
+  marketId: MarketId
+): string => {
+  try {
+    const config = MARKET_CONFIG[marketId];
+    return truncateToSafeDecimals(fullPrecisionBalance, config.decimals);
+  } catch (error) {
+    console.error('Error getting safe max amount:', error);
+    return '0';
+  }
+};
+
+/**
+ * Get input step size for forms with safe precision
+ */
+export const getInputStep = (marketId: MarketId): string => {
+  const config = MARKET_CONFIG[marketId];
+  const maxDecimals = getMaxSafeDecimals(config.decimals);
+  
+  switch (maxDecimals) {
+    case 0:
+      return '1';
+    case 2:
+      return '0.01';
+    case 6:
+      return '0.000001';
+    case 8:
+    default:
+      return '0.00000001';
+  }
+};
