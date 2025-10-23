@@ -140,7 +140,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     os?: string;
   }>({ isLineConnected: false });
 
-  const gasOptions = [100000, 300000, 600000];
+  const gasOptions = [300000, 600000, 900000];
 
   useEffect(() => {
     const checkLineStatus = async () => {
