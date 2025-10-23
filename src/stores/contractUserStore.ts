@@ -1,5 +1,4 @@
-import { create } from 'zustand';
-// import { UserPosition as ContractUserPosition } from '@/hooks/useMarketContract';
+import { create } from 'zustand'; 
 
 /**
  * User Position structure with contract-specific data

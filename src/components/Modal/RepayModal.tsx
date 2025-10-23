@@ -9,6 +9,7 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
 import { useTokenApproval } from '@/hooks/useTokenApproval';
 import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils";
 
 const Container = styled.div`
   height: 100%;
@@ -319,6 +320,7 @@ export const RepayModal = ({
   const [needsApproval, setNeedsApproval] = useState(false);
   const [transactionResult, setTransactionResult] = useState<TransactionResult | null>(null);
   const [repayData, setRepayData] = useState<any>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   const { account } = useWalletAccountStore();
   const { repay } = useMarketContract();
@@ -330,6 +332,12 @@ export const RepayModal = ({
   const maxDebtAmount = parseFloat(totalDebt);
   const walletBalance = market ? parseFloat(balances[market.id]?.formattedBalance || '0') : 0;
   const maxRepayAmount = Math.min(maxDebtAmount, walletBalance);
+
+  // Get full precision balance for validation
+  const getFullPrecisionBalance = (symbol: string): string => {
+    const balance = Object.values(balances).find(b => b.symbol === symbol);
+    return balance?.fullPrecisionBalance || '0';
+  };
 
   // Check if approval is needed when amount changes
   useEffect(() => {
@@ -350,10 +358,25 @@ export const RepayModal = ({
     checkApprovalNeeded();
   }, [market, amount]);
 
+  // Validate amount against balance and max repay amount
+  useEffect(() => {
+    if (amount && parseFloat(amount) > 0 && maxRepayAmount > 0) {
+      const validation = validateAmountAgainstBalance(amount, maxRepayAmount.toString(), market?.id || '');
+      
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Invalid amount');
+      } else {
+        setValidationError(null);
+      }
+    } else {
+      setValidationError(null);
+    }
+  }, [amount, maxRepayAmount, market?.id]);
+
   // Calculate repay data when amount changes
   useEffect(() => {
     const calculateRepayData = async () => {
-      if (!amount || !market || !account) return;
+      if (!amount || !market || !account || validationError) return;
 
       try {
         const borrowingPower = await calculateBorrowingPower(account);
@@ -381,17 +404,29 @@ export const RepayModal = ({
     };
 
     calculateRepayData();
-  }, [amount, market, account, maxDebtAmount]);
+  }, [amount, market, account, maxDebtAmount, validationError]);
 
   const handleQuickAmount = (percentage: number) => {
     const quickAmount = (maxRepayAmount * percentage / 100).toString();
-    setAmount(quickAmount);
+    const decimals = market?.decimals || 18;
+    
+    // Use safe decimal truncation to prevent precision errors
+    const safeAmount = truncateToSafeDecimals(quickAmount, decimals);
+    
+    setAmount(safeAmount);
     setSelectedQuickAmount(percentage);
+    setValidationError(null);
   };
 
   const handleMaxAmount = () => {
-    setAmount(maxRepayAmount.toString());
+    const decimals = market?.decimals || 18;
+    
+    // Use safe maximum amount calculation
+    const safeAmount = getSafeMaxAmount(maxRepayAmount.toString(), market?.id || '');
+    
+    setAmount(safeAmount);
     setSelectedQuickAmount(100);
+    setValidationError(null);
   };
 
   const canProceed = () => {
@@ -399,7 +434,8 @@ export const RepayModal = ({
       case 1: 
         return amount && 
                parseFloat(amount) > 0 && 
-               parseFloat(amount) <= maxRepayAmount;
+               parseFloat(amount) <= maxRepayAmount &&
+               !validationError;
       case 2: 
         return true;
       default: 
@@ -623,6 +659,7 @@ export const RepayModal = ({
       setNeedsApproval(false);
       setTransactionResult(null);
       setRepayData(null);
+      setValidationError(null);
     }
   }, [isOpen]);
 
@@ -647,6 +684,12 @@ export const RepayModal = ({
           {transactionResult?.status === 'failed' && transactionResult.error && (
             <ErrorMessage>
               {transactionResult.error}
+            </ErrorMessage>
+          )}
+          
+          {validationError && (
+            <ErrorMessage>
+              {validationError}
             </ErrorMessage>
           )}
           

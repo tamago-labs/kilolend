@@ -9,6 +9,7 @@ import { useSendTransaction } from '@/hooks/useSendTransaction';
 import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 import { KAIA_TESTNET_TOKENS, KAIA_SCAN_URL } from '@/utils/tokenConfig';
 import { liff } from '@/utils/liff';
+import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils";
 import {  Camera, Send, AlertCircle, CheckCircle, ExternalLink } from 'react-feather';
 
 const ModalContainer = styled.div`
@@ -408,6 +409,7 @@ export const SendModal = ({ isOpen, onClose }: SendModalProps) => {
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState(''); 
   const [isSuccess, setIsSuccess] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Get available tokens with balances > 0 - only show supported send tokens
   const supportedSendTokens = ['KAIA', 'USDT', 'MBX', 'BORA', 'SIX'];
@@ -418,6 +420,19 @@ export const SendModal = ({ isOpen, onClose }: SendModalProps) => {
   // Get selected token info
   const selectedTokenInfo = balances.find(token => token.symbol === selectedToken);
   const tokenConfig = selectedToken === 'KAIA' ? null : KAIA_TESTNET_TOKENS[selectedToken as keyof typeof KAIA_TESTNET_TOKENS];
+
+  // Validate amount against balance
+  useEffect(() => {
+    if (amount && parseFloat(amount) > 0 && selectedTokenInfo) {
+      if (parseFloat(amount) > parseFloat(selectedTokenInfo.balance)) {
+        setValidationError('Insufficient balance');
+      } else {
+        setValidationError(null);
+      }
+    } else {
+      setValidationError(null);
+    }
+  }, [amount, selectedTokenInfo, selectedToken]);
 
   useEffect(() => {
     if (availableTokens.length > 0 && !selectedTokenInfo) {
@@ -444,6 +459,7 @@ export const SendModal = ({ isOpen, onClose }: SendModalProps) => {
   const handleMaxClick = () => {
     if (selectedTokenInfo) {
       setAmount(selectedTokenInfo.balance);
+      setValidationError(null);
     }
   };
 
@@ -468,6 +484,10 @@ export const SendModal = ({ isOpen, onClose }: SendModalProps) => {
 
     if (!amount || parseFloat(amount) <= 0) {
       return { isValid: false, error: 'Please enter a valid amount' };
+    }
+
+    if (validationError) {
+      return { isValid: false, error: validationError };
     }
 
     if (!selectedTokenInfo || parseFloat(amount) > parseFloat(selectedTokenInfo.balance)) {
@@ -521,6 +541,7 @@ export const SendModal = ({ isOpen, onClose }: SendModalProps) => {
     setRecipient(''); 
     setIsSuccess(false);
     resetError();
+    setValidationError(null);
     onClose();
   };
 
@@ -665,6 +686,13 @@ export const SendModal = ({ isOpen, onClose }: SendModalProps) => {
           <ErrorMessage>
             <AlertCircle size={16} />
             {error}
+          </ErrorMessage>
+        )}
+
+        {validationError && (
+          <ErrorMessage>
+            <AlertCircle size={16} />
+            {validationError}
           </ErrorMessage>
         )}
 
