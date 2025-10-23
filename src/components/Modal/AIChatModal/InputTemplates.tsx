@@ -19,7 +19,7 @@ const TemplatesContainer = styled.div<{ $visible: boolean }>`
   border: 1px solid #e2e8f0;
   border-radius: 8px 8px 0 0;
   box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.1);
-  max-height: 300px;
+  max-height: 500px;
   overflow-y: auto;
   z-index: 10;
   display: ${({ $visible }) => $visible ? 'block' : 'none'};
@@ -47,8 +47,8 @@ const TemplateButton = styled.button`
   display: block;
   width: 100%;
   text-align: left;
-  padding: 10px 12px;
-  margin: 4px 0;
+  padding: 12px 12px;
+  margin: 3px 0;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
   background: white;
@@ -65,39 +65,68 @@ const TemplateButton = styled.button`
   
   .template-text {
     color: #1e293b;
-    margin-bottom: 4px;
-  }
-  
-  .template-description {
-    color: #64748b;
-    font-size: 12px;
   }
 `;
 
 const getAgentTemplates = (agent: AIAgent) => {
-  const commonTemplates = {
-    marketData: {
+  const commonTemplates = [
+    {
       text: "What are the current market rates?",
       description: "Get real-time APY rates and market statistics"
     }, 
-    // yields: {
-    //   text: "Find the best yield opportunities",
-    //   description: "Discover optimal strategies for earning"
-    // },
-    simulate: {
+    {
       text: "What happens if I supply 1000 USDT?",
       description: "Simulate position changes and impacts"
     },
-    portfolio: {
+    {
       text: "Analyze my portfolio risk",
       description: "Check portfolio health and liquidation risks"
     },
-    basic:  {
+    {
       text: "Explain how DeFi lending works",
       description: "Learn the fundamentals of decentralized lending"
     },
-    
-  };
+    {
+      text: "What's the safest way to earn yield?",
+      description: "Conservative strategy focused on capital preservation"
+    },
+    {
+      text: "I want to supply 1000 USDT",
+      description: "Execute a supply action with AI guidance"
+    },
+    {
+      text: "Help me borrow 500 USDT",
+      description: "Guided borrowing with risk assessment"
+    },
+    {
+      text: "I want to repay my loan",
+      description: "Loan repayment planning and execution"
+    },
+    {
+      text: "Withdraw my supplied KAIA",
+      description: "Safe withdrawal planning and execution"
+    },
+    {
+      text: "What's my current health factor?",
+      description: "Check portfolio health and risks"
+    },
+    {
+      text: "Which token has the highest APY right now?",
+      description: "Find the best yield opportunities"
+    },
+    {
+      text: "What's the maximum I can borrow safely?",
+      description: "Calculate safe borrowing limits"
+    },
+    {
+      text: "Show me my portfolio summary",
+      description: "Quick overview of your positions"
+    },
+    {
+      text: "Am I at risk of liquidation?",
+      description: "Assess liquidation risk level"
+    }
+  ];
   
   const personalityTemplates = {
     conservative: [
@@ -184,7 +213,7 @@ const getAgentTemplates = (agent: AIAgent) => {
   ];
   
   return {
-    common: Object.values(commonTemplates),
+    common: commonTemplates,
     personality: personalityTemplates[agent.personality as keyof typeof personalityTemplates] || personalityTemplates.custom,
     actions: actionTemplates
   };
@@ -207,42 +236,10 @@ export const InputTemplates: React.FC<InputTemplatesProps> = ({
             onClick={() => onTemplateSelect(template.text)}
           >
             <div className="template-text">{template.text}</div>
-            <div className="template-description">{template.description}</div>
           </TemplateButton>
         ))}
       </TemplateSection>
-      
-      {/* <TemplateSection>
-        <SectionTitle>
-          {agent.personality === 'tiger' && 'Conservative Strategies'}
-          {agent.personality === 'snake' && 'Growth Strategies'}
-          {agent.personality === 'balanced' && 'Balanced Approach'}
-          {agent.personality === 'penguin' && 'Learn DeFi'}
-          {agent.personality === 'custom' && 'Guidance'}
-        </SectionTitle>
-        {templates.personality.map((template, index) => (
-          <TemplateButton 
-            key={index}
-            onClick={() => onTemplateSelect(template.text)}
-          >
-            <div className="template-text">{template.text}</div>
-            <div className="template-description">{template.description}</div>
-          </TemplateButton>
-        ))}
-      </TemplateSection>
-      
-      <TemplateSection>
-        <SectionTitle>⚡ Quick Actions</SectionTitle>
-        {templates.actions.map((template, index) => (
-          <TemplateButton 
-            key={index}
-            onClick={() => onTemplateSelect(template.text)}
-          >
-            <div className="template-text">{template.text}</div>
-            <div className="template-description">{template.description}</div>
-          </TemplateButton>
-        ))}
-      </TemplateSection> */}
+       
     </TemplatesContainer>
   );
 };
