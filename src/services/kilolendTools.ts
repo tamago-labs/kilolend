@@ -69,7 +69,24 @@ export class KiloLendToolsService {
           required: []
         },
         handler: async (params: { includeInactive?: boolean; sortBy?: string }) => {
+          // Validate market data availability
+          if (!this.marketData || this.marketData.length === 0) {
+            return {
+              error: 'Market data unavailable',
+              message: 'Unable to retrieve current market data. Please try again later.',
+              dataStatus: 'unavailable'
+            };
+          }
+
           let markets = this.marketData.filter(m => params.includeInactive || m.isActive);
+          
+          if (markets.length === 0) {
+            return {
+              error: 'No active markets',
+              message: 'No active markets are currently available.',
+              dataStatus: 'no_active_markets'
+            };
+          }
           
           if (params.sortBy) {
             markets.sort((a, b) => {
@@ -79,12 +96,30 @@ export class KiloLendToolsService {
             });
           }
 
+          // Validate all market data before returning
+          const validMarkets = markets.filter(m => 
+            m.supplyAPY !== undefined && 
+            m.borrowAPR !== undefined && 
+            m.utilization !== undefined &&
+            !isNaN(m.supplyAPY) && 
+            !isNaN(m.borrowAPR) && 
+            !isNaN(m.utilization)
+          );
+
+          if (validMarkets.length === 0) {
+            return {
+              error: 'Invalid market data',
+              message: 'Market data is currently corrupted or incomplete.',
+              dataStatus: 'invalid_data'
+            };
+          }
+
           const summary = {
-            totalMarkets: markets.length,
-            totalTVL: markets.reduce((sum, m) => sum + m.totalSupply + m.totalBorrow, 0),
-            avgSupplyAPY: markets.filter(m => !m.isCollateralOnly).reduce((sum, m) => sum + m.supplyAPY, 0) / markets.filter(m => !m.isCollateralOnly).length,
-            bestSupplyAPY: Math.max(...markets.filter(m => !m.isCollateralOnly).map(m => m.supplyAPY)),
-            markets: markets.map(m => ({
+            totalMarkets: validMarkets.length,
+            totalTVL: validMarkets.reduce((sum, m) => sum + (m.totalSupply || 0) + (m.totalBorrow || 0), 0),
+            avgSupplyAPY: validMarkets.filter(m => !m.isCollateralOnly).reduce((sum, m) => sum + (m.supplyAPY || 0), 0) / Math.max(1, validMarkets.filter(m => !m.isCollateralOnly).length),
+            bestSupplyAPY: Math.max(...validMarkets.filter(m => !m.isCollateralOnly).map(m => m.supplyAPY || 0)),
+            markets: validMarkets.map(m => ({
               symbol: m.symbol,
               name: m.name,
               supplyAPY: m.supplyAPY,
@@ -95,7 +130,9 @@ export class KiloLendToolsService {
               price: m.price,
               priceChange24h: m.priceChange24h,
               isCollateralOnly: m.isCollateralOnly || false
-            }))
+            })),
+            dataStatus: 'valid',
+            lastUpdated: new Date().toISOString()
           };
 
           return summary;

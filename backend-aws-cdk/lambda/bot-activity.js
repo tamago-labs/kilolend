@@ -37,13 +37,13 @@ exports.handler = async (event) => {
       return await submitTask(event);
     }
 
-    // PUT /bot/activity/{taskId} - Update task status
-    if (path.match(/\/bot\/activity\/[^/]+$/) && method === 'PUT') {
+    // PUT /bot/task/{taskId} - Update task status
+    if (path.match(/\/bot\/task\/[^/]+$/) && method === 'PUT') {
       return await updateTask(event);
     }
 
-    // GET /bot/activity/{taskId} - Get specific task
-    if (path.match(/\/bot\/activity\/[^/]+$/) && method === 'GET') {
+    // GET /bot/task/{taskId} - Get specific task
+    if (path.match(/\/bot\/task\/[^/]+$/) && method === 'GET') {
       return await getTask(event);
     }
 

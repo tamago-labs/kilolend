@@ -200,156 +200,6 @@ interface HomePageProps {
   onAIDealsGenerated?: (userQuery: string) => void;
 }
 
-export const HomePageOLD = ({ onAIDealsGenerated }: HomePageProps) => {
-  // Use the welcome modal hook instead of useState
-  const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
-
-  const { openModal } = useModalStore();
-
-  // Initialize market data and real-time prices
-  useMarketDataWithPrices();
-
-  const handleWelcomeClose = () => {
-    markAsShown(); // This will set localStorage and hide modal
-  };
-
-  const handleAskAI = () => {
-    openModal('ai-chat-new');
-  };
-
-  const handleSupply = () => {
-    openModal('supply');
-  };
-
-  const handleBorrow = () => {
-    openModal('borrow');
-  };
-
-  const handleLearn = () => {
-    openModal('faq');
-  };
-
-  const handleInvite = () => {
-    openModal('invite');
-  };
-
-  const handleKilo = () => {
-    openModal('kilo');
-  };
-
-  const handleLeaderboard = () => {
-    openModal('leaderboard');
-  };
-
-  const handleSend = () => {
-    openModal('send');
-  };
-
-
-
-  return (
-    <PageContainer>
-      {/* New Welcome Modal with show once a day logic */}
-      <WelcomeModal
-        isOpen={showWelcome}
-        onClose={handleWelcomeClose}
-      />
-
-      {/* Top Cards Section */}
-      <TopCardsContainer>
-        {/* AI Assistant Welcome Card with Swiper */}
-        <Card $gradient onClick={handleAskAI}>
-          <WelcomeSwiper />
-        </Card>
-
-        <Card>
-          <TokenPriceSwiper />
-        </Card>
-      </TopCardsContainer>
-
-      {/* Actions Section */}
-      <ActionsSection>
-        <SectionTitle>Quick Actions</SectionTitle>
-        <IconGrid>
-
-          <IconButton onClick={handleSupply}>
-            <IconCircle $index="3">
-              <IconImage
-                src="./images/icon-supply.png"
-                alt="SUPPLY"
-              />
-            </IconCircle>
-            <IconLabel>Supply</IconLabel>
-          </IconButton>
-
-          <IconButton onClick={handleBorrow}>
-            <IconCircle $index="2">
-              <IconImage
-                src="./images/icon-borrow.png"
-                alt="BORROW"
-              />
-            </IconCircle>
-            <IconLabel>Borrow</IconLabel>
-          </IconButton>
-
-          <IconButton onClick={handleAskAI}>
-            <IconCircle $index="5">
-              <RandomIcon />
-            </IconCircle>
-            <IconLabel>Ask AI</IconLabel>
-          </IconButton>
-
-          <IconButton onClick={handleLearn}>
-            <IconCircle $index="6">
-              <IconImage
-                src="./images/icon-faq.png"
-                alt="LEARN"
-              />
-            </IconCircle>
-            <IconLabel>FAQ</IconLabel>
-          </IconButton>
-          <IconButton onClick={handleKilo}>
-            <IconCircle $index="7">
-              <IconImage
-                src="./images/icon-rewards.png"
-                alt="KILO"
-              />
-            </IconCircle>
-            <IconLabel>KILO</IconLabel>
-          </IconButton>
-
-          <IconButton onClick={handleInvite}>
-            <IconCircle $index="0">
-              <IconImage
-                src="./images/icon-invites.png"
-                alt="INVITE"
-              />
-            </IconCircle>
-            <IconLabel>Invite</IconLabel>
-          </IconButton>
-          <IconButton onClick={handleLeaderboard}>
-            <IconCircle $index="1">
-              <IconImage
-                src="./images/icon-contact.png"
-                alt="CONTACT"
-              />
-            </IconCircle>
-            <IconLabel>Leaderboard</IconLabel>
-          </IconButton>
-          <IconButton onClick={handleSend}>
-            <IconCircle $index="4">
-              <IconImage
-                src="./images/icon-send.png"
-                alt="SEND"
-              />
-            </IconCircle>
-            <IconLabel>Send</IconLabel>
-          </IconButton>
-        </IconGrid>
-      </ActionsSection>
-    </PageContainer>
-  );
-};
 
 export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
   const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
@@ -530,21 +380,19 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
           </IconButton>*/}
 
           {/* Boost with APY badge */}
-          <IconButton onClick={handleBoost}>
+          {/* <IconButton onClick={handleBoost}>
             <IconCircle $index="9">
               <IconImage
                 src="./images/icon-rocket.png"
                 alt="BOOST"
               />
-              {/* <APYBadge>+1.5x</APYBadge> */}
+              <APYBadge>+1.5x</APYBadge>
               <APYBadge>New</APYBadge> 
             </IconCircle>
             <IconLabel>AI Vault</IconLabel>
-          </IconButton>
+          </IconButton> */}
 
-         
-
-
+          
         </IconGrid>
       </ActionsSection>
     </PageContainer>

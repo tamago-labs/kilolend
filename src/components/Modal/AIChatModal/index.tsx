@@ -19,10 +19,9 @@ export interface AIChatModalProps {
 }
 
 export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => {
-
   const { account } = useWalletAccountStore();
 
-  const [currentStep, setCurrentStep] = useState(1); // 1: agent selection, 2: chat
+  const [currentStep, setCurrentStep] = useState<'selection' | 'chat'>('selection');
   const [selectedAgent, setSelectedAgent] = useState<AgentPreset | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
   const [finalAgent, setFinalAgent] = useState<AIAgent | null>(null);
@@ -140,17 +139,17 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
       preferences: agent.defaultPreferences
     };
     setFinalAgent(aiAgent);
-    setCurrentStep(2);
+    setCurrentStep('chat');
   };
 
 
   const handleBackToAgentSelection = () => {
-    setCurrentStep(1);
+    setCurrentStep('selection');
     setFinalAgent(null);
   };
 
   const handleReset = () => {
-    setCurrentStep(1);
+    setCurrentStep('selection');
     setSelectedAgent(null);
     setCustomPrompt('');
     setFinalAgent(null);
@@ -159,7 +158,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
  
   const renderStepContent = () => {
     switch (currentStep) {
-      case 1:
+      case 'selection':
         return (
           <AgentSelectionStep
             selectedAgent={selectedAgent}
@@ -168,7 +167,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
           />
         );
 
-      case 2:
+      case 'chat':
         return finalAgent ? (
           finalAgent.name !== "Secured D" ?
             (

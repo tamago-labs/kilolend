@@ -15,7 +15,12 @@ import { actionIntegration } from '@/services/actionIntegration';
 import { conversationMemory } from '@/services/memory/conversationMemory';
 import { type AIAgent } from '@/types/aiAgent';
 
-export interface UseExecutionAIChatResult {
+export interface UseAIChatConfig {
+  isExecutionMode?: boolean;
+  maxMessages?: number;
+}
+
+export interface UseAIChatResult {
   messages: ChatMessage[];
   isLoading: boolean;
   isStreaming: boolean;
@@ -29,7 +34,9 @@ export interface UseExecutionAIChatResult {
   needsClear: boolean;
 }
 
-export const useExecutionAIChat = (agent: AIAgent): UseExecutionAIChatResult => {
+export const useAIChat = (agent: AIAgent, config: UseAIChatConfig = {}): UseAIChatResult => {
+  const { isExecutionMode = false, maxMessages = 10 } = config;
+  
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -37,9 +44,6 @@ export const useExecutionAIChat = (agent: AIAgent): UseExecutionAIChatResult => 
   const [lastUserMessage, setLastUserMessage] = useState<string>('');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const streamControllerRef = useRef<AbortController | null>(null);
-
-  // Constants
-  const MAX_MESSAGES = 10; // Maximum user messages before requiring clear
 
   // Get KiloLend data
   const { markets } = useContractMarketStore();
@@ -77,21 +81,36 @@ export const useExecutionAIChat = (agent: AIAgent): UseExecutionAIChatResult => 
     if (agent && messages.length === 0) {
       const greetingMessage: ChatMessage = {
         id: `greeting_${Date.now()}`,
-        content: getAgentGreeting(agent),
+        content: getAgentGreeting(agent, isExecutionMode),
         sender: 'agent',
         timestamp: Date.now()
       };
       setMessages([greetingMessage]);
     }
-  }, [agent]);
+  }, [agent, isExecutionMode]);
 
-  const getAgentGreeting = (agent: AIAgent): string => { 
-    return `🤖 Hello! I’m Secured D, your precise and secure AI assistant. I’m ready to guide you through KiloLend and help execute transactions safely. How would you like to proceed today?`
+  const getAgentGreeting = (agent: AIAgent, isExecution: boolean): string => {
+    if (isExecution) {
+      return `🤖 Hello! I'm Secured D, your precise and secure AI assistant. I'm ready to guide you through KiloLend and help execute transactions safely. How would you like to proceed today?`;
+    }
+
+    const greetings = {
+      conservative: `👨‍💼 Good day! I'm ${agent.name}, your professional DeFi advisor. I focus on stable, secure returns perfect for those who prioritize capital preservation. How may I assist you with your KiloLend strategy today?`,
+      aggressive: `🧑‍🚀 Ready for liftoff! I'm ${agent.name}, your mission commander for maximum returns in the DeFi universe. Let's explore stellar yield opportunities on KiloLend together! What's our destination?`,
+      balanced: `🧙 Greetings, traveler! I am ${agent.name}, keeper of ancient DeFi wisdom. I shall help you navigate the mystical balance between risk and reward on KiloLend. What path shall we explore together?`,
+      educational: `🧑‍🏫 Welcome, my eager student! I am ${agent.name}, your patient teacher in the art of decentralized finance. Together we shall master the ways of KiloLend. What would you like to learn today, grasshopper?`,
+      tiger: `🐅 Roar! I'm ${agent.name}, your fierce strategist here on KiloLend. I'm ready to help you pounce on bold opportunities and hunt for higher yields. What prize shall we chase today?`,
+      snake: `🐍 Sss... Greetings, I'm ${agent.name}, your smooth and calculating DeFi guide. I'll help you slither into optimal positions and strike with precision. What strategy shall we refine first?`,
+      penguin: `🐧 Waddle waddle! I'm ${agent.name}, your friendly guardian on KiloLend. I'll help you stay cool, safe, and step confidently into DeFi. What would you like to explore together today?`,
+      custom: `🤖 Hello! I'm ${agent.name}, your custom AI assistant, ready to help you with KiloLend based on the specific guidance you've provided. How can I assist you today?`
+    };
+
+    return greetings[agent.personality as keyof typeof greetings] || greetings.custom;
   };
 
   // Computed values
   const userMessageCount = messages.filter(m => m.sender === 'user').length;
-  const needsClear = userMessageCount >= MAX_MESSAGES;
+  const needsClear = userMessageCount >= maxMessages;
   const canSendMessage = !isLoading && !needsClear;
 
   const sendMessage = useCallback(async (content: string) => {
@@ -167,8 +186,21 @@ export const useExecutionAIChat = (agent: AIAgent): UseExecutionAIChatResult => 
           }
         }
       } else {
+        // Enhanced fallback message with clear data availability status
+        const fallbackMessage = `🚫 **AI Service Unavailable**
 
-        const fallbackMessage = `Unable to connect to the AI service. \n\n*Contact KILOLend team for assistance.*`;
+I'm unable to connect to the AI service at the moment. This means:
+
+❌ **No real-time market data**
+❌ **No portfolio analysis** 
+❌ **No personalized recommendations**
+
+**What you can do:**
+• Try refreshing the page and reconnecting your wallet
+• Contact the KILOLend team for assistance
+• Use the manual interface for transactions
+
+*I never provide fake or estimated data - I prefer to be honest about limitations rather than guess.*`;
 
         agentMessageContent = fallbackMessage;
 
@@ -201,10 +233,23 @@ export const useExecutionAIChat = (agent: AIAgent): UseExecutionAIChatResult => 
       console.error('AI Chat Error:', err);
       setError(err.message || 'Failed to get AI response');
 
-      // Add error message
+      // Enhanced error message
       const errorMessage: ChatMessage = {
         id: `error_${Date.now()}`,
-        content: "I apologize, but I encountered an error processing your request. Please try again or rephrase your question.",
+        content: `🚨 **Connection Error**
+
+I apologize, but I encountered an error while trying to process your request. This could be due to:
+
+• Network connectivity issues
+• Temporary service unavailability  
+• High demand on the AI service
+
+**Please try:**
+1. Sending your message again
+2. Refreshing the page
+3. Contacting support if the issue persists
+
+*I never provide fake data - I'll always be transparent about service limitations.*`,
         sender: 'agent',
         timestamp: Date.now()
       };
@@ -240,13 +285,13 @@ export const useExecutionAIChat = (agent: AIAgent): UseExecutionAIChatResult => 
     if (agent) {
       const greetingMessage: ChatMessage = {
         id: `greeting_${Date.now()}`,
-        content: getAgentGreeting(agent),
+        content: getAgentGreeting(agent, isExecutionMode),
         sender: 'agent',
         timestamp: Date.now()
       };
       setMessages([greetingMessage]);
     }
-  }, [agent, account]);
+  }, [agent, account, isExecutionMode]);
 
   const retryLastMessage = useCallback(async () => {
     if (lastUserMessage) {
