@@ -1,5 +1,4 @@
-import { ContractMarket } from '@/stores/contractMarketStore';
-import { ContractUserPosition } from '@/stores/contractUserStore';
+import { ContractMarket } from '@/stores/contractMarketStore'; 
 import { conversationMemory, type RecommendedAction } from './memory/conversationMemory'; 
 import { actionIntegration } from './actionIntegration';
 

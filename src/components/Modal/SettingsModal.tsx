@@ -140,7 +140,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
     os?: string;
   }>({ isLineConnected: false });
 
-  const gasOptions = [300000, 600000, 1000000];
+  const gasOptions = [100000, 300000, 600000];
 
   useEffect(() => {
     const checkLineStatus = async () => {
@@ -213,8 +213,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         </Section>
 
         {lineInfo.isLineConnected ? (
-          <Section>
-            {/* <SectionTitle>LINE Environment</SectionTitle> */}
+          <Section> 
             {lineInfo.lineVersion && (
               <InfoRow>
                 <InfoLabel>LINE Version</InfoLabel>
@@ -235,8 +234,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
             )}
           </Section>
         ) : (
-          <Section>
-            {/* <SectionTitle>LINE Integration</SectionTitle> */}
+          <Section> 
             <InfoRow>
               <InfoLabel>Status</InfoLabel>
               <InfoValue>Not connected to LINE</InfoValue>

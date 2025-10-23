@@ -138,19 +138,7 @@ export const useMarketContract = (): MarketContractHook => {
         (totalSupplyFormatted * tokenPrice) / BigInt(1e6);
       const totalBorrowUSD =
         (totalBorrowFormatted * tokenPrice) / BigInt(1e6);
-
-      // For logging, convert BigInt -> string or Number for readability
-      // console.log(`Calculated values for ${marketId}:`, {
-      //   utilization: utilizationRate.toFixed(2), // keep BigNumber for ratios
-      //   supplyAPY: supplyAPY.toFixed(2),
-      //   borrowAPR: borrowAPR.toFixed(2),
-      //   totalSupplyUnderlying: totalSupplyFormatted.toString(),
-      //   totalBorrowUnderlying: totalBorrowFormatted.toString(),
-      //   totalSupplyUSD: (Number(totalSupplyUSD) / 1e2).toFixed(2), // adjust scale as needed
-      //   totalBorrowUSD: (Number(totalBorrowUSD) / 1e2).toFixed(2),
-      //   tokenPrice: `$${Number(tokenPrice) / 1e6}`, // convert back to float
-      // });
-
+  
       return {
         totalSupply: Number(totalSupplyUSD).toFixed(2),
         totalBorrow: Number(totalBorrowUSD).toFixed(2),

@@ -17,7 +17,7 @@ export const useAppStore = create<AppState>((set) => ({
   isLoading: false,
   lastUpdated: Date.now(),
   priceUpdateInterval: 5000, // 5 seconds
-  gasLimit: 600000, // Default gas limit
+  gasLimit: 300000, // Default gas limit
 
   setActiveTab: (tab) => set({ activeTab: tab }),
   
