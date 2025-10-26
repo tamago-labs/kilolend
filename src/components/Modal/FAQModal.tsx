@@ -307,10 +307,15 @@ const FAQ_DATA: FAQCategory[] = [
       },
       {
         question: "Who is behind KiloLend?",
+        // answer: `
+        // <p>KiloLend is structured under an offshore entity and has delegated 
+        // operations and maintenance to <span class="highlight">Tamago Labs</span>, 
+        // a Web3 software company based in Japan.</p>
+        // `
         answer: `
-        <p>KiloLend is structured under an offshore entity and has delegated 
-        operations and maintenance to <span class="highlight">Tamago Labs</span>, 
-        a Web3 software company based in Japan.</p>
+        <p>KiloLend is a decentralized, non-custodial lending protocol on KAIA blockchain with 
+        <span class="highlight">Tamago Labs</span>, a Web3 software company based in Japan, 
+        operating the frontend interface and technical infrastructure.</p>
         `
       }
     ]
