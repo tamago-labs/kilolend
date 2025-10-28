@@ -43,7 +43,8 @@ contract ComptrollerErrorReporter {
         SET_PRICE_ORACLE_OWNER_CHECK,
         SUPPORT_MARKET_EXISTS,
         SUPPORT_MARKET_OWNER_CHECK,
-        SET_PAUSE_GUARDIAN_OWNER_CHECK
+        SET_PAUSE_GUARDIAN_OWNER_CHECK,
+        SET_KILO_UTILITY_ADMIN_CHECK
     }
 
     /**
@@ -114,6 +115,8 @@ contract TokenErrorReporter {
     error SetReserveFactorAdminCheck();
     error SetReserveFactorFreshCheck();
     error SetReserveFactorBoundsCheck();
+
+    error SetKiloStakingAdminCheck();
 
     error AddReservesFactorFreshCheck(uint256 actualAddAmount);
 

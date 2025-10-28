@@ -72,4 +72,10 @@ abstract contract ComptrollerInterface {
         address cTokenBorrowed,
         address cTokenCollateral,
         uint repayAmount) virtual external view returns (uint, uint);
+
+    /*** KILO Utility Functions ***/
+
+    function getBorrowRateDiscount(address borrower) virtual external view returns (uint);
+    function getBorrowRateWithDiscount(uint baseBorrowRate, address borrower) virtual external view returns (uint);
+    function getLiquidationThresholdBuffer(address borrower) virtual external view returns (uint);
 }

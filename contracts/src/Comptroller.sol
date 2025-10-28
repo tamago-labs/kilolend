@@ -7,15 +7,46 @@ import "./utils/ExponentialNoError.sol";
 import "./ComptrollerStorage.sol";
 import "./interfaces/ComptrollerInterface.sol";
 import "./interfaces/PriceOracle.sol";
-
+import "./interfaces/IKiloStaking.sol";
 
 /**
  * @title KiloLend's Comptroller Contract
  * @author Compound (Modified)
- * @notice Simplified Comptroller without COMP token distribution
+ * @notice Comptroller without COMP token distribution but with KILO token utility features
+ * 
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * KILO TOKEN UTILITY FEATURES
+ * ═══════════════════════════════════════════════════════════════════════════════
+ * 
+ * This Comptroller implements two core KILO utility features for protocol users who
+ * stake KILO tokens:
+ * 
+ * 1. BORROW RATE DISCOUNTS 
+ *    ────────────────────────────────────────────────────────────
+ *    Users who stake KILO tokens receive reduced interest rates on borrowed assets.
+ *    
+ *    Default Tier Structure:
+ *    - Tier 0: No stake        → 0% discount
+ *    - Tier 1: 10,000 KILO     → 5% discount
+ *    - Tier 2: 100,000 KILO    → 10% discount
+ *    - Tier 3: 1,000,000 KILO  → 15% discount
+ *    - Tier 4: 10,000,000 KILO → 20% discount
+ * 
+ * 2. LIQUIDATION THRESHOLD BUFFER  
+ *    ────────────────────────────────────────────────────────────
+ *    KILO stakers require higher shortfall before liquidation can occur.
+ *    This provides protection against immediate liquidation from small price movements.
+ *     
+ *    Default Tier Structure:
+ *    - Tier 0: No stake        → 0% buffer (immediate liquidation)
+ *    - Tier 1: 10,000 KILO     → 2% buffer
+ *    - Tier 2: 100,000 KILO    → 3% buffer
+ *    - Tier 3: 1,000,000 KILO  → 5% buffer
+ *    - Tier 4: 10,000,000 KILO → 7% buffer
+ * 
  */
 
-contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
+contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerErrorReporter, ExponentialNoError {
     
     /// @notice Emitted when an admin supports a market
     event MarketListed(CToken cToken);
@@ -59,15 +90,21 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
     /// @notice Emitted when admin is changed
     event NewAdmin(address oldAdmin, address newAdmin);
 
+    /// @notice Emitted when KILO staking contract is changed
+    event NewKiloStaking(address oldKiloStaking, address newKiloStaking);
+
+    /// @notice Emitted when KILO utility features are enabled/disabled
+    event KiloUtilityToggled(bool enabled);
+
     uint internal constant closeFactorMinMantissa = 0.05e18;
     uint internal constant closeFactorMaxMantissa = 0.9e18;
     uint internal constant collateralFactorMaxMantissa = 0.9e18;
 
     constructor() {
         admin = msg.sender;
+        kiloUtilityEnabled = false; // Disabled by default until staking contract is set
     }
  
-
     /*** Assets You Are In ***/
 
     /**
@@ -344,7 +381,10 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         if (err != Error.NO_ERROR) {
             return uint(err);
         }
-        if (shortfall == 0) {
+        
+        // Check if shortfall exceeds the liquidation threshold buffer
+        uint requiredShortfall = getLiquidationThresholdBuffer(borrower);
+        if (shortfall <= requiredShortfall) {
             return uint(Error.INSUFFICIENT_SHORTFALL);
         }
 
@@ -538,6 +578,73 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         return (uint(Error.NO_ERROR), seizeTokens);
     }
 
+    /*** KILO Utility Functions ***/
+
+    /**
+     * @notice Get borrow rate discount for a user based on KILO staking
+     * @dev Called by interest rate models to apply discounts
+     * @param borrower The address of the borrower
+     * @return Discount in basis points (0-2000, where 2000 = 20% discount)
+     */
+    function getBorrowRateDiscount(address borrower) public view override returns (uint) {
+        // Return 0 if features disabled or staking contract not set
+        if (!kiloUtilityEnabled || address(kiloStaking) == address(0)) {
+            return 0;
+        }
+
+        // Get discount from staking contract with safety checks
+        try kiloStaking.getBorrowRateDiscount(borrower) returns (uint discountBps) {
+            // Cap at maximum allowed discount
+            return discountBps > MAX_BORROW_DISCOUNT_BPS ? MAX_BORROW_DISCOUNT_BPS : discountBps;
+        } catch {
+            // If staking contract call fails, return 0 discount
+            return 0;
+        }
+    }
+
+    /**
+     * @notice Apply borrow rate discount to a base rate
+     * @dev To be called by interest rate models
+     * @param baseBorrowRate The base borrow rate from the interest rate model
+     * @param borrower The address of the borrower
+     * @return The discounted borrow rate
+     */
+    function getBorrowRateWithDiscount(uint baseBorrowRate, address borrower) external view override returns (uint) {
+        uint discountBps = getBorrowRateDiscount(borrower);
+        
+        if (discountBps == 0) {
+            return baseBorrowRate;
+        }
+        
+        // Apply discount: discountedRate = baseBorrowRate * (10000 - discountBps) / 10000
+        // For example: 10% APR with 5% discount (500 bps) = 10% * 9500 / 10000 = 9.5%
+        uint discountedRate = (baseBorrowRate * (10000 - discountBps)) / 10000;
+        return discountedRate;
+    }
+
+    /**
+     * @notice Get liquidation threshold buffer for a user based on KILO staking
+     * @dev Called during liquidation checks to determine required shortfall
+     * @param borrower The address of the borrower
+     * @return Buffer in mantissa format (0-10e16, where 10e16 = 10%)
+     */
+    function getLiquidationThresholdBuffer(address borrower) public view override returns (uint) {
+        // Return 0 if features disabled or staking contract not set
+        if (!kiloUtilityEnabled || address(kiloStaking) == address(0)) {
+            return 0;
+        }
+
+        // Get buffer from staking contract with safety checks
+        try kiloStaking.getLiquidationThresholdBuffer(borrower) returns (uint bufferMantissa) {
+            // Cap at maximum allowed buffer
+            return bufferMantissa > MAX_LIQUIDATION_BUFFER_MANTISSA ? MAX_LIQUIDATION_BUFFER_MANTISSA : bufferMantissa;
+        } catch {
+            // If staking contract call fails, return 0 buffer
+            return 0;
+        }
+    }
+
+
     /*** Admin Functions ***/
 
 
@@ -588,6 +695,43 @@ contract Comptroller is ComptrollerV7Storage, ComptrollerInterface, ComptrollerE
         emit NewAdmin(oldAdmin, admin);
         emit NewPendingAdmin(oldPendingAdmin, pendingAdmin);
 
+        return uint(Error.NO_ERROR);
+    }
+
+    /**
+     * @notice Set the KILO staking contract address
+     * @dev Admin function to update staking contract reference
+     * @param newKiloStaking The address of the new KILO staking contract
+     * @return uint 0=success, otherwise a failure
+     */
+    function _setKiloStaking(address newKiloStaking) external returns (uint) {
+        // Check caller is admin
+        if (msg.sender != admin) {
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_KILO_UTILITY_ADMIN_CHECK);
+        }
+
+        address oldKiloStaking = address(kiloStaking);
+        kiloStaking = IKiloStaking(newKiloStaking);
+
+        emit NewKiloStaking(oldKiloStaking, newKiloStaking);
+        return uint(Error.NO_ERROR);
+    }
+
+    /**
+     * @notice Enable or disable KILO utility features globally
+     * @dev Admin function to toggle KILO features (emergency kill switch)
+     * @param enabled True to enable, false to disable
+     * @return uint 0=success, otherwise a failure
+     */
+    function _setKiloUtilityEnabled(bool enabled) external returns (uint) {
+        // Check caller is admin
+        if (msg.sender != admin) {
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_KILO_UTILITY_ADMIN_CHECK);
+        }
+
+        kiloUtilityEnabled = enabled;
+
+        emit KiloUtilityToggled(enabled);
         return uint(Error.NO_ERROR);
     }
 

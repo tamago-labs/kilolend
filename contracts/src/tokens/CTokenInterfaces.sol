@@ -109,6 +109,16 @@ contract CTokenStorage {
      * @notice Share of seized collateral that is added to reserves
      */
     uint public constant protocolSeizeShareMantissa = 2.8e16; //2.8%
+
+    /**
+     * @notice KILO staking contract for utility features
+     * @dev Must be set before using KILO utility features
+     * This reference enables future KILO token utility integration including:
+     * - Borrow rate discounts for KILO stakers
+     * - Liquidation threshold buffers for protected users
+     * Reserved storage slot to maintain upgrade compatibility
+     */
+    address public kiloStaking;
 }
 
 abstract contract CTokenInterface is CTokenStorage {
@@ -189,6 +199,11 @@ abstract contract CTokenInterface is CTokenStorage {
     event ReservesReduced(address admin, uint reduceAmount, uint newTotalReserves);
 
     /**
+     * @notice Event emitted when KILO staking contract is changed
+     */
+    event NewKiloStaking(address oldKiloStaking, address newKiloStaking);
+
+    /**
      * @notice EIP20 Transfer event
      */
     event Transfer(address indexed from, address indexed to, uint amount);
@@ -228,6 +243,7 @@ abstract contract CTokenInterface is CTokenStorage {
     function _setReserveFactor(uint newReserveFactorMantissa) virtual external returns (uint);
     function _reduceReserves(uint reduceAmount) virtual external returns (uint);
     function _setInterestRateModel(InterestRateModel newInterestRateModel) virtual external returns (uint);
+    function _setKiloStaking(address newKiloStaking) virtual external returns (uint);
 }
 
 contract CErc20Storage {

@@ -3,6 +3,7 @@ pragma solidity ^0.8.10;
 
 import "./tokens/CToken.sol";
 import "./interfaces/PriceOracle.sol";
+import "./interfaces/IKiloStaking.sol";
 
 contract UnitrollerAdminStorage {
     /**
@@ -125,4 +126,28 @@ contract ComptrollerV7Storage is ComptrollerV6Storage {
 
     /// @notice Accounting storage mapping account addresses to how much COMP they owe the protocol.
     mapping(address => uint) public compReceivable;
+}
+
+/**
+ * @title ComptrollerV8Storage
+ * @notice Storage for KILO Token Utility Features
+ * @dev Adds support for:
+ *      - Borrow Rate Discounts: KILO stakers get reduced interest rates
+ *      - Liquidation Threshold Buffer: Protection against immediate liquidation
+ */
+contract ComptrollerV8Storage is ComptrollerV7Storage {
+    /// @notice KILO staking contract for utility features
+    IKiloStaking public kiloStaking;
+    
+    /// @notice Maximum borrow rate discount in basis points (2000 = 20%)
+    /// @dev Conservative limit to prevent excessive rate reductions
+    uint public constant MAX_BORROW_DISCOUNT_BPS = 2000;
+    
+    /// @notice Maximum liquidation threshold buffer in mantissa (10e16 = 10%)
+    /// @dev Conservative limit to balance protection with protocol safety
+    uint public constant MAX_LIQUIDATION_BUFFER_MANTISSA = 10e16;
+    
+    /// @notice Flag to enable/disable KILO utility features globally
+    /// @dev Emergency kill switch for KILO features
+    bool public kiloUtilityEnabled;
 }

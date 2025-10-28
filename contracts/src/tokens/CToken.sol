@@ -6,6 +6,7 @@ import "../utils/ErrorReporter.sol";
 import "../utils/ExponentialNoError.sol";
 import "../interfaces/EIP20Interface.sol";
 import "../interfaces/InterestRateModel.sol";
+import "../interfaces/IKiloStaking.sol";
 
 /**
  * @title Compound's CToken Contract
@@ -192,6 +193,11 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
      */
     function borrowRatePerBlock() override external view returns (uint) {
         return interestRateModel.getBorrowRate(getCashPrior(), totalBorrows, totalReserves);
+    }
+
+    function borrowRatePerBlockFor(address borrower) external view returns (uint) {
+        uint baseRate = interestRateModel.getBorrowRate(getCashPrior(), totalBorrows, totalReserves);
+        return comptroller.getBorrowRateWithDiscount(baseRate, borrower);
     }
 
     /**
@@ -640,6 +646,18 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
     }
 
     /*** Admin Functions ***/
+
+    function _setKiloStaking(address newKiloStaking) override external returns (uint) { 
+        if (msg.sender != admin) {
+            revert SetKiloStakingAdminCheck();
+        }
+
+        address oldKiloStaking = address(kiloStaking);
+        kiloStaking = newKiloStaking;
+
+        emit NewKiloStaking(oldKiloStaking, newKiloStaking);
+        return NO_ERROR;
+    }
 
     function _setPendingAdmin(address payable newPendingAdmin) override external returns (uint) {
         if (msg.sender != admin) {
