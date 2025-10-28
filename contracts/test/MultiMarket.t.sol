@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 import "../src/Comptroller.sol"; 
 import "../src/KiloPriceOracle.sol";
 import "../src/tokens/CErc20Immutable.sol"; 
-import "../src/mocks/MockToken.sol";
+import "../src/utils/MockToken.sol";
 import "../src/interest-rates/JumpRateModelV2.sol";
 
 contract MultiMarketTest is Test {

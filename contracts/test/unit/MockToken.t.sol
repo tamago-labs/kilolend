@@ -2,7 +2,7 @@
 pragma solidity ^0.8.10;
 
 import "forge-std/Test.sol";
-import "../../src/mocks/MockToken.sol";
+import "../../src/utils/MockToken.sol";
 
 contract MockTokenTest is Test {
     MockToken public usdt;

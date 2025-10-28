@@ -6,7 +6,7 @@ import "../../src/Comptroller.sol";
 import "../../src/KiloPriceOracle.sol";
 import "../../src/tokens/CErc20Immutable.sol";
 import "../../src/interest-rates/JumpRateModelV2.sol";
-import "../../src/mocks/MockToken.sol";
+import "../../src/utils/MockToken.sol";
 
 contract ComptrollerTest is Test {
 

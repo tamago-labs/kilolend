@@ -4,7 +4,7 @@ pragma solidity ^0.8.10;
 import "forge-std/Test.sol";
 import "../src/Comptroller.sol"; 
 import "../src/tokens/CErc20Immutable.sol"; 
-import "../src/mocks/MockToken.sol";
+import "../src/utils/MockToken.sol";
 import "../src/KiloPriceOracle.sol";
 import "../src/interest-rates/CollateralRateModel.sol";
 import "../src/interest-rates/StablecoinJumpRateModel.sol"; 
