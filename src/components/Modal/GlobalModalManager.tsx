@@ -1,7 +1,6 @@
 'use client';
 
-import { useModalStore } from '@/stores/modalStore';
-import { BlankModal } from './BlankModal';
+import { useModalStore } from '@/stores/modalStore'; 
 import { TokenDetailsModal } from './TokenDetailsModal';
 import { FaucetModal } from './FaucetModal';
 import { SupplyModal } from './SupplyModal';
@@ -16,10 +15,8 @@ import { SendModal } from './SendModal';
 import { LeaderboardModal } from './LeaderboardModal';
 import { KiloPointsModal } from "./KiloModal"
 import { InviteModal } from './InviteModal';
-import { AIChatModal } from './AIChatModal';
-// import { SwapModal } from './SwapModal';
-import { BoostModal } from './BoostModal';
-// import { BuyModal } from "./BuyModal"
+import { AIChatModal } from './AIChatModal'; 
+
 
 export const GlobalModalManager = () => {
   const { activeModal, isOpen, closeModal, modalData, openModal } = useModalStore();
@@ -68,41 +65,11 @@ export const GlobalModalManager = () => {
           />
         );
 
-      case 'portfolio':
-        return (
-          <BlankModal
-            isOpen={isOpen}
-            onClose={closeModal}
-            title="Portfolio"
-            icon="📊"
-            placeholderTitle="Your Portfolio"
-            placeholderText="View your lending positions, earnings, and portfolio analytics. This feature will be available soon."
-          />
-        );
+       
 
-      case 'analytics':
-        return (
-          <BlankModal
-            isOpen={isOpen}
-            onClose={closeModal}
-            title="Analytics"
-            icon="📈"
-            placeholderTitle="Market Analytics"
-            placeholderText="Analyze market trends, APY rates, and lending opportunities. This feature will be available soon."
-          />
-        );
+      
 
-      case 'ai-chat':
-        return (
-          <BlankModal
-            isOpen={isOpen}
-            onClose={closeModal}
-            title="AI Assistant"
-            icon="🤖"
-            placeholderTitle="AI Chat"
-            placeholderText="Chat with KiloBot for general DeFi questions and guidance. This feature will be available soon."
-          />
-        );
+       
 
       case 'ai-chat-new':
         return (
@@ -127,18 +94,7 @@ export const GlobalModalManager = () => {
             onClose={closeModal}
           />
         );
-
-      case 'activities':
-        return (
-          <BlankModal
-            isOpen={isOpen}
-            onClose={closeModal}
-            title="Activity"
-            icon="⚙️"
-            placeholderTitle="Activity"
-            placeholderText="View your transaction history."
-          />
-        );
+ 
 
       case 'faq':
         return (
@@ -164,17 +120,7 @@ export const GlobalModalManager = () => {
           />
         );
 
-      case 'contacts':
-        return (
-          <BlankModal
-            isOpen={isOpen}
-            onClose={closeModal}
-            title="Contacts"
-            icon="📇"
-            placeholderTitle="Contact Us"
-            placeholderText="Get in touch with support or the Kaia team for help and inquiries."
-          />
-        );
+       
 
       case 'token-details':
         return (
@@ -195,29 +141,9 @@ export const GlobalModalManager = () => {
           />
         );
 
-      case 'support':
-        return (
-          <BlankModal
-            isOpen={isOpen}
-            onClose={closeModal}
-            title="Support"
-            icon="🆘"
-            placeholderTitle="Get Support"
-            placeholderText="Need help? Contact our support team for assistance with KiloLend features and troubleshooting."
-          />
-        );
+      
 
-      case 'feedback':
-        return (
-          <BlankModal
-            isOpen={isOpen}
-            onClose={closeModal}
-            title="Feedback"
-            icon="💬"
-            placeholderTitle="Send Feedback"
-            placeholderText="We value your feedback! Let us know how we can improve KiloLend for you."
-          />
-        );
+      
 
       case 'faucet':
         return (
@@ -256,13 +182,6 @@ export const GlobalModalManager = () => {
       //       onClose={closeModal}
       //     />
       //   );
-      case 'boost':
-        return (
-          <BoostModal
-            // isOpen={isOpen}
-            onClose={closeModal}
-          />
-        );
 
       default:
         return null;

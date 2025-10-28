@@ -244,17 +244,9 @@ export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
     openModal('send');
   };
 
-  const handleBoost = () => {
-    openModal('boost');
-  };
-
   const handleSwap = () => {
     openModal('swap');
   };
-
-  const handleBuy = () => {
-    openModal("buy")
-  }
 
   return (
     <PageContainer>
