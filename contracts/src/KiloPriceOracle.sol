@@ -12,8 +12,8 @@ import "./interfaces/IOraklFeedRouter.sol";
 /**
  * @title KiloPriceOracle
  * @notice A Compound V2-compatible price oracle with multiple modes:
- *         - Mock mode (default): allows admins to manually set mock prices for testing 
- *           without relying on external feeds.
+ *         - Fallback mode (default): allows admins to manually set fallback prices for testing 
+ *           or when external feeds are unavailable.
  *         - Pyth mode: fetches real-time prices from the Pyth oracle network, 
  *           including staleness checks and decimal adjustments.
  *         - Orakl mode: fetches real-time prices from Orakl Network feeds
@@ -34,9 +34,9 @@ contract KiloPriceOracle is Ownable, PriceOracle {
     // Orakl price feeds (feed names like "BTC-USDT", "AAVE-KRW")
     mapping(address => string) public oraklFeeds;
 
-    // Oracle mode per token: 0=mock, 1=pyth, 2=orakl
+    // Oracle mode per token: 0=fallback, 1=pyth, 2=orakl
     mapping(address => uint8) public oracleMode;
-    mapping(address => uint256) public mockPrices;
+    mapping(address => uint256) public fallbackPrices;
 
     // Invert mode per token (default: false)
     mapping(address => bool) public invertMode;
@@ -86,8 +86,8 @@ contract KiloPriceOracle is Ownable, PriceOracle {
             // Orakl mode
             basePrice = _getOraklPrice(underlying);
         } else {
-            // Mock mode (default)
-            basePrice = mockPrices[underlying];
+            // Fallback mode (default)
+            basePrice = fallbackPrices[underlying];
         }
 
         // Apply inversion if enabled
@@ -112,12 +112,14 @@ contract KiloPriceOracle is Ownable, PriceOracle {
         bytes32 priceId = priceFeeds[token];
         require(priceId != bytes32(0), "Token not supported");
 
-        PythStructs.Price memory price = pyth.getPriceUnsafe(priceId);
+        // Automatically reverts if older than threshold or invalid
+        PythStructs.Price memory price = pyth.getPriceNoOlderThan(priceId, stalenessThreshold);
 
-        require(block.timestamp - price.publishTime <= stalenessThreshold, "Price too stale");
-        require(price.price > 0, "Invalid price");
+        require(price.price > 0, "Invalid price value");
+        require(price.expo >= -18 && price.expo <= 18, "Exponent out of range");
 
-        return _adjustPythPrice(price.price, price.expo);
+        uint256 adjustedPrice = _adjustPythPrice(price.price, price.expo);
+        return adjustedPrice;
     }
 
     function _adjustPythPrice(int64 price, int32 expo) internal pure returns (uint256) {
@@ -131,7 +133,7 @@ contract KiloPriceOracle is Ownable, PriceOracle {
             adjustedPrice = adjustedPrice / (10 ** uint32(-expo));
         }
 
-        // Scale to 18 decimals (Pyth typically uses 8 decimals)
+        // Normalize to 18 decimals
         return adjustedPrice * 1e18 / 1e8;
     }
 
@@ -179,13 +181,13 @@ contract KiloPriceOracle is Ownable, PriceOracle {
     }
 
     function setDirectPrice(address asset, uint price) public isWhitelisted { 
-        // automatically enable mock mode if not set
-        if (mockPrices[asset] == 0) {
-            oracleMode[asset] = 0; // mock mode
+        // automatically enable fallback mode if not set
+        if (fallbackPrices[asset] == 0) {
+            oracleMode[asset] = 0; // fallback mode
         }
-        require(oracleMode[asset] == 0, "only mock mode"); 
-        emit PricePosted(asset, mockPrices[asset], price, price);
-        mockPrices[asset] = price;
+        require(oracleMode[asset] == 0, "only fallback mode"); 
+        emit PricePosted(asset, fallbackPrices[asset], price, price);
+        fallbackPrices[asset] = price;
     }
 
     function getPriceInfo(CToken cToken) external view returns (
@@ -206,8 +208,8 @@ contract KiloPriceOracle is Ownable, PriceOracle {
             // Orakl mode
             basePrice = _getOraklPrice(underlying);
         } else {
-            // Mock mode (default)
-            basePrice = mockPrices[underlying];
+            // Fallback mode (default)
+            basePrice = fallbackPrices[underlying];
         }
         
         decimalAdjustment = _getDecimalAdjustment(decimals);
@@ -257,13 +259,16 @@ contract KiloPriceOracle is Ownable, PriceOracle {
     }
 
     function updatePythPrices(bytes[] calldata updateData) external payable {
-        uint updateFee = pyth.getUpdateFee(updateData);
-        require(msg.value >= updateFee, "Insufficient fee");
+        uint256 updateFee = pyth.getUpdateFee(updateData);
+        require(msg.value >= updateFee, "Insufficient fee for update");
 
+        // Perform Pyth price feed update
         pyth.updatePriceFeeds{value: updateFee}(updateData);
 
+        // Refund any excess ETH safely
         if (msg.value > updateFee) {
-            payable(msg.sender).transfer(msg.value - updateFee);
+            (bool sent, ) = msg.sender.call{value: msg.value - updateFee}("");
+            require(sent, "Refund failed");
         }
     }
 
