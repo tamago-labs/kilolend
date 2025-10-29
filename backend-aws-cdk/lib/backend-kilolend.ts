@@ -17,7 +17,7 @@ export class BackendAwsCdkStack extends cdk.Stack {
   public readonly leaderboardTable: dynamodb.Table;
   public readonly userPointsTable: dynamodb.Table;
   public readonly inviteTable: dynamodb.Table;
-  public readonly cluster: ecs.Cluster;
+  // public readonly cluster: ecs.Cluster;
 
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -33,160 +33,160 @@ export class BackendAwsCdkStack extends cdk.Stack {
     // NETWORKING - VPC and Load Balancer
     // ========================================
 
-    const vpc = new ec2.Vpc(this, 'InferenceVPC', {
-      maxAzs: 2,
-      natGateways: 0,
-      subnetConfiguration: [
-        {
-          cidrMask: 24,
-          name: 'Public',
-          subnetType: ec2.SubnetType.PUBLIC,
-        }
-      ]
-    });
+    // const vpc = new ec2.Vpc(this, 'InferenceVPC', {
+    //   maxAzs: 2,
+    //   natGateways: 0,
+    //   subnetConfiguration: [
+    //     {
+    //       cidrMask: 24,
+    //       name: 'Public',
+    //       subnetType: ec2.SubnetType.PUBLIC,
+    //     }
+    //   ]
+    // });
 
     // ========================================
     // ECS Cluster - BOTS
     // ========================================
 
     // ECS Cluster for running liquidation and oracle bots
-    this.cluster = new ecs.Cluster(this, 'KiloLendCluster', {
-      vpc,
-      clusterName: 'kilolend-bots'
-    });
+    // this.cluster = new ecs.Cluster(this, 'KiloLendCluster', {
+    //   vpc,
+    //   clusterName: 'kilolend-bots'
+    // });
 
-    const executionRole = new iam.Role(this, 'BotsExecutionRole', {
-      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
-      ],
-    });
+    // const executionRole = new iam.Role(this, 'BotsExecutionRole', {
+    //   assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+    //   managedPolicies: [
+    //     iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AmazonECSTaskExecutionRolePolicy'),
+    //   ],
+    // });
 
-    const taskRole = new iam.Role(this, 'BotsTaskRole', {
-      assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
-    });
+    // const taskRole = new iam.Role(this, 'BotsTaskRole', {
+    //   assumedBy: new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
+    // });
 
-    const taskDef = new ecs.FargateTaskDefinition(this, 'KilolendBotsTaskDef', {
-      cpu: 1024, // total CPU shared by all containers
-      memoryLimitMiB: 2048, // total memory pool
-      executionRole,
-      taskRole,
-    });
+    // const taskDef = new ecs.FargateTaskDefinition(this, 'KilolendBotsTaskDef', {
+    //   cpu: 1024, // total CPU shared by all containers
+    //   memoryLimitMiB: 2048, // total memory pool
+    //   executionRole,
+    //   taskRole,
+    // });
 
     // Oracle Bot
-    taskDef.addContainer('OracleBot', {
-      image: ecs.ContainerImage.fromRegistry(
-        '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/kilolend-oracle-bot:latest',
-      ),
-      essential: true,
-      environment: {
-        NODE_ENV: 'production',
-        AWS_REGION: this.region,
-        BOT_TYPE: 'oracle',
-        RPC_URL: "https://public-en.node.kaia.io",
-        PRIVATE_KEY: "",
-        ORACLE_ADDRESS: "0xBB265F42Cce932c5e383536bDf50B82e08eaf454",
-        USDT_ADDRESS: "0xd077A400968890Eacc75cdc901F0356c943e4fDb",
-        SIX_ADDRESS: "0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435",
-        BORA_ADDRESS: "0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa",
-        MBX_ADDRESS: "0xD068c52d81f4409B9502dA926aCE3301cc41f623",
-        UPDATE_INTERVAL_MINUTES: "120",
-        PRICE_API_URL: "https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices"
-      },
-      logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: 'oracle-bot',
-        logGroup: new logs.LogGroup(this, 'OracleBotLogGroup', {
-          logGroupName: '/ecs/oracle-bot',
-          retention: logs.RetentionDays.ONE_WEEK,
-          removalPolicy: cdk.RemovalPolicy.DESTROY,
-        }),
-      }),
-    });
+    // taskDef.addContainer('OracleBot', {
+    //   image: ecs.ContainerImage.fromRegistry(
+    //     '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/kilolend-oracle-bot:latest',
+    //   ),
+    //   essential: true,
+    //   environment: {
+    //     NODE_ENV: 'production',
+    //     AWS_REGION: this.region,
+    //     BOT_TYPE: 'oracle',
+    //     RPC_URL: "https://public-en.node.kaia.io",
+    //     PRIVATE_KEY: "",
+    //     ORACLE_ADDRESS: "0xBB265F42Cce932c5e383536bDf50B82e08eaf454",
+    //     USDT_ADDRESS: "0xd077A400968890Eacc75cdc901F0356c943e4fDb",
+    //     SIX_ADDRESS: "0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435",
+    //     BORA_ADDRESS: "0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa",
+    //     MBX_ADDRESS: "0xD068c52d81f4409B9502dA926aCE3301cc41f623",
+    //     UPDATE_INTERVAL_MINUTES: "120",
+    //     PRICE_API_URL: "https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices"
+    //   },
+    //   logging: ecs.LogDrivers.awsLogs({
+    //     streamPrefix: 'oracle-bot',
+    //     logGroup: new logs.LogGroup(this, 'OracleBotLogGroup', {
+    //       logGroupName: '/ecs/oracle-bot',
+    //       retention: logs.RetentionDays.ONE_WEEK,
+    //       removalPolicy: cdk.RemovalPolicy.DESTROY,
+    //     }),
+    //   }),
+    // });
 
     // Liquidation Bot
-    taskDef.addContainer('LiquidationBot', {
-      image: ecs.ContainerImage.fromRegistry(
-        '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/liquidation-bot:latest',
-      ),
-      essential: true,
-      environment: {
-        NODE_ENV: 'production',
-        AWS_REGION: this.region,
-        BOT_TYPE: 'liquidation',
-        RPC_URL: "https://public-en.node.kaia.io",
-        API_BASE_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod',
-        PRIVATE_KEY: '', 
-        COMPTROLLER_ADDRESS: '0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2',
-        ORACLE_ADDRESS: '0xBB265F42Cce932c5e383536bDf50B82e08eaf454', 
-        CUSDT_ADDRESS: '0x498823F094f6F2121CcB4e09371a57A96d619695',
-        CSIX_ADDRESS: '0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c',
-        CBORA_ADDRESS: '0x7a937C07d49595282c711FBC613c881a83B9fDFD',
-        CMBX_ADDRESS: '0xE321e20F0244500A194543B1EBD8604c02b8fA85',
-        CKAIA_ADDRESS: '0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3', 
-        USDT_ADDRESS: '0xd077A400968890Eacc75cdc901F0356c943e4fDb',
-        SIX_ADDRESS: '0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435',
-        BORA_ADDRESS: '0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa',
-        MBX_ADDRESS: '0xD068c52d81f4409B9502dA926aCE3301cc41f623', 
-        CHECK_INTERVAL_SECONDS: '600',
-        MIN_PROFIT_USD: '10',
-        MAX_GAS_PRICE_GWEI: '50',
-        LIQUIDATION_INCENTIVE: '0.08',
-        CLOSE_FACTOR: '0.5', 
-        MAX_LIQUIDATION_USD: '100',
-        MIN_COLLATERAL_USD: '10',
-      },
-      logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: 'liquidation-bot',
-        logGroup: new logs.LogGroup(this, 'LiquidationBotLogGroup', {
-          logGroupName: '/ecs/liquidation-bot',
-          retention: logs.RetentionDays.ONE_WEEK,
-          removalPolicy: cdk.RemovalPolicy.DESTROY,
-        }),
-      }),
-    });
+    // taskDef.addContainer('LiquidationBot', {
+    //   image: ecs.ContainerImage.fromRegistry(
+    //     '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/liquidation-bot:latest',
+    //   ),
+    //   essential: true,
+    //   environment: {
+    //     NODE_ENV: 'production',
+    //     AWS_REGION: this.region,
+    //     BOT_TYPE: 'liquidation',
+    //     RPC_URL: "https://public-en.node.kaia.io",
+    //     API_BASE_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod',
+    //     PRIVATE_KEY: '', 
+    //     COMPTROLLER_ADDRESS: '0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2',
+    //     ORACLE_ADDRESS: '0xBB265F42Cce932c5e383536bDf50B82e08eaf454', 
+    //     CUSDT_ADDRESS: '0x498823F094f6F2121CcB4e09371a57A96d619695',
+    //     CSIX_ADDRESS: '0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c',
+    //     CBORA_ADDRESS: '0x7a937C07d49595282c711FBC613c881a83B9fDFD',
+    //     CMBX_ADDRESS: '0xE321e20F0244500A194543B1EBD8604c02b8fA85',
+    //     CKAIA_ADDRESS: '0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3', 
+    //     USDT_ADDRESS: '0xd077A400968890Eacc75cdc901F0356c943e4fDb',
+    //     SIX_ADDRESS: '0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435',
+    //     BORA_ADDRESS: '0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa',
+    //     MBX_ADDRESS: '0xD068c52d81f4409B9502dA926aCE3301cc41f623', 
+    //     CHECK_INTERVAL_SECONDS: '600',
+    //     MIN_PROFIT_USD: '10',
+    //     MAX_GAS_PRICE_GWEI: '50',
+    //     LIQUIDATION_INCENTIVE: '0.08',
+    //     CLOSE_FACTOR: '0.5', 
+    //     MAX_LIQUIDATION_USD: '100',
+    //     MIN_COLLATERAL_USD: '10',
+    //   },
+    //   logging: ecs.LogDrivers.awsLogs({
+    //     streamPrefix: 'liquidation-bot',
+    //     logGroup: new logs.LogGroup(this, 'LiquidationBotLogGroup', {
+    //       logGroupName: '/ecs/liquidation-bot',
+    //       retention: logs.RetentionDays.ONE_WEEK,
+    //       removalPolicy: cdk.RemovalPolicy.DESTROY,
+    //     }),
+    //   }),
+    // });
 
     // Points Bot
-    taskDef.addContainer('PointBot', {
-      image: ecs.ContainerImage.fromRegistry(
-        '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/kilolend-point-bot:latest',
-      ),
-      essential: true,
-      environment: {
-        NODE_ENV: 'production',
-        AWS_REGION: this.region,
-        BOT_TYPE: 'points',
-        RPC_URL: 'https://public-en.node.kaia.io', 
-        API_BASE_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod',
-        API_KEY: "",
-        CUSDT_ADDRESS: '0x498823F094f6F2121CcB4e09371a57A96d619695',
-        CSIX_ADDRESS: '0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c',
-        CBORA_ADDRESS: '0x7a937C07d49595282c711FBC613c881a83B9fDFD',
-        CMBX_ADDRESS: '0xE321e20F0244500A194543B1EBD8604c02b8fA85',
-        CKAIA_ADDRESS: '0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3',
-        USDT_ADDRESS: '0xd077A400968890Eacc75cdc901F0356c943e4fDb',
-        SIX_ADDRESS: '0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435',
-        BORA_ADDRESS: '0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa',
-        MBX_ADDRESS: '0xD068c52d81f4409B9502dA926aCE3301cc41f623',
-      },
-      logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: 'point-bot',
-        logGroup: new logs.LogGroup(this, 'PointBotLogGroup', {
-          logGroupName: '/ecs/point-bot',
-          retention: logs.RetentionDays.ONE_WEEK,
-          removalPolicy: cdk.RemovalPolicy.DESTROY,
-        }),
-      }),
-    });
+    // taskDef.addContainer('PointBot', {
+    //   image: ecs.ContainerImage.fromRegistry(
+    //     '057386374967.dkr.ecr.ap-northeast-1.amazonaws.com/kilolend-point-bot:latest',
+    //   ),
+    //   essential: true,
+    //   environment: {
+    //     NODE_ENV: 'production',
+    //     AWS_REGION: this.region,
+    //     BOT_TYPE: 'points',
+    //     RPC_URL: 'https://public-en.node.kaia.io', 
+    //     API_BASE_URL: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod',
+    //     API_KEY: "",
+    //     CUSDT_ADDRESS: '0x498823F094f6F2121CcB4e09371a57A96d619695',
+    //     CSIX_ADDRESS: '0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c',
+    //     CBORA_ADDRESS: '0x7a937C07d49595282c711FBC613c881a83B9fDFD',
+    //     CMBX_ADDRESS: '0xE321e20F0244500A194543B1EBD8604c02b8fA85',
+    //     CKAIA_ADDRESS: '0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3',
+    //     USDT_ADDRESS: '0xd077A400968890Eacc75cdc901F0356c943e4fDb',
+    //     SIX_ADDRESS: '0xEf82b1C6A550e730D8283E1eDD4977cd01FAF435',
+    //     BORA_ADDRESS: '0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa',
+    //     MBX_ADDRESS: '0xD068c52d81f4409B9502dA926aCE3301cc41f623',
+    //   },
+    //   logging: ecs.LogDrivers.awsLogs({
+    //     streamPrefix: 'point-bot',
+    //     logGroup: new logs.LogGroup(this, 'PointBotLogGroup', {
+    //       logGroupName: '/ecs/point-bot',
+    //       retention: logs.RetentionDays.ONE_WEEK,
+    //       removalPolicy: cdk.RemovalPolicy.DESTROY,
+    //     }),
+    //   }),
+    // });
 
     // Service to run all together
-    new ecs.FargateService(this, 'KilolendBotsService', {
-      cluster: this.cluster,
-      serviceName: 'kilolend-bots',
-      taskDefinition: taskDef,
-      desiredCount: 1,
-      assignPublicIp: true,
-      vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
-    });
+    // new ecs.FargateService(this, 'KilolendBotsService', {
+    //   cluster: this.cluster,
+    //   serviceName: 'kilolend-bots',
+    //   taskDefinition: taskDef,
+    //   desiredCount: 1,
+    //   assignPublicIp: true,
+    //   vpcSubnets: { subnetType: ec2.SubnetType.PUBLIC },
+    // });
 
 
     // ========================================
