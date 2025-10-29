@@ -5,14 +5,14 @@ import "forge-std/Test.sol";
 import "../src/Comptroller.sol"; 
 import "../src/tokens/CErc20Immutable.sol"; 
 import "../src/utils/MockToken.sol";
-import "../src/KiloPriceOracle.sol";
+import "../src/utils/MockPriceOracle.sol";
 import "../src/interest-rates/CollateralRateModel.sol";
 import "../src/interest-rates/StablecoinJumpRateModel.sol"; 
 
 contract SingleMarketTest is Test {
 
     Comptroller public comptroller;
-    KiloPriceOracle public oracle;
+    MockPriceOracle public oracle;
     CErc20Immutable public cUSDT;
     CErc20Immutable public cwKAIA;
     MockToken public usdt;
@@ -44,7 +44,7 @@ contract SingleMarketTest is Test {
     function deploySystem() internal {
         // Deploy core
         comptroller = new Comptroller();
-        oracle = new KiloPriceOracle();
+        oracle = new MockPriceOracle();
         
         // Deploy tokens
         usdt = new MockToken("Tether USD", "USDT", 6, 10000000e6);

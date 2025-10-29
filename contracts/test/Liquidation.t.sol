@@ -2,15 +2,15 @@
 pragma solidity ^0.8.10;
 
 import "forge-std/Test.sol";
-import "../src/Comptroller.sol"; 
-import "../src/KiloPriceOracle.sol";
+import "../src/Comptroller.sol";  
 import "../src/tokens/CErc20Immutable.sol"; 
 import "../src/utils/MockToken.sol";
+import "../src/utils/MockPriceOracle.sol";
 import "../src/interest-rates/JumpRateModelV2.sol";
 
 contract LiquidationTest is Test {
     Comptroller public comptroller;
-    KiloPriceOracle public oracle;
+    MockPriceOracle public oracle;
     CErc20Immutable public cUSDT;
     CErc20Immutable public cETH;
     MockToken public usdt;
@@ -30,7 +30,7 @@ contract LiquidationTest is Test {
         
         // Deploy core contracts
         comptroller = new Comptroller();
-        oracle = new KiloPriceOracle();
+        oracle = new MockPriceOracle();
         usdt = new MockToken("Tether USD", "USDT", 6,  1000000e6);
         eth = new MockToken("Wrapped ETH", "ETH", 18, 10000e18); // Mock ETH
         

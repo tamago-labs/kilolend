@@ -3,7 +3,7 @@ pragma solidity ^0.8.10;
 
 import "forge-std/Test.sol";
 import "../src/Comptroller.sol"; 
-import "../src/KiloPriceOracle.sol";
+import "../src/utils/MockPriceOracle.sol";
 import "../src/tokens/CErc20Immutable.sol"; 
 import "../src/utils/MockToken.sol";
 import "../src/interest-rates/JumpRateModelV2.sol";
@@ -11,7 +11,7 @@ import "../src/interest-rates/JumpRateModelV2.sol";
 contract MultiMarketTest is Test {
 
     Comptroller public comptroller;
-    KiloPriceOracle public oracle;
+    MockPriceOracle public oracle;
     CErc20Immutable public cUSDT;
     CErc20Immutable public cETH;
     CErc20Immutable public cBTC;
@@ -33,7 +33,7 @@ contract MultiMarketTest is Test {
         
         // Deploy core contracts
         comptroller = new Comptroller();
-        oracle = new KiloPriceOracle();
+        oracle = new MockPriceOracle();
         
         // Deploy mock tokens
         usdt = new MockToken("Tether USD", "USDT", 6, 10000000e6); // 10M USDT
