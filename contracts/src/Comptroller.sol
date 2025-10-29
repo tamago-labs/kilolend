@@ -711,10 +711,18 @@ contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerE
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_KILO_UTILITY_ADMIN_CHECK);
         }
+        require(newKiloStaking != address(0), "zero address");
 
+        // Verify contract implements interface
+        IKiloStaking testStaking = IKiloStaking(newKiloStaking);
+        try testStaking.getBorrowRateDiscount(address(0)) returns (uint) {
+            // Valid interface confirmed
+        } catch {
+            return fail(Error.UNAUTHORIZED, FailureInfo.SET_KILO_UTILITY_ADMIN_CHECK);
+        }
+        
         address oldKiloStaking = address(kiloStaking);
-        kiloStaking = IKiloStaking(newKiloStaking);
-
+        kiloStaking = testStaking;
         emit NewKiloStaking(oldKiloStaking, newKiloStaking);
         return uint(Error.NO_ERROR);
     }
