@@ -712,9 +712,10 @@ contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerE
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_KILO_UTILITY_ADMIN_CHECK);
         }
         require(newKiloStaking != address(0), "zero address");
+ 
         
         address oldKiloStaking = address(kiloStaking);
-        kiloStaking = testStaking;
+        kiloStaking = IKiloStaking(newKiloStaking);
         emit NewKiloStaking(oldKiloStaking, newKiloStaking);
         return uint(Error.NO_ERROR);
     }
