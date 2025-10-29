@@ -99,6 +99,8 @@ contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerE
     uint internal constant closeFactorMinMantissa = 0.05e18;
     uint internal constant closeFactorMaxMantissa = 0.9e18;
     uint internal constant collateralFactorMaxMantissa = 0.9e18;
+    uint internal constant liquidationIncentiveMinMantissa = 1.0e18;   // 100%
+    uint internal constant liquidationIncentiveMaxMantissa = 1.15e18;  // 115%
 
     constructor() {
         admin = msg.sender;
@@ -755,6 +757,9 @@ contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerE
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_CLOSE_FACTOR_OWNER_CHECK);
         }
+ 
+        require(newCloseFactorMantissa >= closeFactorMinMantissa, "close factor too low");
+        require(newCloseFactorMantissa <= closeFactorMaxMantissa, "close factor too high");
 
         uint oldCloseFactorMantissa = closeFactorMantissa;
         closeFactorMantissa = newCloseFactorMantissa;
@@ -793,6 +798,11 @@ contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerE
         if (msg.sender != admin) {
             return fail(Error.UNAUTHORIZED, FailureInfo.SET_LIQUIDATION_INCENTIVE_OWNER_CHECK);
         }
+
+        require(newLiquidationIncentiveMantissa >= liquidationIncentiveMinMantissa, 
+            "liquidation incentive too low");
+        require(newLiquidationIncentiveMantissa <= liquidationIncentiveMaxMantissa, 
+            "liquidation incentive too high");
 
         uint oldLiquidationIncentiveMantissa = liquidationIncentiveMantissa;
         liquidationIncentiveMantissa = newLiquidationIncentiveMantissa;
