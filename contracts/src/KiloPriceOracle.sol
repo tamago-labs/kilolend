@@ -50,6 +50,9 @@ contract KiloPriceOracle is Ownable, PriceOracle {
     mapping(address => uint256) public lastPriceUpdateTime;
     uint256 public constant PRICE_UPDATE_DELAY = 1 hours;
 
+    uint256 public constant MIN_INITIAL_PRICE = 1e6;    // $0.000001
+    uint256 public constant MAX_INITIAL_PRICE = 1e24;   // $1,000,000
+
     event PricePosted(address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);
     event PythFeedSet(address token, bytes32 priceId);
     event OraklFeedSet(address token, string feedName);
@@ -192,6 +195,8 @@ contract KiloPriceOracle is Ownable, PriceOracle {
         }
         require(oracleMode[asset] == 0, "only fallback mode"); 
         require(price > 0, "price must be positive");
+        require(price >= MIN_INITIAL_PRICE && price <= MAX_INITIAL_PRICE, 
+            "price out of global bounds");
 
         if (lastPriceUpdateTime[asset] != 0) {
             require(block.timestamp >= lastPriceUpdateTime[asset] + PRICE_UPDATE_DELAY,
