@@ -472,9 +472,19 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
         accountBorrows[borrower].interestIndex = borrowIndex;
         totalBorrows = totalBorrowsNew;
 
+        // Calculate KILO discount information for tracking
+        uint baseBorrowRate = interestRateModel.getBorrowRate(getCashPrior(), totalBorrowsNew, totalReserves);
+        uint borrowRateDiscountBps = comptroller.getBorrowRateDiscount(borrower);
+        uint actualBorrowRate = comptroller.getBorrowRateWithDiscount(baseBorrowRate, borrower);
+
+        // Emit KILO discount event if discount is applied
+        if (borrowRateDiscountBps > 0) {
+            emit KiloDiscountApplied(borrower, address(this), baseBorrowRate, actualBorrowRate, borrowRateDiscountBps);
+        }
+
         doTransferOut(borrower, borrowAmount);
 
-        emit Borrow(borrower, borrowAmount, accountBorrowsNew, totalBorrowsNew);
+        emit Borrow(borrower, borrowAmount, accountBorrowsNew, totalBorrowsNew, borrowRateDiscountBps, actualBorrowRate);
     }
 
     /**
@@ -524,7 +534,12 @@ abstract contract CToken is CTokenInterface, ExponentialNoError, TokenErrorRepor
         accountBorrows[borrower].interestIndex = borrowIndex;
         totalBorrows = totalBorrowsNew;
 
-        emit RepayBorrow(payer, borrower, actualRepayAmount, accountBorrowsNew, totalBorrowsNew);
+        // Calculate KILO discount information for tracking
+        uint baseBorrowRate = interestRateModel.getBorrowRate(getCashPrior(), totalBorrowsNew, totalReserves);
+        uint borrowRateDiscountBps = comptroller.getBorrowRateDiscount(borrower);
+        uint actualBorrowRate = comptroller.getBorrowRateWithDiscount(baseBorrowRate, borrower);
+
+        emit RepayBorrow(payer, borrower, actualRepayAmount, accountBorrowsNew, totalBorrowsNew, borrowRateDiscountBps, actualBorrowRate);
         return actualRepayAmount;
     }
 

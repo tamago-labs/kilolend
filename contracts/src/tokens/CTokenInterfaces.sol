@@ -148,12 +148,17 @@ abstract contract CTokenInterface is CTokenStorage {
     /**
      * @notice Event emitted when underlying is borrowed
      */
-    event Borrow(address borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows);
+    event Borrow(address borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate);
 
     /**
      * @notice Event emitted when a borrow is repaid
      */
-    event RepayBorrow(address payer, address borrower, uint repayAmount, uint accountBorrows, uint totalBorrows);
+    event RepayBorrow(address payer, address borrower, uint repayAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate);
+
+    /**
+     * @notice Event emitted when KILO discount is applied to a user
+     */
+    event KiloDiscountApplied(address indexed borrower, address indexed cToken, uint baseBorrowRate, uint discountedRate, uint discountBps);
 
     /**
      * @notice Event emitted when a borrow is liquidated
