@@ -150,4 +150,7 @@ contract ComptrollerV8Storage is ComptrollerV7Storage {
     /// @notice Flag to enable/disable KILO utility features globally
     /// @dev Emergency kill switch for KILO features
     bool public kiloUtilityEnabled;
+
+    /// @notice Emergency Circuit Breaker
+    bool public emergencyPaused;
 }

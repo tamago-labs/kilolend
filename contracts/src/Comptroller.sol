@@ -229,7 +229,7 @@ contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerE
      * @param mintAmount The amount of underlying being supplied to the market in exchange for tokens
      * @return 0 if the mint is allowed, otherwise a semi-opaque error code (See ErrorReporter.sol)
      */
-    function mintAllowed(address cToken, address minter, uint mintAmount) override external returns (uint) {
+    function mintAllowed(address cToken, address minter, uint mintAmount) override external whenNotEmergencyPaused returns (uint) {
         require(!mintGuardianPaused[cToken], "mint is paused");
         minter; mintAmount;
         if (!markets[cToken].isListed) {
@@ -299,7 +299,7 @@ contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerE
      * @param borrowAmount The amount of underlying the account would borrow
      * @return 0 if the borrow is allowed, otherwise a semi-opaque error code (See ErrorReporter.sol)
      */
-    function borrowAllowed(address cToken, address borrower, uint borrowAmount) override external returns (uint) {
+    function borrowAllowed(address cToken, address borrower, uint borrowAmount) override external whenNotEmergencyPaused returns (uint) {
         require(!borrowGuardianPaused[cToken], "borrow is paused");
 
         if (!markets[cToken].isListed) {
@@ -908,6 +908,19 @@ contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerE
         emit ActionPaused("Seize", state);
         return state;
     }
+
+    function _setEmergencyPaused(bool paused) external returns (uint) {
+        // Allow pauseGuardian or admin to pause
+        require(msg.sender == pauseGuardian || msg.sender == admin, 
+                "only pause guardian or admin");
+        // Only admin can unpause
+        require(msg.sender == admin || paused == true, 
+                "only admin can unpause");
+        
+        emergencyPaused = paused;
+        emit ActionPaused("Emergency", paused);
+        return uint(Error.NO_ERROR);
+    }
  
     function getBlockNumber() virtual internal view returns (uint) {
         return block.number;
@@ -915,6 +928,11 @@ contract Comptroller is ComptrollerV8Storage, ComptrollerInterface, ComptrollerE
 
     function getAllMarkets() public view returns (CToken[] memory) {
         return allMarkets;
+    }
+
+    modifier whenNotEmergencyPaused() {
+        require(!emergencyPaused, "protocol emergency paused");
+        _;
     }
 
 }
