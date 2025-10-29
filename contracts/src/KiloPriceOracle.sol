@@ -45,6 +45,9 @@ contract KiloPriceOracle is Ownable, PriceOracle {
 
     mapping(address => bool) public whitelist;
 
+    mapping(address => uint256) public lastValidPrice;
+    uint256 public constant MAX_PRICE_DEVIATION_BPS = 2000; // 20% max change
+
     event PricePosted(address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);
     event PythFeedSet(address token, bytes32 priceId);
     event OraklFeedSet(address token, string feedName);
@@ -186,8 +189,20 @@ contract KiloPriceOracle is Ownable, PriceOracle {
             oracleMode[asset] = 0; // fallback mode
         }
         require(oracleMode[asset] == 0, "only fallback mode"); 
+        require(price > 0, "price must be positive");
+        
+        // ADD PRICE BOUNDS CHECK:
+        uint256 lastPrice = lastValidPrice[asset];
+        if (lastPrice > 0) {
+            uint256 minPrice = lastPrice * (10000 - MAX_PRICE_DEVIATION_BPS) / 10000;
+            uint256 maxPrice = lastPrice * (10000 + MAX_PRICE_DEVIATION_BPS) / 10000;
+            require(price >= minPrice && price <= maxPrice, 
+                    "price deviation too high");
+        }
+
         emit PricePosted(asset, fallbackPrices[asset], price, price);
         fallbackPrices[asset] = price;
+        lastValidPrice[asset] = price;
     }
 
     function getPriceInfo(CToken cToken) external view returns (
