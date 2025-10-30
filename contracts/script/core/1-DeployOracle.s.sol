@@ -5,10 +5,10 @@ import {Script, console} from "forge-std/Script.sol";
 import "../../src/KiloPriceOracle.sol";
 
 /**
- * @title DeployOracle - Mainnet
+ * @title DeployOracle
  * @notice Deploy KiloPriceOracle for KAIA Mainnet (Chain ID 8217)
  * @dev Usage: 
- *   forge script script/mainnet/1-DeployOracle.s.sol --rpc-url $KAIA_RPC_URL --broadcast --verify
+ *   forge script script/core/1-DeployOracle.s.sol --rpc-url $KAIA_RPC_URL --broadcast --verify
  */
 contract DeployOracle is Script {
     
@@ -44,28 +44,34 @@ contract DeployOracle is Script {
             1e18
         );
         
-        // KAIA = $0.15 (native token / only collateral)
+        // KAIA = $0.11  
         oracle.setDirectPrice(
             0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE, // Native token address
-            0.15e18
+            0.11e18
         );
         
-        // SIX = $0.02 (volatile asset)
+        // SIX = $0.018  
         oracle.setDirectPrice(
             _getTokenAddress("SIX"),
-            0.02e18
+            0.018e18
         );
         
-        // BORA = $0.08 (volatile asset)
+        // BORA = $0.06 
         oracle.setDirectPrice(
             _getTokenAddress("BORA"),
-            0.08e18
+            0.06e18
         );
         
-        // MBX = $0.16 (volatile asset)
+        // MBX = $0.11 
         oracle.setDirectPrice(
             _getTokenAddress("MBX"),
-            0.16e18
+            0.11e18
+        );
+
+        // stKAIA = $0.11 
+        oracle.setDirectPrice(
+            _getTokenAddress("stKAIA"),
+            0.11e18
         );
         
         vm.stopBroadcast();
@@ -74,14 +80,7 @@ contract DeployOracle is Script {
         console.log("Oracle deployed successfully!");
         console.log("===========================================");
         console.log("KiloPriceOracle:", address(oracle));
-        console.log("");
-        console.log("Initial Mainnet Prices Set:");
-        console.log("- USDT: $1.00 (Stablecoin)");
-        console.log("- KAIA: $0.15 (Volatile)");
-        console.log("- SIX: $0.02 (Volatile)");
-        console.log("- BORA: 0.08 (Volatile)");
-        console.log("- MBX: $0.16 (Volatile)");
-        console.log("");
+        console.log(""); 
     }
     
     function _parsePrivateKey(string memory privateKeyString) internal pure returns (uint256) {
@@ -101,6 +100,8 @@ contract DeployOracle is Script {
             return 0x02cbE46fB8A1F579254a9B485788f2D86Cad51aa;
         } else if (keccak256(bytes(symbol)) == keccak256(bytes("MBX"))) {
             return 0xD068c52d81f4409B9502dA926aCE3301cc41f623;
+        } else if (keccak256(bytes(symbol)) == keccak256(bytes("stKAIA"))) {
+            return 0x42952B873ed6f7f0A7E4992E2a9818E3A9001995;
         }
         
         revert("Unknown token symbol");
