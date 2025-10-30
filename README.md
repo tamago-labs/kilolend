@@ -267,21 +267,18 @@ pnpm dev:https
 All smart contracts are deployed on **KAIA Mainnet** and verified through **KaiaScan**. Users can easily view contract details, transactions, and interactions directly on KaiaScan. 
 
 ### Core Contracts
-- **Comptroller:** [0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2](https://www.kaiascan.io/address/0x0B5f0Ba5F13eA4Cb9C8Ee48FB75aa22B451470C2)  
-- **KiloOracle:** [0xBB265F42Cce932c5e383536bDf50B82e08eaf454](https://www.kaiascan.io/address/0xBB265F42Cce932c5e383536bDf50B82e08eaf454)  
-- **StablecoinJumpRateModel:** [0x792ecD8E829ca66DE9a744F7a6C17F4B76FE932e](https://www.kaiascan.io/address/0x792ecD8E829ca66DE9a744F7a6C17F4B76FE932e)  
-- **VolatileRateModel:** [0x741AD28811a05845D1de298860F796a54CaE2130](https://www.kaiascan.io/address/0x741AD28811a05845D1de298860F796a54CaE2130)  
-- **CollateralRateModel:** [0x0FB331ed4abE0A2D7da880c6D81C42436B5abAC6](https://www.kaiascan.io/address/0x0FB331ed4abE0A2D7da880c6D81C42436B5abAC6)   
-- **KiloVault (KAIA):** [0xFe575cdE21BEb23d9D9F35e11E443d41CE8e68E3](https://www.kaiascan.io/address/0xFe575cdE21BEb23d9D9F35e11E443d41CE8e68E3)
+- **Comptroller:** [0x2591d179a0B1dB1c804210E111035a3a13c95a48](https://www.kaiascan.io/address/0x2591d179a0B1dB1c804210E111035a3a13c95a48)  
+- **KiloOracle:** [0xE370336C3074E76163b2f9B07876d0Cb3425488D](https://www.kaiascan.io/address/0xE370336C3074E76163b2f9B07876d0Cb3425488D)  
+- **StablecoinJumpRateModel:** [0x9948DFaC28D39c2EeDB7543E24c28df2922568A6](https://www.kaiascan.io/address/0x9948DFaC28D39c2EeDB7543E24c28df2922568A6)  
+- **VolatileRateModel:** [0x836B1A7A6996cC04bA2387e691c7947679A1eF0d](https://www.kaiascan.io/address/0x836B1A7A6996cC04bA2387e691c7947679A1eF0d)   
 
 ### Lending Markets
-- **cUSDT (Stablecoin):** [0x498823F094f6F2121CcB4e09371a57A96d619695](https://www.kaiascan.io/address/0x498823F094f6F2121CcB4e09371a57A96d619695)  
-- **cSIX (Volatile):** [0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c](https://www.kaiascan.io/address/0xC468dFD0C96691035B3b1A4CA152Cb64F0dbF64c)  
-- **cBORA (Volatile):** [0x7a937C07d49595282c711FBC613c881a83B9fDFD](https://www.kaiascan.io/address/0x7a937C07d49595282c711FBC613c881a83B9fDFD)  
-- **cMBX (Volatile):** [0xE321e20F0244500A194543B1EBD8604c02b8fA85](https://www.kaiascan.io/address/0xE321e20F0244500A194543B1EBD8604c02b8fA85)  
-- **cKAIA (Collateral Only):** [0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3](https://www.kaiascan.io/address/0x98Ab86C97Ebf33D28fc43464353014e8c9927aB3)  
-- **cStKAIA:** [0x0BC926EF3856542134B06DCf53c86005b08B9625](https://www.kaiascan.io/address/0x0BC926EF3856542134B06DCf53c86005b08B9625) 
-
+- **cUSDT (Stablecoin):** [0x20A2Cbc68fbee094754b2F03d15B1F5466f1F649](https://www.kaiascan.io/address/0x20A2Cbc68fbee094754b2F03d15B1F5466f1F649)  
+- **cSIX (Volatile):** [0x287770f1236AdbE3F4dA4f29D0f1a776f303C966](https://www.kaiascan.io/address/0x287770f1236AdbE3F4dA4f29D0f1a776f303C966)  
+- **cBORA (Volatile):** [0xA7247a6f5EaC85354642e0E90B515E2dC027d5F4](https://www.kaiascan.io/address/0xA7247a6f5EaC85354642e0E90B515E2dC027d5F4)  
+- **cMBX (Volatile):** [0xa024B1DE3a6022FB552C2ED9a8050926Fb22d7b6](https://www.kaiascan.io/address/0xa024B1DE3a6022FB552C2ED9a8050926Fb22d7b6)  
+- **cKAIA (Volatile):** [0x8A424cCf2D2B7D85F1DFb756307411D2BBc73e07](https://www.kaiascan.io/address/0x8A424cCf2D2B7D85F1DFb756307411D2BBc73e07)  
+- **cStKAIA (Volatile):** [0x2029f3E3C667EBd68b1D29dbd61dc383BdbB56e5](https://www.kaiascan.io/address/0x2029f3E3C667EBd68b1D29dbd61dc383BdbB56e5) 
 
 
 ## Learn More About dapp-portal-sdk
