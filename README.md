@@ -277,8 +277,8 @@ All smart contracts are deployed on **KAIA Mainnet** and verified through **Kaia
 - **cSIX (Volatile):** [0x287770f1236AdbE3F4dA4f29D0f1a776f303C966](https://www.kaiascan.io/address/0x287770f1236AdbE3F4dA4f29D0f1a776f303C966)  
 - **cBORA (Volatile):** [0xA7247a6f5EaC85354642e0E90B515E2dC027d5F4](https://www.kaiascan.io/address/0xA7247a6f5EaC85354642e0E90B515E2dC027d5F4)  
 - **cMBX (Volatile):** [0xa024B1DE3a6022FB552C2ED9a8050926Fb22d7b6](https://www.kaiascan.io/address/0xa024B1DE3a6022FB552C2ED9a8050926Fb22d7b6)  
-- **cKAIA (Volatile):** [0x8A424cCf2D2B7D85F1DFb756307411D2BBc73e07](https://www.kaiascan.io/address/0x8A424cCf2D2B7D85F1DFb756307411D2BBc73e07)  
-- **cStKAIA (Volatile):** [0x2029f3E3C667EBd68b1D29dbd61dc383BdbB56e5](https://www.kaiascan.io/address/0x2029f3E3C667EBd68b1D29dbd61dc383BdbB56e5) 
+- **cStKAIA (Volatile):** [0x8A424cCf2D2B7D85F1DFb756307411D2BBc73e07](https://www.kaiascan.io/address/0x8A424cCf2D2B7D85F1DFb756307411D2BBc73e07)  
+- **cKAIA (Volatile):** [0x2029f3E3C667EBd68b1D29dbd61dc383BdbB56e5](https://www.kaiascan.io/address/0x2029f3E3C667EBd68b1D29dbd61dc383BdbB56e5) 
 
 
 ## Learn More About dapp-portal-sdk
