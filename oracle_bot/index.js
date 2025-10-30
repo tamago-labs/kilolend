@@ -1,11 +1,12 @@
 const axios = require('axios');
 const { ethers } = require('ethers');
 const dotenv = require('dotenv');
+const express = require('express');
 
 // Load environment variables
 dotenv.config();
 
-// KiloPriceOracle ABI - only the functions we need
+// KiloPriceOracle ABI
 const KILO_PRICE_ORACLE_ABI = [
   "function setDirectPrice(address asset, uint256 price) external",
   "function getUnderlyingPrice(address cToken) external view returns (uint256)",
@@ -25,17 +26,21 @@ class OracleBot {
 
     // Token address mapping - underlying tokens for price updates
     this.tokenAddresses = {
+      // 'KAIA': ethers.ZeroAddress, // Native KAIA not needed since we use Orakl Oracle
+      // 'USDT': process.env.USDT_ADDRESS // USDT is fixed at 1, so no updates are needed
       'BORA': process.env.BORA_ADDRESS,
       'SIX': process.env.SIX_ADDRESS,
       'MARBLEX': process.env.MBX_ADDRESS,  // API returns MARBLEX but we call it MBX
-      'STAKED_KAIA': process.env.STAKED_KAIA_ADDRESS,  // New stKAIA token
-      'KAIA': ethers.ZeroAddress, // Native KAIA
-      'USDT': process.env.USDT_ADDRESS
+      'STAKED_KAIA': process.env.STAKED_KAIA_ADDRESS,  // New stKAIA token 
     };
 
     this.provider = null;
     this.wallet = null;
     this.oracleContract = null;
+    this.isInitialized = false;
+    this.lastUpdateTime = null;
+    this.updateCount = 0;
+    this.errorCount = 0;
 
     this.init();
   }
@@ -66,12 +71,14 @@ class OracleBot {
       // Check if wallet is whitelisted
       await this.checkWhitelistStatus();
 
+      this.isInitialized = true;
+
       // Start the update loop
       this.startUpdateLoop();
 
     } catch (error) {
       console.error('❌ Failed to initialize Oracle Bot:', error.message);
-      process.exit(1);
+      this.isInitialized = false;
     }
   }
 
@@ -222,7 +229,7 @@ class OracleBot {
 
   async runUpdate() {
     try {
-      console.log('\\n🔄 Starting price update cycle...');
+      console.log('\n🔄 Starting price update cycle...');
       console.log(`⏰ ${new Date().toISOString()}`);
 
       // Fetch latest prices
@@ -231,11 +238,14 @@ class OracleBot {
       // Update oracle
       await this.updatePrices(priceData);
 
-      console.log('✅ Update cycle completed successfully\\n');
+      this.lastUpdateTime = new Date().toISOString();
+      this.updateCount++;
+      console.log('✅ Update cycle completed successfully\n');
 
     } catch (error) {
       console.error('❌ Update cycle failed:', error.message);
-      console.log('🔄 Will retry on next cycle\\n');
+      this.errorCount++;
+      console.log('🔄 Will retry on next cycle\n');
     }
   }
 
@@ -258,21 +268,55 @@ class OracleBot {
     console.log('🛑 Shutting down Oracle Bot...');
     process.exit(0);
   }
+
+  // Health check status
+  getHealthStatus() {
+    return {
+      status: this.isInitialized ? 'healthy' : 'unhealthy',
+      initialized: this.isInitialized,
+      lastUpdate: this.lastUpdateTime,
+      updateCount: this.updateCount,
+      errorCount: this.errorCount,
+      oracle: this.oracleAddress,
+      timestamp: new Date().toISOString()
+    };
+  }
 }
 
 // Handle graceful shutdown
 process.on('SIGINT', () => {
-  console.log('\\n🛑 Received SIGINT, shutting down...');
+  console.log('\n🛑 Received SIGINT, shutting down...');
   process.exit(0);
 });
 
 process.on('SIGTERM', () => {
-  console.log('\\n🛑 Received SIGTERM, shutting down...');
+  console.log('\n🛑 Received SIGTERM, shutting down...');
   process.exit(0);
 });
 
-// Start the bot
+// Start the bot and health check server
 console.log('🎯 KiloLend Oracle Bot Starting...');
 console.log('================================');
 
 const bot = new OracleBot();
+
+// Create Express server for health checks
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  const health = bot.getHealthStatus();
+  
+  if (health.status === 'healthy') {
+    res.status(200).json(health);
+  } else {
+    res.status(503).json(health);
+  }
+});
+
+// Start the Express server
+app.listen(PORT, () => {
+  console.log(`🌐 Health check server running on port ${PORT}`);
+  console.log(`📊 Health check available at: /health`);
+});

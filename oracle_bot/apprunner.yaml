@@ -1,0 +1,26 @@
+# AWS App Runner Configuration
+version: 1.0
+
+# Runtime configuration - using Node.js 22
+runtime: nodejs22
+build:
+  commands:
+    build:
+      - npm install --production
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: LOG_LEVEL
+      value: INFO
+
+# Runtime configuration
+run:
+  runtime-version: 22.14.0
+  command: npm start
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: LOG_LEVEL
+      value: INFO
+    - name: PORT
+      value: "3000"
