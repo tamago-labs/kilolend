@@ -25,7 +25,8 @@ import {
   NavigationContainer,
   NavButton,
   ErrorMessage,
-  ApprovalMessage
+  ApprovalMessage,
+  WarningMessage
 } from "./styled"
 import { truncateToSafeDecimals, validateAmountAgainstBalance, isAmountExceedingBalance, getSafeMaxAmount } from "@/utils/tokenUtils"
 
@@ -145,10 +146,10 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       const fullBalance = getFullPrecisionBalance(selectedAsset.symbol);
       const quickAmount = (parseFloat(fullBalance) * percentage / 100);
       const decimals = selectedAsset.decimals || 18;
-      
+
       // Use safe decimal truncation to prevent precision errors
       const safeAmount = truncateToSafeDecimals(quickAmount.toString(), decimals);
-      
+
       setAmount(safeAmount);
       setSelectedQuickAmount(percentage);
       setValidationError(null);
@@ -159,7 +160,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     if (selectedAsset) {
       const fullBalance = getFullPrecisionBalance(selectedAsset.symbol);
       const decimals = selectedAsset.decimals || 18;
-      
+
       // Use safe maximum amount calculation
       const safeBalance = getSafeMaxAmount(fullBalance, selectedAsset.id);
 
@@ -174,7 +175,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
     if (selectedAsset && amount && parseFloat(amount) > 0) {
       const fullBalance = getFullPrecisionBalance(selectedAsset.symbol);
       const validation = validateAmountAgainstBalance(amount, fullBalance, selectedAsset.id);
-      
+
       if (!validation.isValid) {
         setValidationError(validation.error || 'Invalid amount');
       } else {
@@ -417,6 +418,13 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
               This asset will be enabled as collateral, allowing you to borrow against it. You can disable this later if needed.
             </ApprovalMessage>
           )}
+
+          <WarningMessage>
+            Smart contract migration in progress to enhance long-term stability and prepare for the launch of our KILO tokens.
+            All supply operations are temporarily paused. Expected completion: <strong>Nov 1 (or earlier)</strong>.
+            We apologize for the inconvenience and appreciate your patience.
+          </WarningMessage>
+          <br />
 
           {renderStepContent()}
         </StepContent>

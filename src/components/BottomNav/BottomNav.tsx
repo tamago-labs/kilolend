@@ -40,7 +40,7 @@ const NavButton = styled.button<{ $active?: boolean }>`
   }
 `;
 
-export type TabType = 'home' | 'portfolio' | 'activity' | 'profile';
+export type TabType = 'home' | 'portfolio' | 'activity' | 'profile' | 'migrate';
 
 interface BottomNavProps {
   activeTab: TabType;
@@ -62,6 +62,9 @@ export const BottomNav = ({ activeTab, onTabChange }: BottomNavProps) => {
         </NavButton>  */}
         <NavButton $active={activeTab === 'profile'} onClick={() => onTabChange('profile')}>
           PROFILE
+        </NavButton>
+        <NavButton $active={activeTab === 'migrate'} onClick={() => onTabChange('migrate')}>
+          MIGRATE
         </NavButton>
       </NavContent>
     </NavContainer>

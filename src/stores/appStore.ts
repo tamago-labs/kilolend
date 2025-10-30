@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export interface AppState {
-  activeTab: 'home' | 'portfolio' | 'activity' | 'profile';
+  activeTab: 'home' | 'portfolio' | 'activity' | 'profile' | 'migrate';
   isLoading: boolean;
   lastUpdated: number;
   priceUpdateInterval: number;

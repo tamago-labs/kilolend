@@ -196,12 +196,10 @@ const IconImage = styled.img`
   }
 `;
 
-interface HomePageProps {
-  onAIDealsGenerated?: (userQuery: string) => void;
-}
+ 
 
-
-export const HomePage = ({ onAIDealsGenerated }: HomePageProps) => {
+export const HomePage = () => {
+  
   const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
   const { openModal } = useModalStore();
 

@@ -86,6 +86,16 @@ export const ErrorMessage = styled.div`
   font-size: 14px;
 `;
 
+export const WarningMessage = styled.div`
+  background: #fffbeb;
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  color: #b45309;
+  font-size: 14px;
+`;
+
 export const ApprovalMessage = styled.div`
   background: #f0f9ff;
   border: 1px solid #0ea5e9;
