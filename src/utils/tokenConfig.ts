@@ -166,25 +166,12 @@ export const ERC20_ABI: any = [
   // Mock token specific function for faucet
   "function mint(address to, uint256 amount) returns (bool)"
 ];
-
-// KAIA network configuration
-export const KAIA_TESTNET_CONFIG = {
-  chainId: 1001,
-  name: 'KAIA Testnet',
-  rpcUrl: 'https://public-en-kairos.node.kaia.io',
-  blockExplorer: 'https://kairos.kaiascan.io',
-  nativeCurrency: {
-    name: 'KAIA',
-    symbol: 'KAIA', 
-    decimals: 18
-  }
-};
+ 
 
 export const KAIA_MAINNET_CONFIG = {
   chainId: 8217,
   name: 'KAIA Mainet',
-  rpcUrl: 'https://public-en.node.kaia.io',
-  // rpcUrl: "https://rpc.ankr.com/kaia",
+  rpcUrl: 'https://public-en.node.kaia.io', 
   blockExplorer: 'https://kaiascan.io',
   nativeCurrency: {
     name: 'KAIA',
