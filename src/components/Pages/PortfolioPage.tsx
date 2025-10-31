@@ -308,6 +308,56 @@ const TokenIcon = styled.img`
   border-radius: 50%;
 `;
 
+const ConnectCard = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 40px 24px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  text-align: center;
+  margin-bottom: 20px;
+
+  @media (max-width: 480px) {
+    padding: 32px 20px;
+    margin-bottom: 16px;
+  }
+`;
+
+const ConnectIcon = styled.div`
+  width: 64px;
+  height: 64px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 28px;
+`;
+
+const ConnectTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+
+  @media (max-width: 480px) {
+    font-size: 18px;
+  }
+`;
+
+const ConnectDescription = styled.p`
+  font-size: 16px;
+  color: #64748b;
+  line-height: 1.5;
+  margin-bottom: 24px;
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+`;
+
 interface Position {
   marketId: string;
   symbol: string;
@@ -505,13 +555,15 @@ export const PortfolioPage = () => {
       <PageContainer>
         <PageTitle>Portfolio</PageTitle>
         <PageSubtitle>
-          Connect your wallet to view your lending positions
+          Track your portfolio performance and manage your lending activities
         </PageSubtitle>
-        <EmptyState>
-          <EmptyIcon>👤</EmptyIcon>
-          <h3 style={{ marginBottom: '8px', color: '#1e293b' }}>Wallet Not Connected</h3>
-          <p>Please connect your wallet to access this section</p>
-        </EmptyState>
+        <ConnectCard>
+          <ConnectIcon>👤</ConnectIcon>
+          <ConnectTitle>Wallet Not Connected</ConnectTitle>
+          <ConnectDescription>
+            Please connect your wallet to access your portfolio and view your lending positions
+          </ConnectDescription>
+        </ConnectCard>
       </PageContainer>
     );
   }
