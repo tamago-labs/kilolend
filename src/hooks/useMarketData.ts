@@ -5,6 +5,7 @@ import { useMarketContract } from './useMarketContract';
 import { MARKET_CONFIG, MarketId } from '@/utils/contractConfig';
 
 export const useMarketData = () => {
+  
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);

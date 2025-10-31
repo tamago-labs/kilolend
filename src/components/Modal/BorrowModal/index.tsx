@@ -4,11 +4,11 @@ import { useState, useEffect } from 'react';
 import { BaseModal } from '../BaseModal';
 import { ChevronRight } from 'react-feather';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract, TransactionResult } from '@/hooks/useMarketContract';
+import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
-import { useUserPositions } from '@/hooks/useUserPositions';
-import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
+import { useUserPositions } from '@/hooks/v1/useUserPositions';
+import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
 import {
   BorrowAssetSelection,
   BorrowAmountInput,
@@ -59,7 +59,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   // Get formatted balances including both supply and borrow
   const formattedBalances = getFormattedBalances();
   
-  // Convert to the format expected by components (including underlying token balances and borrow balances)
+  // Convert to the format expected by components 
   const userBalances = Object.keys(tokenBalances).reduce((acc, marketId) => {
     const balance = tokenBalances[marketId];
     const symbol = balance.symbol;

@@ -4,9 +4,9 @@ import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { BaseModal } from './BaseModal';
 import { ChevronRight } from 'react-feather';
-import { useMarketContract, TransactionResult } from '@/hooks/useMarketContract';
+import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
 import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils";
 
 const Container = styled.div`

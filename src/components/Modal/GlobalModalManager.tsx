@@ -65,12 +65,6 @@ export const GlobalModalManager = () => {
           />
         );
 
-       
-
-      
-
-       
-
       case 'ai-chat-new':
         return (
           <AIChatModal

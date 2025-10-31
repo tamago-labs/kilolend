@@ -7,7 +7,7 @@ import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useSendTransaction } from '@/hooks/useSendTransaction';
 import { usePriceUpdates } from '@/hooks/usePriceUpdates';
-import { KAIA_TESTNET_TOKENS, KAIA_SCAN_URL } from '@/utils/tokenConfig';
+import {  KAIA_SCAN_URL } from '@/utils/tokenConfig';
 import { liff } from '@/utils/liff';
 import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils";
 import {  Camera, Send, AlertCircle, CheckCircle, ExternalLink } from 'react-feather';
@@ -419,8 +419,7 @@ export const SendModal = ({ isOpen, onClose }: SendModalProps) => {
 
   // Get selected token info
   const selectedTokenInfo = balances.find(token => token.symbol === selectedToken);
-  const tokenConfig = selectedToken === 'KAIA' ? null : KAIA_TESTNET_TOKENS[selectedToken as keyof typeof KAIA_TESTNET_TOKENS];
-
+  
   // Validate amount against balance
   useEffect(() => {
     if (amount && parseFloat(amount) > 0 && selectedTokenInfo) {

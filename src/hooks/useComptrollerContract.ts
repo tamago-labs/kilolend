@@ -267,12 +267,6 @@ export const useComptrollerContract = (): ComptrollerContractHook => {
         // Convert mantissa to percentage (mantissa is scaled by 1e18)
         const collateralFactor = Number(ethers.formatUnits(collateralFactorMantissa, 18)) * 100;
 
-        // console.log(`Market info for ${cToken}:`, {
-        //   isListed,
-        //   collateralFactorMantissa: collateralFactorMantissa.toString(),
-        //   collateralFactor: `${collateralFactor.toFixed(1)}%`
-        // });
-
         return {
           isListed,
           collateralFactorMantissa: collateralFactorMantissa.toString(),

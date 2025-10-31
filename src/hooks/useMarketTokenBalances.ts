@@ -17,6 +17,7 @@ export interface MarketTokenBalance {
 }
 
 export const useMarketTokenBalances = () => {
+  
   const { account } = useWalletAccountStore();
   
   const [balances, setBalances] = useState<Record<string, MarketTokenBalance>>({});

@@ -1,12 +1,10 @@
 import { useCallback } from 'react';
-import { ethers } from 'ethers';
-import BigNumber from 'bignumber.js';
+import { ethers } from 'ethers'; 
 import { CTOKEN_ABI } from '@/utils/contractABIs';
 import { MARKET_CONFIG, MarketId } from '@/utils/contractConfig';
 import {
   getContract,
-  parseTokenAmount,
-  formatTokenAmount,
+  parseTokenAmount, 
 } from '@/utils/contractUtils';
 import { useKaiaWalletSdk } from '@/components/Wallet/Sdk/walletSdk.hooks';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';

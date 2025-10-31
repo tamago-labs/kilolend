@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react';
 import { BaseModal } from '../BaseModal';
 import { ChevronRight } from 'react-feather';
-import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract, MarketInfo, TransactionResult } from '@/hooks/useMarketContract';
-import { useComptrollerContract } from '@/hooks/useComptrollerContract';
+import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
-import { useUserPositions } from '@/hooks/useUserPositions';
-import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
-import { useTokenApproval } from '@/hooks/useTokenApproval';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
+import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
+import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
+import { useUserPositions } from '@/hooks/v1/useUserPositions'; 
+import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
 import {
   SupplyAssetSelection,
   SupplyAmountInput,
@@ -25,9 +24,9 @@ import {
   NavigationContainer,
   NavButton,
   ErrorMessage,
-  ApprovalMessage,
-  WarningMessage
+  ApprovalMessage, 
 } from "./styled"
+
 import { truncateToSafeDecimals, validateAmountAgainstBalance, isAmountExceedingBalance, getSafeMaxAmount } from "@/utils/tokenUtils"
 
 interface SupplyModalProps {
@@ -36,6 +35,7 @@ interface SupplyModalProps {
 }
 
 export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
+  
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [amount, setAmount] = useState('');
@@ -100,6 +100,9 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
           const marketAddress = selectedAsset.marketAddress;
           if (marketAddress) {
             const isEntered = await isMarketEntered(account, marketAddress);
+
+            console.log("isEntered:", isEntered)
+
             setIsMarketAlreadyEntered(isEntered);
 
             // If market is already entered, don't need to enable collateral
@@ -229,18 +232,15 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
         setNeedsApproval(false);
       }
 
-      // Step 2: Execute supply transaction
-      console.log(`Starting supply transaction for ${amount} ${selectedAsset.symbol}`);
-      const supplyResult = await supply(selectedAsset.id, amount);
+      console.log("isMarketAlreadyEntered: 123", isMarketAlreadyEntered)
 
-      if (supplyResult.status !== 'confirmed') {
-        throw new Error(supplyResult.error || 'Supply transaction failed');
-      }
+      console.log("enableAsCollateral: 123", enableAsCollateral, selectedAsset)
 
-      console.log(`Supply successful: ${amount} ${selectedAsset.symbol} supplied`);
-
-      // Step 3: Enter market if user enabled collateral and market not already entered
+      // Step 2: Enter market if user enabled collateral and market not already entered
       if (enableAsCollateral && !isMarketAlreadyEntered && selectedAsset.marketAddress) {
+        
+        console.log("hello from here...")
+        
         setIsEnteringMarket(true);
         console.log(`Entering market for ${selectedAsset.symbol} to enable as collateral`);
 
@@ -255,6 +255,16 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
 
         setIsEnteringMarket(false);
       }
+
+      // Step 3: Execute supply transaction
+      console.log(`Starting supply transaction for ${amount} ${selectedAsset.symbol}`);
+      const supplyResult = await supply(selectedAsset.id, amount);
+
+      if (supplyResult.status !== 'confirmed') {
+        throw new Error(supplyResult.error || 'Supply transaction failed');
+      }
+
+      console.log(`Supply successful: ${amount} ${selectedAsset.symbol} supplied`);
 
       // Step 4: Refresh all data after successful transaction
       setTimeout(() => {
@@ -419,11 +429,12 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
             </ApprovalMessage>
           )}
 
-          <WarningMessage>
-            Smart contract migration in progress to enhance long-term stability and prepare for the launch of our KILO tokens.
-            All supply operations are temporarily paused. Expected completion: <strong>Nov 1 (or earlier)</strong>.
-            We apologize for the inconvenience and appreciate your patience.
-          </WarningMessage>
+          { currentStep === 1 && (
+            <ApprovalMessage>
+            If you have positions on KiloLend hackathon version, please visit our Migrate Page to help transfer your assets to v1
+          </ApprovalMessage>
+          ) }
+ 
           <br />
 
           {renderStepContent()}

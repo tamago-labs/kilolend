@@ -1,8 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
-import { useModalStore } from '@/stores/modalStore';
-import { useMarketDataWithPrices } from '@/hooks/useMarketDataWithPrices';
+import { useModalStore } from '@/stores/modalStore'; 
 import { TokenPriceSwiper, WelcomeSwiper } from '@/components/Swiper';
 import RandomIcon from "@/components/RandomIcon"
 import { WelcomeModal } from '../Modal/WelcomeModal';
@@ -203,9 +202,6 @@ export const HomePage = () => {
   const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
   const { openModal } = useModalStore();
 
-  // Initialize market data and real-time prices
-  useMarketDataWithPrices();
-
   const handleWelcomeClose = () => {
     markAsShown();
   };
@@ -242,9 +238,9 @@ export const HomePage = () => {
     openModal('send');
   };
 
-  const handleSwap = () => {
-    openModal('swap');
-  };
+  // const handleSwap = () => {
+  //   openModal('swap');
+  // };
 
   return (
     <PageContainer>

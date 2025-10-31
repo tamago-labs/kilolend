@@ -4,11 +4,11 @@ import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { BaseModal } from './BaseModal';
 import { ChevronRight } from 'react-feather';
-import { useMarketContract, TransactionResult } from '@/hooks/useMarketContract';
+import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
-import { useTokenApproval } from '@/hooks/useTokenApproval';
-import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
+import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
+import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
 import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils";
 
 const Container = styled.div`

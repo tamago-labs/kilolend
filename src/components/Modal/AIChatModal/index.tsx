@@ -3,12 +3,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { BaseModal } from '../BaseModal';
 import { AgentSelectionStep } from './AgentSelectionStep';
-import { ChatStep } from './ChatStep';
-import { ChatStepWithExecution } from "./ChatStepWithExecution"
+import { ChatStep } from './ChatStep'; 
 import { Container, StepContent, ErrorMessage } from './styled';
 import { AgentPreset, AIAgent } from '@/types/aiAgent';
-import { useMarketContract } from '@/hooks/useMarketContract';
-import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+import { useMarketContract } from '@/hooks/v1/useMarketContract';
+import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useContractUserStore } from '@/stores/contractUserStore';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
@@ -155,7 +154,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
     setFinalAgent(null);
     setError(null);
   };
- 
+
   const renderStepContent = () => {
     switch (currentStep) {
       case 'selection':
@@ -169,21 +168,11 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
 
       case 'chat':
         return finalAgent ? (
-          finalAgent.name !== "Secured D" ?
-            (
-              <ChatStep
-                agent={finalAgent}
-                onBack={handleBackToAgentSelection}
-                onReset={handleReset}
-              />
-            ) :
-            (
-              <ChatStepWithExecution
-                agent={finalAgent}
-                onBack={handleBackToAgentSelection}
-                onReset={handleReset}
-              />
-            ) 
+          <ChatStep
+            agent={finalAgent}
+            onBack={handleBackToAgentSelection}
+            onReset={handleReset}
+          />
         ) : null;
 
       default:

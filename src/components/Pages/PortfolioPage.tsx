@@ -5,9 +5,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from '@/hooks/useMarketContract';
-import { useMarketTokenBalances } from '@/hooks/useMarketTokenBalances';
-import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+import { useMarketContract } from '@/hooks/v1/useMarketContract'; 
+import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
 import { useModalStore } from '@/stores/modalStore';
 import { PortfolioOverview } from '../Portfolio/PortfolioOverview';
 
@@ -591,8 +590,7 @@ export const PortfolioPage = () => {
       <PageTitle>Portfolio</PageTitle>
       <PageSubtitle>
         Your lending and borrowing positions
-      </PageSubtitle>
-
+      </PageSubtitle> 
       {
         hasPositions ? (
           <>
@@ -629,11 +627,7 @@ export const PortfolioPage = () => {
                 {activeTab === 'supply' && (
                   <>
                     {supplyPositions.length > 0 ? (
-                      <>
-                        {/* <TabTitle>
-                          Your Supply Positions
-                          <PositionCount>{supplyPositions.length}</PositionCount>
-                        </TabTitle> */}
+                      <> 
                         <PositionsList>
                           {supplyPositions.map(renderPosition)}
                         </PositionsList>
@@ -652,11 +646,7 @@ export const PortfolioPage = () => {
                 {activeTab === 'borrow' && (
                   <>
                     {borrowPositions.length > 0 ? (
-                      <>
-                        {/* <TabTitle>
-                          Your Borrow Positions
-                          <PositionCount>{borrowPositions.length}</PositionCount>
-                        </TabTitle> */}
+                      <> 
                         <PositionsList>
                           {borrowPositions.map(renderPosition)}
                         </PositionsList>
