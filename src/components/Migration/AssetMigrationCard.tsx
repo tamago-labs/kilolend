@@ -447,16 +447,38 @@ export const AssetMigrationCard = (({
   }, [type, amount, balance, position.marketId]);
 
   const handleQuickAmount = useCallback((percentage: number) => {
-    const fullBalance = parseFloat(balance);
+    // Use different balance source based on active tab
+    let sourceBalance: string;
+    
+    if (activeTab === 'supply') {
+      // For supply to V1, use wallet balance
+      sourceBalance = walletBalanceDisplay;
+    } else {
+      // For withdraw/repay, use position balance
+      sourceBalance = balance;
+    }
+    
+    const fullBalance = parseFloat(sourceBalance);
     const quickAmount = (fullBalance * percentage / 100).toString();
     const decimals = position.decimals || 18;
     const safeAmount = truncateToSafeDecimals(quickAmount, decimals);
     setAmount(safeAmount);
     setSelectedQuick(percentage);
-  }, [balance, position.decimals]);
+  }, [balance, walletBalanceDisplay, position.decimals, activeTab]);
 
   const handleMaxAmount = useCallback(() => {
     const marketId = position.marketId.toLowerCase() as any;
+
+    // Use different balance source based on active tab
+    let sourceBalance: string;
+    
+    if (activeTab === 'supply') {
+      // For supply to V1, use wallet balance
+      sourceBalance = walletBalanceDisplay;
+    } else {
+      // For withdraw/repay, use position balance
+      sourceBalance = balance;
+    }
 
     // For withdraw, we need to account for health factor and collateral constraints
     // if (activeTab === 'withdraw' && type === 'supply') {
@@ -477,7 +499,7 @@ export const AssetMigrationCard = (({
     //     const maxWithdrawTokens = maxWithdrawUSD / position.price;
 
     //     // Take the minimum of balance and calculated max withdraw
-    //     const finalMaxAmount = Math.min(parseFloat(balance), maxWithdrawTokens);
+    //     const finalMaxAmount = Math.min(parseFloat(sourceBalance), maxWithdrawTokens);
 
     //     if (finalMaxAmount > 0) {
     //       const decimals = position.decimals || 18;
@@ -490,7 +512,7 @@ export const AssetMigrationCard = (({
 
     //   // If no debt or healthy enough, allow full balance with small buffer
     //   if (totalBorrowValue === 0 || currentHealthFactor > 2) {
-    //     const bufferAmount = parseFloat(balance) * 0.99; // 1% buffer for safety
+    //     const bufferAmount = parseFloat(sourceBalance) * 0.99; // 1% buffer for safety
     //     const decimals = position.decimals || 18;
     //     const safeAmount = truncateToSafeDecimals(bufferAmount.toString(), decimals);
     //     setAmount(safeAmount);
@@ -500,7 +522,7 @@ export const AssetMigrationCard = (({
     // }
 
     if (type === 'supply') {
-      const safeAmount = getSafeMaxAmount(balance, marketId);
+      const safeAmount = getSafeMaxAmount(sourceBalance, marketId);
       const roundedDown = Math.floor(Number(safeAmount) * 10000) / 10000; // round down to 4 decimals
       setAmount(`${roundedDown.toFixed(4)}`);
       setSelectedQuick(99);
@@ -508,10 +530,10 @@ export const AssetMigrationCard = (({
     }
 
     // For supply and repay, use regular safe max amount
-    const safeAmount = getSafeMaxAmount(balance, marketId);
+    const safeAmount = getSafeMaxAmount(sourceBalance, marketId);
     setAmount(safeAmount);
     setSelectedQuick(100);
-  }, [balance, position.marketId, activeTab, type, borrowingPower, position.price, position.decimals]);
+  }, [balance, walletBalanceDisplay, position.marketId, activeTab, type, borrowingPower, position.price, position.decimals]);
 
   const handleWithdraw = useCallback(async () => {
     if (!amount || !account) return;
