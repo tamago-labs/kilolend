@@ -1,14 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { ArrowLeft, TrendingUp, AlertCircle } from 'react-feather';
+import { ArrowLeft, TrendingUp, AlertCircle, AlertTriangle } from 'react-feather';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useModalStore } from '@/stores/modalStore';
 import { useDualPositions } from '@/hooks/useDualPositions';
 import { useMigrationContract } from '@/hooks/useMigrationContract';
 import { AssetMigrationCard } from '@/components/Migration/AssetMigrationCard';
 import { EligibilityStatus } from '@/components/Migration/EligibilityStatus';
+import { useTokenBalances } from '@/hooks/useTokenBalances';
+import { Position } from '@/hooks/useDualPositions';
+import { useMarketContract } from '@/hooks/useMarketContract';
+import { useMarketContract as useV1MarketContract } from '@/hooks/v1/useMarketContract';
+import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from '@/utils/tokenUtils';
+import { useTokenApproval } from '@/hooks/useTokenApproval'; // For repay
+import { useTokenApproval as useV1TokenApproval } from '@/hooks/v1/useTokenApproval'; // For supply
+import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
+
 
 const Container = styled.div`
   max-width: 1200px;
@@ -21,7 +30,7 @@ const Container = styled.div`
 const Header = styled.div`
   margin-bottom: 32px;
 `;
- 
+
 
 const Title = styled.h1`
   font-size: 32px;
@@ -110,6 +119,7 @@ const EmptyDescription = styled.p`
   margin: 0 auto;
 `;
 
+
 const InfoCard = styled.div`
   background: #f0f9ff;
   border: 1px solid #0ea5e9;
@@ -135,223 +145,184 @@ const InfoText = styled.div`
 type TabType = 'supply' | 'borrow';
 
 export const MigratePage = () => {
+
+  const { getBalanceBySymbol } = useTokenBalances();
+
   const { account } = useWalletAccountStore();
-  const { openModal, closeModal } = useModalStore();
-  const { hackathonPositions, v1Positions, isLoading } = useDualPositions();
-  const { 
-    checkHackathonEligibility, 
-    checkV1Eligibility, 
-    getBonusStatus, 
-    claimBonus, 
-    isLoading: isClaimingBonus 
-  } = useMigrationContract();
-  
+  const { hackathonPositions, v1Positions, isLoading, refreshPositions } = useDualPositions();
+  const { withdraw: hackathonWithdraw, repay: hackathonRepay } = useMarketContract();
+  const { supply: v1Supply } = useV1MarketContract();
+  const {
+    checkAllowance: checkV1Allowance,
+    ensureApproval: ensureV1Approval
+  } = useV1TokenApproval();
+  const {
+    checkAllowance: checkHackathonAllowance,
+    ensureApproval: ensureHackathonApproval
+  } = useTokenApproval();
+  const { enterMarkets, isMarketEntered } = useComptrollerContract();
+  const { calculateBorrowingPower } = useBorrowingPower();
+
+
+  // const {
+  //     checkHackathonEligibility,
+  //     checkV1Eligibility,
+  //     getBonusStatus,
+  //     claimBonus,
+  //     isLoading: isClaimingBonus
+  // } = useMigrationContract();
+
   const [activeTab, setActiveTab] = useState<TabType>('supply');
-  const [hackathonEligible, setHackathonEligible] = useState(false);
-  const [v1Eligible, setV1Eligible] = useState(false);
-  const [bonusClaimed, setBonusClaimed] = useState(false);
+  // const [hackathonEligible, setHackathonEligible] = useState(false);
+  // const [v1Eligible, setV1Eligible] = useState(false);
+  // const [bonusClaimed, setBonusClaimed] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<Record<string, string>>({});
 
-  // Check eligibility when account changes
-  useEffect(() => {
-    const checkEligibility = async () => {
-      if (!account) return;
+   
 
-      try {
-        const [hackEligible, v1Eligible, bonusStatus] = await Promise.all([
-          checkHackathonEligibility(account),
-          checkV1Eligibility(account),
-          getBonusStatus(account)
-        ]);
+  const borrowPositions = hackathonPositions.filter(pos =>
+    parseFloat(pos.formattedSupplyBalance) > 0 ||
+    parseFloat(pos.formattedBorrowBalance) > 0
+  );
 
-        setHackathonEligible(hackEligible);
-        setV1Eligible(v1Eligible);
-        setBonusClaimed(bonusStatus.claimed);
-      } catch (error) {
-        console.error('Error checking eligibility:', error);
-      }
-    };
-
-    checkEligibility();
-  }, [account]);
-
-  // Initialize migration status
-  useEffect(() => {
-    const status: Record<string, string> = {};
-    
-    hackathonPositions.forEach(position => {
-      const key = `${position.marketId}-supply`;
-      status[key] = 'pending';
-    });
-    
-    hackathonPositions.forEach(position => {
-      const key = `${position.marketId}-borrow`;
-      status[key] = 'pending';
-    });
-
-    setMigrationStatus(status);
-  }, [hackathonPositions]);
-
-  const handleWithdraw = (position: any) => {
-    openModal('withdraw', {
-      market: position,
-      currentSupply: position.formattedSupplyBalance,
-      maxWithdraw: position.formattedSupplyBalance
-    });
-  };
-
-  const handleSupply = (position: any) => {
-    openModal('supply', {
-      preSelectedMarket: position
-    });
-  };
-
-  const handleRepay = (position: any) => {
-    openModal('repay', {
-      market: position,
-      currentDebt: position.formattedBorrowBalance,
-      totalDebt: position.formattedBorrowBalance
-    });
-  };
-
-  const handleClaimBonus = async () => {
-    try {
-      const result = await claimBonus();
-      if (result.status === 'confirmed') {
-        setBonusClaimed(true);
-      }
-    } catch (error) {
-      console.error('Error claiming bonus:', error);
-    }
-  };
-
-  const getSupplyPositions = () => {
-    return hackathonPositions.filter(pos => 
-      parseFloat(pos.formattedSupplyBalance) > 0
-    );
-  };
-
-  const getBorrowPositions = () => {
-    return hackathonPositions.filter(pos => 
-      parseFloat(pos.formattedBorrowBalance) > 0
-    );
-  };
-
-  const renderContent = () => {
-    if (isLoading) {
-      return <EmptyState> 
-        <EmptyTitle>Loading positions...</EmptyTitle>
-      </EmptyState>;
-    }
-
-    switch (activeTab) {
-      case 'supply':
-        const supplyPositions = getSupplyPositions();
-        if (supplyPositions.length === 0) {
-          return (
-            <EmptyState> 
-              <EmptyTitle>No Supply Positions Found</EmptyTitle>
-              <EmptyDescription>
-                You don't have any supply positions in the hackathon version that need migration.
-              </EmptyDescription>
-            </EmptyState>
-          );
-        }
-
-        return (
-          <>
-            {/* <InfoCard>
-              <InfoIcon><AlertCircle size={20} /></InfoIcon>
-              <InfoText>
-                Migrate your supply positions from the hackathon version to V1. 
-                First withdraw from hackathon, then supply to V1 to complete the migration.
-              </InfoText>
-            </InfoCard> */}
-            {supplyPositions.map(position => (
-              <AssetMigrationCard
-                key={position.marketId}
-                position={position}
-                type="supply"
-                migrationStatus={migrationStatus[`${position.marketId}-supply`] || 'pending'}
-              />
-            ))}
-          </>
-        );
-
-      case 'borrow':
-        const borrowPositions = getBorrowPositions();
-        if (borrowPositions.length === 0) {
-          return (
-            <EmptyState> 
-              <EmptyTitle>No Borrow Positions Found</EmptyTitle>
-              <EmptyDescription>
-                You don't have any borrow positions in the hackathon version.
-              </EmptyDescription>
-            </EmptyState>
-          );
-        }
-
-        return (
-          <>
-            {/* <InfoCard>
-              <InfoIcon><AlertCircle size={20} /></InfoIcon>
-              <InfoText>
-                Repay your borrow positions from the hackathon version. 
-                This will improve your health factor and reduce your debt.
-              </InfoText>
-            </InfoCard> */}
-            {borrowPositions.map(position => (
-              <AssetMigrationCard
-                key={position.marketId}
-                position={position}
-                type="borrow"
-                migrationStatus={migrationStatus[`${position.marketId}-borrow`] || 'pending'}
-              />
-            ))}
-          </>
-        );
-
-
-      default:
-        return null;
-    }
-  };
+  const supplyPositions = hackathonPositions.filter(pos =>
+    parseFloat(pos.formattedSupplyBalance) > 0 ||
+    parseFloat(pos.formattedBorrowBalance) > 0
+  );
 
   return (
     <Container>
-      <Header> 
+      <Header>
         <Title>Migrate to V1</Title>
         <Subtitle>
           Migrate your assets from the hackathon version to V1 and claim your 100 KAIA bonus.
         </Subtitle>
       </Header>
-
       <TabContainer>
-        <Tab 
-          $active={activeTab === 'supply'} 
+        <Tab
+          $active={activeTab === 'supply'}
           onClick={() => setActiveTab('supply')}
         >
-          Supply Positions ({getSupplyPositions().length})
+          Supply Positions
         </Tab>
-        <Tab 
-          $active={activeTab === 'borrow'} 
+        <Tab
+          $active={activeTab === 'borrow'}
           onClick={() => setActiveTab('borrow')}
         >
-          Borrow Positions ({getBorrowPositions().length})
+          Borrow Positions
         </Tab>
       </TabContainer>
 
       <Content>
-        {renderContent()} 
+
+        {isLoading && (
+          <EmptyState>
+            <EmptyTitle>Loading positions...</EmptyTitle>
+          </EmptyState>
+        )}
+
+        {!isLoading && (
+          <>
+            {activeTab === "supply" && (
+              <>
+                {supplyPositions.length === 0 ?
+                  <EmptyState>
+                    <EmptyTitle>No Supply Positions Found</EmptyTitle>
+                    <EmptyDescription>
+                      You don't have any supply positions in the hackathon version that need migration.
+                    </EmptyDescription>
+                  </EmptyState>
+                  : <>
+                    <InfoCard>
+                      <InfoIcon><AlertCircle size={20} /></InfoIcon>
+                      <InfoText>
+                        Ensure you have repaid all debts before starting to withdraw from the hackathon version and supplying to v1.
+                      </InfoText>
+                    </InfoCard>
+                    {supplyPositions.map(position => (
+                      <AssetMigrationCard
+                        key={position.marketId}
+                        position={position}
+                        type="supply"
+                        migrationStatus={migrationStatus[`${position.marketId}-supply`] || 'pending'}
+                        onRefreshPositions={refreshPositions}
+                        getBalanceBySymbol={getBalanceBySymbol}
+                        account={account}
+                        hackathonWithdraw={hackathonWithdraw}
+                        hackathonRepay={hackathonRepay}
+                        v1Supply={v1Supply}
+                        checkV1Allowance={checkV1Allowance}
+                        ensureV1Approval={ensureV1Approval}
+                        checkHackathonAllowance={checkHackathonAllowance}
+                        ensureHackathonApproval={ensureHackathonApproval}
+                        enterMarkets={enterMarkets}
+                        isMarketEntered={isMarketEntered}
+                        calculateBorrowingPower={calculateBorrowingPower}
+                      />
+                    ))}
+                  </>
+                }
+              </>
+            )
+
+            }
+            {activeTab === "borrow" && (
+              <>
+                {supplyPositions.length === 0 ?
+                  <EmptyState>
+                    <EmptyTitle>No Borrow Positions Found</EmptyTitle>
+                    <EmptyDescription>
+                      You don't have any borrow positions in the hackathon version.
+                    </EmptyDescription>
+                  </EmptyState>
+                  : <>
+                    {borrowPositions.map(position => (
+                      <AssetMigrationCard
+                        key={position.marketId}
+                        position={position}
+                        type="borrow"
+                        migrationStatus={migrationStatus[`${position.marketId}-borrow`] || 'pending'}
+                        onRefreshPositions={refreshPositions}
+                        getBalanceBySymbol={getBalanceBySymbol}
+                        account={account}
+                        hackathonWithdraw={hackathonWithdraw}
+                        hackathonRepay={hackathonRepay}
+                        v1Supply={v1Supply}
+                        checkV1Allowance={checkV1Allowance}
+                        ensureV1Approval={ensureV1Approval}
+                        checkHackathonAllowance={checkHackathonAllowance}
+                        ensureHackathonApproval={ensureHackathonApproval}
+                        enterMarkets={enterMarkets}
+                        isMarketEntered={isMarketEntered}
+                        calculateBorrowingPower={calculateBorrowingPower}
+                      />
+                    ))}
+                  </>
+                }
+              </>
+            )
+
+            }
+          </>
+        )}
+
       </Content>
 
-      <EligibilityStatus
-        hackathonEligible={hackathonEligible}
-        v1Eligible={v1Eligible}
-        bonusClaimed={bonusClaimed}
-        onClaimBonus={handleClaimBonus}
-        isClaimingBonus={isClaimingBonus}
-      />
-    </Container>
-  );
-};
+      <InfoCard>
+        <InfoIcon><AlertCircle size={20} /></InfoIcon>
+        <InfoText>
+          Stay tuned for the bonus claim. Follow our Twitter/X for announcements.
+        </InfoText>
+      </InfoCard>
+
+      <br />
+      <br />
+      <br />
+      <br />
+      <br />
+
+
+
+    </Container >
+  )
+}

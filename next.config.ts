@@ -2,11 +2,13 @@ import type { NextConfig } from "next";
 import path from "path";
 
 const nextConfig: NextConfig = {
-  /* config options here */
-  eslint: {
+    /* config options here */
+    eslint: {
         ignoreDuringBuilds: true,
     },
-
+    compiler: {
+        styledComponents: true,
+    }, 
     webpack: (config) => {
         config.resolve.alias = {
             ...(config.resolve.alias || {}),

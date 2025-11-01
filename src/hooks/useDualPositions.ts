@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useUserPositions } from '@/hooks/useUserPositions'; // Hackathon version
 import { useUserPositions as useV1UserPositions } from '@/hooks/v1/useUserPositions'; // V1 version
@@ -25,25 +25,31 @@ export interface DualPositions {
   hackathonPositions: Position[];
   v1Positions: Position[];
   isLoading: boolean;
+  refreshPositions?: () => Promise<void>; 
 }
 
-export const useDualPositions = (): DualPositions => {
+export interface UseDualPositionsOptions {
+  disableAutoRefresh?: boolean;
+  cacheDuration?: number;
+}
+
+export const useDualPositions = (options: UseDualPositionsOptions = {}): DualPositions => {
+  
+
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
-  const { positions: hackathonPositionsRaw, isLoading: hackathonLoading } = useUserPositions();
-  const { positions: v1PositionsRaw, isLoading: v1Loading } = useV1UserPositions();
   
+  const { positions: hackathonPositionsRaw, isLoading: hackathonLoading, refreshPositions: refreshHackathonPositions } = useUserPositions();
+  const { positions: v1PositionsRaw, isLoading: v1Loading, refreshPositions: refreshV1Positions } = useV1UserPositions();
+   
   const [dualPositions, setDualPositions] = useState<DualPositions>({
     hackathonPositions: [],
     v1Positions: [],
     isLoading: true
   });
-
-  // Memoize position data to prevent infinite loops
-  const hackathonPositionsMemo = useMemo(() => hackathonPositionsRaw, [hackathonPositionsRaw]);
-  const v1PositionsMemo = useMemo(() => v1PositionsRaw, [v1PositionsRaw]);
-
+ 
   useEffect(() => {
+    
     const processPositions = () => {
       if (!account || !markets.length) {
         setDualPositions({
@@ -55,7 +61,7 @@ export const useDualPositions = (): DualPositions => {
       }
 
       // Process hackathon positions
-      const hackathonPositions = Object.values(hackathonPositionsMemo)
+      const hackathonPositions = Object.values(hackathonPositionsRaw)
         .filter((pos: any) => {
           const supplyBalance = parseFloat(pos.supplyBalance || '0');
           const borrowBalance = parseFloat(pos.borrowBalance || '0');
@@ -80,7 +86,7 @@ export const useDualPositions = (): DualPositions => {
         });
 
       // Process V1 positions
-      const v1Positions = Object.values(v1PositionsMemo)
+      const v1Positions = Object.values(v1PositionsRaw)
         .filter((pos: any) => {
           const supplyBalance = parseFloat(pos.supplyBalance || '0');
           const borrowBalance = parseFloat(pos.borrowBalance || '0');
@@ -112,7 +118,24 @@ export const useDualPositions = (): DualPositions => {
     };
 
     processPositions();
-  }, [account, markets.length, hackathonPositionsMemo, v1PositionsMemo, hackathonLoading, v1Loading]);
+  }, [account, markets.length, hackathonPositionsRaw, v1PositionsRaw]);
 
-  return dualPositions;
+
+  const refreshPositions = useCallback(async () => {
+    console.log('🔄 Refreshing positions...');
+    try {
+      await Promise.all([
+        refreshHackathonPositions(),
+        refreshV1Positions()
+      ]);
+      console.log('✅ Positions refreshed');
+    } catch (error) {
+      console.error('❌ Error refreshing:', error);
+    }
+  }, [refreshHackathonPositions, refreshV1Positions])
+
+  return {
+    ...dualPositions,
+    refreshPositions
+  };
 };

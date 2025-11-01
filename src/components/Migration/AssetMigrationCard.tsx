@@ -1,15 +1,17 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import styled from 'styled-components';
 import { ArrowUp, ArrowUpRight, AlertTriangle } from 'react-feather';
-import { Position } from '@/hooks/useDualPositions';
-import { useMarketContract } from '@/hooks/useMarketContract';
-import { useMarketContract as useV1MarketContract } from '@/hooks/v1/useMarketContract';
-import { useBorrowingPower } from '@/hooks/useBorrowingPower';
-import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useTokenBalances } from '@/hooks/useTokenBalances';
+// import { Position } from '@/hooks/useDualPositions';
+// import { useMarketContract } from '@/hooks/useMarketContract';
+// import { useMarketContract as useV1MarketContract } from '@/hooks/v1/useMarketContract';
+// import { useBorrowingPower } from '@/hooks/useBorrowingPower';
+// import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks'; 
 import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from '@/utils/tokenUtils';
+// import { useTokenApproval } from '@/hooks/useTokenApproval'; // For repay
+// import { useTokenApproval as useV1TokenApproval } from '@/hooks/v1/useTokenApproval'; // For supply
+// import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
 
 const Card = styled.div`
   background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
@@ -327,23 +329,57 @@ const ErrorMessage = styled.div`
 `;
 
 interface AssetMigrationCardProps {
-  position: Position;
+  position: any;
   type: 'supply' | 'borrow';
   migrationStatus: string;
   disabled?: boolean;
+  onRefreshPositions: any;
+  getBalanceBySymbol: any;
+  hackathonWithdraw: any;
+  hackathonRepay: any;
+  v1Supply: any;
+  checkV1Allowance: any;
+  ensureV1Approval: any;
+  checkHackathonAllowance: any;
+  ensureHackathonApproval: any;
+  enterMarkets: any;
+  isMarketEntered: any;
+  calculateBorrowingPower: any;
+  account: any;
 }
 
-export const AssetMigrationCard = ({
+export const AssetMigrationCard = (({
   position,
   type,
   migrationStatus,
+  onRefreshPositions,
+  getBalanceBySymbol,
+  hackathonWithdraw,
+  hackathonRepay,
+  v1Supply,
+  checkV1Allowance,
+  ensureV1Approval,
+  checkHackathonAllowance,
+  ensureHackathonApproval,
+  enterMarkets,
+  isMarketEntered,
+  calculateBorrowingPower,
+  account,
   disabled = false
 }: AssetMigrationCardProps) => {
-  const { account } = useWalletAccountStore();
-  const { withdraw: hackathonWithdraw } = useMarketContract();
-  const { supply: v1Supply, repay: v1Repay } = useV1MarketContract();
-  const { calculateBorrowingPower } = useBorrowingPower();
-  const { getBalanceBySymbol } = useTokenBalances();
+
+  // const { withdraw: hackathonWithdraw, repay: hackathonRepay } = useMarketContract();
+  // const { supply: v1Supply } = useV1MarketContract();
+  // const {
+  //   checkAllowance: checkV1Allowance,
+  //   ensureApproval: ensureV1Approval
+  // } = useV1TokenApproval();
+  // const {
+  //   checkAllowance: checkHackathonAllowance,
+  //   ensureApproval: ensureHackathonApproval
+  // } = useTokenApproval();
+  // const { enterMarkets, isMarketEntered } = useComptrollerContract();
+  // const { calculateBorrowingPower } = useBorrowingPower();
 
   const [activeTab, setActiveTab] = useState<'withdraw' | 'supply' | 'repay'>(
     type === 'supply' ? 'withdraw' : 'repay'
@@ -358,7 +394,12 @@ export const AssetMigrationCard = ({
   const balanceUSD = type === 'supply'
     ? (parseFloat(position.formattedSupplyBalance) * position.price).toFixed(2)
     : (parseFloat(position.formattedBorrowBalance) * position.price).toFixed(2);
-  const apy = type === 'supply' ? position.supplyAPY : position.borrowAPR;
+
+  useEffect(() => {
+    setActiveTab(type === 'supply' ? 'withdraw' : 'repay');
+    setAmount('');
+    setSelectedQuick(null);
+  }, [type]);
 
   // Get wallet balance for supply tab - handle both KAIA and token symbols
   const getTokenSymbolForBalance = (symbol: string): 'USDT' | 'STAKED_KAIA' | 'SIX' | 'BORA' | 'MBX' | 'KAIA' => {
@@ -379,31 +420,31 @@ export const AssetMigrationCard = ({
   const walletBalanceDisplay = walletBalance?.formattedBalance || '0';
 
   // Fetch borrowing power only when account changes
-  useEffect(() => {
-    const fetchBorrowingPower = async () => {
-      if (account) {
-        try {
-          const power = await calculateBorrowingPower(account);
-          setBorrowingPower(power);
-        } catch (error) {
-          console.error('Error fetching borrowing power:', error);
-        }
-      }
-    };
+  // useEffect(() => {
+  //   const fetchBorrowingPower = async () => {
+  //     if (account) {
+  //       try {
+  //         const power = await calculateBorrowingPower(account);
+  //         setBorrowingPower(power);
+  //       } catch (error) {
+  //         console.error('Error fetching borrowing power:', error);
+  //       }
+  //     }
+  //   };
 
-    fetchBorrowingPower();
-  }, [account]); // Only depend on account, not the function itself
+  //   fetchBorrowingPower();
+  // }, [account]); // Only depend on account, not the function itself
 
   // Validate amount with proper dependencies
   useEffect(() => {
-    if (amount) {
+    if (amount && type !== "supply") {
       const marketId = position.marketId.toLowerCase() as any;
       const validation = validateAmountAgainstBalance(amount, balance, marketId);
       setValidationError(validation.isValid ? null : validation.error);
     } else {
       setValidationError(null);
     }
-  }, [amount, balance, position.marketId]);
+  }, [type, amount, balance, position.marketId]);
 
   const handleQuickAmount = useCallback((percentage: number) => {
     const fullBalance = parseFloat(balance);
@@ -415,12 +456,62 @@ export const AssetMigrationCard = ({
   }, [balance, position.decimals]);
 
   const handleMaxAmount = useCallback(() => {
-    const decimals = position.decimals || 18;
     const marketId = position.marketId.toLowerCase() as any;
+
+    // For withdraw, we need to account for health factor and collateral constraints
+    // if (activeTab === 'withdraw' && type === 'supply') {
+    //   // Calculate safe withdraw amount based on health factor
+    //   const currentHealthFactor = borrowingPower ? parseFloat(borrowingPower.healthFactor) : 999;
+    //   const totalCollateralValue = borrowingPower ? parseFloat(borrowingPower.totalCollateralValue) : 0;
+    //   const totalBorrowValue = borrowingPower ? parseFloat(borrowingPower.totalBorrowValue) : 0;
+
+    //   // If user has debt, we need to maintain minimum health factor (usually 1.5)
+    //   const minHealthFactor = 1.5;
+
+    //   if (currentHealthFactor > minHealthFactor && totalBorrowValue > 0) {
+    //     // Calculate how much collateral we can remove while maintaining min health factor
+    //     const maxCollateralToRemove = (totalCollateralValue - (totalBorrowValue * minHealthFactor));
+    //     const maxWithdrawUSD = Math.max(0, maxCollateralToRemove);
+
+    //     // Convert USD amount to token amount
+    //     const maxWithdrawTokens = maxWithdrawUSD / position.price;
+
+    //     // Take the minimum of balance and calculated max withdraw
+    //     const finalMaxAmount = Math.min(parseFloat(balance), maxWithdrawTokens);
+
+    //     if (finalMaxAmount > 0) {
+    //       const decimals = position.decimals || 18;
+    //       const safeAmount = truncateToSafeDecimals(finalMaxAmount.toString(), decimals);
+    //       setAmount(safeAmount);
+    //       setSelectedQuick(100);
+    //       return;
+    //     }
+    //   }
+
+    //   // If no debt or healthy enough, allow full balance with small buffer
+    //   if (totalBorrowValue === 0 || currentHealthFactor > 2) {
+    //     const bufferAmount = parseFloat(balance) * 0.99; // 1% buffer for safety
+    //     const decimals = position.decimals || 18;
+    //     const safeAmount = truncateToSafeDecimals(bufferAmount.toString(), decimals);
+    //     setAmount(safeAmount);
+    //     setSelectedQuick(100);
+    //     return;
+    //   }
+    // }
+
+    if (type === 'supply') {
+      const safeAmount = getSafeMaxAmount(balance, marketId);
+      const roundedDown = Math.floor(Number(safeAmount) * 10000) / 10000; // round down to 4 decimals
+      setAmount(`${roundedDown.toFixed(4)}`);
+      setSelectedQuick(99);
+      return
+    }
+
+    // For supply and repay, use regular safe max amount
     const safeAmount = getSafeMaxAmount(balance, marketId);
     setAmount(safeAmount);
     setSelectedQuick(100);
-  }, [balance, position.marketId, position.decimals]);
+  }, [balance, position.marketId, activeTab, type, borrowingPower, position.price, position.decimals]);
 
   const handleWithdraw = useCallback(async () => {
     if (!amount || !account) return;
@@ -444,37 +535,120 @@ export const AssetMigrationCard = ({
     if (!amount || !account) return;
 
     setIsProcessing(true);
+
     try {
+      // Check approval inline
+      console.log(`Checking approval for ${position.symbol}...`);
+      const { hasEnoughAllowance } = await checkV1Allowance((position.marketId as any), amount);
+
+      if (!hasEnoughAllowance) {
+        console.log(`Approving ${position.symbol}...`);
+
+        const approvalResult = await ensureV1Approval(position.marketId as any, amount);
+        if (!approvalResult.success) {
+          throw new Error(approvalResult.error || 'Approval failed');
+        }
+
+        console.log(`Approval successful`);
+      }
+
+      // Check market entry inline
+      console.log(`Checking market entry...`);
+      if (position.marketAddress) {
+        const isEntered = await isMarketEntered(account, position.marketAddress);
+
+        if (!isEntered) {
+          console.log(`Entering market for ${position.symbol}...`);
+
+          const enterResult = await enterMarkets([position.marketAddress]);
+          if (enterResult.status === 'confirmed') {
+            console.log(`Market entry successful`);
+          }
+        }
+      }
+
+      // Execute supply
+      console.log(`Supplying ${amount} ${position.symbol}...`);
       const result = await v1Supply(position.marketId as any, amount);
+
       if (result.status === 'confirmed') {
+        console.log(`Supply successful`);
         setAmount('');
         setSelectedQuick(null);
-        // Parent would handle status update
+
+        setTimeout(() => {
+          if (onRefreshPositions) {
+            onRefreshPositions();
+          }
+        }, 2000);
       }
     } catch (error) {
       console.error('Supply failed:', error);
     } finally {
       setIsProcessing(false);
     }
-  }, [amount, account, v1Supply, position.marketId]);
+  }, [
+    amount,
+    account,
+    position,
+    checkV1Allowance,
+    ensureV1Approval,
+    isMarketEntered,
+    enterMarkets,
+    v1Supply,
+    onRefreshPositions
+  ]);
 
   const handleRepay = useCallback(async () => {
     if (!amount || !account) return;
 
     setIsProcessing(true);
+
     try {
-      const result = await v1Repay(position.marketId as any, amount);
+      // Check approval inline
+      console.log(`Checking approval for ${position.symbol} repay...`);
+      const { hasEnoughAllowance } = await checkHackathonAllowance((position.marketId as any), amount);
+
+      if (!hasEnoughAllowance) {
+        console.log(`Approving ${position.symbol}...`);
+
+        const approvalResult = await ensureHackathonApproval(position.marketId as any, amount);
+        if (!approvalResult.success) {
+          throw new Error(approvalResult.error || 'Approval failed');
+        }
+
+        console.log(`Approval successful`);
+      }
+
+      // Execute repay
+      console.log(`Repaying ${amount} ${position.symbol}...`);
+      const result = await hackathonRepay(position.marketId as any, amount);
+
       if (result.status === 'confirmed') {
+        console.log(`Repay successful`);
         setAmount('');
         setSelectedQuick(null);
-        // Parent would handle status update
+
+        setTimeout(() => {
+          if (onRefreshPositions) {
+            onRefreshPositions();
+          }
+        }, 2000);
       }
     } catch (error) {
       console.error('Repay failed:', error);
     } finally {
       setIsProcessing(false);
     }
-  }, [amount, account, v1Repay, position.marketId]);
+  }, [
+    amount,
+    account,
+    position,
+    checkHackathonAllowance,
+    ensureHackathonApproval,
+    hackathonRepay,
+    onRefreshPositions
+  ]);
 
   const hasOutstandingDebt = borrowingPower && parseFloat(borrowingPower.totalBorrowValue) > 0;
   const currentHealthFactor = borrowingPower ? parseFloat(borrowingPower.healthFactor) : 0;
@@ -704,10 +878,9 @@ export const AssetMigrationCard = ({
               <div style={{ display: "flex", flexDirection: "row" }}>
                 Outstanding: {balance} {position.symbol}
                 <div style={{ marginLeft: "auto" }}>
-                  Wallet Balance: {walletBalanceDisplay} {position.symbol} 
+                  Wallet Balance: {walletBalanceDisplay} {position.symbol}
                 </div>
               </div>
-
             </BalanceInfo>
           </TransactionInput>
 
@@ -734,4 +907,4 @@ export const AssetMigrationCard = ({
       )}
     </Card>
   );
-};
+});

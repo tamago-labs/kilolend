@@ -222,7 +222,7 @@ export const getSafeMaxAmount = (
     return '0';
   }
 };
-
+ 
 /**
  * Get input step size for forms with safe precision
  */
