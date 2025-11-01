@@ -1,473 +1,357 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { useEffect, useState } from 'react';
-import { useMigration } from '@/contexts/MigrationContext';
+import { ArrowLeft, TrendingUp, AlertCircle } from 'react-feather';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useUserPositions } from '@/hooks/useUserPositions';
-import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { MigrationWizard } from '@/components/Migration/MigrationWizard';
+import { useModalStore } from '@/stores/modalStore';
+import { useDualPositions } from '@/hooks/useDualPositions';
+import { useMigrationContract } from '@/hooks/useMigrationContract';
+import { AssetMigrationCard } from '@/components/Migration/AssetMigrationCard';
+import { EligibilityStatus } from '@/components/Migration/EligibilityStatus';
 
-const PageContainer = styled.div`
-  flex: 1;
-  padding: 20px 16px;
-  padding-bottom: 80px;
-  background: #f8fafc;
-  min-height: 100vh;
-
-  @media (max-width: 480px) {
-    padding: 16px 12px;
-    padding-bottom: 80px;
-  }
-`;
-
-const PageTitle = styled.h1`
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const PageSubtitle = styled.p`
-  color: #64748b;
-  margin-bottom: 24px;
-  line-height: 1.6;
-`;
-
-const AlertBanner = styled.div`
-  background: linear-gradient(135deg, #06C755, #05a547);
-  color: white;
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 24px;
-  text-align: center;
-  box-shadow: 0 4px 12px rgba(6, 199, 85, 0.2);
-`;
-
-const BannerTitle = styled.div`
-  font-size: 18px;
-  font-weight: 700;
-  margin-bottom: 12px;
-`;
-
-const BenefitsList = styled.ul`
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 14px;
-`;
-
-const BenefitItem = styled.li`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-`;
-
-const Card = styled.div`
-  background: white;
-  border-radius: 12px;
+const Container = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 20px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e2e8f0;
-  margin-bottom: 20px;
+  min-height: 100vh;
+  overflow-y: auto;
 `;
 
-const CardTitle = styled.h3`
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 16px;
+const Header = styled.div`
+  margin-bottom: 32px;
 `;
+ 
 
-const PositionItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin-bottom: 8px;
-`;
-
-const AssetInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const AssetIcon = styled.img`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-`;
-
-const AssetDetails = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const AssetName = styled.span`
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-`;
-
-const AssetBalance = styled.span`
-  font-size: 14px;
-  color: #64748b;
-`;
-
-const ImprovementBadge = styled.span`
-  background: #10b981;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-`;
-
-const ComparisonGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 16px;
-`;
-
-const ComparisonCard = styled.div<{ $highlight?: boolean }>`
-  padding: 16px;
-  border-radius: 8px;
-  border: 2px solid ${props => props.$highlight ? '#06C755' : '#e2e8f0'};
-  background: ${props => props.$highlight ? '#f0fdf4' : 'white'};
-`;
-
-const ComparisonLabel = styled.div`
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 8px;
-`;
-
-const ComparisonValue = styled.div`
-  font-size: 24px;
+const Title = styled.h1`
+  font-size: 32px;
   font-weight: 700;
   color: #1e293b;
+  margin-bottom: 8px;
 `;
 
-const StartButton = styled.button`
-  width: 100%;
-  padding: 16px;
-  background: linear-gradient(135deg, #06C755, #05a547);
-  color: white;
-  border: none;
-  border-radius: 12px;
+const Subtitle = styled.p`
   font-size: 16px;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 24px;
+`;
+
+const TabContainer = styled.div`
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e2e8f0;
+`;
+
+const Tab = styled.button<{ $active: boolean }>`
+  padding: 12px 24px;
+  background: none;
+  border: none;
+  font-size: 14px;
   font-weight: 600;
+  color: ${({ $active }) => $active ? '#06C755' : '#64748b'};
   cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 4px 12px rgba(6, 199, 85, 0.2);
+  position: relative;
+  transition: all 0.2s ease;
+  
+  &:after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: ${({ $active }) => $active ? '#06C755' : 'transparent'};
+    transition: all 0.2s ease;
+  }
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(6, 199, 85, 0.3);
+    color: ${({ $active }) => $active ? '#06C755' : '#1e293b'};
   }
+`;
 
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
+const Content = styled.div`
+  min-height: 400px;
 `;
 
 const EmptyState = styled.div`
   text-align: center;
-  padding: 40px 20px;
-  color: #64748b;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 16px;
+  border: 1px solid #cbd5e1;
 `;
 
-const InfoBox = styled.div`
-  background: #eff6ff;
-  border: 1px solid #93c5fd;
-  border-radius: 8px;
-  padding: 12px;
-  margin-bottom: 20px;
-  font-size: 14px;
-  color: #1e40af;
-`;
-
-const ConnectCard = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 40px 24px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  text-align: center;
-  margin-bottom: 20px;
-
-  @media (max-width: 480px) {
-    padding: 32px 20px;
-    margin-bottom: 16px;
-  }
-`;
-
-const ConnectIcon = styled.div`
-  width: 64px;
-  height: 64px;
+const EmptyIcon = styled.div`
+  width: 80px;
+  height: 80px;
   background: #f1f5f9;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 20px;
-  font-size: 28px;
+  color: #64748b;
 `;
 
-const ConnectTitle = styled.h3`
+const EmptyTitle = styled.h3`
   font-size: 20px;
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 8px;
-
-  @media (max-width: 480px) {
-    font-size: 18px;
-  }
 `;
 
-const ConnectDescription = styled.p`
+const EmptyDescription = styled.p`
   font-size: 16px;
   color: #64748b;
-  line-height: 1.5;
-  margin-bottom: 24px;
-
-  @media (max-width: 480px) {
-    font-size: 14px;
-    margin-bottom: 20px;
-  }
-`;
-
-const SuccessContent = styled.div`
-  padding: 20px 0;
-`;
-
-const SuccessText = styled.p`
-  margin-bottom: 12px;
-  font-size: 16px;
   line-height: 1.6;
+  max-width: 400px;
+  margin: 0 auto;
 `;
 
-const BonusText = styled.p`
-  font-size: 20px;
-  font-weight: 700;
-  color: #06C755;
-  margin: 16px 0;
+const InfoCard = styled.div`
+  background: #f0f9ff;
+  border: 1px solid #0ea5e9;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
 `;
+
+const InfoIcon = styled.div`
+  color: #0ea5e9;
+  flex-shrink: 0;
+`;
+
+const InfoText = styled.div`
+  font-size: 14px;
+  color: #0369a1;
+  line-height: 1.5;
+`;
+
+type TabType = 'supply' | 'borrow';
 
 export const MigratePage = () => {
   const { account } = useWalletAccountStore();
-  const { positions, isLoading } = useUserPositions();
-  const { markets } = useContractMarketStore();
-  const { currentStep, setCurrentStep, setV1Positions } = useMigration();
+  const { openModal, closeModal } = useModalStore();
+  const { hackathonPositions, v1Positions, isLoading } = useDualPositions();
+  const { 
+    checkHackathonEligibility, 
+    checkV1Eligibility, 
+    getBonusStatus, 
+    claimBonus, 
+    isLoading: isClaimingBonus 
+  } = useMigrationContract();
+  
+  const [activeTab, setActiveTab] = useState<TabType>('supply');
+  const [hackathonEligible, setHackathonEligible] = useState(false);
+  const [v1Eligible, setV1Eligible] = useState(false);
+  const [bonusClaimed, setBonusClaimed] = useState(false);
+  const [migrationStatus, setMigrationStatus] = useState<Record<string, string>>({});
 
-  const [hasV1Positions, setHasV1Positions] = useState(false);
-  const [totalSupplyUSD, setTotalSupplyUSD] = useState(0);
-
+  // Check eligibility when account changes
   useEffect(() => {
-    // Check if user has any V1 positions
-    const positionsArray = Object.values(positions);
-    const hasPositions = positionsArray.some(
-      (pos: any) => parseFloat(pos.supplyBalance) > 0
-    );
-    setHasV1Positions(hasPositions);
+    const checkEligibility = async () => {
+      if (!account) return;
 
-    // Calculate total supply USD
-    let total = 0;
-    positionsArray.forEach((pos: any) => {
-      const market = markets.find(m => m.id === pos.marketId);
-      if (market && parseFloat(pos.supplyBalance) > 0) {
-        total += parseFloat(pos.supplyBalance) * market.price;
+      try {
+        const [hackEligible, v1Eligible, bonusStatus] = await Promise.all([
+          checkHackathonEligibility(account),
+          checkV1Eligibility(account),
+          getBonusStatus(account)
+        ]);
+
+        setHackathonEligible(hackEligible);
+        setV1Eligible(v1Eligible);
+        setBonusClaimed(bonusStatus.claimed);
+      } catch (error) {
+        console.error('Error checking eligibility:', error);
       }
+    };
+
+    checkEligibility();
+  }, [account]);
+
+  // Initialize migration status
+  useEffect(() => {
+    const status: Record<string, string> = {};
+    
+    hackathonPositions.forEach(position => {
+      const key = `${position.marketId}-supply`;
+      status[key] = 'pending';
     });
-    setTotalSupplyUSD(total);
-  }, [positions, markets]);
+    
+    hackathonPositions.forEach(position => {
+      const key = `${position.marketId}-borrow`;
+      status[key] = 'pending';
+    });
 
-  const handleStartMigration = () => {
-    // Convert positions to V1Position format
-    const v1Positions = Object.values(positions)
-      .filter((pos: any) => parseFloat(pos.supplyBalance) > 0)
-      .map((pos: any) => {
-        const market = markets.find(m => m.id === pos.marketId);
-        return {
-          marketId: pos.marketId,
-          symbol: pos.symbol,
-          supplyBalance: pos.supplyBalance,
-          borrowBalance: pos.borrowBalance,
-          priceUSD: market?.price || 0
-        };
-      });
+    setMigrationStatus(status);
+  }, [hackathonPositions]);
 
-    setV1Positions(v1Positions);
-    setCurrentStep('wizard');
+  const handleWithdraw = (position: any) => {
+    openModal('withdraw', {
+      market: position,
+      currentSupply: position.formattedSupplyBalance,
+      maxWithdraw: position.formattedSupplyBalance
+    });
   };
 
-  // Calculate KAIA bonus: ~20 KAIA per user for 4-5 users = ~$100 total
-  const kaiaBonus = 20; // KAIA tokens per user
-  const bonusUSD = kaiaBonus * 0.11; // ~$2.20 per user
+  const handleSupply = (position: any) => {
+    openModal('supply', {
+      preSelectedMarket: position
+    });
+  };
 
-  if (!account) {
-    return (
-      <PageContainer>
-        <PageTitle>Migrate to V2</PageTitle>
-        <PageSubtitle>Convenient tool for V1 users to migrate assets to V2 smart contracts</PageSubtitle>
-        <ConnectCard>
-          <ConnectIcon>👤</ConnectIcon>
-          <ConnectTitle>Wallet Not Connected</ConnectTitle>
-          <ConnectDescription>
-            Please connect your wallet to access the migration tool and transfer your V1 positions to V2
-          </ConnectDescription>
-        </ConnectCard>
-      </PageContainer>
-    );
-  }
+  const handleRepay = (position: any) => {
+    openModal('repay', {
+      market: position,
+      currentDebt: position.formattedBorrowBalance,
+      totalDebt: position.formattedBorrowBalance
+    });
+  };
 
-  if (isLoading) {
-    return (
-      <PageContainer>
-        <PageTitle>Loading</PageTitle>
-        <PageSubtitle>Preparing your migration data</PageSubtitle>
-      </PageContainer>
-    );
-  }
+  const handleClaimBonus = async () => {
+    try {
+      const result = await claimBonus();
+      if (result.status === 'confirmed') {
+        setBonusClaimed(true);
+      }
+    } catch (error) {
+      console.error('Error claiming bonus:', error);
+    }
+  };
 
-  // ✅ ADDED: Wizard step
-  if (currentStep === 'wizard') {
-    return (
-      <PageContainer>
-        <PageTitle>Migration Wizard</PageTitle>
-        <PageSubtitle>Follow the step-by-step migration process</PageSubtitle>
-        <MigrationWizard />
-      </PageContainer>
+  const getSupplyPositions = () => {
+    return hackathonPositions.filter(pos => 
+      parseFloat(pos.formattedSupplyBalance) > 0
     );
-  }
+  };
 
-  // ✅ ADDED: Success step
-  if (currentStep === 'success') {
-    return (
-      <PageContainer>
-        <PageTitle>Migration Complete</PageTitle>
-        <PageSubtitle>Your positions have been successfully transferred to V2</PageSubtitle>
-        <Card>
-          <CardTitle>Success!</CardTitle>
-          <SuccessContent>
-            <SuccessText>
-              Your positions have been successfully migrated to V2 contracts with enhanced security and stability.
-            </SuccessText>
-            <BonusText>
-              You've earned {kaiaBonus} KAIA bonus!
-            </BonusText>
-            <SuccessText style={{ fontSize: '14px', color: '#64748b' }}>
-              The bonus will be sent to your wallet within 24 hours.
-            </SuccessText>
-          </SuccessContent>
-          <StartButton onClick={() => setCurrentStep('overview')}>
-            Back to Overview
-          </StartButton>
-        </Card>
-      </PageContainer>
+  const getBorrowPositions = () => {
+    return hackathonPositions.filter(pos => 
+      parseFloat(pos.formattedBorrowBalance) > 0
     );
-  }
+  };
 
-  // ✅ EXISTING: Overview step (default)
-  if (!hasV1Positions) {
-    return (
-      <PageContainer>
-        <PageTitle>Migrate to V2</PageTitle>
-        <PageSubtitle>You don't have any positions eligible for migration</PageSubtitle>
-        <EmptyState>
-          <div style={{ fontSize: '48px', marginBottom: '16px' }}>📦</div>
-          <div style={{ fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-            No V1 Positions Found
-          </div>
-          <div>You don't have any active V1 positions to migrate</div>
-        </EmptyState>
-      </PageContainer>
-    );
-  }
+  const renderContent = () => {
+    if (isLoading) {
+      return <EmptyState> 
+        <EmptyTitle>Loading positions...</EmptyTitle>
+      </EmptyState>;
+    }
+
+    switch (activeTab) {
+      case 'supply':
+        const supplyPositions = getSupplyPositions();
+        if (supplyPositions.length === 0) {
+          return (
+            <EmptyState> 
+              <EmptyTitle>No Supply Positions Found</EmptyTitle>
+              <EmptyDescription>
+                You don't have any supply positions in the hackathon version that need migration.
+              </EmptyDescription>
+            </EmptyState>
+          );
+        }
+
+        return (
+          <>
+            {/* <InfoCard>
+              <InfoIcon><AlertCircle size={20} /></InfoIcon>
+              <InfoText>
+                Migrate your supply positions from the hackathon version to V1. 
+                First withdraw from hackathon, then supply to V1 to complete the migration.
+              </InfoText>
+            </InfoCard> */}
+            {supplyPositions.map(position => (
+              <AssetMigrationCard
+                key={position.marketId}
+                position={position}
+                type="supply"
+                migrationStatus={migrationStatus[`${position.marketId}-supply`] || 'pending'}
+              />
+            ))}
+          </>
+        );
+
+      case 'borrow':
+        const borrowPositions = getBorrowPositions();
+        if (borrowPositions.length === 0) {
+          return (
+            <EmptyState> 
+              <EmptyTitle>No Borrow Positions Found</EmptyTitle>
+              <EmptyDescription>
+                You don't have any borrow positions in the hackathon version.
+              </EmptyDescription>
+            </EmptyState>
+          );
+        }
+
+        return (
+          <>
+            {/* <InfoCard>
+              <InfoIcon><AlertCircle size={20} /></InfoIcon>
+              <InfoText>
+                Repay your borrow positions from the hackathon version. 
+                This will improve your health factor and reduce your debt.
+              </InfoText>
+            </InfoCard> */}
+            {borrowPositions.map(position => (
+              <AssetMigrationCard
+                key={position.marketId}
+                position={position}
+                type="borrow"
+                migrationStatus={migrationStatus[`${position.marketId}-borrow`] || 'pending'}
+              />
+            ))}
+          </>
+        );
+
+
+      default:
+        return null;
+    }
+  };
 
   return (
-    <PageContainer>
-      <PageTitle>Migrate to V2</PageTitle>
-      <PageSubtitle>
-        Upgrade to our enhanced protocol with improved security and stability
-      </PageSubtitle>
+    <Container>
+      <Header> 
+        <Title>Migrate to V1</Title>
+        <Subtitle>
+          Migrate your assets from the hackathon version to V1 and claim your 100 KAIA bonus.
+        </Subtitle>
+      </Header>
 
-      <AlertBanner>
-        <BannerTitle>Migration Bonus!</BannerTitle>
-        <BenefitsList>
-          <BenefitItem>Enhanced protocol security and stability</BenefitItem>
-          <BenefitItem>Improved contract architecture for long-term reliability</BenefitItem>
-          <BenefitItem>Receive {kaiaBonus} KAIA (~${bonusUSD.toFixed(2)}) bonus!</BenefitItem>
-        </BenefitsList>
-      </AlertBanner>
+      <TabContainer>
+        <Tab 
+          $active={activeTab === 'supply'} 
+          onClick={() => setActiveTab('supply')}
+        >
+          Supply Positions ({getSupplyPositions().length})
+        </Tab>
+        <Tab 
+          $active={activeTab === 'borrow'} 
+          onClick={() => setActiveTab('borrow')}
+        >
+          Borrow Positions ({getBorrowPositions().length})
+        </Tab>
+      </TabContainer>
 
-      <InfoBox>
-        Smart contract migration in progress. We've upgraded to V2 contracts with enhanced
-        long-term stability and prepared for future KILO token integration. All existing users will receive a migration bonus!
-      </InfoBox>
+      <Content>
+        {renderContent()} 
+      </Content>
 
-      <Card>
-        <CardTitle>Your V1 Positions</CardTitle>
-        {Object.values(positions).map((pos: any) => {
-          if (parseFloat(pos.supplyBalance) === 0) return null;
-
-          const market = markets.find(m => m.id === pos.marketId);
-
-          return (
-            <PositionItem key={pos.marketId}>
-              <AssetInfo>
-                <AssetIcon src={market?.icon} alt={pos.symbol} />
-                <AssetDetails>
-                  <AssetName>{pos.symbol}</AssetName>
-                  <AssetBalance>
-                    {parseFloat(pos.formattedSupplyBalance).toFixed(4)} supplied
-                  </AssetBalance>
-                </AssetDetails>
-              </AssetInfo>
-              <ImprovementBadge>V2 ✓</ImprovementBadge>
-            </PositionItem>
-          );
-        })}
-      </Card>
-
-      <Card>
-        <CardTitle>Migration Benefits</CardTitle>
-        <ComparisonGrid>
-          <ComparisonCard>
-            <ComparisonLabel>Current Balance</ComparisonLabel>
-            <ComparisonValue>${totalSupplyUSD.toFixed(2)}</ComparisonValue>
-          </ComparisonCard>
-          <ComparisonCard $highlight>
-            <ComparisonLabel>KAIA Bonus</ComparisonLabel>
-            <ComparisonValue>{kaiaBonus}</ComparisonValue>
-          </ComparisonCard>
-        </ComparisonGrid>
-
-        <ComparisonGrid style={{ marginTop: '12px' }}>
-          <ComparisonCard>
-            <ComparisonLabel>V1 Protocol</ComparisonLabel>
-            <ComparisonValue>Old</ComparisonValue>
-          </ComparisonCard>
-          <ComparisonCard $highlight>
-            <ComparisonLabel>V2 Protocol</ComparisonLabel>
-            <ComparisonValue>New</ComparisonValue>
-          </ComparisonCard>
-        </ComparisonGrid>
-      </Card>
-
-      <StartButton onClick={handleStartMigration}>
-        Start Migration →
-      </StartButton>
-    </PageContainer>
+      <EligibilityStatus
+        hackathonEligible={hackathonEligible}
+        v1Eligible={v1Eligible}
+        bonusClaimed={bonusClaimed}
+        onClaimBonus={handleClaimBonus}
+        isClaimingBonus={isClaimingBonus}
+      />
+    </Container>
   );
 };
