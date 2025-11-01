@@ -154,14 +154,14 @@ class ActionIntegrationService implements ActionIntegration {
 
     switch (action.action) {
       case 'supply':
-        if (market.isCollateralOnly && action.asset !== 'KAIA') {
-          warnings.push('This asset can only be used as collateral');
-        }
+        // if (market.isCollateralOnly && action.asset !== 'KAIA') {
+        //   warnings.push('This asset can only be used as collateral');
+        // }
         break;
       case 'borrow':
-        if (market.isCollateralOnly) {
-          blockers.push(`${action.asset} cannot be borrowed, only used as collateral`);
-        }
+        // if (market.isCollateralOnly) {
+        //   blockers.push(`${action.asset} cannot be borrowed, only used as collateral`);
+        // }
         if (market.utilization > 95) {
           warnings.push('High utilization - borrowing may be expensive');
         }

@@ -165,7 +165,7 @@ export const BorrowAssetSelection = ({
   isLoading = false
 }: BorrowAssetSelectionProps) => {
   // Filter out collateral-only markets for borrowing
-  const borrowableMarkets = markets.filter(market => !market.isCollateralOnly && market.isActive);
+  const borrowableMarkets = markets.filter(market => market.isActive);
 
   if (isLoading) {
     return (

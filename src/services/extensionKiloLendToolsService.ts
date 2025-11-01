@@ -51,7 +51,7 @@ export class ExtensionKiloLendToolsService {
           if (sessionId) {
             conversationMemory.addTopicToConversation(sessionId, 'market_trends');
             conversationMemory.updateMarketSnapshot(sessionId, {
-              bestAPY: Math.max(...this.marketData.filter(m => !m.isCollateralOnly).map(m => m.supplyAPY)),
+              bestAPY: Math.max(...this.marketData.map(m => m.supplyAPY)),
               totalTVL: this.marketData.reduce((sum, m) => sum + m.totalSupply + m.totalBorrow, 0),
               userPortfolioValue: this.portfolioData?.totalSupplied || 0
             });
@@ -202,7 +202,7 @@ export class ExtensionKiloLendToolsService {
   private analyzeMarketTrends(timeframe?: string, focusAsset?: string) {
     const markets = focusAsset
       ? this.marketData.filter(m => m.symbol === focusAsset.toUpperCase())
-      : this.marketData.filter(m => !m.isCollateralOnly);
+      : this.marketData;
 
     const analysis = {
       timeframe: timeframe || '24h',
@@ -251,8 +251,8 @@ export class ExtensionKiloLendToolsService {
   // Helper methods
   private determineMarketCondition(): 'bullish' | 'bearish' | 'sideways' {
     const avgAPY =
-      this.marketData.filter(m => !m.isCollateralOnly).reduce((sum, m) => sum + m.supplyAPY, 0) /
-      this.marketData.filter(m => !m.isCollateralOnly).length;
+      this.marketData.reduce((sum, m) => sum + m.supplyAPY, 0) /
+      this.marketData.length;
 
     if (avgAPY > 8) return 'bullish';
     if (avgAPY < 4) return 'bearish';

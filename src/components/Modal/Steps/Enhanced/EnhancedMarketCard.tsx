@@ -307,24 +307,24 @@ export const EnhancedMarketCard = ({
   // const availableLiquidity = parseFloat(`${market.totalSupply}`) - parseFloat(`${market.totalBorrow}`);
   
   const getRiskLevel = () => {
-    if (market.isCollateralOnly) return 'low';
+    // if (market.isCollateralOnly) return 'low';
     if (utilizationRate > 90) return 'high';
     if (utilizationRate > 70) return 'medium';
     return 'low';
   };
 
   const getMarketBadgeType = () => {
-    if (market.isCollateralOnly) return 'collateral'; 
+    // if (market.isCollateralOnly) return 'collateral'; 
     return 'borrowable';
   };
 
   const getBadgeText = () => {
-    if (market.isCollateralOnly) return 'Collateral Only'; 
+    // if (market.isCollateralOnly) return 'Collateral Only'; 
     return 'Borrowable';
   };
 
   const getBadgeIcon = () => {
-    if (market.isCollateralOnly) return <Shield size={12} />; 
+    // if (market.isCollateralOnly) return <Shield size={12} />; 
     return <TrendingUp size={12} />;
   };
 

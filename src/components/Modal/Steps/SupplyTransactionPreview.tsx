@@ -92,13 +92,13 @@ const StatusBadge = styled.span<{ $status: 'enabled' | 'disabled' | 'already' }>
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  background: ${props => 
-    props.$status === 'enabled' ? '#dcfce7' : 
-    props.$status === 'already' ? '#fef3c7' : '#fee2e2'
+  background: ${props =>
+    props.$status === 'enabled' ? '#dcfce7' :
+      props.$status === 'already' ? '#fef3c7' : '#fee2e2'
   };
-  color: ${props => 
-    props.$status === 'enabled' ? '#166534' : 
-    props.$status === 'already' ? '#92400e' : '#991b1b'
+  color: ${props =>
+    props.$status === 'enabled' ? '#166534' :
+      props.$status === 'already' ? '#92400e' : '#991b1b'
   };
 `;
 
@@ -139,10 +139,10 @@ export const SupplyTransactionPreview = ({
   exchangeRate
 }: SupplyTransactionPreviewProps) => {
   const usdValue = amount && selectedAsset ? parseFloat(amount) * selectedAsset.price : 0;
-  
+
   // Calculate expected cTokens correctly using exchange rate
   // exchangeRate = underlying per cToken, so cTokens = underlying / exchangeRate
-  const expectedCTokens = exchangeRate 
+  const expectedCTokens = exchangeRate
     ? parseFloat(amount || '0') / parseFloat(exchangeRate)
     : parseFloat(amount || '0') * 50; // Fallback to ~50x (typical initial exchange rate)
 
@@ -159,7 +159,7 @@ export const SupplyTransactionPreview = ({
   return (
     <div>
       <OverviewTitle>Transaction Preview</OverviewTitle>
-      
+
       <PreviewSection>
         <PreviewRow>
           <PreviewLabel>Asset</PreviewLabel>
@@ -184,47 +184,45 @@ export const SupplyTransactionPreview = ({
       </PreviewSection>
 
       {/* Collateral Configuration Section */}
-      {!selectedAsset.isCollateralOnly && (
-        <CollateralSection>
-          <CollateralHeader>
-            <CollateralTitle>Use as Collateral</CollateralTitle>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <StatusBadge $status={getCollateralStatus()}>
-                {getCollateralStatusText()}
-              </StatusBadge>
-              {!isMarketAlreadyEntered && onCollateralToggle && (
-                <CollateralToggle>
-                  Enable
-                  <ToggleSwitch
-                    type="checkbox"
-                    checked={enableAsCollateral}
-                    onChange={(e) => onCollateralToggle(e.target.checked)}
-                  />
-                </CollateralToggle>
-              )}
-            </div>
-          </CollateralHeader>
-          <CollateralInfo>
-            {isMarketAlreadyEntered ? (
-              `This asset is already enabled as collateral in your account. You can borrow against it immediately after supply.`
-            ) : enableAsCollateral ? (
-              `This asset will be enabled as collateral, allowing you to borrow against it. You can disable this later if needed.`
-            ) : (
-              `This asset will only earn supply APY. To use it as collateral for borrowing, you can enable it later in your portfolio.`
+      <CollateralSection>
+        <CollateralHeader>
+          <CollateralTitle>Use as Collateral</CollateralTitle>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <StatusBadge $status={getCollateralStatus()}>
+              {getCollateralStatusText()}
+            </StatusBadge>
+            {!isMarketAlreadyEntered && onCollateralToggle && (
+              <CollateralToggle>
+                Enable
+                <ToggleSwitch
+                  type="checkbox"
+                  checked={enableAsCollateral}
+                  onChange={(e) => onCollateralToggle(e.target.checked)}
+                />
+              </CollateralToggle>
             )}
-          </CollateralInfo>
-        </CollateralSection>
-      )}
+          </div>
+        </CollateralHeader>
+        <CollateralInfo>
+          {isMarketAlreadyEntered ? (
+            `This asset is already enabled as collateral in your account. You can borrow against it immediately after supply.`
+          ) : enableAsCollateral ? (
+            `This asset will be enabled as collateral, allowing you to borrow against it. You can disable this later if needed.`
+          ) : (
+            `This asset will only earn supply APY. To use it as collateral for borrowing, you can enable it later in your portfolio.`
+          )}
+        </CollateralInfo>
+      </CollateralSection>
 
-       
+
       <WarningSection>
-        <WarningText> 
-          {selectedAsset.isCollateralOnly 
-            ? ' This asset can be used as collateral for borrowing.' 
+        <WarningText>
+          {false
+            ? ' This asset can be used as collateral for borrowing.'
             : ' Your supplied assets will be available for others to borrow.'
           }
           {needsApproval && ' You will need to approve token spending first.'}
-          {enableAsCollateral && !isMarketAlreadyEntered && !selectedAsset.isCollateralOnly && 
+          {enableAsCollateral && !isMarketAlreadyEntered &&
             ' Enabling as collateral will increase your borrowing power.'
           }
         </WarningText>

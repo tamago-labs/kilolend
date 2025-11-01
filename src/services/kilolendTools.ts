@@ -117,8 +117,8 @@ export class KiloLendToolsService {
           const summary = {
             totalMarkets: validMarkets.length,
             totalTVL: validMarkets.reduce((sum, m) => sum + (m.totalSupply || 0) + (m.totalBorrow || 0), 0),
-            avgSupplyAPY: validMarkets.filter(m => !m.isCollateralOnly).reduce((sum, m) => sum + (m.supplyAPY || 0), 0) / Math.max(1, validMarkets.filter(m => !m.isCollateralOnly).length),
-            bestSupplyAPY: Math.max(...validMarkets.filter(m => !m.isCollateralOnly).map(m => m.supplyAPY || 0)),
+            avgSupplyAPY: validMarkets.reduce((sum, m) => sum + (m.supplyAPY || 0), 0) / Math.max(1, validMarkets.length),
+            bestSupplyAPY: Math.max(...validMarkets.map(m => m.supplyAPY || 0)),
             markets: validMarkets.map(m => ({
               symbol: m.symbol,
               name: m.name,
@@ -129,7 +129,7 @@ export class KiloLendToolsService {
               totalBorrow: m.totalBorrow,
               price: m.price,
               priceChange24h: m.priceChange24h,
-              isCollateralOnly: m.isCollateralOnly || false
+              isCollateralOnly: false
             })),
             dataStatus: 'valid',
             lastUpdated: new Date().toISOString()
@@ -213,7 +213,7 @@ export class KiloLendToolsService {
         },
         handler: async (params: { riskTolerance?: string; investmentAmount?: number; excludeAssets?: string[] }) => {
           const opportunities = this.marketData
-            .filter(m => !m.isCollateralOnly && m.isActive)
+            .filter(m => m.isActive)
             .filter(m => !params.excludeAssets?.includes(m.symbol))
             .map(m => ({
               symbol: m.symbol,

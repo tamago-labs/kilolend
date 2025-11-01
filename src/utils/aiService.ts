@@ -130,7 +130,7 @@ export class LendingAIService {
         if (pool.symbol === 'USDT') riskScore = Math.max(0, riskScore - 2);
 
         // Native token (KAIA) used as collateral is lower risk
-        if (pool.symbol === 'KAIA' && pool.isCollateralOnly) riskScore = Math.max(0, riskScore - 1);
+        if (pool.symbol === 'KAIA') riskScore = Math.max(0, riskScore - 1);
 
         if (riskScore >= 6) return 'high';
         if (riskScore >= 3) return 'medium';
@@ -336,7 +336,7 @@ IMPORTANT:
         
         // Filter pools based on risk tolerance and exclude collateral-only pools for supply/borrow
         let suitablePools = pools.filter(pool => {
-            if (pool.isCollateralOnly) return false; // Skip KAIA for basic recommendations
+            // if (pool.isCollateralOnly) return false; // Skip KAIA for basic recommendations
             
             const poolRisk = this.calculatePoolRisk(pool);
             if (riskTolerance === 'conservative') return poolRisk === 'low';
