@@ -20,11 +20,16 @@ import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
 
 
 const Container = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  flex: 1;
+  padding: 20px 16px;
+  padding-bottom: 80px;
+  background: #f8fafc;
   min-height: 100vh;
-  overflow-y: auto;
+
+  @media (max-width: 480px) {
+    padding: 16px 12px;
+    padding-bottom: 80px;
+  }
 `;
 
 const Header = styled.div`
@@ -33,14 +38,14 @@ const Header = styled.div`
 
 
 const Title = styled.h1`
-  font-size: 32px;
+  font-size: 28px;
   font-weight: 700;
   color: #1e293b;
   margin-bottom: 8px;
 `;
 
 const Subtitle = styled.p`
-  font-size: 16px;
+  font-size: 14px;
   color: #64748b;
   line-height: 1.6;
   margin-bottom: 24px;
@@ -55,6 +60,7 @@ const TabContainer = styled.div`
 
 const Tab = styled.button<{ $active: boolean }>`
   padding: 12px 24px;
+  flex: 1;
   background: none;
   border: none;
   font-size: 14px;

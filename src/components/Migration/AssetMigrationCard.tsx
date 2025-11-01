@@ -163,6 +163,7 @@ const TabList = styled.div`
 const TabButton = styled.button<{ $active: boolean }>`
   padding: 12px 20px;
   background: none;
+  flex: 1;
   border: none;
   font-size: 14px;
   font-weight: 600;
