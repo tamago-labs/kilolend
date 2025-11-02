@@ -39,6 +39,8 @@ class PriceManager {
         
         if (symbol === 'MARBLEX') {
           prices['MBX'] = item.price;
+        } else if (symbol === 'STAKED_KAIA') {
+          prices['STKAIA'] = item.price;  // Map STAKED_KAIA to STKAIA
         } else if (symbol !== 'USDT') {
           prices[symbol] = item.price;
         }

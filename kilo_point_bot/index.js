@@ -1,5 +1,6 @@
 const { ethers } = require('ethers');
 const dotenv = require('dotenv');
+const express = require('express');
 const KiloPointCalculator = require('./src/KiloPointCalculator.js');
 const PriceManager = require('./src/PriceManager.js');
 const StatsManager = require('./src/StatsManager.js');
@@ -63,6 +64,12 @@ class KiloPointBot {
         underlying: ethers.ZeroAddress,
         underlyingSymbol: 'KAIA',
         decimals: 18
+      },
+      [process.env.CSTKAIA_ADDRESS]: {
+        symbol: 'cSTKAIA',
+        underlying: process.env.STKAIA_ADDRESS,
+        underlyingSymbol: 'STKAIA',
+        decimals: 18
       }
     };
 
@@ -124,7 +131,7 @@ class KiloPointBot {
   validateConfig() {
     const required = [
       'RPC_URL', 'CUSDT_ADDRESS', 'CSIX_ADDRESS', 
-      'CBORA_ADDRESS', 'CMBX_ADDRESS', 'CKAIA_ADDRESS'
+      'CBORA_ADDRESS', 'CMBX_ADDRESS', 'CKAIA_ADDRESS', 'CSTKAIA_ADDRESS'
     ];
     
     for (const key of required) {
@@ -425,6 +432,19 @@ class KiloPointBot {
     
     process.exit(0);
   }
+
+  // Health check status
+  getHealthStatus() {
+    return {
+      status: this.provider ? 'healthy' : 'unhealthy',
+      initialized: !!this.provider,
+      lastProcessedBlock: this.lastProcessedBlock,
+      marketsTracked: Object.keys(this.markets).length,
+      pollInterval: this.pollInterval,
+      scanWindow: this.scanWindowSeconds,
+      timestamp: new Date().toISOString()
+    };
+  }
 }
 
 // Handle graceful shutdown
@@ -452,3 +472,24 @@ console.log('==================================');
 
 const bot = new KiloPointBot();
 global.pointBot = bot;
+
+// Create Express server for health checks
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  const health = bot.getHealthStatus();
+  
+  if (health.status === 'healthy') {
+    res.status(200).json(health);
+  } else {
+    res.status(503).json(health);
+  }
+});
+
+// Start the Express server
+app.listen(PORT, () => {
+  console.log(`🌐 Health check server running on port ${PORT}`);
+  console.log(`📊 Health check available at: /health`);
+});

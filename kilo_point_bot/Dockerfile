@@ -1,15 +1,8 @@
-# Kilo Point Bot Dockerfile for KiloLend Protocol
-FROM node:20.3.1-alpine
+# Use Node.js 22 Alpine for smaller image size
+FROM node:22-alpine AS base
 
 # Set working directory
 WORKDIR /app
-
-# Install dependencies for building native modules
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    git
 
 # Copy package files
 COPY package*.json ./
@@ -17,30 +10,25 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy source code
-COPY . .
-
-# Create non-root user
+# Create non-root user for security
 RUN addgroup -g 1001 -S nodejs && \
-    adduser -S kilopoint -u 1001 -G nodejs
+    adduser -S nodejs -u 1001
 
-# Change ownership of app directory
-RUN chown -R kilopoint:nodejs /app
-USER kilopoint
+# Production stage
+FROM base AS production
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "console.log('Kilo point bot health check')" || exit 1
+# Copy source code
+COPY --chown=nodejs:nodejs . .
 
-# Expose port (if needed for monitoring)
-EXPOSE 3001
+# Switch to non-root user
+USER nodejs
 
-# Set environment variables
-ENV NODE_ENV=production
-ENV POLL_INTERVAL_SECONDS=60
-ENV SCAN_WINDOW_SECONDS=60
-ENV MAX_BLOCKS_PER_SCAN=100
-ENV DAILY_KILO_DISTRIBUTION=100000
+# Expose port (App Runner expects this)
+EXPOSE 3000
 
-# Start the application
+# Health check for App Runner
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node -e "console.log('Health check passed')" || exit 1
+
+# Start the bot
 CMD ["npm", "start"]
