@@ -450,7 +450,7 @@ export const AssetMigrationCard = (({
   const handleQuickAmount = useCallback((percentage: number) => {
     // Use different balance source based on active tab
     let sourceBalance: string;
-    
+
     if (activeTab === 'supply') {
       // For supply to V1, use wallet balance
       sourceBalance = walletBalanceDisplay;
@@ -458,7 +458,7 @@ export const AssetMigrationCard = (({
       // For withdraw/repay, use position balance
       sourceBalance = balance;
     }
-    
+
     const fullBalance = parseFloat(sourceBalance);
     const quickAmount = (fullBalance * percentage / 100).toString();
     const decimals = position.decimals || 18;
@@ -472,7 +472,7 @@ export const AssetMigrationCard = (({
 
     // Use different balance source based on active tab
     let sourceBalance: string;
-    
+
     if (activeTab === 'supply') {
       // For supply to V1, use wallet balance
       sourceBalance = walletBalanceDisplay;
@@ -481,53 +481,13 @@ export const AssetMigrationCard = (({
       sourceBalance = balance;
     }
 
-    // For withdraw, we need to account for health factor and collateral constraints
-    // if (activeTab === 'withdraw' && type === 'supply') {
-    //   // Calculate safe withdraw amount based on health factor
-    //   const currentHealthFactor = borrowingPower ? parseFloat(borrowingPower.healthFactor) : 999;
-    //   const totalCollateralValue = borrowingPower ? parseFloat(borrowingPower.totalCollateralValue) : 0;
-    //   const totalBorrowValue = borrowingPower ? parseFloat(borrowingPower.totalBorrowValue) : 0;
-
-    //   // If user has debt, we need to maintain minimum health factor (usually 1.5)
-    //   const minHealthFactor = 1.5;
-
-    //   if (currentHealthFactor > minHealthFactor && totalBorrowValue > 0) {
-    //     // Calculate how much collateral we can remove while maintaining min health factor
-    //     const maxCollateralToRemove = (totalCollateralValue - (totalBorrowValue * minHealthFactor));
-    //     const maxWithdrawUSD = Math.max(0, maxCollateralToRemove);
-
-    //     // Convert USD amount to token amount
-    //     const maxWithdrawTokens = maxWithdrawUSD / position.price;
-
-    //     // Take the minimum of balance and calculated max withdraw
-    //     const finalMaxAmount = Math.min(parseFloat(sourceBalance), maxWithdrawTokens);
-
-    //     if (finalMaxAmount > 0) {
-    //       const decimals = position.decimals || 18;
-    //       const safeAmount = truncateToSafeDecimals(finalMaxAmount.toString(), decimals);
-    //       setAmount(safeAmount);
-    //       setSelectedQuick(100);
-    //       return;
-    //     }
-    //   }
-
-    //   // If no debt or healthy enough, allow full balance with small buffer
-    //   if (totalBorrowValue === 0 || currentHealthFactor > 2) {
-    //     const bufferAmount = parseFloat(sourceBalance) * 0.99; // 1% buffer for safety
-    //     const decimals = position.decimals || 18;
-    //     const safeAmount = truncateToSafeDecimals(bufferAmount.toString(), decimals);
-    //     setAmount(safeAmount);
-    //     setSelectedQuick(100);
-    //     return;
-    //   }
-    // }
-
     if (type === 'supply') {
       const safeAmount = getSafeMaxAmount(sourceBalance, marketId);
       const roundedDown = Math.floor(Number(safeAmount) * 10000) / 10000; // round down to 4 decimals
-      setAmount(`${roundedDown.toFixed(4)}`);
+      const adjustedAmount = Math.max(0, roundedDown - 0.1); // subtract 0.1 but prevent negative values
+      setAmount(`${adjustedAmount.toFixed(4)}`);
       setSelectedQuick(99);
-      return
+      return;
     }
 
     // For supply and repay, use regular safe max amount

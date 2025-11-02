@@ -62,11 +62,11 @@ export const useDualPositions = (options: UseDualPositionsOptions = {}): DualPos
 
       // Process hackathon positions
       const hackathonPositions = Object.values(hackathonPositionsRaw)
-        .filter((pos: any) => {
-          const supplyBalance = parseFloat(pos.supplyBalance || '0');
-          const borrowBalance = parseFloat(pos.borrowBalance || '0');
-          return supplyBalance > 0 || borrowBalance > 0;
-        })
+        // .filter((pos: any) => {
+        //   const supplyBalance = parseFloat(pos.supplyBalance || '0');
+        //   const borrowBalance = parseFloat(pos.borrowBalance || '0');
+        //   return supplyBalance > 0 || borrowBalance > 0;
+        // })
         .map((pos: any) => {
           const market = markets.find(m => m.id === pos.marketId);
           return {
@@ -87,11 +87,11 @@ export const useDualPositions = (options: UseDualPositionsOptions = {}): DualPos
 
       // Process V1 positions
       const v1Positions = Object.values(v1PositionsRaw)
-        .filter((pos: any) => {
-          const supplyBalance = parseFloat(pos.supplyBalance || '0');
-          const borrowBalance = parseFloat(pos.borrowBalance || '0');
-          return supplyBalance > 0 || borrowBalance > 0;
-        })
+        // .filter((pos: any) => {
+        //   const supplyBalance = parseFloat(pos.supplyBalance || '0');
+        //   const borrowBalance = parseFloat(pos.borrowBalance || '0');
+        //   return supplyBalance > 0 || borrowBalance > 0;
+        // })
         .map((pos: any) => {
           const market = markets.find(m => m.id === pos.marketId);
           return {

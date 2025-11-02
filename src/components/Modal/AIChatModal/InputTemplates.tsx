@@ -75,7 +75,7 @@ const getAgentTemplates = (agent: AIAgent) => {
       description: "Get real-time APY rates and market statistics"
     }, 
     {
-      text: "What happens if I supply 1000 USDT?",
+      text: "What happens if I supply 100 USDT?",
       description: "Simulate position changes and impacts"
     },
     {
@@ -86,16 +86,16 @@ const getAgentTemplates = (agent: AIAgent) => {
       text: "Explain how DeFi lending works",
       description: "Learn the fundamentals of decentralized lending"
     },
+    // {
+    //   text: "What's the safest way to earn yield?",
+    //   description: "Conservative strategy focused on capital preservation"
+    // },
     {
-      text: "What's the safest way to earn yield?",
-      description: "Conservative strategy focused on capital preservation"
-    },
-    {
-      text: "I want to supply 1000 USDT",
+      text: "I want to supply 100 USDT",
       description: "Execute a supply action with AI guidance"
     },
     {
-      text: "Help me borrow 500 USDT",
+      text: "Help me borrow 50 USDT",
       description: "Guided borrowing with risk assessment"
     },
     {
