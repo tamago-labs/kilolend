@@ -217,15 +217,18 @@ export const MigratePage = () => {
     }
   };
 
-  const borrowPositions = hackathonPositions.filter(pos =>
-    parseFloat(pos.formattedSupplyBalance) > 0 ||
-    parseFloat(pos.formattedBorrowBalance) > 0
-  );
+  // const borrowPositions = hackathonPositions.filter(pos =>
+  //   parseFloat(pos.formattedSupplyBalance) > 0 ||
+  //   parseFloat(pos.formattedBorrowBalance) > 0
+  // );
 
-  const supplyPositions = hackathonPositions.filter(pos =>
-    parseFloat(pos.formattedSupplyBalance) > 0 ||
-    parseFloat(pos.formattedBorrowBalance) > 0
-  );
+  // const supplyPositions = hackathonPositions.filter(pos =>
+  //   parseFloat(pos.formattedSupplyBalance) > 0 ||
+  //   parseFloat(pos.formattedBorrowBalance) > 0
+  // );
+
+  const borrowPositions = hackathonPositions
+  const supplyPositions = hackathonPositions
 
   return (
     <Container>
