@@ -18,7 +18,6 @@ import { useTokenApproval } from '@/hooks/useTokenApproval'; // For repay
 import { useTokenApproval as useV1TokenApproval } from '@/hooks/v1/useTokenApproval'; // For supply
 import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
 
-
 const Container = styled.div`
   flex: 1;
   padding: 20px 16px;
@@ -169,22 +168,54 @@ export const MigratePage = () => {
   const { enterMarkets, isMarketEntered } = useComptrollerContract();
   const { calculateBorrowingPower } = useBorrowingPower();
 
-
-  // const {
-  //     checkHackathonEligibility,
-  //     checkV1Eligibility,
-  //     getBonusStatus,
-  //     claimBonus,
-  //     isLoading: isClaimingBonus
-  // } = useMigrationContract();
+  const {
+    checkHackathonEligibility,
+    checkV1Eligibility,
+    getBonusStatus,
+    claimBonus,
+    isLoading: isClaimingBonus
+  } = useMigrationContract();
 
   const [activeTab, setActiveTab] = useState<TabType>('supply');
-  // const [hackathonEligible, setHackathonEligible] = useState(false);
-  // const [v1Eligible, setV1Eligible] = useState(false);
-  // const [bonusClaimed, setBonusClaimed] = useState(false);
+  const [hackathonEligible, setHackathonEligible] = useState(false);
+  const [v1Eligible, setV1Eligible] = useState(false);
+  const [bonusClaimed, setBonusClaimed] = useState(false);
   const [migrationStatus, setMigrationStatus] = useState<Record<string, string>>({});
 
-   
+
+  // Check eligibility when account changes
+  useEffect(() => {
+    const checkEligibility = async () => {
+      if (!account) return;
+
+      try {
+        const [hackEligible, v1Eligible, bonusStatus] = await Promise.all([
+          checkHackathonEligibility(account),
+          checkV1Eligibility(account),
+          getBonusStatus(account)
+        ]);
+ 
+        setHackathonEligible(hackEligible);
+        setV1Eligible(v1Eligible);
+        setBonusClaimed(bonusStatus ? bonusStatus.claimed : false);
+      } catch (error) {
+        console.error('Error checking eligibility:', error);
+      }
+    };
+
+    checkEligibility();
+  }, [account]);
+
+  const handleClaimBonus = async () => {
+    try {
+      const result = await claimBonus();
+      if (result.status === 'confirmed') {
+        setBonusClaimed(true);
+      }
+    } catch (error) {
+      console.error('Error claiming bonus:', error);
+    }
+  };
 
   const borrowPositions = hackathonPositions.filter(pos =>
     parseFloat(pos.formattedSupplyBalance) > 0 ||
@@ -314,15 +345,14 @@ export const MigratePage = () => {
 
       </Content>
 
-      <InfoCard>
-        <InfoIcon><AlertCircle size={20} /></InfoIcon>
-        <InfoText>
-          Stay tuned for the bonus claim. Follow our Twitter/X for announcements.
-        </InfoText>
-      </InfoCard>
+      <EligibilityStatus
+        hackathonEligible={hackathonEligible}
+        v1Eligible={v1Eligible}
+        bonusClaimed={bonusClaimed}
+        onClaimBonus={handleClaimBonus}
+        isClaimingBonus={isClaimingBonus}
+      />
 
-      <br />
-      <br />
       <br />
       <br />
       <br />

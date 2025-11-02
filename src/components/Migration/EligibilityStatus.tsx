@@ -10,6 +10,17 @@ const Container = styled.div`
   padding: 24px;
   margin-top: 24px;
   margin-bottom: 100px;
+
+  @media (max-width: 768px) {
+    padding: 20px;
+    margin-bottom: 60px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 16px;
+    margin-bottom: 40px;
+    margin-top: 20px;
+  }
 `;
 
 const Title = styled.h3`
@@ -20,6 +31,16 @@ const Title = styled.h3`
   display: flex;
   align-items: center;
   gap: 8px;
+
+  @media (max-width: 768px) {
+    font-size: 17px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 16px;
+    margin-bottom: 14px;
+  }
 `;
 
 const StatusGrid = styled.div`
@@ -27,6 +48,11 @@ const StatusGrid = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 16px;
   margin-bottom: 20px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
 `;
 
 const StatusCard = styled.div<{ $eligible: boolean }>`
@@ -60,6 +86,11 @@ const StatusDescription = styled.div`
   font-size: 14px;
   color: #64748b;
   line-height: 1.4;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    line-height: 1.5;
+  }
 `;
 
 const BonusSection = styled.div<{ $eligible: boolean }>`
@@ -70,6 +101,13 @@ const BonusSection = styled.div<{ $eligible: boolean }>`
   display: flex;
   align-items: center;
   gap: 16px;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+    gap: 12px;
+  }
 `;
 
 const BonusIcon = styled.div<{ $eligible: boolean }>`
@@ -82,6 +120,10 @@ const BonusIcon = styled.div<{ $eligible: boolean }>`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+
+  @media (max-width: 768px) {
+    margin: 0 auto;
+  }
 `;
 
 const BonusContent = styled.div`
@@ -99,6 +141,11 @@ const BonusDescription = styled.div`
   font-size: 14px;
   color: #64748b;
   line-height: 1.4;
+
+  @media (max-width: 480px) {
+    font-size: 13px;
+    line-height: 1.5;
+  }
 `;
 
 const ClaimButton = styled.button<{ $eligible: boolean }>`
@@ -110,6 +157,17 @@ const ClaimButton = styled.button<{ $eligible: boolean }>`
   transition: all 0.2s ease;
   border: 2px solid;
   white-space: nowrap;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    padding: 14px 20px;
+    font-size: 13px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px 16px;
+    font-size: 12px;
+  }
 
   ${({ $eligible }) => $eligible ? `
     background: linear-gradient(135deg, #06C755 0%, #059212 100%);
