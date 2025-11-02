@@ -11,6 +11,7 @@ cBORA (Volatile): 0xA7247a6f5EaC85354642e0E90B515E2dC027d5F4
 cMBX (Volatile): 0xa024B1DE3a6022FB552C2ED9a8050926Fb22d7b6
 cKAIA (Volatile): 0x2029f3E3C667EBd68b1D29dbd61dc383BdbB56e5
 cStKAIA (Volatile): 0x8a424ccf2d2b7d85f1dfb756307411d2bbc73e07
+MigrationBonus: 0xd8fb9aFD5beeB7F5a703eBd4f2320AD40DAC9De7
 
 KAIA Kairos Testnet
 ================================================
