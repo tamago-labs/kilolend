@@ -389,7 +389,7 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: any
                 <TableHeaderCell $fixed={true}>Wallet</TableHeaderCell>
                 <TableHeaderCell>KILO</TableHeaderCell>
                 {/* <TableHeaderCell>Share %</TableHeaderCell> */}
-                <TableHeaderCell>Multiplier</TableHeaderCell> 
+                {/* <TableHeaderCell>Multiplier</TableHeaderCell>  */}
                 <TableHeaderCell>Base Points</TableHeaderCell> 
                 <TableHeaderCell>TVL</TableHeaderCell>  
                 <TableHeaderCell>Net Daily</TableHeaderCell> 
@@ -410,7 +410,7 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: any
                   </WalletCell>
                   <KiloCell>{formatKilo(user.kiloReward)}</KiloCell>
                   {/* <TableCell>{user.share.toFixed(2)}</TableCell>  */}
-                  <TableCell> {parseFloat(Number(user.multiplier).toFixed(4))}x</TableCell> 
+                  {/* <TableCell> {parseFloat(Number(user.multiplier).toFixed(4))}x</TableCell>  */}
                   <TableCell>{user.basePoints.toFixed(2)}</TableCell> 
                   <TableCell>{user.baseTVL.toFixed(2)}</TableCell> 
                   <TableCell>

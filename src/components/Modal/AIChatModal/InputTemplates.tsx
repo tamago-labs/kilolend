@@ -70,10 +70,14 @@ const TemplateButton = styled.button`
 
 const getAgentTemplates = (agent: AIAgent) => {
   const commonTemplates = [
+    // {
+    //   text: "What are the current market rates?",
+    //   description: "Get real-time APY rates and market statistics"
+    // }, 
     {
-      text: "What are the current market rates?",
-      description: "Get real-time APY rates and market statistics"
-    }, 
+      text: "Which token has the highest APY right now?",
+      description: "Find the best yield opportunities"
+    },
     {
       text: "What happens if I supply 100 USDT?",
       description: "Simulate position changes and impacts"
@@ -110,10 +114,14 @@ const getAgentTemplates = (agent: AIAgent) => {
       text: "What's my current health factor?",
       description: "Check portfolio health and risks"
     },
+    // {
+    //   text: "Which token has the highest APY right now?",
+    //   description: "Find the best yield opportunities"
+    // },
     {
-      text: "Which token has the highest APY right now?",
-      description: "Find the best yield opportunities"
-    },
+      text: "What are the current market rates?",
+      description: "Get real-time APY rates and market statistics"
+    }, 
     {
       text: "What's the maximum I can borrow safely?",
       description: "Calculate safe borrowing limits"

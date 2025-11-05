@@ -26,6 +26,7 @@ export type ModalType =
   | 'faucet'
   | 'send'
   | 'swap'
+  | 'news'
   | null;
 
 interface ModalData {

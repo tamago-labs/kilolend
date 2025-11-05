@@ -15,7 +15,8 @@ import { SendModal } from './SendModal';
 import { LeaderboardModal } from './LeaderboardModal';
 import { KiloPointsModal } from "./KiloModal"
 import { InviteModal } from './InviteModal';
-import { AIChatModal } from './AIChatModal'; 
+import { AIChatModal } from './AIChatModal';
+import { NewsModal } from './NewsModal'; 
 
 
 export const GlobalModalManager = () => {
@@ -158,6 +159,14 @@ export const GlobalModalManager = () => {
       case 'leaderboard':
         return (
           <LeaderboardModal
+            isOpen={isOpen}
+            onClose={closeModal}
+          />
+        );
+
+      case 'news':
+        return (
+          <NewsModal
             isOpen={isOpen}
             onClose={closeModal}
           />

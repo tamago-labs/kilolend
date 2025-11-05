@@ -6,6 +6,8 @@ import { TokenPriceSwiper, WelcomeSwiper } from '@/components/Swiper';
 import RandomIcon from "@/components/RandomIcon"
 import { WelcomeModal } from '../Modal/WelcomeModal';
 import { useWelcomeModal } from '../Modal/WelcomeModal/useWelcomeModal';
+import { NewsModal } from '../Modal/NewsModal';
+import { useNewsModal } from '../Modal/NewsModal/useNewsModal';
 
 const PageContainer = styled.div`
   flex: 1;
@@ -200,10 +202,15 @@ const IconImage = styled.img`
 export const HomePage = () => {
   
   const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
+  const { shouldShow: showNews, markAsShown: markNewsAsShown } = useNewsModal();
   const { openModal } = useModalStore();
 
   const handleWelcomeClose = () => {
     markAsShown();
+  };
+
+  const handleNewsClose = () => {
+    markNewsAsShown();
   };
 
   const handleAskAI = () => {
@@ -247,6 +254,11 @@ export const HomePage = () => {
       <WelcomeModal
         isOpen={showWelcome}
         onClose={handleWelcomeClose}
+      />
+
+      <NewsModal
+        isOpen={showNews}
+        onClose={handleNewsClose}
       />
 
       {/* Top Cards Section */}

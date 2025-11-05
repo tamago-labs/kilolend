@@ -481,12 +481,12 @@ export const AssetMigrationCard = (({
       sourceBalance = balance;
     }
 
-    if (type === 'supply') {
+    if (activeTab !== 'supply') {
       const safeAmount = getSafeMaxAmount(sourceBalance, marketId);
-      const roundedDown = Math.floor(Number(safeAmount) * 10000) / 10000; // round down to 4 decimals
-      const adjustedAmount = Math.max(0, roundedDown - 0.1); // subtract 0.1 but prevent negative values
+      const roundedDown = Math.floor(Number(safeAmount) * 100) / 100; // round down to 2 decimals
+      const adjustedAmount = Math.max(0, roundedDown - 0.01); // subtract 0.01 but prevent negative values
       setAmount(`${adjustedAmount.toFixed(4)}`);
-      setSelectedQuick(99);
+      setSelectedQuick(100);
       return;
     }
 
