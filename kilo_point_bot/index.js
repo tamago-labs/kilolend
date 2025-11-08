@@ -190,20 +190,51 @@ class KiloPointBot {
       
       // Initialize stats manager with existing users' base TVL
       let usersWithTVL = 0;
+      let usersWithZeroTVL = 0;
+      let usersWithErrors = 0;
+      
       for (const userAddress of allUsers) {
         const baseTVLData = existingUserBaseTVL[userAddress];
-        if (baseTVLData && baseTVLData.totalBaseTVL > 0) {
-          this.statsManager.initializeUserBaseTVL(userAddress, baseTVLData.totalBaseTVL, baseTVLData.marketBreakdown);
-          console.log(`✅ Initialized ${userAddress.slice(0, 8)}... with ${baseTVLData.totalBaseTVL.toFixed(2)} base TVL`);
-          usersWithTVL++;
+        
+        if (baseTVLData && baseTVLData.error) {
+          console.log(`❌ Error calculating TVL for ${userAddress.slice(0, 8)}...: ${baseTVLData.error}`);
+          usersWithErrors++;
+          // Still initialize with zero TVL to ensure user is tracked
+          this.statsManager.initializeUserBaseTVL(userAddress, 0, {});
+        } else if (baseTVLData) {
+          if (baseTVLData.totalBaseTVL > 0) {
+            this.statsManager.initializeUserBaseTVL(userAddress, baseTVLData.totalBaseTVL, baseTVLData.marketBreakdown);
+            console.log(`✅ Initialized ${userAddress.slice(0, 8)}... with ${baseTVLData.totalBaseTVL.toFixed(2)} base TVL (${baseTVLData.marketsWithBalance} markets)`);
+            usersWithTVL++;
+          } else {
+            this.statsManager.initializeUserBaseTVL(userAddress, 0, baseTVLData.marketBreakdown);
+            console.log(`💭 Initialized ${userAddress.slice(0, 8)}... with 0.00 base TVL (no balances)`);
+            usersWithZeroTVL++;
+          }
+        } else {
+          console.log(`⚠️  No TVL data found for ${userAddress.slice(0, 8)}...`);
+          usersWithErrors++;
+          // Still initialize with zero TVL to ensure user is tracked
+          this.statsManager.initializeUserBaseTVL(userAddress, 0, {});
         }
       }
       
       console.log(`\n🏆 Initialization Complete:`);
-      console.log(`   • Total users: ${allUsers.length}`);
-      console.log(`   • Users with TVL: ${usersWithTVL}`);
-      console.log(`   • Ready to track new events!`);
+      console.log(`   • Total users loaded: ${allUsers.length}`);
+      console.log(`   • Users with TVL > 0: ${usersWithTVL}`);
+      console.log(`   • Users with TVL = 0: ${usersWithZeroTVL}`);
+      console.log(`   • Users with errors: ${usersWithErrors}`);
+      console.log(`   • Total users tracked: ${this.statsManager.getUsers().length}`);
       console.log('=================================\n');
+      
+      // Verify all users are being tracked
+      const trackedUsers = this.statsManager.getUsers();
+      if (trackedUsers.length !== allUsers.length) {
+        console.warn(`⚠️  Warning: Only ${trackedUsers.length}/${allUsers.length} users are being tracked!`);
+        console.warn(`📍 Missing users: ${allUsers.filter(u => !trackedUsers.includes(u)).map(u => u.slice(0, 8) + '...').join(', ')}`);
+      } else {
+        console.log(`✅ All ${allUsers.length} users are successfully being tracked`);
+      }
       
     } catch (error) {
       console.error('❌ Error initializing existing users:', error.message);
@@ -346,6 +377,12 @@ class KiloPointBot {
     try {
       const currentBlock = await this.provider.getBlockNumber();
       
+      // Validate current block number
+      if (!currentBlock || currentBlock <= 0) {
+        console.warn('⚠️  Invalid current block number, skipping scan');
+        return;
+      }
+
       const blocksToScan = Math.min(this.scanWindowSeconds, this.maxBlocksPerScan);
       const fromBlock = Math.max(currentBlock - blocksToScan, this.lastProcessedBlock || currentBlock - blocksToScan);
       const toBlock = currentBlock;
@@ -354,72 +391,158 @@ class KiloPointBot {
         return;
       }
 
-      console.log(`🔍 Scanning recent blocks ${fromBlock} to ${toBlock} (${toBlock - fromBlock + 1} blocks)...`);
-
-      let totalEventsFound = 0;
-
-      for (const [cTokenAddress, market] of Object.entries(this.markets)) {
-        const contract = new ethers.Contract(cTokenAddress, CTOKEN_ABI, this.provider);
-
-        try {
-          const [mintEvents, redeemEvents, borrowEvents, repayEvents] = await Promise.all([
-            contract.queryFilter(contract.filters.Mint(), fromBlock, toBlock),
-            contract.queryFilter(contract.filters.Redeem(), fromBlock, toBlock),
-            contract.queryFilter(contract.filters.Borrow(), fromBlock, toBlock),
-            contract.queryFilter(contract.filters.RepayBorrow(), fromBlock, toBlock)
-          ]);
-
-          const allEvents = [
-            ...mintEvents.map(e => ({ ...e, type: 'mint' })),
-            ...redeemEvents.map(e => ({ ...e, type: 'redeem' })),
-            ...borrowEvents.map(e => ({ ...e, type: 'borrow' })),
-            ...repayEvents.map(e => ({ ...e, type: 'repay' }))
-          ];
-
-          allEvents.sort((a, b) => {
-            if (a.blockNumber !== b.blockNumber) {
-              return a.blockNumber - b.blockNumber;
-            }
-            return a.transactionIndex - b.transactionIndex;
-          });
-
-          for (const event of allEvents) {
-            switch (event.type) {
-              case 'mint':
-                await this.handleMintEvent(event.args[0], event.args[1], event.args[2], event, market);
-                break;
-              case 'redeem':
-                await this.handleRedeemEvent(event.args[0], event.args[1], event.args[2], event, market);
-                break;
-              case 'borrow':
-                await this.handleBorrowEvent(event.args[0], event.args[1], event.args[2], event.args[3], event, market);
-                break;
-              case 'repay':
-                await this.handleRepayBorrowEvent(event.args[0], event.args[1], event.args[2], event.args[3], event.args[4], event, market);
-                break;
-            }
-          }
-
-          if (allEvents.length > 0) {
-            console.log(`✅ Processed ${allEvents.length} events for ${market.symbol}`);
-            totalEventsFound += allEvents.length;
-          }
-
-        } catch (error) {
-          console.error(`❌ Error processing events for ${market.symbol}:`, error.message);
+      // Validate block range before scanning
+      if (!(await this.validateBlockRange(fromBlock, toBlock))) {
+        console.warn(`⚠️  Invalid block range ${fromBlock}-${toBlock}, adjusting scan window`);
+        // Fallback to smaller range
+        const fallbackFromBlock = Math.max(currentBlock - 10, 0);
+        if (fallbackFromBlock >= currentBlock) {
+          return;
         }
+        return this.scanBlockRange(fallbackFromBlock, currentBlock);
       }
 
-      if (totalEventsFound === 0) {
-        console.log(`✅ Scan complete - no events found in last ${this.scanWindowSeconds}s`);
-      } else {
-        console.log(`🎯 Total events processed: ${totalEventsFound}`);
-      }
-
-      this.lastProcessedBlock = currentBlock;
+      console.log(`🔍 Scanning recent blocks ${fromBlock} to ${toBlock} (${toBlock - fromBlock + 1} blocks)...`);
+      
+      await this.scanBlockRange(fromBlock, toBlock);
       
     } catch (error) {
       console.error('❌ Error processing recent events:', error.message);
+      // Don't update lastProcessedBlock on error to retry next time
+    }
+  }
+
+  /**
+   * Validate that a block range exists and is accessible
+   */
+  async validateBlockRange(fromBlock, toBlock) {
+    try {
+      // Test the latest block first
+      const latestBlock = await this.provider.getBlock(toBlock);
+      if (!latestBlock) {
+        console.warn(`⚠️  Block ${toBlock} does not exist`);
+        return false;
+      }
+
+      // Test the earliest block
+      if (fromBlock > 0) {
+        const earliestBlock = await this.provider.getBlock(fromBlock);
+        if (!earliestBlock) {
+          console.warn(`⚠️  Block ${fromBlock} does not exist`);
+          return false;
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.warn(`⚠️  Block range validation failed: ${error.message}`);
+      return false;
+    }
+  }
+
+  /**
+   * Scan a validated block range for events
+   */
+  async scanBlockRange(fromBlock, toBlock) {
+    let totalEventsFound = 0;
+    let successfulMarkets = 0;
+    let failedMarkets = 0;
+
+    for (const [cTokenAddress, market] of Object.entries(this.markets)) {
+      try {
+        const events = await this.getMarketEvents(cTokenAddress, market, fromBlock, toBlock);
+        
+        if (events.length > 0) {
+          console.log(`✅ Processed ${events.length} events for ${market.symbol}`);
+          totalEventsFound += events.length;
+        }
+        
+        successfulMarkets++;
+        
+      } catch (error) {
+        console.error(`❌ Error processing events for ${market.symbol}:`, error.message);
+        failedMarkets++;
+        
+        // Continue with other markets even if one fails
+        continue;
+      }
+    }
+
+    // Update last processed block only if at least one market succeeded
+    if (successfulMarkets > 0) {
+      this.lastProcessedBlock = toBlock;
+    }
+
+    console.log(`📊 Scan summary: ${successfulMarkets} successful, ${failedMarkets} failed markets`);
+    
+    if (totalEventsFound === 0) {
+      console.log(`✅ Scan complete - no events found in range ${fromBlock}-${toBlock}`);
+    } else {
+      console.log(`🎯 Total events processed: ${totalEventsFound}`);
+    }
+  }
+
+  /**
+   * Get events for a specific market with retry logic
+   */
+  async getMarketEvents(cTokenAddress, market, fromBlock, toBlock, maxRetries = 3) {
+    const contract = new ethers.Contract(cTokenAddress, CTOKEN_ABI, this.provider);
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const [mintEvents, redeemEvents, borrowEvents, repayEvents] = await Promise.all([
+          contract.queryFilter(contract.filters.Mint(), fromBlock, toBlock),
+          contract.queryFilter(contract.filters.Redeem(), fromBlock, toBlock),
+          contract.queryFilter(contract.filters.Borrow(), fromBlock, toBlock),
+          contract.queryFilter(contract.filters.RepayBorrow(), fromBlock, toBlock)
+        ]);
+
+        const allEvents = [
+          ...mintEvents.map(e => ({ ...e, type: 'mint' })),
+          ...redeemEvents.map(e => ({ ...e, type: 'redeem' })),
+          ...borrowEvents.map(e => ({ ...e, type: 'borrow' })),
+          ...repayEvents.map(e => ({ ...e, type: 'repay' }))
+        ];
+
+        // Sort events by block number and transaction index
+        allEvents.sort((a, b) => {
+          if (a.blockNumber !== b.blockNumber) {
+            return a.blockNumber - b.blockNumber;
+          }
+          return a.transactionIndex - b.transactionIndex;
+        });
+
+        // Process events
+        for (const event of allEvents) {
+          switch (event.type) {
+            case 'mint':
+              await this.handleMintEvent(event.args[0], event.args[1], event.args[2], event, market);
+              break;
+            case 'redeem':
+              await this.handleRedeemEvent(event.args[0], event.args[1], event.args[2], event, market);
+              break;
+            case 'borrow':
+              await this.handleBorrowEvent(event.args[0], event.args[1], event.args[2], event.args[3], event, market);
+              break;
+            case 'repay':
+              await this.handleRepayBorrowEvent(event.args[0], event.args[1], event.args[2], event.args[3], event.args[4], event, market);
+              break;
+          }
+        }
+
+        return allEvents;
+
+      } catch (error) {
+        console.warn(`⚠️  Attempt ${attempt}/${maxRetries} failed for ${market.symbol}: ${error.message}`);
+        
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        
+        // Exponential backoff
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
     }
   }
 
