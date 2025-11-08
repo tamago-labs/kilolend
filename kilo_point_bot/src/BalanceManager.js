@@ -5,6 +5,50 @@ const { ethers } = require('ethers');
  * Handles fetching user cToken balances and calculating TVL contributions
  */
 class BalanceManager {
+  
+  /**
+   * Safely convert BigInt to string with validation
+   */
+  static safeBigIntToString(value) {
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    if (typeof value === 'string') {
+      return value;
+    }
+    if (typeof value === 'number') {
+      if (Number.isSafeInteger(value)) {
+        return value.toString();
+      }
+      console.warn(`⚠️  Unsafe number conversion: ${value} - may lose precision`);
+      return value.toString();
+    }
+    return '0';
+  }
+  
+  /**
+   * Safely convert to Number for calculations with safety checks
+   */
+  static safeToNumber(value) {
+    if (typeof value === 'number') {
+      return value;
+    }
+    if (typeof value === 'bigint') {
+      const num = Number(value);
+      if (!Number.isSafeInteger(num)) {
+        console.warn(`⚠️  BigInt ${value.toString()} exceeds Number.MAX_SAFE_INTEGER, precision may be lost`);
+      }
+      return num;
+    }
+    if (typeof value === 'string') {
+      const num = Number(value);
+      if (!Number.isSafeInteger(num)) {
+        console.warn(`⚠️  String "${value}" exceeds Number.MAX_SAFE_INTEGER, precision may be lost`);
+      }
+      return num;
+    }
+    return 0;
+  }
   constructor(provider, markets) {
     this.provider = provider;
     this.markets = markets;
@@ -44,15 +88,18 @@ class BalanceManager {
         };
       }
 
-      // Calculate share as percentage
-      const sharePercentage = (Number(userBalance) / Number(totalSupply)) * 100;
+      // Use helper functions for safe conversion
+      const userBalanceNum = BalanceManager.safeToNumber(userBalance);
+      const totalSupplyNum = BalanceManager.safeToNumber(totalSupply);
+      
+      const sharePercentage = totalSupplyNum > 0 ? (userBalanceNum / totalSupplyNum) * 100 : 0;
       
       // Base TVL contribution: if user has 1% of total supply, they get 1 point
       const baseTVLContribution = sharePercentage;
 
       return {
-        userBalance: Number(userBalance),
-        totalSupply: Number(totalSupply),
+        userBalance: BalanceManager.safeBigIntToString(userBalance),
+        totalSupply: BalanceManager.safeBigIntToString(totalSupply),
         sharePercentage,
         baseTVLContribution,
         market: marketInfo.symbol

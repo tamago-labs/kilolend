@@ -35,9 +35,29 @@ class DatabaseService {
         console.warn('⚠️  API_KEY not configured - leaderboard storage may fail if endpoint is protected');
       }
 
+      // Validate and sanitize payload to ensure large numbers are handled properly
+      const sanitizedDistributions = distributions.map(distribution => {
+        const sanitized = { ...distribution };
+        
+        // Ensure balance breakdown numbers are strings
+        if (sanitized.balanceBreakdown) {
+          Object.keys(sanitized.balanceBreakdown).forEach(market => {
+            const marketData = sanitized.balanceBreakdown[market];
+            if (marketData.userBalance !== undefined && typeof marketData.userBalance !== 'string') {
+              marketData.userBalance = marketData.userBalance.toString();
+            }
+            if (marketData.totalSupply !== undefined && typeof marketData.totalSupply !== 'string') {
+              marketData.totalSupply = marketData.totalSupply.toString();
+            }
+          });
+        }
+        
+        return sanitized;
+      });
+
       const payload = {
         date,
-        distributions,
+        distributions: sanitizedDistributions,
         summary: {
           totalUsers: distributions.length,
           totalKiloDistributed: distributions.reduce((sum, d) => sum + d.kilo, 0),
@@ -49,7 +69,17 @@ class DatabaseService {
         }
       };
 
-      console.log(JSON.stringify(payload))
+      console.log('🔍 Validating payload for large numbers...');
+      
+      // Check for any remaining large numbers that might cause issues
+      const payloadStr = JSON.stringify(payload);
+      const largeNumbers = payloadStr.match(/\d{16,}/g);
+      if (largeNumbers) {
+        console.warn('⚠️  Found large numbers in payload:', largeNumbers.slice(0, 3)); // Show first 3
+        console.warn('⚠️  These should be converted to strings to avoid Number.MAX_SAFE_INTEGER issues');
+      }
+      
+      console.log(`📤 Sending payload for ${distributions.length} users...`);
 
       // Prepare headers
       const headers = {
