@@ -9,6 +9,48 @@ class DatabaseService {
     this.apiBaseUrl = apiBaseUrl || process.env.API_BASE_URL;
     this.apiKey = process.env.API_KEY; // API key for protected endpoints
     this.timeout = 10000; // 10 second timeout
+    this.minKiloThreshold = parseInt(process.env.MIN_KILO_THRESHOLD) || 3; // Minimum KILO to store in database
+  }
+
+  /**
+   * Filter distributions to remove users with 0 or very small KILO amounts
+   */
+  filterDistributions(distributions) {
+    const originalCount = distributions.length;
+    
+    const filteredDistributions = distributions.filter(distribution => {
+      const kiloAmount = Math.floor(distribution.kilo);
+      
+      // Filter out users with 0 KILO or amounts below threshold
+      if (kiloAmount === 0) {
+        return false;
+      }
+      
+      if (kiloAmount <= this.minKiloThreshold) {
+        return false;
+      }
+      
+      return true;
+    });
+    
+    const filteredCount = originalCount - filteredDistributions.length;
+    
+    if (filteredCount > 0) {
+      console.log(`🔍 Filtered ${filteredCount} users with ≤${this.minKiloThreshold} KILO (including 0 KILO users)`);
+      console.log(`📊 Reduced from ${originalCount} to ${filteredDistributions.length} users for database storage`);
+      
+      // Log some examples of filtered users for transparency
+      const filteredExamples = distributions
+        .filter(d => Math.floor(d.kilo) <= this.minKiloThreshold)
+        .slice(0, 3)
+        .map(d => `${d.address.slice(0, 8)}... (${Math.floor(d.kilo)} KILO)`);
+      
+      if (filteredExamples.length > 0) {
+        console.log(`🗑️  Examples filtered: ${filteredExamples.join(', ')}`);
+      }
+    }
+    
+    return filteredDistributions;
   }
 
   /**
@@ -28,7 +70,17 @@ class DatabaseService {
       }
 
       console.log(`💾 Storing leaderboard to database for ${date}...`);
-      console.log(`📊 ${distributions.length} users to store as JSON`);
+      console.log(`📊 ${distributions.length} total users calculated`);
+      
+      // Filter out users with 0 KILO or very small amounts
+      const filteredDistributions = this.filterDistributions(distributions);
+      
+      if (filteredDistributions.length === 0) {
+        console.log('📝 No users meet minimum KILO threshold for storage');
+        return null;
+      }
+      
+      console.log(`📊 ${filteredDistributions.length} users to store after filtering`);
 
       // Check if API key is configured for protected endpoints
       if (!this.apiKey) {
@@ -36,7 +88,7 @@ class DatabaseService {
       }
 
       // Validate and sanitize payload to ensure large numbers are handled properly
-      const sanitizedDistributions = distributions.map(distribution => {
+      const sanitizedDistributions = filteredDistributions.map(distribution => {
         const sanitized = { ...distribution };
         
         // Ensure balance breakdown numbers are strings
@@ -59,11 +111,11 @@ class DatabaseService {
         date,
         distributions: sanitizedDistributions,
         summary: {
-          totalUsers: distributions.length,
-          totalKiloDistributed: distributions.reduce((sum, d) => sum + d.kilo, 0),
-          topUser: distributions[0] ? {
-            address: distributions[0].address,
-            kilo: Math.floor(distributions[0].kilo)
+          totalUsers: filteredDistributions.length,
+          totalKiloDistributed: filteredDistributions.reduce((sum, d) => sum + d.kilo, 0),
+          topUser: filteredDistributions[0] ? {
+            address: filteredDistributions[0].address,
+            kilo: Math.floor(filteredDistributions[0].kilo)
           } : null,
           ...summary
         }
@@ -79,7 +131,7 @@ class DatabaseService {
         console.warn('⚠️  These should be converted to strings to avoid Number.MAX_SAFE_INTEGER issues');
       }
       
-      console.log(`📤 Sending payload for ${distributions.length} users...`);
+      console.log(`📤 Sending payload for ${filteredDistributions.length} users...`);
 
       // Prepare headers
       const headers = {
@@ -222,8 +274,6 @@ class DatabaseService {
           timeout: 5000 // Shorter timeout for connection test
         }
       );
-
-      
 
       console.log('✅ Database connection successful');
       console.log(`📍 API URL: ${this.apiBaseUrl}`);
