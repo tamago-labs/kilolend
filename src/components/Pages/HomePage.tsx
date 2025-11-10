@@ -1,7 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
-import { useModalStore } from '@/stores/modalStore'; 
+import { useModalStore } from '@/stores/modalStore';
 import { TokenPriceSwiper, WelcomeSwiper } from '@/components/Swiper';
 import RandomIcon from "@/components/RandomIcon"
 import { WelcomeModal } from '../Modal/WelcomeModal';
@@ -197,10 +197,10 @@ const IconImage = styled.img`
   }
 `;
 
- 
+
 
 export const HomePage = () => {
-  
+
   const { shouldShow: showWelcome, markAsShown } = useWelcomeModal();
   const { shouldShow: showNews, markAsShown: markNewsAsShown } = useNewsModal();
   const { openModal } = useModalStore();
@@ -245,6 +245,10 @@ export const HomePage = () => {
     openModal('send');
   };
 
+  const handleNews = () => {
+    openModal('news');
+  }
+
   // const handleSwap = () => {
   //   openModal('swap');
   // };
@@ -263,10 +267,9 @@ export const HomePage = () => {
 
       {/* Top Cards Section */}
       <TopCardsContainer>
-        <Card $gradient onClick={handleAskAI}>
+        <Card $gradient onClick={handleNews}>
           <WelcomeSwiper />
-        </Card>
-
+        </Card> 
         <Card>
           <TokenPriceSwiper />
         </Card>
@@ -295,7 +298,7 @@ export const HomePage = () => {
               />
             </IconCircle>
             <IconLabel>Borrow</IconLabel>
-          </IconButton> 
+          </IconButton>
           <IconButton onClick={handleAskAI}>
             <IconCircle $index="5">
               <RandomIcon />
@@ -303,7 +306,7 @@ export const HomePage = () => {
             <IconLabel>Ask AI</IconLabel>
           </IconButton>
 
-           <IconButton onClick={handleLearn}>
+          <IconButton onClick={handleLearn}>
             <IconCircle $index="6">
               <IconImage
                 src="./images/icon-faq.png"
@@ -390,7 +393,7 @@ export const HomePage = () => {
             <IconLabel>AI Vault</IconLabel>
           </IconButton> */}
 
-          
+
         </IconGrid>
       </ActionsSection>
     </PageContainer>

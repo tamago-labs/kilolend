@@ -147,9 +147,8 @@ export const useAIChat = (agent: AIAgent, config: UseAIChatConfig = {}): UseAICh
     try {
       const chatHistory = messages.filter(m => m.sender !== 'agent' || m.content.trim() !== '');
 
-      // Check if AWS credentials are available for real AI
-      const hasAWSCredentials = process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID &&
-        process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY;
+      // Check if AWS credentials are available  
+      const hasAWSCredentials = process.env.NEXT_PUBLIC_AWS_ACCESS_KEY_ID
 
       if (hasAWSCredentials) {
         // Use real AI service

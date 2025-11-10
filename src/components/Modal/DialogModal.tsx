@@ -30,6 +30,14 @@ const DialogContainer = styled.div<{ $isOpen: boolean }>`
   opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
   transform: scale(1); /* no scaling animation */
   transition: opacity 0.2s ease;
+  
+  /* Add horizontal margins on mobile */
+  margin: 0 16px;
+  
+  @media (max-width: 480px) {
+    margin: 0 12px;
+    border-radius: 12px;
+  }
 `;
 
 const DialogHeader = styled.div`
