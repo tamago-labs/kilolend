@@ -242,13 +242,17 @@ class KiloPointBot {
     }
   }
 
-  updateDailyStats(user, market, usdValue, type) {
+  async updateDailyStats(user, market, usdValue, type) {
     const newDay = this.statsManager.updateDailyStats(user, market, usdValue, type);
     
     // If new day started, print summary and reset
     if (newDay) {
       this.statsManager.printDailySummary(this.kiloCalculator, this.balanceManager);
       this.statsManager.reset();
+      
+      // NEW: Re-initialize existing users after daily reset
+      await this.statsManager.reinitializeExistingUsers(this.databaseService, this.balanceManager);
+      
       // Re-update for the new day
       this.statsManager.updateDailyStats(user, market, usdValue, type);
     }
@@ -272,7 +276,7 @@ class KiloPointBot {
       console.log(`🆔 Tx: ${event.transactionHash}`);
       console.log('─'.repeat(50));
 
-      this.updateDailyStats(minter, market.underlyingSymbol, calculation.usdValue, 'mint');
+      await this.updateDailyStats(minter, market.underlyingSymbol, calculation.usdValue, 'mint');
       
     } catch (error) {
       console.error('❌ Error handling Mint event:', error.message);
@@ -297,7 +301,7 @@ class KiloPointBot {
       console.log(`🆔 Tx: ${event.transactionHash}`);
       console.log('─'.repeat(50));
 
-      this.updateDailyStats(redeemer, market.underlyingSymbol, calculation.usdValue, 'redeem');
+      await this.updateDailyStats(redeemer, market.underlyingSymbol, calculation.usdValue, 'redeem');
       
     } catch (error) {
       console.error('❌ Error handling Redeem event:', error.message);
@@ -322,7 +326,7 @@ class KiloPointBot {
       console.log(`🆔 Tx: ${event.transactionHash}`);
       console.log('─'.repeat(50));
 
-      this.updateDailyStats(borrower, market.underlyingSymbol, calculation.usdValue, 'borrow');
+      await this.updateDailyStats(borrower, market.underlyingSymbol, calculation.usdValue, 'borrow');
       
     } catch (error) {
       console.error('❌ Error handling Borrow event:', error.message);
@@ -348,7 +352,7 @@ class KiloPointBot {
       console.log(`🆔 Tx: ${event.transactionHash}`);
       console.log('─'.repeat(50));
 
-      this.updateDailyStats(borrower, market.underlyingSymbol, calculation.usdValue, 'repay');
+      await this.updateDailyStats(borrower, market.underlyingSymbol, calculation.usdValue, 'repay');
       
     } catch (error) {
       console.error('❌ Error handling RepayBorrow event:', error.message);

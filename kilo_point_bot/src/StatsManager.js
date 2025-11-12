@@ -237,6 +237,77 @@ class StatsManager {
   getUsers() {
     return Array.from(this.dailyStats.users);
   }
+
+  /**
+   * Re-initialize existing users after daily reset
+   * Ensures users with base TVL are tracked even without daily activity
+   */
+  async reinitializeExistingUsers(databaseService, balanceManager) {
+    try {
+      console.log('\n🔄 RE-INITIALIZING USERS AFTER DAILY RESET...');
+      console.log('==========================================');
+      
+      // Get all users from the database
+      const allUsers = await databaseService.getAllUsers();
+      
+      if (allUsers.length === 0) {
+        console.log('💭 No existing users found in the system');
+        return;
+      }
+      
+      console.log(`🚀 Found ${allUsers.length} existing users, re-calculating base TVL...`);
+      
+      // Calculate base TVL for all existing users
+      const existingUserBaseTVL = await balanceManager.calculateBaseTVLForUsers(allUsers);
+      
+      // Re-initialize stats manager with existing users' base TVL
+      let usersWithTVL = 0;
+      let usersWithZeroTVL = 0;
+      let usersWithErrors = 0;
+      
+      for (const userAddress of allUsers) {
+        const baseTVLData = existingUserBaseTVL[userAddress];
+        
+        if (baseTVLData && baseTVLData.error) {
+          console.log(`❌ Error calculating TVL for ${userAddress.slice(0, 8)}...: ${baseTVLData.error}`);
+          usersWithErrors++;
+          // Still initialize with zero TVL to ensure user is tracked
+          this.initializeUserBaseTVL(userAddress, 0, {});
+          this.dailyStats.users.add(userAddress);
+        } else if (baseTVLData) {
+          if (baseTVLData.totalBaseTVL > 0) {
+            this.initializeUserBaseTVL(userAddress, baseTVLData.totalBaseTVL, baseTVLData.marketBreakdown);
+            this.dailyStats.users.add(userAddress);
+            console.log(`✅ Re-initialized ${userAddress.slice(0, 8)}... with ${baseTVLData.totalBaseTVL.toFixed(2)} base TVL (${baseTVLData.marketsWithBalance} markets)`);
+            usersWithTVL++;
+          } else {
+            this.initializeUserBaseTVL(userAddress, 0, baseTVLData.marketBreakdown);
+            this.dailyStats.users.add(userAddress);
+            console.log(`💭 Re-initialized ${userAddress.slice(0, 8)}... with 0.00 base TVL (no balances)`);
+            usersWithZeroTVL++;
+          }
+        } else {
+          console.log(`⚠️  No TVL data found for ${userAddress.slice(0, 8)}...`);
+          usersWithErrors++;
+          // Still initialize with zero TVL to ensure user is tracked
+          this.initializeUserBaseTVL(userAddress, 0, {});
+          this.dailyStats.users.add(userAddress);
+        }
+      }
+      
+      console.log(`\n🏆 Re-initialization Complete:`);
+      console.log(`   • Total users re-loaded: ${allUsers.length}`);
+      console.log(`   • Users with TVL > 0: ${usersWithTVL}`);
+      console.log(`   • Users with TVL = 0: ${usersWithZeroTVL}`);
+      console.log(`   • Users with errors: ${usersWithErrors}`);
+      console.log(`   • Total users tracked: ${this.dailyStats.users.length}`);
+      console.log('==========================================\n');
+      
+    } catch (error) {
+      console.error('❌ Error re-initializing existing users:', error.message);
+      console.log('💡 Continuing without existing user data - new events will still be tracked');
+    }
+  }
 }
 
 module.exports = StatsManager;
