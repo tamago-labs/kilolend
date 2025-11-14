@@ -167,6 +167,13 @@ export const BorrowAssetSelection = ({
   // Filter out collateral-only markets for borrowing
   const borrowableMarkets = markets.filter(market => market.isActive);
 
+  // Sort borrowable markets by available liquidity (totalSupply - totalBorrow) * price, descending
+  const sortedBorrowableMarkets = [...borrowableMarkets].sort((a, b) => {
+    const liquidityA = (a.totalSupply - a.totalBorrow) * a.price;
+    const liquidityB = (b.totalSupply - b.totalBorrow) * b.price;
+    return liquidityB - liquidityA; // Descending order (most liquid first)
+  });
+
   if (isLoading) {
     return (
       <LoadingState>
@@ -229,7 +236,7 @@ export const BorrowAssetSelection = ({
 
       {hasBorrowingPower && (
         <>
-          {borrowableMarkets.map((market) => (
+          {sortedBorrowableMarkets.map((market) => (
             <AssetCard
               key={market.id}
               $selected={selectedAsset?.id === market.id}

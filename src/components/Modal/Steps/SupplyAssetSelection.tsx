@@ -172,6 +172,13 @@ export const SupplyAssetSelection = ({
   
   const [currentMarketIndex, setCurrentMarketIndex] = useState(0);
 
+  // Sort markets by available liquidity (totalSupply - totalBorrow) * price, descending
+  const sortedMarkets = [...markets].sort((a, b) => {
+    const liquidityA = (a.totalSupply - a.totalBorrow) * a.price;
+    const liquidityB = (b.totalSupply - b.totalBorrow) * b.price;
+    return liquidityB - liquidityA; // Descending order (most liquid first)
+  });
+
   // Update current market index when selectedAsset changes
   // useEffect(() => {
   //   if (selectedAsset) {
@@ -183,10 +190,10 @@ export const SupplyAssetSelection = ({
   // }, [selectedAsset, markets]);
 
   useEffect(() => { 
-    if (markets.length > 0 && markets[currentMarketIndex]) { 
-      onAssetSelect(markets[currentMarketIndex])
+    if (sortedMarkets.length > 0 && sortedMarkets[currentMarketIndex]) { 
+      onAssetSelect(sortedMarkets[currentMarketIndex])
     }
-  },[markets, currentMarketIndex])
+  },[sortedMarkets, currentMarketIndex])
  
   const handlePrevious = () => {
     if (currentMarketIndex > 0) {
@@ -195,7 +202,7 @@ export const SupplyAssetSelection = ({
   };
 
   const handleNext = () => {
-    if (currentMarketIndex < markets.length - 1) {
+    if (currentMarketIndex < sortedMarkets.length - 1) {
       setCurrentMarketIndex(currentMarketIndex + 1);
     }
   };
@@ -210,11 +217,11 @@ export const SupplyAssetSelection = ({
     }
   };
 
-  const currentMarket = markets[currentMarketIndex];
+  const currentMarket = sortedMarkets[currentMarketIndex];
   const isCurrentSelected = selectedAsset?.id === currentMarket?.id;
 
   // Calculate summary stats
-  const totalMarkets = markets.length; 
+  const totalMarkets = sortedMarkets.length;
 
   if (isLoading) {
     return (
@@ -264,7 +271,7 @@ export const SupplyAssetSelection = ({
       </CardSection>
 
       <MarketNavigation
-        markets={markets}
+        markets={sortedMarkets}
         currentIndex={currentMarketIndex}
         userBalances={userBalances}
         onNavigate={handleNavigate}
