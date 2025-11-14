@@ -13,7 +13,12 @@ import {
   CustomSection,
   SectionTitle,
   CustomPromptInput,
-  InfoBox
+  InfoBox,
+  MaintenanceBanner,
+  MaintenanceTitle,
+  MaintenanceMessage,
+  MaintenanceDetails,
+  DisabledAgentCard
 } from './styled';
 import { AGENT_PRESETS } from '@/types/aiAgent';
 import type { AgentPreset } from '@/types/aiAgent';
@@ -22,6 +27,7 @@ interface AgentSelectionStepProps {
   selectedAgent: AgentPreset | null;
   customPrompt: string;
   onAgentSelect: (agent: AgentPreset) => void;
+  isUnderMaintenance?: boolean;
 }
 
 const getAgentBadges = (agent: AgentPreset): string[] => {
@@ -80,17 +86,37 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
   selectedAgent,
   customPrompt,
   onAgentSelect,
+  isUnderMaintenance = false,
 }) => {
+  const CardComponent = isUnderMaintenance ? DisabledAgentCard : AgentCard;
+
   return (
     <>
+      {/* Maintenance Banner */}
+      {isUnderMaintenance && (
+        <MaintenanceBanner>
+          <MaintenanceTitle>
+            🔧 Under Maintenance
+          </MaintenanceTitle>
+          <MaintenanceMessage>
+            Our AI chat feature is currently undergoing maintenance to improve your experience.
+          </MaintenanceMessage>
+          <MaintenanceDetails>
+            <li>Feature temporarily unavailable for system upgrades</li> 
+            <li>Expected to be back by end of November or sooner</li>
+            <li>Thank you for your patience and understanding</li>
+          </MaintenanceDetails>
+        </MaintenanceBanner>
+      )}
+
       <AgentGrid>
         {AGENT_PRESETS.slice(0, 3).map((agent) => {
           const badges = getAgentBadges(agent);
           return (
-            <AgentCard
+            <CardComponent
               key={agent.id}
               $selected={selectedAgent?.id === agent.id}
-              onClick={() => onAgentSelect(agent)}
+              onClick={() => !isUnderMaintenance && onAgentSelect(agent)}
             >
               <AgentAvatar>
                 <img src={`${agent.image}`} alt="Agent Avatar" />
@@ -103,7 +129,7 @@ export const AgentSelectionStep: React.FC<AgentSelectionStepProps> = ({
                   ))}
                 </AgentBadges>
               </AgentInfo>
-            </AgentCard>
+            </CardComponent>
           );
         })}
 

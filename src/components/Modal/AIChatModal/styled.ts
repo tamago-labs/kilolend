@@ -628,3 +628,67 @@ export const AgentSelectionContainer = styled.div`
   flex-direction: column;
   height: 100%;
 `;
+
+// Maintenance mode components
+export const MaintenanceBanner = styled.div`
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 24px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '🔧';
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 60px;
+    opacity: 0.1;
+    transform: rotate(-15deg);
+  }
+`;
+
+export const MaintenanceTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 8px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+`;
+
+export const MaintenanceMessage = styled.p`
+  font-size: 14px;
+  color: #78350f;
+  margin: 0 0 12px 0;
+  line-height: 1.5;
+`;
+
+export const MaintenanceDetails = styled.ul`
+  font-size: 13px;
+  color: #92400e;
+  margin: 0;
+  padding-left: 20px;
+  text-align: left;
+
+  li {
+    margin-bottom: 4px;
+  }
+`;
+
+export const DisabledAgentCard = styled(AgentCard)`
+  opacity: 0.6;
+  cursor: not-allowed;
+  filter: grayscale(0.8);
+  
+  &:hover {
+    border-color: #e2e8f0;
+    background: white;
+    transform: none;
+  }
+`;

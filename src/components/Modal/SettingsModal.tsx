@@ -196,12 +196,8 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
           {/* <SectionTitle>Application Info</SectionTitle> */}
           <InfoRow>
             <InfoLabel>DApp Version</InfoLabel>
-            <InfoValue>0.2.0</InfoValue>
-          </InfoRow>
-          {/* <InfoRow>
-            <InfoLabel>Support Email</InfoLabel>
-            <InfoValue>support@tamagolabs.com</InfoValue>
-          </InfoRow> */}
+            <InfoValue>0.2.1</InfoValue>
+          </InfoRow> 
           <InfoRow>
             <InfoLabel>Access Mode</InfoLabel>
             <InfoValue>

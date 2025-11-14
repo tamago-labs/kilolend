@@ -20,6 +20,9 @@ export interface AIChatModalProps {
 export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => {
   const { account } = useWalletAccountStore();
 
+  // Maintenance mode flag - set to true to enable maintenance
+  const IS_UNDER_MAINTENANCE = true;
+
   const [currentStep, setCurrentStep] = useState<'selection' | 'chat'>('selection');
   const [selectedAgent, setSelectedAgent] = useState<AgentPreset | null>(null);
   const [customPrompt, setCustomPrompt] = useState('');
@@ -163,6 +166,7 @@ export const AIChatModal: React.FC<AIChatModalProps> = ({ isOpen, onClose }) => 
             selectedAgent={selectedAgent}
             customPrompt={customPrompt}
             onAgentSelect={handleAgentSelect}
+            isUnderMaintenance={IS_UNDER_MAINTENANCE}
           />
         );
 
