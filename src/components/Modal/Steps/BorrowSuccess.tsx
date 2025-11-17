@@ -180,7 +180,7 @@ export const BorrowSuccess = ({
       <SuccessIcon>
         <CheckCircle size={40} color="white" />
       </SuccessIcon>
-      
+
       <SuccessTitle>Borrow Successful!</SuccessTitle>
       <SuccessMessage>
         You have successfully borrowed {amount} {asset}. The tokens have been sent to your wallet.
@@ -205,13 +205,22 @@ export const BorrowSuccess = ({
           <DetailLabel>Estimated Yearly Interest</DetailLabel>
           <DetailValue>{yearlyInterest.toFixed(4)} {asset}</DetailValue>
         </DetailRow>
-        <DetailRow>
+        {/* <DetailRow>
           <DetailLabel>Status</DetailLabel>
           <DetailValue>Active Loan</DetailValue>
-        </DetailRow>
+        </DetailRow> */}
+        {transactionHash && (
+          <DetailRow>
+            <DetailLabel>Transaction</DetailLabel>
+            <ClickableTransactionHash onClick={() => handleExternalLink(`https://www.kaiascan.io/tx/${transactionHash}`, 'Transaction')}>
+              <DetailValue>{`${transactionHash.slice(0, 6)}...${transactionHash.slice(-4)}`}</DetailValue>
+              <ExternalLink size={12} />
+            </ClickableTransactionHash>
+          </DetailRow>
+        )}
       </DetailsSection>
 
-      {transactionHash && (
+      {/* {transactionHash && (
         <TransactionDetails>
           <DetailRow>
             <DetailLabel>Transaction</DetailLabel>
@@ -221,8 +230,8 @@ export const BorrowSuccess = ({
             </ClickableTransactionHash>
           </DetailRow>
         </TransactionDetails>
-      )}
- 
+      )} */}
+
     </Container>
   );
 };
