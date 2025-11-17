@@ -9,4 +9,5 @@ export { SupplySuccess } from './SupplySuccess';
 export { BorrowAssetSelection } from './BorrowAssetSelection';
 export { BorrowAmountInput } from './BorrowAmountInput';
 export { BorrowTransactionPreview } from './BorrowTransactionPreview';
+export { BorrowTransactionConfirmation } from './BorrowTransactionConfirmation';
 export { BorrowSuccess } from './BorrowSuccess';

@@ -24,6 +24,7 @@ const LoadingSpinner = styled.div`
   
   svg {
     animation: spin 1s linear infinite;
+    color: #00C300;
   }
   
   @keyframes spin {

@@ -196,7 +196,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
           {/* <SectionTitle>Application Info</SectionTitle> */}
           <InfoRow>
             <InfoLabel>DApp Version</InfoLabel>
-            <InfoValue>0.2.1</InfoValue>
+            <InfoValue>0.2.2</InfoValue>
           </InfoRow> 
           <InfoRow>
             <InfoLabel>Access Mode</InfoLabel>

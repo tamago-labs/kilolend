@@ -2,6 +2,7 @@
 
 import styled from 'styled-components';
 import { CheckCircle, ExternalLink } from 'react-feather';
+import { liff } from "@/utils/liff";
 
 const Container = styled.div`
   text-align: center;
@@ -80,6 +81,28 @@ const TransactionLink = styled.a`
   }
 `;
 
+const TransactionDetails = styled.div`
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+  text-align: left;
+`;
+
+const ClickableTransactionHash = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #059669;
+    text-decoration: underline;
+  }
+`;
+
 const NextStepsSection = styled.div`
   background: #f0f9ff;
   border: 1px solid #0ea5e9;
@@ -140,7 +163,17 @@ export const BorrowSuccess = ({
   borrowAPR
 }: BorrowSuccessProps) => {
   const yearlyInterest = parseFloat(amount) * (borrowAPR / 100);
-  // const explorerUrl = transactionHash ? `https://kairos.kaiascan.io/tx/${transactionHash}` : null;
+
+  const handleExternalLink = (url: string, name: string) => {
+    if (liff.isInClient()) {
+      liff.openWindow({
+        url: url,
+        external: true,
+      });
+    } else {
+      window.open(url, '_blank');
+    }
+  };
 
   return (
     <Container>
@@ -178,31 +211,18 @@ export const BorrowSuccess = ({
         </DetailRow>
       </DetailsSection>
 
-      {/* <NextStepsSection>
-        <NextStepsTitle>Important Reminders</NextStepsTitle>
-        <NextStepsList>
-          <NextStepsItem>
-            Interest accrues continuously on your borrowed amount
-          </NextStepsItem>
-          <NextStepsItem>
-            Monitor your health factor to avoid liquidation
-          </NextStepsItem>
-          <NextStepsItem>
-            You can repay anytime to reduce interest costs
-          </NextStepsItem>
-          <NextStepsItem>
-            Consider setting up alerts for health factor changes
-          </NextStepsItem>
-        </NextStepsList>
-      </NextStepsSection> */}
-
-      {/* <WarningSection>
-        <WarningText>
-          <strong>⚠️ Important:</strong> Your debt will increase over time due to interest. 
-          Make sure to repay your loan or maintain sufficient collateral to avoid liquidation. 
-          You can monitor your position in the dashboard.
-        </WarningText>
-      </WarningSection> */}
+      {transactionHash && (
+        <TransactionDetails>
+          <DetailRow>
+            <DetailLabel>Transaction</DetailLabel>
+            <ClickableTransactionHash onClick={() => handleExternalLink(`https://www.kaiascan.io/tx/${transactionHash}`, 'Transaction')}>
+              <DetailValue>{`${transactionHash.slice(0, 6)}...${transactionHash.slice(-4)}`}</DetailValue>
+              <ExternalLink size={12} />
+            </ClickableTransactionHash>
+          </DetailRow>
+        </TransactionDetails>
+      )}
+ 
     </Container>
   );
 };

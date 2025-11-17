@@ -9,10 +9,12 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
 import { useUserPositions } from '@/hooks/v1/useUserPositions';
 import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useEventTracking } from '@/hooks/useEventTracking';
 import {
   BorrowAssetSelection,
   BorrowAmountInput,
   BorrowTransactionPreview,
+  BorrowTransactionConfirmation,
   BorrowSuccess,
 } from '../Steps';
 import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils"
@@ -53,8 +55,17 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances(); 
   const { positions: userPositions, getFormattedBalances, refreshPositions } = useUserPositions();
   const { calculateBorrowingPower, calculateMaxBorrowAmount } = useBorrowingPower();
+  const { 
+    isTracking, 
+    trackedEvent, 
+    error: trackingError, 
+    hasTimedOut, 
+    startTracking, 
+    stopTracking, 
+    reset: resetTracking 
+  } = useEventTracking(account);
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   // Get formatted balances including both supply and borrow
   const formattedBalances = getFormattedBalances();
@@ -209,22 +220,17 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
         `Starting borrow transaction for ${amount} ${selectedAsset.symbol}`
       );
       const result = await borrow(selectedAsset.id, amount);
-      setTransactionResult(result);
 
-      if (result.status === 'confirmed') {
-        console.log(
-          `Borrow successful: ${amount} ${selectedAsset.symbol} borrowed`
-        );
+      // LINE SDK doesn't return transaction hash, so we start event tracking
+      console.log(`Borrow transaction sent, starting event tracking for ${selectedAsset.id}`);
+      
+      // Start tracking for the borrow event and move to confirmation step
+      startTracking(selectedAsset.id, 'borrow');
+      setCurrentStep(4); // Move to confirmation step
+      
+      // Don't set transaction result yet - wait for event tracking
+      return; // Exit early, event tracking will handle the rest
 
-        setTimeout(() => {
-          refreshBalances(); // Refresh token balances
-          refreshPositions(); // Refresh user positions (including borrow balances)
-        }, 2000); // Wait 2 seconds for blockchain to update
-
-        setCurrentStep(4);
-      } else {
-        throw new Error(result.error || 'Borrow transaction failed');
-      }
     } catch (error) {
       console.error('Borrow process failed:', error);
       setTransactionResult({
@@ -235,7 +241,6 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
             ? error.message
             : 'Transaction failed. Please try again.',
       });
-    } finally {
       setIsTransacting(false);
     }
   };
@@ -293,6 +298,13 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
         ) : null;
       case 4:
         return selectedAsset ? (
+          <BorrowTransactionConfirmation
+            asset={selectedAsset.symbol}
+            amount={amount}
+          />
+        ) : null;
+      case 5:
+        return selectedAsset ? (
           <BorrowSuccess
             transactionHash={transactionResult?.hash}
             amount={amount}
@@ -304,6 +316,55 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
         return null;
     }
   };
+
+  // Handle event tracking results
+  useEffect(() => {
+    if (trackedEvent && trackedEvent.type === 'borrow') {
+      console.log('Borrow transaction confirmed via event tracking:', trackedEvent);
+      
+      // Create transaction result from tracked event
+      const result: TransactionResult = {
+        hash: trackedEvent.transactionHash,
+        status: 'confirmed'
+      };
+
+      setTransactionResult(result);
+      setIsTransacting(false);
+      setCurrentStep(5); // Move to success step
+
+      // Refresh data after successful transaction
+      setTimeout(() => {
+        refreshBalances();
+        refreshPositions();
+      }, 2000);
+    }
+  }, [trackedEvent]);
+
+  // Handle tracking errors
+  useEffect(() => {
+    if (trackingError) {
+      console.error('Event tracking error:', trackingError);
+      setTransactionResult({
+        hash: '',
+        status: 'failed',
+        error: trackingError
+      });
+      setIsTransacting(false);
+    }
+  }, [trackingError]);
+
+  // Handle timeout
+  useEffect(() => {
+    if (hasTimedOut) {
+      console.log('Transaction tracking timed out');
+      setTransactionResult({
+        hash: '',
+        status: 'failed',
+        error: 'Transaction tracking timed out. Please check your wallet and try again.'
+      });
+      setIsTransacting(false);
+    }
+  }, [hasTimedOut]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -317,6 +378,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
       setBorrowingPowerData(null);
       setMaxBorrowData(null);
       setValidationError(null);
+      resetTracking(); // Reset event tracking
     }
   }, [isOpen]);
 
@@ -355,7 +417,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
               onClick={currentStep === 3 ? handleConfirm : handleNext}
             >
               {isTransacting ? (
-                'Processing Borrow...'
+                'Transaction is being confirmed...'
               ) : (
                 <>
                   {currentStep === 3 ? 'Confirm Borrow' : 'Next'}

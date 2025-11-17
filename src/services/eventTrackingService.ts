@@ -5,12 +5,14 @@ import { MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig';
 const CTOKEN_ABI = [
   "event Mint(address minter, uint256 mintAmount, uint256 mintTokens)",
   "event Redeem(address redeemer, uint256 redeemAmount, uint256 redeemTokens)",
-  "event Borrow(address borrower, uint256 borrowAmount, uint256 accountBorrows, uint256 totalBorrows)",
-  "event RepayBorrow(address payer, address borrower, uint256 repayAmount, uint256 accountBorrows, uint256 totalBorrows)",
+  "event Borrow(address borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate)",
+  "event RepayBorrow(address payer, address borrower, uint repayAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate)",
   "function decimals() view returns (uint8)",
   "function symbol() view returns (string)",
   "function underlying() view returns (address)"
 ];
+
+
 
 export interface TrackedEvent {
   type: 'mint' | 'redeem' | 'borrow' | 'repay';
@@ -183,7 +185,7 @@ class EventTrackingService {
       amount = ethers.formatUnits(event.args[1], marketConfig.decimals); // mintAmount
       tokenAmount = ethers.formatUnits(event.args[2], 8); // mintTokens (cTokens have 8 decimals)
     } else if (options.eventType === 'borrow') {
-      // Borrow event: (address borrower, uint256 borrowAmount, uint256 accountBorrows, uint256 totalBorrows)
+      // Borrow event: (address borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate)
       amount = ethers.formatUnits(event.args[1], marketConfig.decimals); // borrowAmount
       tokenAmount = '0'; // No token minting in borrow
     } else {
