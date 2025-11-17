@@ -14,8 +14,8 @@ dotenv.config();
 const CTOKEN_ABI = [
   "event Mint(address minter, uint256 mintAmount, uint256 mintTokens)",
   "event Redeem(address redeemer, uint256 redeemAmount, uint256 redeemTokens)",
-  "event Borrow(address borrower, uint256 borrowAmount, uint256 accountBorrows, uint256 totalBorrows)",
-  "event RepayBorrow(address payer, address borrower, uint256 repayAmount, uint256 accountBorrows, uint256 totalBorrows)",
+  "event Borrow(address borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate)",
+  "event RepayBorrow(address payer, address borrower, uint repayAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate)",
   "function decimals() view returns (uint8)",
   "function symbol() view returns (string)",
   "function underlying() view returns (address)"
@@ -308,7 +308,7 @@ class KiloPointBot {
     }
   }
 
-  async handleBorrowEvent(borrower, borrowAmount, accountBorrows, totalBorrows, event, market) {
+  async handleBorrowEvent(borrower, borrowAmount, accountBorrows, totalBorrows, borrowRateDiscountBps, actualBorrowRate, event, market) {
     try {
       const calculation = await this.calculateUSDValue(
         market.underlyingSymbol,
@@ -333,7 +333,7 @@ class KiloPointBot {
     }
   }
 
-  async handleRepayBorrowEvent(payer, borrower, repayAmount, accountBorrows, totalBorrows, event, market) {
+  async handleRepayBorrowEvent(payer, borrower, repayAmount, accountBorrows, totalBorrows, borrowRateDiscountBps, actualBorrowRate, event, market) {
     try {
       const calculation = await this.calculateUSDValue(
         market.underlyingSymbol,
@@ -526,10 +526,10 @@ class KiloPointBot {
               await this.handleRedeemEvent(event.args[0], event.args[1], event.args[2], event, market);
               break;
             case 'borrow':
-              await this.handleBorrowEvent(event.args[0], event.args[1], event.args[2], event.args[3], event, market);
+              await this.handleBorrowEvent(event.args[0], event.args[1], event.args[2], event.args[3], event.args[4], event.args[5], event, market);
               break;
             case 'repay':
-              await this.handleRepayBorrowEvent(event.args[0], event.args[1], event.args[2], event.args[3], event.args[4], event, market);
+              await this.handleRepayBorrowEvent(event.args[0], event.args[1], event.args[2], event.args[3], event.args[4], event.args[5], event, market);
               break;
           }
         }
