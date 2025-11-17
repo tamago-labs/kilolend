@@ -10,10 +10,12 @@ import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContra
 import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
 import { useUserPositions } from '@/hooks/v1/useUserPositions'; 
 import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
+import { useEventTracking } from '@/hooks/useEventTracking';
 import {
   SupplyAssetSelection,
   SupplyAmountInput,
   SupplyTransactionPreview,
+  SupplyTransactionConfirmation,
   SupplySuccess
 } from '../Steps';
 import {
@@ -57,8 +59,17 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances();
   const { refreshPositions } = useUserPositions();
   const { checkAllowance, ensureApproval } = useTokenApproval();
+  const { 
+    isTracking, 
+    trackedEvent, 
+    error: trackingError, 
+    hasTimedOut, 
+    startTracking, 
+    stopTracking, 
+    reset: resetTracking 
+  } = useEventTracking(account);
 
-  const totalSteps = 4;
+  const totalSteps = 5;
 
   // Convert token balances to the format expected by components
   const userBalances = Object.keys(tokenBalances).reduce((acc, marketId) => {
@@ -231,16 +242,10 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
         setIsApproving(false);
         setNeedsApproval(false);
       }
-
-      console.log("isMarketAlreadyEntered: 123", isMarketAlreadyEntered)
-
-      console.log("enableAsCollateral: 123", enableAsCollateral, selectedAsset)
-
+ 
       // Step 2: Enter market if user enabled collateral and market not already entered
       if (enableAsCollateral && !isMarketAlreadyEntered && selectedAsset.marketAddress) {
-        
-        console.log("hello from here...")
-        
+
         setIsEnteringMarket(true);
         console.log(`Entering market for ${selectedAsset.symbol} to enable as collateral`);
 
@@ -260,20 +265,15 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       console.log(`Starting supply transaction for ${amount} ${selectedAsset.symbol}`);
       const supplyResult = await supply(selectedAsset.id, amount);
 
-      if (supplyResult.status !== 'confirmed') {
-        throw new Error(supplyResult.error || 'Supply transaction failed');
-      }
-
-      console.log(`Supply successful: ${amount} ${selectedAsset.symbol} supplied`);
-
-      // Step 4: Refresh all data after successful transaction
-      setTimeout(() => {
-        refreshBalances(); // Refresh token balances
-        refreshPositions(); // Refresh user positions
-      }, 2000); // Wait 2 seconds for blockchain to update
-
-      setTransactionResult(supplyResult);
-      setCurrentStep(4);
+      // LINE SDK doesn't return transaction hash, so we start event tracking
+      console.log(`Supply transaction sent, starting event tracking for ${selectedAsset.id}`);
+      
+      // Start tracking for the mint event and move to confirmation step
+      startTracking(selectedAsset.id, 'mint');
+      setCurrentStep(4); // Move to confirmation step
+      
+      // Don't set transaction result yet - wait for event tracking
+      return; // Exit early, event tracking will handle the rest
 
     } catch (error) {
       console.error('Supply process failed:', error);
@@ -292,6 +292,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const getTransactionStatusText = () => {
     if (isApproving) return 'Approving Token...';
     if (isEnteringMarket) return 'Enabling as Collateral...';
+    if (isTransacting && isTracking) return 'Transaction is being confirmed...';
     if (isTransacting) return 'Confirming Supply...';
     return '';
   };
@@ -355,6 +356,14 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
 
       case 4:
         return selectedAsset ? (
+          <SupplyTransactionConfirmation
+            asset={selectedAsset.symbol}
+            amount={amount}
+          />
+        ) : null;
+
+      case 5:
+        return selectedAsset ? (
           <SupplySuccess
             transactionHash={transactionResult?.hash}
             amount={amount}
@@ -368,6 +377,55 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
         return null;
     }
   };
+
+  // Handle event tracking results
+  useEffect(() => {
+    if (trackedEvent && trackedEvent.type === 'mint') {
+      console.log('Supply transaction confirmed via event tracking:', trackedEvent);
+      
+      // Create transaction result from tracked event
+      const result: TransactionResult = {
+        hash: trackedEvent.transactionHash,
+        status: 'confirmed'
+      };
+
+      setTransactionResult(result);
+      setIsTransacting(false);
+      setCurrentStep(5); // Move to success step
+
+      // Refresh data after successful transaction
+      setTimeout(() => {
+        refreshBalances();
+        refreshPositions();
+      }, 2000);
+    }
+  }, [trackedEvent]);
+
+  // Handle tracking errors
+  useEffect(() => {
+    if (trackingError) {
+      console.error('Event tracking error:', trackingError);
+      setTransactionResult({
+        hash: '',
+        status: 'failed',
+        error: trackingError
+      });
+      setIsTransacting(false);
+    }
+  }, [trackingError]);
+
+  // Handle timeout
+  useEffect(() => {
+    if (hasTimedOut) {
+      console.log('Transaction tracking timed out');
+      setTransactionResult({
+        hash: '',
+        status: 'failed',
+        error: 'Transaction tracking timed out. Please check your wallet and try again.'
+      });
+      setIsTransacting(false);
+    }
+  }, [hasTimedOut]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -384,6 +442,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
       setIsMarketAlreadyEntered(false);
       setTransactionResult(null);
       setValidationError(null);
+      resetTracking(); // Reset event tracking
     }
   }, [isOpen]);
 

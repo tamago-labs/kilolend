@@ -2,6 +2,7 @@
 export { SupplyAssetSelection } from './SupplyAssetSelection';
 export { SupplyAmountInput } from './SupplyAmountInput';
 export { SupplyTransactionPreview } from './SupplyTransactionPreview';
+export { SupplyTransactionConfirmation } from './SupplyTransactionConfirmation';
 export { SupplySuccess } from './SupplySuccess';
 
 // Borrow Modal Steps

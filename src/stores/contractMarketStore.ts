@@ -95,7 +95,7 @@ const initialContractMarkets: ContractMarket[] = [
     totalSupply: 0,
     totalBorrow: 0,
     utilization: 0,
-    price: 0.10,
+    price: 0.09,
     priceChange24h: -0.5,
     isActive: true
   },
@@ -127,7 +127,7 @@ const initialContractMarkets: ContractMarket[] = [
     totalSupply: 0,
     totalBorrow: 0,
     utilization: 0,
-    price: 0.11,
+    price: 0.09,
     priceChange24h: -1.2,
     isActive: true
   },
@@ -143,7 +143,7 @@ const initialContractMarkets: ContractMarket[] = [
     totalSupply: 0,
     totalBorrow: 0,
     utilization: 0,
-    price: 0.11,
+    price: 0.09,
     priceChange24h: 0.1,
     isActive: true
   }

@@ -1,7 +1,8 @@
 'use client';
 
 import styled from 'styled-components';
-import { CheckCircle, Shield } from 'react-feather';
+import { CheckCircle, Shield, ExternalLink } from 'react-feather';
+import { liff } from "@/utils/liff";
 
 const SuccessContainer = styled.div`
   text-align: center;
@@ -80,6 +81,19 @@ const CollateralText = styled.span`
   font-weight: 500;
 `;
 
+const ClickableTransactionHash = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #059669;
+    text-decoration: underline;
+  }
+`;
+
 interface SupplySuccessProps {
   transactionHash?: string;
   amount: string;
@@ -95,6 +109,18 @@ export const SupplySuccess = ({
   expectedAPY,
   collateralEnabled = false
 }: SupplySuccessProps) => {
+
+  const handleExternalLink = (url: string, name: string) => {
+    if (liff.isInClient()) {
+      liff.openWindow({
+        url: url,
+        external: true,
+      });
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+
   return (
     <SuccessContainer>
       <SuccessIcon>
@@ -122,7 +148,10 @@ export const SupplySuccess = ({
         {transactionHash && (
           <DetailRow>
             <DetailLabel>Transaction</DetailLabel>
-            <DetailValue>{`${transactionHash.slice(0, 6)}...${transactionHash.slice(-4)}`}</DetailValue>
+            <ClickableTransactionHash onClick={() => handleExternalLink(`https://www.kaiascan.io/tx/${transactionHash}`, 'Transaction')}>
+              <DetailValue>{`${transactionHash.slice(0, 6)}...${transactionHash.slice(-4)}`}</DetailValue>
+              <ExternalLink size={12} />
+            </ClickableTransactionHash>
           </DetailRow>
         )}
       </TransactionDetails>

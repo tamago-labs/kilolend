@@ -2,16 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import BigNumber from 'bignumber.js';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract } from './useMarketContract';
-import { MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig';
+import { MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig'; 
 
 export const useMarketData = () => {
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   const { updateMarketData, setLoading, markets } = useContractMarketStore();
   const { getMarketInfo } = useMarketContract();
+
 
   /**
    * Fetch market info for a specific market
@@ -26,10 +27,10 @@ export const useMarketData = () => {
 
       console.log(`Fetching market info for ${marketId}...`);
       const marketInfo = await getMarketInfo(marketId);
-      
+
       if (marketInfo) {
         console.log(`Market info for ${marketId}:`, marketInfo);
-        
+
         // Use BigNumber for safe calculations
         const safeMarketInfo = {
           ...marketInfo,
@@ -37,7 +38,7 @@ export const useMarketData = () => {
           borrowAPR: new BigNumber(marketInfo.borrowAPR || 0).toNumber(),
           utilizationRate: new BigNumber(marketInfo.utilizationRate || 0).toNumber()
         };
-        
+
         updateMarketData(marketId, safeMarketInfo);
       } else {
         console.warn(`No market info returned for ${marketId}`);
@@ -58,10 +59,10 @@ export const useMarketData = () => {
 
     try {
       console.log('Starting to fetch all market data...');
-      
+
       // Get all market IDs and process them
       const marketIds = Object.keys(MARKET_CONFIG_V1) as MarketId[];
-      
+
       console.log('All markets to fetch:', marketIds);
 
       // Fetch market data for all markets
@@ -77,7 +78,7 @@ export const useMarketData = () => {
       setIsLoading(false);
       setLoading(false);
     }
-  }, [fetchMarketInfo, setLoading]);
+  }, [fetchMarketInfo]);
 
   /**
    * Fetch market data for a single market
@@ -111,7 +112,10 @@ export const useMarketData = () => {
     error,
     fetchAllMarketData,
     refreshMarket,
-    markets
+    markets,
+    // prices: priceData.prices,
+    // pricesLoading: priceData.isLoading,
+    // pricesError: priceData.error,
   };
 };
 
