@@ -395,7 +395,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
           ))}
         </StepProgress>
         <StepContent>
-          {!isTransacting && (
+          {(!isTransacting && currentStep !== 4) && (
             <>
               {transactionResult?.status === 'failed' &&
                 transactionResult.error && (

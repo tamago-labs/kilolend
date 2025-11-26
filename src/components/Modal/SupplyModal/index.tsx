@@ -465,7 +465,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
 
         <StepContent>
 
-          {!isTransacting && (
+          {(!isTransacting && currentStep !== 4) && (
             <>
               {transactionResult?.status === 'failed' && transactionResult.error && (
                 <ErrorMessage>
