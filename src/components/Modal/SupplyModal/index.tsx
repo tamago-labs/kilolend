@@ -492,13 +492,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
               This asset will be enabled as collateral, allowing you to borrow against it. You can disable this later if needed.
             </ApprovalMessage>
           )}
-
-          {currentStep === 1 && (
-            <ApprovalMessage>
-              If you have positions on KiloLend hackathon version, please visit our Migrate Page to help transfer your assets to v1
-            </ApprovalMessage>
-          )}
-
+  
           <br />
 
           {renderStepContent()}
