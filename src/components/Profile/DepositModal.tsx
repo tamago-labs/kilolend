@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useModalStore } from '@/stores/modalStore';
-import { aiWalletService } from '@/services/aiWalletService';
+import { useSendTransaction } from '@/hooks/useSendTransaction';
 import { X, ArrowDownCircle, AlertCircle, CheckCircle } from 'react-feather';
 import { KAIA_MAINNET_TOKENS } from '@/utils/tokenConfig';
 
@@ -192,12 +192,12 @@ const ActionButton = styled.button<{ $variant?: 'primary' | 'secondary'; $loadin
   ${({ $variant, $loading }) => {
     if ($variant === 'primary') {
       return `
-        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        background: linear-gradient(135deg, #00C300, #00A000);
         color: white;
         
         &:hover:not(:disabled) {
           transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+          box-shadow: 0 4px 12px rgba(0, 195, 0, 0.3);
         }
       `;
     } else {
@@ -277,11 +277,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const { account } = useWalletAccountStore();
   const { balances, isLoading: balancesLoading } = useTokenBalances();
   const { closeModal } = useModalStore();
+  const { sendTokens, isLoading: transactionLoading, error: transactionError, resetError } = useSendTransaction();
 
   const [selectedToken, setSelectedToken] = useState<string>('');
   const [amount, setAmount] = useState<string>('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   // Filter tokens with balances
@@ -318,28 +317,26 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    resetError();
+    
     const validationError = validateAmount();
     if (validationError) {
-      setError(validationError);
       return;
     }
 
     if (!account || !selectedToken) {
-      setError('Missing required information');
       return;
     }
 
-    setIsLoading(true);
-    setError(null);
     setSuccess(null);
 
     try {
-      const txHash = await aiWalletService.transferToAIWallet(
-        account,
-        aiWalletAddress,
-        selectedToken,
-        amount
-      );
+      await sendTokens({
+        tokenSymbol: selectedToken,
+        amount,
+        recipient: aiWalletAddress,
+        isNative: selectedToken === 'KAIA'
+      });
 
       setSuccess(`Successfully deposited ${amount} ${selectedToken} to AI wallet`);
       
@@ -353,9 +350,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({
       }, 2000);
 
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Deposit failed');
-    } finally {
-      setIsLoading(false);
+      // Error is handled by the hook
+      console.error('Deposit failed:', err);
     }
   };
 
@@ -394,10 +390,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({
         </ModalHeader>
 
         <ModalBody>
-          {error && (
+          {transactionError && (
             <ErrorMessage>
               <AlertCircle size={16} />
-              {error}
+              {transactionError}
             </ErrorMessage>
           )}
 
@@ -414,7 +410,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
               <TokenSelect
                 value={selectedToken}
                 onChange={(e) => setSelectedToken(e.target.value)}
-                disabled={isLoading || balancesLoading}
+                disabled={transactionLoading || balancesLoading}
               >
                 <option value="">Choose a token...</option>
                 {availableTokens.map((token) => (
@@ -435,14 +431,14 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                 step="any"
                 min="0"
                 max={maxAmount}
-                disabled={isLoading || !selectedToken}
+                disabled={transactionLoading || !selectedToken}
               />
               <BalanceInfo>
                 <span>Available: <BalanceAmount>{selectedTokenBalance?.formattedBalance || '0'} {selectedToken}</BalanceAmount></span>
                 <MaxButton 
                   type="button" 
                   onClick={handleMaxClick}
-                  disabled={isLoading || !selectedToken}
+                  disabled={transactionLoading || !selectedToken}
                 >
                   MAX
                 </MaxButton>
@@ -461,7 +457,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
                 </SummaryRow>
                 <SummaryRow>
                   <SummaryLabel>To</SummaryLabel>
-                  <SummaryValue>{aiWalletService.formatAddress(aiWalletAddress)}</SummaryValue>
+                  <SummaryValue>{aiWalletAddress.slice(0, 8)}...{aiWalletAddress.slice(-6)}</SummaryValue>
                 </SummaryRow>
               </SummarySection>
             )}
@@ -469,10 +465,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({
             <ActionButton
               type="submit"
               $variant="primary"
-              $loading={isLoading}
-              disabled={isLoading || !selectedToken || !amount || validateAmount() !== null}
+              $loading={transactionLoading}
+              disabled={transactionLoading || !selectedToken || !amount || validateAmount() !== null}
             >
-              {isLoading ? (
+              {transactionLoading ? (
                 <>
                   <LoadingSpinner />
                   Depositing...

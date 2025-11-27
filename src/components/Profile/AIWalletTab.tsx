@@ -7,7 +7,7 @@ import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 import { useModalStore } from '@/stores/modalStore';
 import { aiWalletService, AIWalletStatus } from '@/services/aiWalletService';
 import { useAITokenBalances } from '@/hooks/useAITokenBalances';
-import { RefreshCw, ArrowUpCircle, Plus, CreditCard, AlertCircle, Info } from 'react-feather';
+import { RefreshCw, ArrowUpCircle, Plus, CreditCard, AlertCircle, Info, ArrowDownCircle } from 'react-feather';
 import { PRICE_API_CONFIG, KAIA_MAINNET_TOKENS } from '@/utils/tokenConfig';
 
 const TabContainer = styled.div`
@@ -349,8 +349,100 @@ const LoadingState = styled.div`
   color: #64748b;
 `;
 
+const GreenGradientHeader = styled.div`
+  background: linear-gradient(135deg, #1e293b, #06C755);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  color: white;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    right: -30%;
+    width: 100px;
+    height: 100px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    z-index: 0;
+  }
+`;
+
+const HeaderContent = styled.div`
+  position: relative;
+  z-index: 1;
+`;
+
+const HeaderTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const HeaderSubtitle = styled.p`
+  font-size: 14px;
+  opacity: 0.9;
+  margin-bottom: 20px;
+  line-height: 1.4;
+  text-align: center;
+`;
+
+const ActionButtonsContainer = styled.div`
+  display: flex;
+  gap: 12px;
+  
+  @media (max-width: 480px) {
+    flex-direction: column;
+    gap: 8px;
+  }
+`;
+
+const ActionButton = styled.button<{ $variant?: 'deposit' | 'withdraw' }>`
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  backdrop-filter: blur(10px);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  @media (max-width: 480px) {
+    padding: 10px 16px;
+    font-size: 13px;
+  }
+`;
+
 interface AIWalletTabProps {
   onWithdrawClick: () => void;
+  onDepositClick: () => void;
+  onAiWalletAddressChange: (address: string) => void;
   account: any
   prices: any;
   getFormattedChange: any;
@@ -358,7 +450,7 @@ interface AIWalletTabProps {
   pricesLoading: any;
 }
 
-export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, account, prices, getFormattedChange, getFormattedPrice, pricesLoading }) => {
+export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, onDepositClick, onAiWalletAddressChange, account, prices, getFormattedChange, getFormattedPrice, pricesLoading }) => {
 
   const { openModal } = useModalStore();
 
@@ -444,6 +536,13 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
     }
   }, [account]);
 
+  // Update parent component when AI wallet address changes
+  useEffect(() => {
+    if (aiWalletData?.aiWalletAddress) {
+      onAiWalletAddressChange(aiWalletData.aiWalletAddress);
+    }
+  }, [aiWalletData?.aiWalletAddress, onAiWalletAddressChange]);
+
   const formatAddress = (address: string) => {
     return `${address.slice(0, 8)}...${address.slice(-6)}`;
   };
@@ -451,6 +550,18 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
   const handleRefresh = () => {
     fetchAIWalletStatus();
     refreshBalances();
+  };
+
+  const handleDepositClick = () => {
+    if (aiWalletData?.aiWalletAddress) {
+      onDepositClick();
+    }
+  };
+
+  const handleWithdrawClick = () => {
+    if (aiWalletData?.aiWalletAddress) {
+      onWithdrawClick();
+    }
   };
 
   if (!account) {
@@ -527,7 +638,25 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
   // Show AI wallet UI if wallet exists
   return (
     <TabContainer>
-  
+      {/* Green Gradient Header with Action Buttons */}
+      <GreenGradientHeader>
+        <HeaderContent> 
+          <HeaderSubtitle>
+            Seamless transfer between your main wallet and AI wallet for autonomous trading
+          </HeaderSubtitle>
+          <ActionButtonsContainer>
+            <ActionButton onClick={onDepositClick}>
+              <ArrowDownCircle size={16} />
+              Deposit
+            </ActionButton>
+            <ActionButton onClick={onWithdrawClick}>
+              <ArrowUpCircle size={16} />
+              Withdraw
+            </ActionButton>
+          </ActionButtonsContainer>
+        </HeaderContent>
+      </GreenGradientHeader>
+
       <TokensSection>
         <SectionHeader>
           <SectionTitle>AI Wallet Balances</SectionTitle>

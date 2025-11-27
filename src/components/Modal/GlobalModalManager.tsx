@@ -16,7 +16,9 @@ import { LeaderboardModal } from './LeaderboardModal';
 import { KiloPointsModal } from "./KiloModal"
 import { InviteModal } from './InviteModal';
 import { AIChatModal } from './AIChatModal';
-import { NewsModal } from './NewsModal'; 
+import { NewsModal } from './NewsModal';
+import { DepositModal } from '../Profile/DepositModal';
+import { WithdrawModal as AIWithdrawModal } from '../Profile/WithdrawModal';
 
 
 export const GlobalModalManager = () => {
@@ -171,6 +173,25 @@ export const GlobalModalManager = () => {
             onClose={closeModal}
           />
         );
+
+      case 'ai-deposit':
+        return (
+          <DepositModal
+            aiWalletAddress={modalData.aiWalletAddress || ''}
+            onClose={closeModal}
+            onSuccess={modalData.onSuccess}
+          />
+        );
+
+      case 'ai-withdraw':
+        return (
+          <AIWithdrawModal
+            aiWalletAddress={modalData.aiWalletAddress || ''}
+            onClose={closeModal}
+            onSuccess={modalData.onSuccess}
+          />
+        );
+
       // case 'buy':
       //   return (
       //     <BuyModal

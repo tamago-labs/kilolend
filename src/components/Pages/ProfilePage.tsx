@@ -116,6 +116,7 @@ export const ProfilePage = () => {
   const [lineProfile, setLineProfile] = useState<LineProfile | null>(null);
   const [totalUSDValue, setTotalUSDValue] = useState<number>(0);
   const [activeTab, setActiveTab] = useState<'my-wallet' | 'ai-wallet'>('my-wallet');
+  const [aiWalletAddress, setAiWalletAddress] = useState<string>('');
 
   // Get prices for tokens we have API data for
   const apiTokens = PRICE_API_CONFIG.supportedTokens;
@@ -161,9 +162,10 @@ export const ProfilePage = () => {
   };
 
   const handleDepositClick = () => {
-    if (account) {
+    if (account && aiWalletAddress) {
       openModal('ai-deposit', {
         userAddress: account,
+        aiWalletAddress: aiWalletAddress,
         onSuccess: () => {
           // Refresh balances after successful deposit
           // refreshBalances();
@@ -173,9 +175,10 @@ export const ProfilePage = () => {
   };
 
   const handleWithdrawClick = () => {
-    if (account) {
+    if (account && aiWalletAddress) {
       openModal('ai-withdraw', {
         userAddress: account,
+        aiWalletAddress: aiWalletAddress,
         onSuccess: () => {
           // Refresh balances after successful withdrawal
           //  refreshBalances();
@@ -245,6 +248,8 @@ export const ProfilePage = () => {
         ) : (
           <AIWalletTab
             onWithdrawClick={handleWithdrawClick}
+            onDepositClick={handleDepositClick}
+            onAiWalletAddressChange={setAiWalletAddress}
             account={account} 
             prices={prices}
             getFormattedChange={getFormattedChange}
@@ -258,7 +263,7 @@ export const ProfilePage = () => {
       <ExternalLinksSection />
 
       {/* Modals */}
-      {depositModalData && (
+      {/* {depositModalData && (
         <DepositModal
           aiWalletAddress={depositModalData.aiWalletAddress || ''}
           onClose={() => openModal('ai-deposit', undefined)}
@@ -272,7 +277,7 @@ export const ProfilePage = () => {
           onClose={() => openModal('ai-withdraw', undefined)}
           onSuccess={withdrawModalData.onSuccess}
         />
-      )}
+      )} */}
     </PageContainer>
   );
 };
