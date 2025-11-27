@@ -103,19 +103,16 @@ class AIWalletService {
 
   /**
    * Get token balances for an AI wallet address
-   * This would typically call your existing balance API
+   * This method is deprecated - use useAITokenBalances hook instead
    */
   async getAIWalletBalances(aiWalletAddress: string): Promise<any[]> {
     try {
-      // Use existing token balance logic
-      // This is a placeholder - you'd integrate with your existing balance fetching
-      const response = await fetch(`/api/balances?address=${aiWalletAddress}`);
+      // This method should not be used anymore
+      // Use useAITokenBalances hook in components instead
+      console.warn('getAIWalletBalances is deprecated. Use useAITokenBalances hook instead.');
       
-      if (!response.ok) {
-        throw new Error('Failed to get AI wallet balances');
-      }
-
-      return await response.json();
+      // Return empty array for now
+      return [];
     } catch (error) {
       console.error('Error getting AI wallet balances:', error);
       throw error;

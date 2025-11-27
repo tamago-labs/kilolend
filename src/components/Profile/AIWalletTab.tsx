@@ -6,7 +6,8 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 import { useModalStore } from '@/stores/modalStore';
 import { aiWalletService, AIWalletStatus } from '@/services/aiWalletService';
-import { RefreshCw, ArrowUpCircle, Plus, CreditCard, AlertCircle } from 'react-feather';
+import { useAITokenBalances } from '@/hooks/useAITokenBalances';
+import { RefreshCw, ArrowUpCircle, Plus, CreditCard, AlertCircle, Info } from 'react-feather';
 import { PRICE_API_CONFIG, KAIA_MAINNET_TOKENS } from '@/utils/tokenConfig';
 
 const TabContainer = styled.div`
@@ -40,71 +41,36 @@ const WalletAddress = styled.div`
 `;
 
 const StatusSection = styled.div`
-  background: linear-gradient(135deg, #f0f9ff, #f8fafc);
-  border: 1px solid #3b82f6;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
-  text-align: center;
+  background: linear-gradient(135deg, #fef3c7, #fef9e7);
+  border: 1px solid #f59e0b;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const StatusIcon = styled.div`
+  color: #f59e0b;
+  flex-shrink: 0;
+`;
+
+const StatusContent = styled.div`
+  flex: 1;
 `;
 
 const StatusTitle = styled.div`
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 12px;
-`;
-
-const StatusGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 16px;
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-`;
-
-const StatusItem = styled.div`
-  text-align: center;
-`;
-
-const StatusValue = styled.div`
-  font-size: 20px;
-  font-weight: 700;
-  color: #3b82f6;
+  color: #92400e;
   margin-bottom: 4px;
 `;
 
-const StatusLabel = styled.div`
-  font-size: 12px;
-  color: #64748b;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-`;
-
-const UtilizationBar = styled.div`
-  width: 100%;
-  height: 8px;
-  background: #e2e8f0;
-  border-radius: 4px;
-  overflow: hidden;
-  margin-bottom: 8px;
-`;
-
-const UtilizationFill = styled.div<{ $percentage: number }>`
-  height: 100%;
-  width: ${({ $percentage }) => $percentage}%;
-  background: linear-gradient(90deg, #3b82f6, #2563eb);
-  border-radius: 4px;
-  transition: width 0.3s ease;
-`;
-
-const UtilizationText = styled.div`
-  font-size: 12px;
-  color: #64748b;
+const StatusText = styled.div`
+  font-size: 13px;
+  color: #78350f;
+  line-height: 1.4;
 `;
 
 const CreateWalletSection = styled.div`
@@ -119,7 +85,7 @@ const CreateWalletSection = styled.div`
 const CreateWalletIcon = styled.div`
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #00C300, #00A000);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -150,7 +116,7 @@ const CreateWalletButton = styled.button<{ $loading?: boolean }>`
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: linear-gradient(135deg, #00C300, #00A000);
   color: white;
   border: none;
   border-radius: 8px;
@@ -163,7 +129,7 @@ const CreateWalletButton = styled.button<{ $loading?: boolean }>`
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 195, 0, 0.3);
   }
 
   &:disabled {
@@ -397,11 +363,14 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
   const { openModal } = useModalStore();
 
   const [aiWalletData, setAiWalletData] = useState<AIWalletStatus | null>(null);
-  const [aiWalletBalances, setAiWalletBalances] = useState<any[]>([]);
-  const [totalUSDValue, setTotalUSDValue] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
+  const [ isLoading , setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null);
+
+  // Use the new AI wallet balances hook
+  const { balances: aiWalletBalances, isLoading: balancesLoading, refreshBalances } = useAITokenBalances(
+    aiWalletData?.aiWalletAddress || null
+  );
 
   // Get prices for tokens
   const apiTokens = PRICE_API_CONFIG.supportedTokens;
@@ -414,22 +383,15 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
   const fetchAIWalletStatus = async () => {
     if (!account) return;
 
-    setIsLoading(true);
-    setError(null);
+    setLoading(true)
 
     try {
       const status = await aiWalletService.getAIWalletStatus(account);
       setAiWalletData(status);
-
-      if (status.hasWallet && status.aiWalletAddress) {
-        // Fetch AI wallet balances
-        const balances = await aiWalletService.getAIWalletBalances(status.aiWalletAddress);
-        setAiWalletBalances(balances);
-      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to fetch AI wallet status');
     } finally {
-      setIsLoading(false);
+      setLoading(false)
     }
   };
 
@@ -450,10 +412,6 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
         assignedAt: result.assignedAt,
         status: result.status
       });
-
-      // Fetch balances for the new wallet
-      const balances = await aiWalletService.getAIWalletBalances(result.aiWalletAddress);
-      setAiWalletBalances(balances);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to create AI wallet');
     } finally {
@@ -462,20 +420,22 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
   };
 
   // Calculate total USD value
-  useEffect(() => {
-    let total = 0;
+  // useEffect(() => {
+  //   let total = 0;
 
-    aiWalletBalances.forEach((balance: any) => {
-      const priceKey = balance.symbol === 'MBX' ? 'MBX' : balance.symbol;
-      const price = prices[priceKey];
+  //   aiWalletBalances.forEach((balance: any) => {
+  //     const priceKey = balance.symbol === 'MBX' ? 'MBX' : balance.symbol;
+  //     const price = prices[priceKey];
 
-      if (price && parseFloat(balance.balance) > 0) {
-        total += parseFloat(balance.balance) * price.price;
-      }
-    });
+  //     if (price && parseFloat(balance.balance) > 0) {
+  //       total += parseFloat(balance.balance) * price.price;
+  //     }
+  //   });
 
-    setTotalUSDValue(total);
-  }, [aiWalletBalances, prices]);
+  //   setTotalUSDValue(total);
+  // }, [aiWalletBalances, prices]);
+
+  // const [totalUSDValue, setTotalUSDValue] = useState<number>(0);
 
   // Fetch data on component mount and when account changes
   useEffect(() => {
@@ -490,6 +450,7 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
 
   const handleRefresh = () => {
     fetchAIWalletStatus();
+    refreshBalances();
   };
 
   if (!account) {
@@ -502,9 +463,12 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
 
   if (isLoading) {
     return (
-      <LoadingState>
-        <div>Loading AI wallet data...</div>
-      </LoadingState>
+      <TabContainer>
+        <LoadingState>
+          <RefreshCw size={20} style={{ animation: 'spin 1s linear infinite', marginRight: '12px' }} />
+          Loading AI wallet data...
+        </LoadingState>
+      </TabContainer>
     );
   }
 
@@ -527,34 +491,18 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
   if (!aiWalletData?.hasWallet) {
     return (
       <TabContainer>
-        <WalletHeader>
-          <WalletTitle>
-            <CreditCard size={20} />
-            AI Wallet
-          </WalletTitle>
-        </WalletHeader>
 
         {aiWalletData?.status && (
           <StatusSection>
-            <StatusTitle>AI Wallet Capacity</StatusTitle>
-            <StatusGrid>
-              <StatusItem>
-                <StatusValue>{aiWalletData.status.usedWallets}</StatusValue>
-                <StatusLabel>Used</StatusLabel>
-              </StatusItem>
-              <StatusItem>
-                <StatusValue>{aiWalletData.status.totalWallets}</StatusValue>
-                <StatusLabel>Total</StatusLabel>
-              </StatusItem>
-              <StatusItem>
-                <StatusValue>{aiWalletData.status.availableWallets}</StatusValue>
-                <StatusLabel>Available</StatusLabel>
-              </StatusItem>
-            </StatusGrid>
-            <UtilizationBar>
-              <UtilizationFill $percentage={aiWalletData.status.utilizationRate} />
-            </UtilizationBar>
-            <UtilizationText>{aiWalletData.status.utilizationRate.toFixed(1)}% utilized</UtilizationText>
+            <StatusIcon>
+              <Info size={20} />
+            </StatusIcon>
+            <StatusContent>
+              <StatusTitle>Early Access</StatusTitle>
+              <StatusText>
+                AI Wallet is currently in beta phase with {aiWalletData.status.usedWallets}/{aiWalletData.status.totalWallets} slots available
+              </StatusText>
+            </StatusContent>
           </StatusSection>
         )}
 
@@ -564,13 +512,14 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
           </CreateWalletIcon>
           <CreateWalletTitle>Create Your AI Wallet</CreateWalletTitle>
           <CreateWalletDescription>
-            Get a dedicated AI wallet for automated trading and AI-powered portfolio management.
+            Enable your AI agent to trade autonomously with advanced strategies across multiple DeFi protocols
           </CreateWalletDescription>
           <CreateWalletButton onClick={handleCreateAIWallet} $loading={isCreating} disabled={isCreating}>
             <Plus size={16} />
             {isCreating ? 'Creating...' : 'Create AI Wallet'}
           </CreateWalletButton>
         </CreateWalletSection>
+
       </TabContainer>
     );
   }
@@ -578,34 +527,11 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, accou
   // Show AI wallet UI if wallet exists
   return (
     <TabContainer>
-      <WalletHeader>
-        <WalletTitle>
-          <CreditCard size={20} />
-          AI Wallet
-        </WalletTitle>
-      </WalletHeader>
-
-      {aiWalletData.aiWalletAddress && (
-        <WalletAddress>
-          {formatAddress(aiWalletData.aiWalletAddress)}
-        </WalletAddress>
-      )}
-
-      <TotalBalanceSection>
-        <TotalBalanceLabel>Total Balance</TotalBalanceLabel>
-        <TotalBalanceValue>
-          ${totalUSDValue.toFixed(2)}
-        </TotalBalanceValue>
-        <WithdrawButton onClick={onWithdrawClick}>
-          <ArrowUpCircle size={16} />
-          Withdraw to Main Wallet
-        </WithdrawButton>
-      </TotalBalanceSection>
-
+  
       <TokensSection>
         <SectionHeader>
           <SectionTitle>AI Wallet Balances</SectionTitle>
-          <RefreshButton onClick={handleRefresh} $loading={isLoading}>
+          <RefreshButton onClick={handleRefresh} $loading={balancesLoading}>
             <RefreshCw size={16} />
             Refresh
           </RefreshButton>

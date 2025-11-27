@@ -79,16 +79,10 @@ const TabButton = styled.button<{ $active?: boolean }>`
   }
 `;
 
-const TabContent = styled.div`
-  background: white;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  border: 1px solid #e2e8f0;
+const TabContent = styled.div` 
+  margin-bottom: 24px; 
 
-  @media (max-width: 480px) {
-    padding: 20px;
+  @media (max-width: 480px) { 
     margin-bottom: 20px;
   }
 `;

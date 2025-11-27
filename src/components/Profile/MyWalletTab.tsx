@@ -334,28 +334,9 @@ export const MyWalletTab: React.FC<MyWalletTabProps> = ({ onDepositClick , total
   }
 
   return (
-    <TabContainer>
-      <WalletHeader>
-        <WalletTitle>
-          My Wallet
-        </WalletTitle>
-      </WalletHeader>
-
-      <WalletAddress>
-        {formatAddress(account)}
-      </WalletAddress>
-
-      <TotalBalanceSection>
-        <TotalBalanceLabel>Total Balance</TotalBalanceLabel>
-        <TotalBalanceValue>
-          ${totalUSDValue.toFixed(2)}
-        </TotalBalanceValue>
-        <DepositButton onClick={onDepositClick}>
-          <ArrowDownCircle size={16} />
-          Deposit to AI Wallet
-        </DepositButton>
-      </TotalBalanceSection>
-
+    <TabContainer> 
+ 
+  
       <TokensSection>
         <SectionHeader>
           <SectionTitle>Available Tokens</SectionTitle>
