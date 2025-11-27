@@ -27,6 +27,8 @@ export type ModalType =
   | 'send'
   | 'swap'
   | 'news'
+  | 'ai-deposit'
+  | 'ai-withdraw'
   | null;
 
 interface ModalData {
