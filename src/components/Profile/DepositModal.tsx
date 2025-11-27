@@ -6,7 +6,7 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useModalStore } from '@/stores/modalStore';
 import { useSendTransaction } from '@/hooks/useSendTransaction';
-import { X, ArrowDownCircle, AlertCircle, CheckCircle } from 'react-feather';
+import { X, ArrowDownCircle, AlertCircle, CheckCircle, Shield } from 'react-feather';
 import { KAIA_MAINNET_TOKENS } from '@/utils/tokenConfig';
 
 const ModalOverlay = styled.div`
@@ -263,16 +263,42 @@ const LoadingSpinner = styled.div`
   }
 `;
 
+
+// Security Alert Styles
+const SecurityAlert = styled.div`
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border: 1px solid #3b82f6;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+`;
+
+const AlertIcon = styled.div`
+  color: #1e40af;
+  flex-shrink: 0;
+  margin-top: 2px;
+`;
+
+const AlertText = styled.p`
+  font-size: 14px;
+  color: #1e3a8a;
+  line-height: 1.5;
+  margin: 0;
+`;
+
 interface DepositModalProps {
   aiWalletAddress: string;
   onClose: () => void;
   onSuccess?: () => void;
 }
 
-export const DepositModal: React.FC<DepositModalProps> = ({ 
-  aiWalletAddress, 
-  onClose, 
-  onSuccess 
+export const DepositModal: React.FC<DepositModalProps> = ({
+  aiWalletAddress,
+  onClose,
+  onSuccess
 }) => {
   const { account } = useWalletAccountStore();
   const { balances, isLoading: balancesLoading } = useTokenBalances();
@@ -284,7 +310,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
 
   // Filter tokens with balances
-  const availableTokens = balances.filter(token => 
+  const availableTokens = balances.filter(token =>
     parseFloat(token.balance) > 0
   );
 
@@ -316,9 +342,9 @@ export const DepositModal: React.FC<DepositModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     resetError();
-    
+
     const validationError = validateAmount();
     if (validationError) {
       return;
@@ -339,10 +365,10 @@ export const DepositModal: React.FC<DepositModalProps> = ({
       });
 
       setSuccess(`Successfully deposited ${amount} ${selectedToken} to AI wallet`);
-      
+
       // Reset form
       setAmount('');
-      
+
       // Close modal after delay
       setTimeout(() => {
         onClose();
@@ -380,8 +406,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
     <ModalOverlay onClick={handleClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
-          <ModalTitle>
-            <ArrowDownCircle size={20} />
+          <ModalTitle> 
             Deposit to AI Wallet
           </ModalTitle>
           <CloseButton onClick={handleClose}>
@@ -390,6 +415,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
         </ModalHeader>
 
         <ModalBody>
+
           {transactionError && (
             <ErrorMessage>
               <AlertCircle size={16} />
@@ -435,8 +461,8 @@ export const DepositModal: React.FC<DepositModalProps> = ({
               />
               <BalanceInfo>
                 <span>Available: <BalanceAmount>{selectedTokenBalance?.formattedBalance || '0'} {selectedToken}</BalanceAmount></span>
-                <MaxButton 
-                  type="button" 
+                <MaxButton
+                  type="button"
                   onClick={handleMaxClick}
                   disabled={transactionLoading || !selectedToken}
                 >
@@ -478,6 +504,15 @@ export const DepositModal: React.FC<DepositModalProps> = ({
               )}
             </ActionButton>
           </form>
+          <SecurityAlert>
+            <AlertIcon>
+              <Shield size={20} />
+            </AlertIcon>
+            <AlertText>
+              Your AI wallet is secured with enterprise-grade AWS Secrets Manager. We're in beta - try small amounts first. You maintain full control and can withdraw funds anytime.
+            </AlertText>
+          </SecurityAlert>
+
         </ModalBody>
       </ModalContent>
     </ModalOverlay>

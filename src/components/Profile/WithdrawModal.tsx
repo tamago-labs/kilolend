@@ -171,8 +171,7 @@ export const WithdrawModal: React.FC<WithdrawModalProps> = ({
     <ModalOverlay onClick={handleClose}>
       <ModalContent onClick={(e) => e.stopPropagation()}>
         <ModalHeader>
-          <ModalTitle>
-            <ArrowUpCircle size={20} />
+          <ModalTitle> 
             Withdraw from AI Wallet
           </ModalTitle>
           <CloseButton onClick={handleClose}>
