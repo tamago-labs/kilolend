@@ -214,7 +214,7 @@ export const HomePage = () => {
   };
 
   const handleAskAI = () => {
-    openModal('ai-chat-new');
+    openModal('ai-agent');
   };
 
   const handleSupply = () => {

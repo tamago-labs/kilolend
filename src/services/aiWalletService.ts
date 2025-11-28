@@ -7,6 +7,7 @@ interface AIWalletStatus {
   hasWallet: boolean;
   aiWalletAddress?: string;
   assignedAt?: string;
+  agentId?: string | null;
   status?: {
     totalWallets: number;
     usedWallets: number;
@@ -97,6 +98,62 @@ class AIWalletService {
       return data;
     } catch (error) {
       console.error('Error creating AI wallet:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Create an AI agent for a user (assign agentId to existing AI wallet)
+   */
+  async createAgent(userAddress: string, agentId: string): Promise<AIWalletStatus> {
+    try {
+      const response = await fetch(`${this.baseURL}/ai-agent`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
+        },
+        body: JSON.stringify({ userAddress, agentId }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create AI agent');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error creating AI agent:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete an AI agent for a user (remove agentId from AI wallet)
+   */
+  async deleteAgent(userAddress: string): Promise<AIWalletStatus> {
+    try {
+      const url = new URL(`${this.baseURL}/ai-agent`);
+      url.searchParams.append('userAddress', userAddress);
+
+      const response = await fetch(url.toString(), {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete AI agent');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error deleting AI agent:', error);
       throw error;
     }
   }

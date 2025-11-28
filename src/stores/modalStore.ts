@@ -12,6 +12,7 @@ export type ModalType =
   | 'ai-chat' 
   | 'ai-chat-new'
   | 'ai-recommendations'
+  | 'ai-agent'
   | 'settings'
   | 'activities'
   | 'faq'

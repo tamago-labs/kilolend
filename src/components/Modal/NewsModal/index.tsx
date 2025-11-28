@@ -87,11 +87,11 @@ const newsItems = [
     title: 'V1 is Live',
     description: 'Migrate your assets from the hackathon version to v.1 and receive 100 $KAIA reward'
   },
-  {
-    image: './images/poster-tbw.png',
-    title: 'Thailand Blockchain Week',
-    description: 'Meet our team at Thailand Blockchain Week in Bangkok and hear about our latest features on stage'
-  },
+  // {
+  //   image: './images/poster-tbw.png',
+  //   title: 'Thailand Blockchain Week',
+  //   description: 'Meet our team at Thailand Blockchain Week in Bangkok and hear about our latest features on stage'
+  // },
   {
     image: './images/poster-vibe-trading.png',
     title: 'Vibe Trading with AI',
