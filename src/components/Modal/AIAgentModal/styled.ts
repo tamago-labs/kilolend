@@ -4,22 +4,21 @@ export const Container = styled.div`
   display: flex;
   flex-direction: column;
   height: 600px;
-  max-height: 80vh;
+  max-height: 80vh; 
 `;
 
 export const StepContent = styled.div`
   flex: 1;
   display: flex;
-  flex-direction: column;
-  padding: 20px;
+  flex-direction: column; 
   overflow-y: auto;
 `;
 
 export const StepIndicator = styled.div`
   display: flex;
   justify-content: center;
-  gap: 8px;
-  margin-bottom: 24px;
+  gap: 8px; 
+  margin-top: 24px;
 `;
 
 export const StepDot = styled.div<{ $active?: boolean; $completed?: boolean }>`
@@ -338,6 +337,32 @@ export const SendButton = styled.button`
 
   &:hover {
     background: #05a047;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+export const DeleteButton = styled.button`
+  padding: 12px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+
+  &:hover {
+    background: #b91c1c;
     transform: translateY(-1px);
   }
 

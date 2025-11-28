@@ -16,6 +16,18 @@ import {
   Button,
   InfoBox
 } from './styled';
+import styled from 'styled-components';
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column; 
+  padding: 24px;
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
+
+`;
 
 interface AIModel {
   id: string;
@@ -59,7 +71,7 @@ export const ModelSelectionStep: React.FC<ModelSelectionStepProps> = ({
   onBack,
 }) => {
   return (
-    <>
+    <Container>
       <StepTitle>Choose AI Model</StepTitle>
       <StepSubtitle>
         Select the AI model that will power your trading decisions
@@ -113,6 +125,6 @@ export const ModelSelectionStep: React.FC<ModelSelectionStepProps> = ({
           <li>Both models can execute transactions on your behalf through the backend</li>
         </ul>
       </InfoBox>
-    </>
+    </Container>
   );
 };

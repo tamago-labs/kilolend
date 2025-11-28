@@ -8,7 +8,12 @@ const InfoContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
-  padding: 20px 0;
+  padding: 24px;
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
+
 `;
 
 const StatusMessage = styled.div`
@@ -259,9 +264,15 @@ export const InfoStep: React.FC<InfoStepProps> = ({
     }
 
     try {
+
+
       setError(null);
       const status = await aiWalletService.getAIWalletStatus(account);
+
+
       setAiWalletData(status);
+
+
 
       if (!status.hasWallet) {
         setSetupState('no-ai-wallet');

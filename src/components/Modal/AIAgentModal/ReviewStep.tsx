@@ -17,7 +17,18 @@ import {
   ButtonContainer,
   Button,
   InfoBox
-} from './styled';
+} from './styled'; 
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column; 
+  padding: 24px;
+
+  @media (max-width: 480px) {
+    padding: 20px;
+  }
+
+`;
 
 const LoadingSpinner = styled.div<{ size?: number }>`
   width: ${({ size = 16 }) => size}px;
@@ -26,11 +37,18 @@ const LoadingSpinner = styled.div<{ size?: number }>`
   border-top: 2px solid white;
   border-radius: 50%;
   animation: spin 1s linear infinite;
+  margin-right: 8px;
   
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
   }
+`;
+
+const LoadingContent = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 interface AIModel {
@@ -60,7 +78,7 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
   creationError = null,
 }) => {
   return (
-    <>
+    <Container>
       <StepTitle>Review Your AI Agent</StepTitle>
       <StepSubtitle>
         Confirm your selections to create your personalized AI trading agent
@@ -130,10 +148,10 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           disabled={isCreatingWallet}
         >
           {isCreatingWallet ? (
-            <>
+            <LoadingContent>
               <LoadingSpinner size={16} />
               Creating AI Agent...
-            </>
+            </LoadingContent>
           ) : (
             'Create AI Agent'
           )}
@@ -155,6 +173,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
           <li>Start with small amounts to test your agent's performance</li>
         </ul>
       </InfoBox>
-    </>
+    </Container>
   );
 };

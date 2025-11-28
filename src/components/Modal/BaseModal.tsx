@@ -116,9 +116,9 @@ const CloseButton = styled.button`
   }
 `;
 
-const ModalContent = styled.div`
-  flex: 1;
-  padding: 24px;
+const ModalContent = styled.div<{ $isFull: boolean }>`
+  flex: 1; 
+  padding: ${({ $isFull }) => ($isFull ? '0px' : '24px')};
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 
@@ -136,7 +136,7 @@ const ModalContent = styled.div`
   }
 
   @media (max-width: 480px) {
-    padding: 20px;
+    padding: ${({ $isFull }) => ($isFull ? '0px' : '20px')};
   }
 `;
 
@@ -160,9 +160,10 @@ export interface BaseModalProps {
   onClose: () => void;
   title: string;
   children: ReactNode;
+  isFull?: boolean;
 }
 
-export const BaseModal = ({ isOpen, onClose, title, children }: BaseModalProps) => {
+export const BaseModal = ({ isOpen, onClose, title, children, isFull = false }: BaseModalProps) => {
   // Lock body scroll when modal is open
   useEffect(() => {
     if (isOpen) {
@@ -206,7 +207,7 @@ export const BaseModal = ({ isOpen, onClose, title, children }: BaseModalProps) 
           <ModalTitle>{title}</ModalTitle>
           <CloseButton onClick={onClose}>×</CloseButton>
         </ModalHeader>
-        <ModalContent>{children}</ModalContent>
+        <ModalContent $isFull={isFull}>{children}</ModalContent>
       </ModalContainer>
     </ModalOverlay>
   );

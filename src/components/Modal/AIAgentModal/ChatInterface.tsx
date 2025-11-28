@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import type { AgentPreset } from '@/types/aiAgent';
+import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import { aiWalletService } from '@/services/aiWalletService';
 import {
   ChatContainer,
   ChatHeader,
@@ -10,7 +12,8 @@ import {
   ChatInputContainer,
   ChatInputWrapper,
   ChatInput,
-  SendButton
+  SendButton,
+  DeleteButton
 } from './styled';
 
 interface ChatMessage {
@@ -43,7 +46,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { account } = useWalletAccountStore();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -99,10 +104,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
+  const handleDeleteAgent = async () => {
+    if (!account) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${character.name}? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    try {
+      await aiWalletService.deleteAgent(account);
+      onClose(); // Close the modal after successful deletion
+    } catch (error) {
+      console.error('Failed to delete agent:', error);
+      alert('Failed to delete agent. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   return (
     <ChatContainer>
       <ChatHeader>
-        <ChatTitle>{character.name} - AI Assistant</ChatTitle>
+        <ChatTitle>{character.name}</ChatTitle>
       </ChatHeader>
 
       <ChatMessages>
@@ -132,14 +158,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Ask about trading strategies, market analysis, or portfolio optimization..."
-            disabled={isLoading}
+            disabled={isLoading || isDeleting}
           />
           <SendButton
             onClick={handleSendMessage}
-            disabled={!inputText.trim() || isLoading}
+            disabled={!inputText.trim() || isLoading || isDeleting}
           >
             Send
           </SendButton>
+          <DeleteButton
+            onClick={handleDeleteAgent}
+            disabled={isDeleting || isLoading}
+            title="Delete Agent"
+          >
+            {isDeleting ? '...' : '🗑️'}
+          </DeleteButton>
         </ChatInputWrapper>
       </ChatInputContainer>
     </ChatContainer>

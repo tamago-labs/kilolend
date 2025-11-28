@@ -248,9 +248,9 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
   };
 
   const getModalTitle = () => {
-    if (isAgentCreated) return "AI Assistant";
+    if (isAgentCreated) return "Your AI Agent";
     if (currentStep === 'info') return "AI Agent Setup";
-    return "Create AI Agent";
+    return "Your AI Agent";
   };
 
   return (
@@ -258,6 +258,7 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
       isOpen={isOpen}
       onClose={handleClose}
       title={getModalTitle()}
+      isFull={true}
     >
       <Container>
         {renderStepIndicator()}
