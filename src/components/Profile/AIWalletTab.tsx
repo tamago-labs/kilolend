@@ -349,49 +349,6 @@ const LoadingState = styled.div`
   color: #64748b;
 `;
 
-const GreenGradientHeader = styled.div`
-  background: linear-gradient(135deg, #1e293b, #06C755);
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 20px;
-  color: white;
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -30%;
-    right: -30%;
-    width: 100px;
-    height: 100px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 50%;
-    z-index: 0;
-  }
-`;
-
-const HeaderContent = styled.div`
-  position: relative;
-  z-index: 1;
-`;
-
-const HeaderTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 700;
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const HeaderSubtitle = styled.p`
-  font-size: 14px;
-  opacity: 0.9;
-  margin-bottom: 20px;
-  line-height: 1.4;
-  text-align: center;
-`;
 
 const ActionButtonsContainer = styled.div`
   display: flex;
@@ -401,6 +358,22 @@ const ActionButtonsContainer = styled.div`
     flex-direction: column;
     gap: 8px;
   }
+`;
+
+const WalletActionsSection = styled.div`
+  margin-bottom: 20px;
+  padding: 16px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+`;
+
+const WalletSubtitle = styled.p`
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 16px;
+  line-height: 1.4;
+  text-align: center;
 `;
 
 const ActionButton = styled.button<{ $variant?: 'deposit' | 'withdraw' }>`
@@ -415,16 +388,15 @@ const ActionButton = styled.button<{ $variant?: 'deposit' | 'withdraw' }>`
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  background: rgba(255, 255, 255, 0.15);
-  color: white;
-  backdrop-filter: blur(10px);
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #1e293b;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.5);
+    background: #f8fafc;
+    border-color: #cbd5e1;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   &:disabled {
@@ -638,12 +610,19 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, onDep
   // Show AI wallet UI if wallet exists
   return (
     <TabContainer>
-      {/* Green Gradient Header with Action Buttons */}
-      <GreenGradientHeader>
-        <HeaderContent> 
-          <HeaderSubtitle>
-            Seamless transfer between your main wallet and AI wallet for autonomous trading
-          </HeaderSubtitle>
+      <TokensSection>
+        <SectionHeader>
+          <SectionTitle>AI Wallet Balances</SectionTitle>
+          <RefreshButton onClick={handleRefresh} $loading={balancesLoading}>
+            <RefreshCw size={16} />
+            Refresh
+          </RefreshButton>
+        </SectionHeader>
+
+        <WalletActionsSection>
+          <WalletSubtitle>
+            Seamless transfer between your main wallet and AI wallet
+          </WalletSubtitle>
           <ActionButtonsContainer>
             <ActionButton onClick={onDepositClick}>
               <ArrowDownCircle size={16} />
@@ -654,17 +633,7 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, onDep
               Withdraw
             </ActionButton>
           </ActionButtonsContainer>
-        </HeaderContent>
-      </GreenGradientHeader>
-
-      <TokensSection>
-        <SectionHeader>
-          <SectionTitle>AI Wallet Balances</SectionTitle>
-          <RefreshButton onClick={handleRefresh} $loading={balancesLoading}>
-            <RefreshCw size={16} />
-            Refresh
-          </RefreshButton>
-        </SectionHeader>
+        </WalletActionsSection>
 
         {aiWalletBalances.length === 0 ? (
           <EmptyState>

@@ -6,7 +6,7 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useTokenBalances } from '@/hooks/useTokenBalances';
 import { useModalStore } from '@/stores/modalStore';
 import { useSendTransaction } from '@/hooks/useSendTransaction';
-import { X, ArrowDownCircle, AlertCircle, CheckCircle, Shield } from 'react-feather';
+import { X, ArrowDownCircle, AlertCircle, CheckCircle, Shield, Info } from 'react-feather';
 import { KAIA_MAINNET_TOKENS } from '@/utils/tokenConfig';
 
 const ModalOverlay = styled.div`
@@ -270,7 +270,7 @@ const SecurityAlert = styled.div`
   border: 1px solid #3b82f6;
   border-radius: 12px;
   padding: 16px;
-  margin-top: 20px;
+  margin-bottom: 20px;
   display: flex;
   align-items: flex-start;
   gap: 12px;
@@ -416,6 +416,15 @@ export const DepositModal: React.FC<DepositModalProps> = ({
 
         <ModalBody>
 
+          <SecurityAlert>
+            <AlertIcon>
+              <Info size={20} />
+            </AlertIcon>
+            <AlertText>
+              Your AI trading agent uses a secure, isolated wallet to execute transactions on your behalf. To ensure you’re fully confident, we suggest starting with a small amount first.
+            </AlertText>
+          </SecurityAlert>
+
           {transactionError && (
             <ErrorMessage>
               <AlertCircle size={16} />
@@ -504,14 +513,7 @@ export const DepositModal: React.FC<DepositModalProps> = ({
               )}
             </ActionButton>
           </form>
-          <SecurityAlert>
-            <AlertIcon>
-              <Shield size={20} />
-            </AlertIcon>
-            <AlertText>
-              Your AI wallet is secured with enterprise-grade AWS Secrets Manager. We're in beta - try small amounts first. You maintain full control and can withdraw funds anytime.
-            </AlertText>
-          </SecurityAlert>
+          
 
         </ModalBody>
       </ModalContent>
