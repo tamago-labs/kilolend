@@ -45,7 +45,7 @@ const AI_MODELS: AIModel[] = [
     provider: 'Anthropic',
     description: 'Advanced reasoning with aggressive trading strategies for maximum returns',
     riskLevel: 'aggressive',
-    icon: '/images/icon-robot.png'
+    icon: '/images/claude-icon.png'
   },
   {
     id: 'aws-nova-pro',
@@ -53,7 +53,7 @@ const AI_MODELS: AIModel[] = [
     provider: 'Amazon Web Services',
     description: 'Conservative approach focused on capital preservation and steady growth',
     riskLevel: 'conservative',
-    icon: '/images/icon-credit-card.png'
+    icon: '/images/amazon-nova.png'
   }
 ];
 
@@ -117,14 +117,6 @@ export const ModelSelectionStep: React.FC<ModelSelectionStepProps> = ({
         </Button>
       </ButtonContainer>
 
-      <InfoBox>
-        <strong>About AI Models:</strong>
-        <ul>
-          <li><strong>Risk Aggressive:</strong> Pursues higher returns with advanced strategies</li>
-          <li><strong>Risk Conservative:</strong> Prioritizes capital preservation and steady growth</li>
-          <li>Both models can execute transactions on your behalf through the backend</li>
-        </ul>
-      </InfoBox>
     </Container>
   );
 };

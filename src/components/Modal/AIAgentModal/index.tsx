@@ -84,12 +84,12 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
   };
 
   const handleCreateAgent = async () => {
-    if (!account || !selectedCharacter) return;
+    if (!account || !selectedCharacter || !selectedModel) return;
 
     setIsCreatingWallet(true); // Reuse loading state
     setCreationError(null);
-    try {
-      const result = await aiWalletService.createAgent(account, selectedCharacter.id);
+    try { 
+      const result = await aiWalletService.createAgent(account, selectedCharacter.id, selectedModel.id);
       setIsAgentCreated(true);
       setCurrentStep('chat');
     } catch (error) {
@@ -128,24 +128,42 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
       // Get the current AI wallet status to retrieve agent info
       const status = await aiWalletService.getAIWalletStatus(account);
       
-      if (status.agentId) {
+      if (status.agentId && status.modelId) {
         // Find the agent preset based on the agentId
         const agentPreset = AGENT_PRESETS.find(preset => preset.id === status.agentId);
         
-        if (agentPreset) {
+        // Find the model based on the modelId
+        const availableModels = [
+          {
+            id: 'claude-sonnet-4.5',
+            name: 'Claude Sonnet 4.5',
+            provider: 'Anthropic',
+            description: 'Advanced reasoning with aggressive trading strategies for maximum returns',
+            riskLevel: 'aggressive' as const,
+            icon: '/images/icon-robot.png'
+          },
+          {
+            id: 'aws-nova-pro',
+            name: 'AWS Nova Pro',
+            provider: 'Amazon Web Services',
+            description: 'Conservative approach focused on capital preservation and steady growth',
+            riskLevel: 'conservative' as const,
+            icon: '/images/icon-credit-card.png'
+          }
+        ];
+        
+        const model = availableModels.find(model => model.id === status.modelId);
+        
+        if (agentPreset && model) {
           setSelectedCharacter(agentPreset);
-          // Set a default model for existing agents
-          setSelectedModel({
-            id: 'default',
-            name: 'Default Model',
-            provider: 'OpenAI',
-            description: 'Default AI model for your agent',
-            riskLevel: 'conservative',
-            icon: './images/icon-robot.png'
-          });
+          setSelectedModel(model);
           setIsAgentCreated(true);
           setCurrentStep('chat');
+        } else {
+          setCreationError('Failed to load agent configuration: Agent or model not found');
         }
+      } else {
+        setCreationError('No existing agent found or agent configuration incomplete');
       }
     } catch (error) {
       console.error('Failed to load existing agent:', error);

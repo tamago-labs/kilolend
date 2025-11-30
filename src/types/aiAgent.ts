@@ -168,6 +168,7 @@ export interface AIWalletResponse {
   aiWalletAddress: string | null;
   assignedAt: string | null;
   agentId: string | null;
+  modelId: string | null;
   status: {
     totalWallets: number;
     usedWallets: number;

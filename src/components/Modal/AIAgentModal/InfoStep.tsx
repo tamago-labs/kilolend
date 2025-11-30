@@ -269,10 +269,7 @@ export const InfoStep: React.FC<InfoStepProps> = ({
       setError(null);
       const status = await aiWalletService.getAIWalletStatus(account);
 
-
       setAiWalletData(status);
-
-
 
       if (!status.hasWallet) {
         setSetupState('no-ai-wallet');

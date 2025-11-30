@@ -8,6 +8,7 @@ interface AIWalletStatus {
   aiWalletAddress?: string;
   assignedAt?: string;
   agentId?: string | null;
+  modelId?: string | null;
   status?: {
     totalWallets: number;
     usedWallets: number;
@@ -103,9 +104,9 @@ class AIWalletService {
   }
 
   /**
-   * Create an AI agent for a user (assign agentId to existing AI wallet)
+   * Create an AI agent for a user (assign agentId and modelId to existing AI wallet)
    */
-  async createAgent(userAddress: string, agentId: string): Promise<AIWalletStatus> {
+  async createAgent(userAddress: string, agentId: string, modelId: string): Promise<AIWalletStatus> {
     try {
       const response = await fetch(`${this.baseURL}/ai-agent`, {
         method: 'POST',
@@ -113,7 +114,7 @@ class AIWalletService {
           'Content-Type': 'application/json',
           'X-Api-Key': this.apiKey,
         },
-        body: JSON.stringify({ userAddress, agentId }),
+        body: JSON.stringify({ userAddress, agentId, modelId }),
       });
 
       const data = await response.json();

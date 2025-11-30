@@ -164,15 +164,6 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
         </InfoBox>
       )}
 
-      <InfoBox>
-        <strong>Before you confirm:</strong>
-        <ul>
-          <li>Your AI agent will be able to execute transactions on your behalf</li>
-          <li>All transactions will be processed through our secure backend</li>
-          <li>You can modify or delete your AI agent at any time</li>
-          <li>Start with small amounts to test your agent's performance</li>
-        </ul>
-      </InfoBox>
     </Container>
   );
 };
