@@ -21,6 +21,11 @@ export class TextProcessor {
 export class AIChatServiceV1 {
   private readonly STREAM_ENDPOINT = 'https://unaenv7eet.ap-southeast-1.awsapprunner.com/stream';
   private readonly TIMEOUT_MS = 30000; // 30 seconds timeout
+  private readonly apiKey: string;
+
+  constructor() {
+    this.apiKey = process.env.NEXT_PUBLIC_API_KEY || '';
+  }
 
   async streamChat(prompt: string, userAddress: string, response: StreamResponse): Promise<void> {
     const controller = new AbortController();
@@ -31,6 +36,7 @@ export class AIChatServiceV1 {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
         },
         body: JSON.stringify({
           prompt,
@@ -106,6 +112,7 @@ export class AIChatServiceV1 {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
         },
         body: JSON.stringify({
           prompt: 'test',

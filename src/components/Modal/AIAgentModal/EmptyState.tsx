@@ -6,12 +6,13 @@ interface EmptyStateProps {
 
 export const EmptyState: React.FC<EmptyStateProps> = ({ characterName }) => {
   const suggestions = [
-    "Help me analyze my portfolio",
-    "What are the best lending strategies?",
-    "Show me current market conditions",
-    "How can I optimize my yields?",
-    "What's my risk level?",
-    "Explain KiloLend features"
+    "Help me check my wallet balance",
+    "What are current KiloLend lending rates?",
+    "Help swap 5 USDT to KAIA on DragonSwap",
+    "Analyze my DeFi portfolio performance",
+    "How to leverage my KAIA position",
+    "Check prices for major KAIA tokens",
+    "How to send tokens back to main wallet"
   ];
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -39,15 +40,6 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ characterName }) => {
         What would you like {characterName} to help you with?
       </div>
       
-      <div style={{
-        fontSize: '0.9em',
-        color: '#999999',
-        marginBottom: '32px',
-        maxWidth: '400px',
-        lineHeight: '1.4'
-      }}>
-        Ask about trading strategies, market analysis, portfolio optimization, or any DeFi-related questions.
-      </div>
 
       <div style={{
         display: 'flex',

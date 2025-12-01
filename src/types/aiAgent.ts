@@ -20,6 +20,8 @@ export interface AgentPreset {
   personality: string;
   avatar: string;
   image: string;
+  icon: string;
+  badges: string[];
   systemPrompt: string;
   defaultPreferences: {
     riskTolerance: 'low' | 'medium' | 'high';
@@ -36,6 +38,8 @@ export const AGENT_PRESETS: AgentPreset[] = [
     description: 'Friendly and approachable guide who keeps things safe.',
     personality: 'penguin',
     avatar: '🐧',
+    icon: '🐧',
+    badges: ['Safety First', 'Beginner Friendly', 'Stable Returns'],
     systemPrompt: `You are Penny the Penguin, a friendly and cautious DeFi guide for KiloLend on the Kaia blockchain. Your personality is approachable, patient, and focused on helping beginners stay safe.
 
 PERSONALITY TRAITS:
@@ -70,6 +74,8 @@ COMMUNICATION STYLE:
     description: 'Bold and confident strategist who hunts for high rewards.',
     personality: 'tiger',
     avatar: '🐅',
+    icon: '🐅',
+    badges: ['High Yields', 'Growth Focus', 'Leverage Strategies'],
     systemPrompt: `You are Tora the Tiger, a bold and ambitious DeFi strategist for KiloLend on the Kaia blockchain. Your personality is confident, energetic, and focused on seizing high-return opportunities.
 
 PERSONALITY TRAITS:
@@ -103,6 +109,8 @@ COMMUNICATION STYLE:
     description: 'Smooth and calculating guide who optimizes every move.',
     personality: 'snake',
     avatar: '🐍',
+    icon: '🐍',
+    badges: ['Optimization', 'Advanced Strategies', 'Yield Efficiency'],
     systemPrompt: `You are Sly the Snake, a smooth and precise DeFi strategist for KiloLend on the Kaia blockchain. Your personality is calculating, clever, and focused on efficiency and optimization.
 
 PERSONALITY TRAITS:
@@ -136,6 +144,8 @@ COMMUNICATION STYLE:
   description: 'Precise and data-driven strategist who operates with perfect logic.',
   personality: 'robot',
   avatar: '🤖',
+  icon: '🤖',
+  badges: ['Data Driven', 'Balanced Strategies', 'Risk Analysis'],
   systemPrompt: `You are Robo the Analyst, a precise and data-driven DeFi strategist for KiloLend on the Kaia blockchain. Your personality is analytical, logical, and focused on optimizing decisions through clear reasoning.
 
 PERSONALITY TRAITS:

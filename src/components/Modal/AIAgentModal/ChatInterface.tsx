@@ -5,6 +5,7 @@ import { aiWalletService } from '@/services/aiWalletService';
 import { aiChatServiceV1, TextProcessor } from '@/services/AIChatServiceV1';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { EmptyState } from './EmptyState';
+import { AgentSettingsModal } from './AgentSettingsModal';
 import {
   ChatContainer,
   ChatHeader,
@@ -16,7 +17,7 @@ import {
   ChatInputWrapper,
   ChatInput,
   SendButton,
-  DeleteButton,
+  SettingsButton,
   LoadingIndicator
 } from './styled';
 
@@ -50,8 +51,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
   const [currentStreamingText, setCurrentStreamingText] = useState('');
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { account } = useWalletAccountStore();
 
@@ -167,39 +168,44 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  const handleDeleteAgent = async () => {
-    if (!account) return;
+  const handleSettingsClick = () => {
+    setShowSettingsModal(true);
+  };
 
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${character.name}? This action cannot be undone.`
-    );
+  const handleSettingsClose = () => {
+    setShowSettingsModal(false);
+  };
 
-    if (!confirmed) return;
-
-    setIsDeleting(true);
-    try {
-      await aiWalletService.deleteAgent(account);
-      onClose(); // Close the modal after successful deletion
-    } catch (error) {
-      console.error('Failed to delete agent:', error);
-      alert('Failed to delete agent. Please try again.');
-    } finally {
-      setIsDeleting(false);
-    }
+  const handleDeleteSuccess = () => {
+    onClose(); // Close the chat modal after successful deletion
   };
 
   return (
     <ChatContainer>
       <ChatHeader style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <ChatTitle>{character.name}</ChatTitle>
-        <DeleteButton
-          onClick={handleDeleteAgent}
-          disabled={isDeleting || isLoading}
-          title="Delete Agent"
-          style={{ padding: '8px 12px', fontSize: '12px' }}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img 
+            src={character.image} 
+            alt={character.name}
+            onError={(e) => {
+              e.currentTarget.src = '/images/icon-ai.png'; // fallback image
+            }}
+            style={{ 
+              width: '32px', 
+              height: '32px', 
+              borderRadius: '50%',
+              objectFit: 'cover'
+            }}
+          />
+          <ChatTitle>{character.name}</ChatTitle>
+        </div>
+        <SettingsButton
+          onClick={handleSettingsClick}
+          disabled={isLoading}
+          title="Agent Settings"
         >
-          {isDeleting ? '...' : '🗑️'}
-        </DeleteButton>
+          ⚙️ Settings
+        </SettingsButton>
       </ChatHeader>
 
       <ChatMessages>
@@ -239,17 +245,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask about trading strategies, market analysis, or portfolio optimization..."
-            disabled={isLoading || isDeleting}
+            placeholder="Ask me anything about your wallet, trading, or portfolio..."
+            disabled={isLoading}
           />
           <SendButton
             onClick={handleSendMessage}
-            disabled={!inputText.trim() || isLoading || isDeleting}
+            disabled={!inputText.trim() || isLoading}
           >
             Send
           </SendButton>
         </ChatInputWrapper>
       </ChatInputContainer>
+
+      {showSettingsModal && (
+        <AgentSettingsModal
+          character={character}
+          model={model}
+          onClose={handleSettingsClose}
+          onDeleteSuccess={handleDeleteSuccess}
+        />
+      )}
     </ChatContainer>
   );
 };

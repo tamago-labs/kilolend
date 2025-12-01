@@ -38,6 +38,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({
       }} />
     ),
     
+    // Disable strikethrough - render as plain text instead
+    del: (props: any) => (
+      <span {...props} style={{ 
+        color: isUser ? '#ffffff' : '#333333',
+        textDecoration: 'none'
+      }} />
+    ),
+    
     // Style for lists
     ul: (props: any) => (
       <ul {...props} style={{ 
