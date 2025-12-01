@@ -296,6 +296,10 @@ export const MessageBubble = styled.div<{ $isUser?: boolean }>`
   background: ${({ $isUser }) => $isUser ? '#06C755' : 'white'};
   color: ${({ $isUser }) => $isUser ? 'white' : '#1e293b'};
   border: 1px solid ${({ $isUser }) =>  $isUser ? 'transparent' : '#e2e8f0'};
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  line-height: 1.5;
 `;
 
 export const ChatInputContainer = styled.div`
@@ -370,6 +374,43 @@ export const DeleteButton = styled.button`
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+  }
+`;
+
+export const LoadingIndicator = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+
+  &::before,
+  &::after {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: loadingDots 1.4s infinite ease-in-out;
+  }
+
+  &::before {
+    animation-delay: -0.32s;
+  }
+
+  &::after {
+    animation-delay: 0.32s;
+  }
+
+  @keyframes loadingDots {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
   }
 `;
 

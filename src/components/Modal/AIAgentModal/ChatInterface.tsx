@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import type { AgentPreset } from '@/types/aiAgent';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { aiWalletService } from '@/services/aiWalletService';
+import { aiChatServiceV1, TextProcessor } from '@/services/AIChatServiceV1';
+import { MarkdownRenderer } from './MarkdownRenderer';
+import { EmptyState } from './EmptyState';
 import {
   ChatContainer,
   ChatHeader,
@@ -13,7 +16,8 @@ import {
   ChatInputWrapper,
   ChatInput,
   SendButton,
-  DeleteButton
+  DeleteButton,
+  LoadingIndicator
 } from './styled';
 
 interface ChatMessage {
@@ -47,6 +51,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [currentStreamingText, setCurrentStreamingText] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { account } = useWalletAccountStore();
 
@@ -56,21 +61,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, currentStreamingText]);
 
+  // Handle suggestion clicks from EmptyState
   useEffect(() => {
-    // Add welcome message when component mounts
-    const welcomeMessage: ChatMessage = {
-      id: 'welcome',
-      text: `${character.name} at your service! I'm powered by ${model.name} and ready to help you with your DeFi trading strategies. What would you like to accomplish today?`,
-      isUser: false,
-      timestamp: new Date()
+    const handleSuggestionClick = (event: CustomEvent) => {
+      setInputText(event.detail);
     };
-    setMessages([welcomeMessage]);
-  }, [character, model]);
+
+    window.addEventListener('suggestionClick', handleSuggestionClick as EventListener);
+    return () => {
+      window.removeEventListener('suggestionClick', handleSuggestionClick as EventListener);
+    };
+  }, []);
+
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isLoading) return;
+    if (!inputText.trim() || isLoading || !account) return;
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -79,22 +86,78 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       timestamp: new Date()
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    const aiMessageId = `ai-${Date.now()}`;
+    const aiMessage: ChatMessage = {
+      id: aiMessageId,
+      text: '',
+      isUser: false,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage, aiMessage]);
     setInputText('');
     setIsLoading(true);
+    setCurrentStreamingText('');
 
-    // Simulate AI response (in real implementation, this would call backend)
-    setTimeout(() => {
-      const aiResponse: ChatMessage = {
-        id: `ai-${Date.now()}`,
-        text: `I understand you want to "${inputText}". Based on your ${model.riskLevel} risk profile, I'll analyze the best DeFi strategies for you. Let me check current market conditions and prepare some recommendations...`,
-        isUser: false,
-        timestamp: new Date()
-      };
-      
-      setMessages(prev => [...prev, aiResponse]);
+    try {
+      await aiChatServiceV1.streamChat(
+        inputText.trim(),
+        account,
+        {
+          onChunk: (chunk: string) => {
+            setMessages(prev => {
+              const updatedMessages = prev.map(msg => 
+                msg.id === aiMessageId 
+                  ? { ...msg, text: TextProcessor.processChunk(chunk, msg.text) }
+                  : msg
+              );
+              
+              // Update current streaming text for the loading indicator
+              const currentAIMessage = updatedMessages.find(msg => msg.id === aiMessageId);
+              if (currentAIMessage) {
+                setCurrentStreamingText(currentAIMessage.text);
+              }
+              
+              return updatedMessages;
+            });
+          },
+          onComplete: () => {
+            setIsLoading(false);
+            setCurrentStreamingText('');
+            
+            // Final cleanup of thinking tags
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === aiMessageId 
+                  ? { ...msg, text: TextProcessor.cleanThinkingTags(msg.text) }
+                  : msg
+              )
+            );
+          },
+          onError: (error: Error) => {
+            setMessages(prev => 
+              prev.map(msg => 
+                msg.id === aiMessageId 
+                  ? { ...msg, text: `Error: ${error.message}` }
+                  : msg
+              )
+            );
+            setIsLoading(false);
+            setCurrentStreamingText('');
+          }
+        }
+      );
+    } catch (error) {
+      setMessages(prev => 
+        prev.map(msg => 
+          msg.id === aiMessageId 
+            ? { ...msg, text: `Failed to connect: ${error instanceof Error ? error.message : 'Unknown error'}` }
+            : msg
+        )
+      );
       setIsLoading(false);
-    }, 2000);
+      setCurrentStreamingText('');
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -127,23 +190,42 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <ChatContainer>
-      <ChatHeader>
+      <ChatHeader style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <ChatTitle>{character.name}</ChatTitle>
+        <DeleteButton
+          onClick={handleDeleteAgent}
+          disabled={isDeleting || isLoading}
+          title="Delete Agent"
+          style={{ padding: '8px 12px', fontSize: '12px' }}
+        >
+          {isDeleting ? '...' : '🗑️'}
+        </DeleteButton>
       </ChatHeader>
 
       <ChatMessages>
+        {messages.length === 0 && !isLoading && (
+          <EmptyState characterName={character.name} />
+        )}
+        
         {messages.map((message) => (
           <Message key={message.id} $isUser={message.isUser}>
             <MessageBubble $isUser={message.isUser}>
-              {message.text}
+              {message.isUser ? (
+                message.text
+              ) : (
+                <MarkdownRenderer content={message.text} isUser={false} />
+              )}
             </MessageBubble>
           </Message>
         ))}
         
-        {isLoading && (
+        {isLoading && !currentStreamingText && (
           <Message $isUser={false}>
             <MessageBubble $isUser={false}>
-              Thinking...
+              <span style={{ display: 'flex', alignItems: 'center' }}>
+                <span>{character.name} is processing</span>
+                <LoadingIndicator />
+              </span>
             </MessageBubble>
           </Message>
         )}
@@ -166,13 +248,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           >
             Send
           </SendButton>
-          <DeleteButton
-            onClick={handleDeleteAgent}
-            disabled={isDeleting || isLoading}
-            title="Delete Agent"
-          >
-            {isDeleting ? '...' : '🗑️'}
-          </DeleteButton>
         </ChatInputWrapper>
       </ChatInputContainer>
     </ChatContainer>
