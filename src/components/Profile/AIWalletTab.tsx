@@ -572,6 +572,11 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, onDep
 
   // Show create wallet UI if no AI wallet exists
   if (!aiWalletData?.hasWallet) {
+    // Check if capacity is reached
+    const isCapacityReached = aiWalletData?.status?.usedWallets !== undefined && 
+                              aiWalletData?.status?.totalWallets !== undefined &&
+                              aiWalletData.status.usedWallets >= aiWalletData.status.totalWallets;
+
     return (
       <TabContainer>
 
@@ -584,6 +589,11 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, onDep
               <StatusTitle>Early Access</StatusTitle>
               <StatusText>
                 AI Wallet is currently in beta phase with {aiWalletData.status.usedWallets}/{aiWalletData.status.totalWallets} slots available
+                {isCapacityReached && (
+                  <div style={{ marginTop: '8px', fontWeight: '600', color: '#dc2626' }}>
+                    All slots are currently taken. Please check back later.
+                  </div>
+                )}
               </StatusText>
             </StatusContent>
           </StatusSection>
@@ -597,9 +607,13 @@ export const AIWalletTab: React.FC<AIWalletTabProps> = ({ onWithdrawClick, onDep
           <CreateWalletDescription>
             Enable your AI agent to trade autonomously with advanced strategies across multiple DeFi protocols
           </CreateWalletDescription>
-          <CreateWalletButton onClick={handleCreateAIWallet} $loading={isCreating} disabled={isCreating}>
+          <CreateWalletButton 
+            onClick={handleCreateAIWallet} 
+            $loading={isCreating} 
+            disabled={isCreating || isCapacityReached}
+          >
             <Plus size={16} />
-            {isCreating ? 'Creating...' : 'Create AI Wallet'}
+            {isCapacityReached ? 'Capacity Full' : isCreating ? 'Creating...' : 'Create AI Wallet'}
           </CreateWalletButton>
         </CreateWalletSection>
 

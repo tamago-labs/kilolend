@@ -325,6 +325,11 @@ export const InfoStep: React.FC<InfoStepProps> = ({
         );
 
       case 'no-ai-wallet':
+        // Check if capacity is reached
+        const isCapacityReached = aiWalletData?.status?.usedWallets !== undefined && 
+                                  aiWalletData?.status?.totalWallets !== undefined &&
+                                  aiWalletData.status.usedWallets >= aiWalletData.status.totalWallets;
+
         return (
           <InfoContainer>
             <StatusIcon $type="ai-wallet">
@@ -357,6 +362,11 @@ export const InfoStep: React.FC<InfoStepProps> = ({
                   <CapacityTitle>Limited spots available</CapacityTitle>
                   <CapacityText>
                     Beta phase: {aiWalletData.status.usedWallets}/{aiWalletData.status.totalWallets} slots available
+                    {isCapacityReached && (
+                      <div style={{ marginTop: '8px', fontWeight: '600', color: '#dc2626' }}>
+                        All slots are currently taken. Please check back later.
+                      </div>
+                    )}
                   </CapacityText>
                 </CapacityContent>
               </CapacitySection>
@@ -364,9 +374,9 @@ export const InfoStep: React.FC<InfoStepProps> = ({
 
             <ActionButton 
               onClick={onCreateAIWallet} 
-              disabled={isCreatingWallet}
+              disabled={isCreatingWallet || isCapacityReached}
             >
-              {isCreatingWallet ? (
+              {isCapacityReached ? 'Capacity Full' : isCreatingWallet ? (
                 <>
                   <LoadingSpinner size={18} />
                   Creating...
