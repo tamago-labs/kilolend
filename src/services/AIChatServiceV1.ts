@@ -4,22 +4,59 @@ export interface StreamResponse {
   onError: (error: Error) => void;
 }
 
+export interface MessageResponse {
+  message_id: number;
+  role: string;
+  content: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MessagesListResponse {
+  user_address: string;
+  session_id: number;
+  messages: MessageResponse[];
+  total_count: number;
+}
+
 export class TextProcessor {
   static cleanThinkingTags(text: string): string {
     // Remove <thinking>...</thinking> tags and their content
     return text.replace(/<thinking>[\s\S]*?<\/thinking>/gi, '').trim();
   }
 
+  static normalizeLineBreaks(text: string): string {
+
+    // Replace multiple consecutive newlines with maximum 2 newlines
+    // This prevents excessive spacing while preserving paragraph breaks
+    return text
+      .replace(/\n{3,}/g, '\n\n') // 3+ newlines -> 2 newlines 
+      .replace(/[ \t]+\n/g, '\n') // Remove trailing spaces before newlines
+      .replace(/\n[ \t]+/g, '\n') // Remove leading spaces after newlines
+      .trim();
+  }
+
   static processChunk(chunk: string, accumulatedText: string): string {
     const fullText = accumulatedText + chunk;
     // Only clean thinking tags when we have a complete response or at chunk boundaries
     // This prevents breaking partial responses during streaming
-    return this.cleanThinkingTags(fullText);
+    const cleanedText = this.cleanThinkingTags(fullText);
+    
+    // During streaming, be more conservative with line break normalization
+    // to avoid breaking partial sentences. Only normalize obvious excess.
+    return cleanedText.replace(/\n{4,}/g, '\n\n\n');
+  }
+
+  static finalizeText(text: string): string {
+    // Apply full normalization when streaming is complete
+    const cleanedText = this.cleanThinkingTags(text);
+    return cleanedText;
   }
 }
 
 export class AIChatServiceV1 {
   private readonly STREAM_ENDPOINT = 'https://unaenv7eet.ap-southeast-1.awsapprunner.com/stream';
+  private readonly MESSAGES_ENDPOINT = 'https://unaenv7eet.ap-southeast-1.awsapprunner.com/messages';
   private readonly TIMEOUT_MS = 30000; // 30 seconds timeout
   private readonly apiKey: string;
 
@@ -27,7 +64,7 @@ export class AIChatServiceV1 {
     this.apiKey = process.env.NEXT_PUBLIC_API_KEY || '';
   }
 
-  async streamChat(prompt: string, userAddress: string, response: StreamResponse): Promise<void> {
+  async streamChat(prompt: string, userAddress: string, sessionId: number, response: StreamResponse): Promise<void> {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), this.TIMEOUT_MS);
 
@@ -41,6 +78,7 @@ export class AIChatServiceV1 {
         body: JSON.stringify({
           prompt,
           user_address: userAddress,
+          session_id: sessionId,
         }),
         signal: controller.signal,
       });
@@ -105,6 +143,26 @@ export class AIChatServiceV1 {
     }
   }
 
+  async getMessages(userAddress: string, sessionId: number): Promise<MessagesListResponse> {
+    try {
+      const response = await fetch(`${this.MESSAGES_ENDPOINT}/${userAddress}/${sessionId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw new Error(`Failed to retrieve messages: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   // Utility method to test connection
   async testConnection(): Promise<boolean> {
     try {
@@ -117,6 +175,7 @@ export class AIChatServiceV1 {
         body: JSON.stringify({
           prompt: 'test',
           user_address: '0x0000000000000000000000000000000000000000',
+          session_id: 1,
         }),
       });
       

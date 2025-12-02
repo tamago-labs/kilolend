@@ -378,18 +378,19 @@ export const DeleteButton = styled.button`
 `;
 
 export const SettingsButton = styled.button`
-  padding: 8px 12px;
+  padding: 8px;
   background: #f8fafc;
   color: #64748b;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 18px;
   cursor: pointer;
   transition: all 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  min-width: 36px;
+  height: 36px;
 
   &:hover {
     background: #f1f5f9;
@@ -402,6 +403,67 @@ export const SettingsButton = styled.button`
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
+  }
+`;
+
+export const BalancesButton = styled.button`
+  padding: 8px;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  height: 36px;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #1e293b;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+
+export const SessionSelector = styled.select`
+  padding: 6px 8px;
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-width: 50px;
+  height: 36px;
+
+  &:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #1e293b;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: #06C755;
+    box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
