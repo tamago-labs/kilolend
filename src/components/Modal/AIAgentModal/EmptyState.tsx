@@ -9,10 +9,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ characterName }) => {
     "Help me check my wallet balance",
     "What are current KiloLend lending rates?",
     "Help swap 5 USDT to KAIA on DragonSwap",
-    "Analyze my DeFi portfolio performance",
-    "How to leverage my KAIA position",
-    "Check prices for major KAIA tokens",
-    "How to send tokens back to main wallet"
+    "Check prices for major KAIA tokens"
   ];
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -39,7 +36,33 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ characterName }) => {
       }}>
         What would you like {characterName} to help you with?
       </div>
-      
+
+      <div style={{
+        backgroundColor: '#f0f8ff',
+        border: '1px solid #b3d9ff',
+        borderRadius: '8px',
+        padding: '12px 16px',
+        marginBottom: '20px',
+        maxWidth: '500px',
+        fontSize: '0.85em',
+        color: '#0066cc',
+        lineHeight: '1.4'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '8px'
+        }}>
+          <span style={{
+            fontSize: '1.2em',
+            fontWeight: 'bold',
+            marginTop: '-2px'
+          }}>ℹ️</span>
+          <span>
+            Early access: This AI DeFi co-pilot uses a separate, isolated wallet linked to your account. Free for now; terms may change when KILO launches. No KILO points earned
+          </span>
+        </div>
+      </div>
 
       <div style={{
         display: 'flex',
