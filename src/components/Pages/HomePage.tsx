@@ -214,7 +214,7 @@ export const HomePage = () => {
   };
 
   const handleAskAI = () => {
-    openModal('ai-chat-new');
+    openModal('ai-agent');
   };
 
   const handleSupply = () => {
@@ -303,7 +303,7 @@ export const HomePage = () => {
             <IconCircle $index="5">
               <RandomIcon />
             </IconCircle>
-            <IconLabel>Ask AI</IconLabel>
+            <IconLabel>AI Agent</IconLabel>
           </IconButton>
 
           <IconButton onClick={handleLearn}>

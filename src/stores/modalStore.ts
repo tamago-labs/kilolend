@@ -12,6 +12,7 @@ export type ModalType =
   | 'ai-chat' 
   | 'ai-chat-new'
   | 'ai-recommendations'
+  | 'ai-agent'
   | 'settings'
   | 'activities'
   | 'faq'
@@ -27,6 +28,8 @@ export type ModalType =
   | 'send'
   | 'swap'
   | 'news'
+  | 'ai-deposit'
+  | 'ai-withdraw'
   | null;
 
 interface ModalData {

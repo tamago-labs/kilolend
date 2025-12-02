@@ -8,7 +8,7 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
 import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
-import { useUserPositions } from '@/hooks/v1/useUserPositions'; 
+import { useUserPositions } from '@/hooks/v1/useUserPositions';
 import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
 import { useEventTracking } from '@/hooks/useEventTracking';
 import {
@@ -26,7 +26,7 @@ import {
   NavigationContainer,
   NavButton,
   ErrorMessage,
-  ApprovalMessage, 
+  ApprovalMessage,
 } from "./styled"
 
 import { truncateToSafeDecimals, validateAmountAgainstBalance, isAmountExceedingBalance, getSafeMaxAmount } from "@/utils/tokenUtils"
@@ -37,7 +37,7 @@ interface SupplyModalProps {
 }
 
 export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
-  
+
   const [currentStep, setCurrentStep] = useState(1);
   const [selectedAsset, setSelectedAsset] = useState<any>(null);
   const [amount, setAmount] = useState('');
@@ -59,14 +59,14 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances();
   const { refreshPositions } = useUserPositions();
   const { checkAllowance, ensureApproval } = useTokenApproval();
-  const { 
-    isTracking, 
-    trackedEvent, 
-    error: trackingError, 
-    hasTimedOut, 
-    startTracking, 
-    stopTracking, 
-    reset: resetTracking 
+  const {
+    isTracking,
+    trackedEvent,
+    error: trackingError,
+    hasTimedOut,
+    startTracking,
+    stopTracking,
+    reset: resetTracking
   } = useEventTracking(account);
 
   const totalSteps = 5;
@@ -242,7 +242,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
         setIsApproving(false);
         setNeedsApproval(false);
       }
- 
+
       // Step 2: Enter market if user enabled collateral and market not already entered
       if (enableAsCollateral && !isMarketAlreadyEntered && selectedAsset.marketAddress) {
 
@@ -267,11 +267,11 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
 
       // LINE SDK doesn't return transaction hash, so we start event tracking
       console.log(`Supply transaction sent, starting event tracking for ${selectedAsset.id}`);
-      
+
       // Start tracking for the mint event and move to confirmation step
       startTracking(selectedAsset.id, 'mint');
       setCurrentStep(4); // Move to confirmation step
-      
+
       // Don't set transaction result yet - wait for event tracking
       return; // Exit early, event tracking will handle the rest
 
@@ -382,7 +382,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
   useEffect(() => {
     if (trackedEvent && trackedEvent.type === 'mint') {
       console.log('Supply transaction confirmed via event tracking:', trackedEvent);
-      
+
       // Create transaction result from tracked event
       const result: TransactionResult = {
         hash: trackedEvent.transactionHash,
@@ -464,17 +464,22 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
         </StepProgress>
 
         <StepContent>
-          {transactionResult?.status === 'failed' && transactionResult.error && (
-            <ErrorMessage>
-              {transactionResult.error}
-            </ErrorMessage>
-          )}
 
-          {validationError && (
-            <ErrorMessage>
-              {validationError}
-            </ErrorMessage>
-          )}
+          {(!isTransacting && currentStep !== 4) && (
+            <>
+              {transactionResult?.status === 'failed' && transactionResult.error && (
+                <ErrorMessage>
+                  {transactionResult.error}
+                </ErrorMessage>
+              )}
+
+              {validationError && (
+                <ErrorMessage>
+                  {validationError}
+                </ErrorMessage>
+              )}
+            </>
+          ) }
 
           {needsApproval && currentStep === 3 && (
             <ApprovalMessage>
@@ -487,13 +492,7 @@ export const SupplyModal = ({ isOpen, onClose }: SupplyModalProps) => {
               This asset will be enabled as collateral, allowing you to borrow against it. You can disable this later if needed.
             </ApprovalMessage>
           )}
-
-          { currentStep === 1 && (
-            <ApprovalMessage>
-            If you have positions on KiloLend hackathon version, please visit our Migrate Page to help transfer your assets to v1
-          </ApprovalMessage>
-          ) }
- 
+  
           <br />
 
           {renderStepContent()}

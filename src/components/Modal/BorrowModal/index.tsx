@@ -1,5 +1,5 @@
 'use client';
- 
+
 import { useState, useEffect } from 'react';
 import { BaseModal } from '../BaseModal';
 import { ChevronRight } from 'react-feather';
@@ -18,7 +18,7 @@ import {
   BorrowSuccess,
 } from '../Steps';
 import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils"
-import { 
+import {
   Container,
   StepProgress,
   StepDot,
@@ -52,38 +52,38 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   const { markets } = useContractMarketStore();
   const { account } = useWalletAccountStore();
   const { borrow } = useMarketContract();
-  const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances(); 
+  const { balances: tokenBalances, isLoading: balancesLoading, refreshBalances } = useMarketTokenBalances();
   const { positions: userPositions, getFormattedBalances, refreshPositions } = useUserPositions();
   const { calculateBorrowingPower, calculateMaxBorrowAmount } = useBorrowingPower();
-  const { 
-    isTracking, 
-    trackedEvent, 
-    error: trackingError, 
-    hasTimedOut, 
-    startTracking, 
-    stopTracking, 
-    reset: resetTracking 
+  const {
+    isTracking,
+    trackedEvent,
+    error: trackingError,
+    hasTimedOut,
+    startTracking,
+    stopTracking,
+    reset: resetTracking
   } = useEventTracking(account);
 
   const totalSteps = 5;
 
   // Get formatted balances including both supply and borrow
   const formattedBalances = getFormattedBalances();
-  
+
   // Convert to the format expected by components 
   const userBalances = Object.keys(tokenBalances).reduce((acc, marketId) => {
     const balance = tokenBalances[marketId];
     const symbol = balance.symbol;
-    
+
     // Add underlying token balance
     acc[symbol] = balance.formattedBalance;
-    
+
     // Add borrow balance
     if (formattedBalances[symbol]) {
       acc[`${symbol}_borrowed`] = formattedBalances[symbol].borrow;
       acc[`${symbol}_supplied`] = formattedBalances[symbol].supply;
     }
-    
+
     return acc;
   }, {} as Record<string, string>);
 
@@ -136,10 +136,10 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
       const maxAmount = parseFloat(maxBorrowData.maxBorrowAmount || '0');
       const quickAmount = ((maxAmount * percentage) / 100).toString();
       const decimals = selectedAsset.decimals || 18;
-      
+
       // Use safe decimal truncation to prevent precision errors
       const safeAmount = truncateToSafeDecimals(quickAmount, decimals);
-      
+
       setAmount(safeAmount);
       setSelectedQuickAmount(percentage);
       setValidationError(null);
@@ -150,10 +150,10 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
     if (selectedAsset && maxBorrowData) {
       const maxAmount = maxBorrowData.maxBorrowAmount || '0';
       const decimals = selectedAsset.decimals || 18;
-      
+
       // Use safe maximum amount calculation
       const safeAmount = getSafeMaxAmount(maxAmount, selectedAsset.id);
-      
+
       setAmount(safeAmount);
       setSelectedQuickAmount(100);
       setValidationError(null);
@@ -165,7 +165,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
     if (selectedAsset && amount && parseFloat(amount) > 0 && maxBorrowData) {
       const maxAmount = maxBorrowData.maxBorrowAmount || '0';
       const validation = validateAmountAgainstBalance(amount, maxAmount, selectedAsset.id);
-      
+
       if (!validation.isValid) {
         setValidationError(validation.error || 'Invalid amount');
       } else {
@@ -223,11 +223,11 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
 
       // LINE SDK doesn't return transaction hash, so we start event tracking
       console.log(`Borrow transaction sent, starting event tracking for ${selectedAsset.id}`);
-      
+
       // Start tracking for the borrow event and move to confirmation step
       startTracking(selectedAsset.id, 'borrow');
       setCurrentStep(4); // Move to confirmation step
-      
+
       // Don't set transaction result yet - wait for event tracking
       return; // Exit early, event tracking will handle the rest
 
@@ -249,8 +249,8 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
     if (isLoadingBorrowData) {
       return <LoadingMessage>Loading borrowing power data...</LoadingMessage>;
     }
- 
- 
+
+
     switch (currentStep) {
       case 1:
         return (
@@ -321,7 +321,7 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
   useEffect(() => {
     if (trackedEvent && trackedEvent.type === 'borrow') {
       console.log('Borrow transaction confirmed via event tracking:', trackedEvent);
-      
+
       // Create transaction result from tracked event
       const result: TransactionResult = {
         hash: trackedEvent.transactionHash,
@@ -395,12 +395,16 @@ export const BorrowModal = ({ isOpen, onClose }: BorrowModalProps) => {
           ))}
         </StepProgress>
         <StepContent>
-          {transactionResult?.status === 'failed' &&
-            transactionResult.error && (
-              <ErrorMessage>{transactionResult.error}</ErrorMessage>
-            )}
-          {validationError && (
-            <ErrorMessage>{validationError}</ErrorMessage>
+          {(!isTransacting && currentStep !== 4) && (
+            <>
+              {transactionResult?.status === 'failed' &&
+                transactionResult.error && (
+                  <ErrorMessage>{transactionResult.error}</ErrorMessage>
+                )}
+              {validationError && (
+                <ErrorMessage>{validationError}</ErrorMessage>
+              )}
+            </>
           )}
           {renderStepContent()}
         </StepContent>

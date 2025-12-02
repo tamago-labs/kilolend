@@ -80,7 +80,7 @@ export const WelcomeSwiper = () => {
       title: 'KiloLend',
       subtitle: (
         <>
-          The first stablecoin-focused <HighlightText>DeFAI lending</HighlightText> on LINE Mini Dapp
+          Simplify DeFi for <HighlightText>everyday users</HighlightText> on LINE Mini Dapp
         </>)
     },
     {
@@ -94,11 +94,11 @@ export const WelcomeSwiper = () => {
       )
     },
     {
-      icon: '⚡',
-      title: 'AI Assistant',
+      icon: '✈️',
+      title: 'AI DeFi Co-pilot',
       subtitle: (
         <>
-          Get personalized advice with our <HighlightText>AI lending assistant</HighlightText> to guide smarter moves
+          Let your <HighlightText>AI Co-pilot</HighlightText> handle complex transactions and optimize your lending moves
         </>
       )
     },
