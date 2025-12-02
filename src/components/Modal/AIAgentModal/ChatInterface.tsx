@@ -77,7 +77,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       .replace(/>/g, '>')
       .replace(/"/g, '"')
       .replace(/'/g, '&#39;');
-    
     // Process headers (# ## ###) - all become bold
     processed = processed.replace(/^(#{1,3})\s+(.+)$/gm, '<strong>$2</strong>');
     
@@ -243,6 +242,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     onClose(); // Close the chat modal after successful deletion
   };
 
+  const handleConversationDeleteSuccess = () => {
+    // Reload message history after successful conversation deletion
+    loadMessageHistory();
+  };
+
   return (
     <ChatContainer>
       <ChatHeader style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -305,7 +309,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <Message key={message.id} $isUser={message.isUser}>
             <MessageBubble $isUser={message.isUser}>
               {message.isUser ? (
-                message.text
+                message.text || "🤔"
               ) : (
                 <span 
                   dangerouslySetInnerHTML={{ 
@@ -353,8 +357,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <AgentSettingsModal
           character={character}
           model={model}
+          selectedSession={selectedSession}
           onClose={handleSettingsClose}
           onDeleteSuccess={handleDeleteSuccess}
+          onConversationDeleteSuccess={handleConversationDeleteSuccess}
         />
       )}
       {showBalancesModal && (

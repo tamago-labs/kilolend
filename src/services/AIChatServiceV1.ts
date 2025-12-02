@@ -163,6 +163,30 @@ export class AIChatServiceV1 {
     }
   }
 
+  async deleteMessages(userAddress: string, sessionId: number): Promise<{ message: string; deleted_count: number }> {
+    try {
+      const response = await fetch(`${this.MESSAGES_ENDPOINT}/${userAddress}/${sessionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      return {
+        message: result.message,
+        deleted_count: result.deleted_count
+      };
+    } catch (error) {
+      throw new Error(`Failed to delete messages: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
   // Utility method to test connection
   async testConnection(): Promise<boolean> {
     try {

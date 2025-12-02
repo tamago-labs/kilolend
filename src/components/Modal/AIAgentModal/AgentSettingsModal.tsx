@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { aiWalletService } from '@/services/aiWalletService';
+import { aiChatServiceV1 } from '@/services/AIChatServiceV1';
 import { X } from "react-feather"
 
 const ModalOverlay = styled.div`
@@ -179,6 +180,74 @@ const WarningSection = styled.div`
   margin-top: 24px;
 `;
 
+const DangerSection = styled.div`
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 24px;
+`;
+
+const DangerTitle = styled.h4`
+  font-size: 16px;
+  font-weight: 600;
+  color: #dc2626;
+  margin: 0 0 12px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const DangerText = styled.p`
+  font-size: 14px;
+  color: #991b1b;
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+`;
+
+const DeleteButton = styled.button<{ $loading?: boolean }>`
+  width: 100%;
+  padding: 14px 20px;
+  background: #dc2626;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  &:hover:not(:disabled) {
+    background: #b91c1c;
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const DeleteSpinner = styled.div`
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid #f3f3f3;
+  border-top: 2px solid #dc2626;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
 const WarningTitle = styled.h4`
   font-size: 16px;
   font-weight: 600;
@@ -273,18 +342,23 @@ interface AIModel {
 interface AgentSettingsModalProps {
   character: AgentPreset;
   model: AIModel;
+  selectedSession: number;
   onClose: () => void;
   onDeleteSuccess?: () => void;
+  onConversationDeleteSuccess?: () => void;
 }
 
 export const AgentSettingsModal: React.FC<AgentSettingsModalProps> = ({
   character,
   model,
+  selectedSession,
   onClose,
-  onDeleteSuccess
+  onDeleteSuccess,
+  onConversationDeleteSuccess
 }) => {
   const { account } = useWalletAccountStore();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeletingConversation, setIsDeletingConversation] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
 
   const handleDeleteAgent = async () => {
@@ -316,8 +390,37 @@ export const AgentSettingsModal: React.FC<AgentSettingsModalProps> = ({
     }
   };
 
+  const handleDeleteConversation = async () => {
+    if (!account) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to delete the conversation for Session ${selectedSession}? This will permanently delete all messages in this session and cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setIsDeletingConversation(true);
+    setSuccess(null);
+
+    try {
+      const result = await aiChatServiceV1.deleteMessages(account, selectedSession);
+      setSuccess(`Successfully deleted ${result.deleted_count} messages from Session ${selectedSession}.`);
+
+      // Close modal after delay
+      setTimeout(() => {
+        onClose();
+        onConversationDeleteSuccess?.();
+      }, 2000);
+
+    } catch (error) {
+      console.error('Failed to delete conversation:', error);
+      alert('Failed to delete conversation. Please try again.');
+      setIsDeletingConversation(false);
+    }
+  };
+
   const handleClose = () => {
-    if (!isDeleting) {
+    if (!isDeleting && !isDeletingConversation) {
       onClose();
     }
   };
@@ -329,7 +432,7 @@ export const AgentSettingsModal: React.FC<AgentSettingsModalProps> = ({
           <ModalTitle>
             Agent Settings
           </ModalTitle>
-          <CloseButton onClick={handleClose} disabled={isDeleting}>
+          <CloseButton onClick={handleClose} disabled={isDeleting || isDeletingConversation}>
             <X />
           </CloseButton>
         </ModalHeader>
@@ -380,7 +483,7 @@ export const AgentSettingsModal: React.FC<AgentSettingsModalProps> = ({
               <InfoRow>
                 <InfoLabel>Model</InfoLabel>
                 <InfoValue>{model.name}</InfoValue>
-              </InfoRow> 
+              </InfoRow>
               <InfoRow>
                 <InfoLabel>Risk Level</InfoLabel>
                 <InfoValue>
@@ -388,9 +491,25 @@ export const AgentSettingsModal: React.FC<AgentSettingsModalProps> = ({
                     {model.riskLevel.charAt(0).toUpperCase() + model.riskLevel.slice(1)}
                   </RiskBadge>
                 </InfoValue>
-              </InfoRow> 
+              </InfoRow>
             </InfoGrid>
           </Section>
+          <DeleteButton
+            onClick={handleDeleteConversation}
+            disabled={isDeletingConversation || !account}
+            $loading={isDeletingConversation}
+          >
+            {isDeletingConversation ? (
+              <>
+                <DeleteSpinner />
+                Deleting Conversation...
+              </>
+            ) : (
+              <>
+                Delete Conversation
+              </>
+            )}
+          </DeleteButton>
 
           <WarningSection>
             <WarningTitle>
@@ -416,6 +535,8 @@ export const AgentSettingsModal: React.FC<AgentSettingsModalProps> = ({
               )}
             </ResetButton>
           </WarningSection>
+
+
         </ModalBody>
       </ModalContent>
     </ModalOverlay>
