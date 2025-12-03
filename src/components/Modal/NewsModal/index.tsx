@@ -83,6 +83,11 @@ const CloseButton = styled.button`
 // Hardcoded news data
 const newsItems = [
   {
+    image: "./images/poster-agent-v1.png",
+    title: 'New AI DeFi Co-Pilot',
+    description: 'Read our latest blog for our newly upgraded AI-agent support lend, borrow, swap and loop across KAIA'
+  },
+  {
     image: './images/poster-v1.png',
     title: 'V1 is Live',
     description: 'Migrate your assets from the hackathon version to v.1 and receive 100 $KAIA reward'
@@ -92,11 +97,11 @@ const newsItems = [
   //   title: 'Thailand Blockchain Week',
   //   description: 'Meet our team at Thailand Blockchain Week in Bangkok and hear about our latest features on stage'
   // },
-  {
-    image: './images/poster-vibe-trading.png',
-    title: 'Vibe Trading with AI',
-    description: 'Read our latest blog on how to use KAIA-MCP for AI-driven vibe trading across KiloLend, DragonSwap and more'
-  }
+  // {
+  //   image: './images/poster-vibe-trading.png',
+  //   title: 'Vibe Trading with AI',
+  //   description: 'Read our latest blog on how to use KAIA-MCP for AI-driven vibe trading across KiloLend, DragonSwap and more'
+  // }
 ];
 
 
