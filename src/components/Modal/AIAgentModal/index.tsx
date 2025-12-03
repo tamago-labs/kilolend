@@ -6,6 +6,8 @@ import { CharacterSelectionStep } from './CharacterSelectionStep';
 import { ModelSelectionStep } from './ModelSelectionStep';
 import { ReviewStep } from './ReviewStep';
 import { ChatInterface } from './ChatInterface';
+import { AgentSettingsModal } from './AgentSettingsModal';
+import { AIWalletBalancesModal } from './AIWalletBalancesModal';
 import type { AgentPreset } from '@/types/aiAgent';
 import { AGENT_PRESETS } from '@/types/aiAgent';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
@@ -34,6 +36,8 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
   const [isAgentCreated, setIsAgentCreated] = useState(false);
   const [isCreatingWallet, setIsCreatingWallet] = useState(false);
   const [creationError, setCreationError] = useState<string | null>(null);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showBalancesModal, setShowBalancesModal] = useState(false);
   const { account, setAccount } = useWalletAccountStore();
 
   const resetModal = () => {
@@ -88,7 +92,7 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
 
     setIsCreatingWallet(true); // Reuse loading state
     setCreationError(null);
-    try { 
+    try {
       const result = await aiWalletService.createAgent(account, selectedCharacter.id, selectedModel.id);
       setIsAgentCreated(true);
       setCurrentStep('chat');
@@ -127,11 +131,11 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
     try {
       // Get the current AI wallet status to retrieve agent info
       const status = await aiWalletService.getAIWalletStatus(account);
-      
+
       if (status.agentId && status.modelId) {
         // Find the agent preset based on the agentId
         const agentPreset = AGENT_PRESETS.find(preset => preset.id === status.agentId);
-        
+
         // Find the model based on the modelId
         const availableModels = [
           {
@@ -151,9 +155,9 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
             icon: '/images/icon-credit-card.png'
           }
         ];
-        
+
         const model = availableModels.find(model => model.id === status.modelId);
-        
+
         if (agentPreset && model) {
           setSelectedCharacter(agentPreset);
           setSelectedModel(model);
@@ -188,6 +192,9 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
           character={selectedCharacter!}
           model={selectedModel!}
           onClose={handleClose}
+          onSettingsClick={handleSettingsClick}
+          onBalancesClick={handleBalancesClick}
+          onConversationDeleteSuccess={handleConversationDeleteSuccess}
         />
       );
     }
@@ -245,7 +252,7 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
     if (isAgentCreated || currentStep === 'info') return null; // Don't show steps in chat mode or info step
 
     const steps: Step[] = ['character', 'model', 'review'];
-    
+
     return (
       <StepIndicator>
         {steps.map((step) => {
@@ -271,19 +278,62 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
     return "Your AI Agent";
   };
 
+  const handleSettingsClick = () => {
+    setShowSettingsModal(true);
+  };
+
+  const handleSettingsClose = () => {
+    setShowSettingsModal(false);
+  };
+
+  const handleBalancesClick = () => {
+    setShowBalancesModal(true);
+  };
+
+  const handleBalancesClose = () => {
+    setShowBalancesModal(false);
+  };
+
+  const handleDeleteSuccess = () => {
+    handleClose(); // Close the main modal after successful deletion
+  };
+
+  const handleConversationDeleteSuccess = () => {
+    handleClose();
+  };
+
   return (
-    <BaseModal
-      isOpen={isOpen}
-      onClose={handleClose}
-      title={getModalTitle()}
-      isFull={true}
-    >
-      <Container>
-        {renderStepIndicator()}
-        <StepContent>
-          {renderStepContent()}
-        </StepContent>
-      </Container>
-    </BaseModal>
+    <>
+      <BaseModal
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={getModalTitle()}
+        isFull={true}
+      >
+        <Container>
+          {renderStepIndicator()}
+          <StepContent>
+            {renderStepContent()}
+          </StepContent>
+        </Container>
+      </BaseModal>
+
+      {showSettingsModal && selectedCharacter && selectedModel && (
+        <AgentSettingsModal
+          character={selectedCharacter}
+          model={selectedModel}
+          selectedSession={1} // Default session, could be managed separately
+          onClose={handleSettingsClose}
+          onDeleteSuccess={handleDeleteSuccess}
+          onConversationDeleteSuccess={handleConversationDeleteSuccess}
+        />
+      )}
+
+      {showBalancesModal && (
+        <AIWalletBalancesModal
+          onClose={handleBalancesClose}
+        />
+      )}
+    </>
   );
 };

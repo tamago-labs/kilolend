@@ -63,6 +63,37 @@ const CloseButton = styled.button`
   }
 `;
 
+const BottomCloseButton = styled.button`
+  width: 100%;
+  margin-top: 20px;
+  padding: 12px 20px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #1e293b;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
 const ModalBody = styled.div`
   padding: 24px;
 `;
@@ -536,6 +567,9 @@ export const AgentSettingsModal: React.FC<AgentSettingsModalProps> = ({
             </ResetButton>
           </WarningSection>
 
+          <BottomCloseButton onClick={handleClose} disabled={isDeleting || isDeletingConversation}>
+            Close
+          </BottomCloseButton>
 
         </ModalBody>
       </ModalContent>

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import {Bootstrap} from "@/components/Bootstrap/Bootstrap";
-import {QueryClientProvider} from "@tanstack/react-query";
-import {queryClient} from "@/components/Query/QueryClient.hooks";
+import { Bootstrap } from "@/components/Bootstrap/Bootstrap";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/components/Query/QueryClient.hooks";
 import StyledComponentsRegistry from "@/components/StyledComponentsRegistry";
-import { GoogleAnalytics } from '@next/third-parties/google' 
+import { GoogleAnalytics } from '@next/third-parties/google'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,9 +18,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KiloLend | Mini Dapp",
-  description: "KiloLend is a Line Mini Dapp lending protocol on Kaia Blockchain. Borrow a wide range of stablecoins using any crypto as collateral, guided by AI for seamless one-click deal execution.",
+  title: "KiloLend | AI-Powered LINE Mini Dapp",
+  description:
+    "KiloLend simplifies DeFi on LINE Mini Dapp with an intelligent AI co-pilot that helps you lend, borrow, swap, and loop on KAIA without complex inputs.",
 };
+
 
 export default function RootLayout({
   children,
@@ -33,12 +35,12 @@ export default function RootLayout({
         <StyledComponentsRegistry>
           <QueryClientProvider client={queryClient}>
             <Bootstrap>
-                {children} 
+              {children}
             </Bootstrap>
           </QueryClientProvider>
         </StyledComponentsRegistry>
       </body>
-       <GoogleAnalytics gaId="G-QNBVXZZR9E" />
+      <GoogleAnalytics gaId="G-QNBVXZZR9E" />
     </html>
   );
 }

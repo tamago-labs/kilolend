@@ -88,6 +88,13 @@ export const CharacterAvatar = styled.div`
   font-size: 40px;
   background: #f8fafc;
   border: 2px solid #e2e8f0;
+
+  @media (max-width: 480px) {
+    background: transparent;
+    border: none;
+    width: 60px;
+    height: 60px;
+  }
 `;
 
 export const CharacterAvatarImage = styled.img`
@@ -171,6 +178,13 @@ export const ModelIcon = styled.div`
   font-size: 24px;
   background: #f8fafc;
   border: 1px solid #e2e8f0;
+
+  @media (max-width: 480px) {
+    background: transparent;
+    border: none;
+    width: 40px;
+    height: 40px;
+  }
 `;
 
 export const ModelIconImage = styled.img`

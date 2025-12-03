@@ -5,8 +5,6 @@ import { aiWalletService } from '@/services/aiWalletService';
 import { aiChatServiceV1, TextProcessor, type MessageResponse } from '@/services/AIChatServiceV1';
 // import { MarkdownRenderer } from './MarkdownRenderer';
 import { EmptyState } from './EmptyState';
-import { AgentSettingsModal } from './AgentSettingsModal';
-import { AIWalletBalancesModal } from './AIWalletBalancesModal';
 import {
   ChatContainer,
   ChatHeader,
@@ -44,19 +42,24 @@ interface ChatInterfaceProps {
   character: AgentPreset;
   model: AIModel;
   onClose: () => void;
+  onSettingsClick: () => void;
+  onBalancesClick: () => void;
+  onConversationDeleteSuccess: () => void;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   character,
   model,
   onClose,
+  onSettingsClick,
+  onBalancesClick,
+  onConversationDeleteSuccess,
 }) => {
+  
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentStreamingText, setCurrentStreamingText] = useState('');
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
-  const [showBalancesModal, setShowBalancesModal] = useState(false);
   const [selectedSession, setSelectedSession] = useState(1);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -137,13 +140,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     };
   }, []);
 
-  const handleBalancesClick = () => {
-    setShowBalancesModal(true);
-  };
-
-  const handleBalancesClose = () => {
-    setShowBalancesModal(false);
-  };
 
   const handleSendMessage = async () => {
     if (!inputText.trim() || isLoading || !account) return;
@@ -230,21 +226,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  const handleSettingsClick = () => {
-    setShowSettingsModal(true);
-  };
-
-  const handleSettingsClose = () => {
-    setShowSettingsModal(false);
-  };
-
   const handleDeleteSuccess = () => {
     onClose(); // Close the chat modal after successful deletion
-  };
-
-  const handleConversationDeleteSuccess = () => {
-    // Reload message history after successful conversation deletion
-    loadMessageHistory();
   };
 
   return (
@@ -283,14 +266,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <BalancesButton
-              onClick={handleBalancesClick}
+              onClick={onBalancesClick}
               disabled={isLoading}
               title="AI Wallet Balances"
             >
               💰
             </BalancesButton>
             <SettingsButton
-              onClick={handleSettingsClick}
+              onClick={onSettingsClick}
               disabled={isLoading}
               title="Agent Settings"
             >
@@ -352,22 +335,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           </SendButton>
         </ChatInputWrapper>
       </ChatInputContainer>
-
-      {showSettingsModal && (
-        <AgentSettingsModal
-          character={character}
-          model={model}
-          selectedSession={selectedSession}
-          onClose={handleSettingsClose}
-          onDeleteSuccess={handleDeleteSuccess}
-          onConversationDeleteSuccess={handleConversationDeleteSuccess}
-        />
-      )}
-      {showBalancesModal && (
-        <AIWalletBalancesModal
-          onClose={handleBalancesClose}
-        />
-      )}
     </ChatContainer>
   );
 };

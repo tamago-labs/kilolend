@@ -59,7 +59,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ characterName }) => {
             marginTop: '-2px'
           }}>ℹ️</span>
           <span>
-            Early access: This AI DeFi co-pilot uses a separate, isolated wallet linked to your account. Free for now; terms may change when KILO launches. No KILO points earned
+            Early access: This AI DeFi co-pilot uses a separate, isolated wallet linked to your account. Free for now; terms may change when KILO launches.
           </span>
         </div>
       </div>
