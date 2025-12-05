@@ -2,6 +2,8 @@
 
 import styled, { keyframes } from 'styled-components';
 import { useEffect, useState } from 'react';
+import { detectDevice } from '@/utils/deviceDetection';
+import { useAppStore } from '@/stores/appStore';
 
 const fadeIn = keyframes`
   from {
@@ -101,13 +103,21 @@ interface SplashScreenProps {
 
 export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
 
+  const { setIsMobile, setDeviceDetected } = useAppStore();
+
   useEffect(() => {
-    const timer = setTimeout(() => {
+    // Perform device detection immediately when splash screen loads
+    const deviceInfo = detectDevice();
+    console.log('Device detected:', deviceInfo);
+    setIsMobile(deviceInfo.isMobile);
+    setDeviceDetected(true);
+
+    const timer = setTimeout(() => { 
       onFinish();
     }, 2500); // Show splash for 2.5 seconds
 
     return () => clearTimeout(timer);
-  }, [onFinish]);
+  }, []);
 
   return (
     <SplashContainer>

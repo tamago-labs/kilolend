@@ -12,3 +12,8 @@ docs/
 
 # Dotenv file
 .env
+
+bin/
+4*
+DeployMigration*
+ManagePar*

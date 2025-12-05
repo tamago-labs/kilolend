@@ -132,7 +132,8 @@ interface SettingsModalProps {
 }
 
 export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
-  const { gasLimit, setGasLimit } = useAppStore();
+   
+  const { gasLimit, setGasLimit, isMobile } = useAppStore();
   const [lineInfo, setLineInfo] = useState<{
     isLineConnected: boolean;
     lineVersion?: string;
@@ -193,7 +194,6 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         </Section>
 
         <Section>
-          {/* <SectionTitle>Application Info</SectionTitle> */}
           <InfoRow>
             <InfoLabel>DApp Version</InfoLabel>
             <InfoValue>0.2.4</InfoValue>
@@ -204,8 +204,13 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               <ModeTag $isLine={lineInfo.isLineConnected}>
                 {lineInfo.isLineConnected ? 'LINE Mini DApp' : 'Web Access'}
               </ModeTag>
+              {` `}
+              <ModeTag $isLine={isMobile}>
+                { isMobile ? 'Mobile' : 'Desktop'}
+              </ModeTag> 
             </InfoValue>
-          </InfoRow>
+          </InfoRow> 
+
         </Section>
 
         {lineInfo.isLineConnected ? (
@@ -232,7 +237,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         ) : (
           <Section> 
             <InfoRow>
-              <InfoLabel>Status</InfoLabel>
+              <InfoLabel>LINE Status</InfoLabel>
               <InfoValue>Not connected to LINE</InfoValue>
             </InfoRow>
             <OpenLineButton

@@ -26,8 +26,9 @@ const ContentArea = styled.div`
 `;
 
 export default function Home() {
-
-    const { activeTab, setActiveTab } = useAppStore();
+    
+   
+    const { activeTab, setActiveTab, isMobile, deviceDetected } = useAppStore();
     const [showSplash, setShowSplash] = useState(true);
 
     const handleSplashFinish = () => {
@@ -38,8 +39,7 @@ export default function Home() {
         window.scrollTo({ top: 0, behavior: "smooth" });
     }, [activeTab]);
 
-
-
+     
 
     const renderContent = () => {
 
@@ -68,6 +68,8 @@ export default function Home() {
     if (showSplash) {
         return <SplashScreen onFinish={handleSplashFinish} />;
     }
+
+    // TODO: no route
 
     return (
         <PageContainer>
