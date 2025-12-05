@@ -11,6 +11,7 @@ import { useModalStore } from '@/stores/modalStore';
 import { useAppStore } from '@/stores/appStore';
 import { liff } from "@/utils/liff";
 import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
+import { useRouter, usePathname } from 'next/navigation';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -192,7 +193,31 @@ export const DesktopHeader = () => {
   const { openModal } = useModalStore();
   const { account, setAccount } = useWalletAccountStore();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showChainDropdown, setShowChainDropdown] = useState(false);
   const { disconnectWallet } = useKaiaWalletSdk();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [selectedChain, setSelectedChain] = useState('kaia');
+
+  const chains = [
+    { id: 'kaia', name: 'KAIA Testnet', icon: '🌐' },
+    { id: 'massa', name: 'Massa (Coming Soon)', icon: '⚡' },
+    { id: 'ethereum', name: 'Ethereum (Coming Soon)', icon: '🔷' }
+  ];
+
+  const handleNavigation = (path: string) => {
+    router.push(path);
+  };
+
+  const handleChainChange = (chainId: string) => {
+    if (chainId !== 'kaia') {
+      alert(`${chainId} network is coming soon!`);
+      return;
+    }
+    setSelectedChain(chainId);
+    setShowChainDropdown(false);
+  };
 
   const handleDisconnect = useCallback(() => {
     disconnectWallet().then(() => {
@@ -245,10 +270,30 @@ export const DesktopHeader = () => {
           KiloLend
         </Logo>
         <Navigation>
-          <NavItem className="active">Dashboard</NavItem>
-          <NavItem>Markets</NavItem>
-          <NavItem>Portfolio</NavItem>
-          <NavItem>Analytics</NavItem>
+          <NavItem 
+            className={pathname === '/' ? 'active' : ''}
+            onClick={() => handleNavigation('/')}
+          >
+            Home
+          </NavItem>
+          <NavItem 
+            className={pathname === '/dashboard' ? 'active' : ''}
+            onClick={() => handleNavigation('/dashboard')}
+          >
+            Dashboard
+          </NavItem>
+          <NavItem 
+            className={pathname === '/markets' ? 'active' : ''}
+            onClick={() => handleNavigation('/markets')}
+          >
+            Markets
+          </NavItem>
+          <NavItem 
+            className={pathname === '/portfolio' ? 'active' : ''}
+            onClick={() => handleNavigation('/portfolio')}
+          >
+            Portfolio
+          </NavItem>
         </Navigation>
       </LeftSection>
       
@@ -284,12 +329,27 @@ export const DesktopHeader = () => {
                 ⚙️ Settings
               </DropdownItem>
               <DropdownSeparator />
-              <DropdownItem>
-                🌐 KAIA Testnet
+              <DropdownItem onClick={() => setShowChainDropdown(!showChainDropdown)}>
+                🌐 {chains.find(c => c.id === selectedChain)?.name}
               </DropdownItem>
               <DisconnectItem onClick={handleDisconnect}>
                 🔌 Disconnect Wallet
               </DisconnectItem>
+            </DropdownMenu>
+            
+            <DropdownMenu $isOpen={showChainDropdown} style={{ right: '280px' }}>
+              {chains.map((chain) => (
+                <DropdownItem 
+                  key={chain.id}
+                  onClick={() => handleChainChange(chain.id)}
+                  style={{ 
+                    opacity: chain.id === 'kaia' ? 1 : 0.6,
+                    cursor: chain.id === 'kaia' ? 'pointer' : 'not-allowed'
+                  }}
+                >
+                  {chain.icon} {chain.name}
+                </DropdownItem>
+              ))}
             </DropdownMenu>
           </>
         )}
