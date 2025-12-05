@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { Bootstrap } from "@/components/Bootstrap/Bootstrap";
+import { LayoutWrapper } from "@/components/Layout/LayoutWrapper";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/components/Query/QueryClient.hooks";
 import StyledComponentsRegistry from "@/components/StyledComponentsRegistry";
@@ -34,9 +34,9 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable}`} style={{ margin: 0, backgroundColor: '#f1f5f9' }}>
         <StyledComponentsRegistry>
           <QueryClientProvider client={queryClient}>
-            <Bootstrap>
+            <LayoutWrapper>
               {children}
-            </Bootstrap>
+            </LayoutWrapper>
           </QueryClientProvider>
         </StyledComponentsRegistry>
       </body>
