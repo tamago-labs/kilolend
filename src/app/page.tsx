@@ -5,6 +5,7 @@ import { useAppStore } from '@/stores/appStore';
 import { SplashScreen } from '@/components/SplashScreen/SplashScreen';
 import { HomeContainer } from '@/components/Home';
 import { Landing } from '@/components/Desktop/Landing';
+import { DesktopHome } from '@/components/Desktop/DesktopHome';
 
 export default function Home() {
     const { isMobile, deviceDetected } = useAppStore();
@@ -23,7 +24,6 @@ export default function Home() {
     if (isMobile && deviceDetected) {
         return <HomeContainer />;
     }
-
-    // Desktop: Show Landing page (DesktopBootstrap is handled in layout)
-    return <Landing />;
+ 
+    return <DesktopHome />;
 }

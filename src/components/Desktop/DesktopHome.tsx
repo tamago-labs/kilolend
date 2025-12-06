@@ -4,7 +4,7 @@ import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import { DesktopHeader } from './DesktopHeader';
 
-const DashboardContainer = styled.div`
+const HomeContainer = styled.div`
   min-height: 100vh;
   background: #f8fafc;
 `;
@@ -233,7 +233,7 @@ const AssetAPY = styled.div`
   font-weight: 500;
 `;
 
-export const DesktopDashboard = () => {
+export const DesktopHome = () => {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -243,7 +243,7 @@ export const DesktopDashboard = () => {
   if (!mounted) return null;
 
   return (
-    <DashboardContainer> 
+    <HomeContainer> 
       
       <MainContent>
         <DashboardHeader>
@@ -348,6 +348,6 @@ export const DesktopDashboard = () => {
           </AssetList>
         </PortfolioSection>
       </MainContent>
-    </DashboardContainer>
+    </HomeContainer>
   );
 };

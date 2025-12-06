@@ -40,11 +40,12 @@ const Logo = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 5px;
 `;
 
 const LogoIcon = styled.img`
-  width: 40px;
-  height: 40px;
+  width: 180px;
+  height: 55px;
 `;
 
 const Navigation = styled.nav`
@@ -265,22 +266,15 @@ export const DesktopHeader = () => {
   return (
     <HeaderContainer>
       <LeftSection>
-        <Logo>
-          <LogoIcon src="./images/kilolend-logo.png" alt="KiloLend" />
-          KiloLend
-        </Logo>
-        <Navigation>
+        {/*<Logo>
+          <LogoIcon src="./images/kilolend-logo-desktop.png" alt="KiloLend" /> 
+        </Logo>*/}
+        <Navigation> 
           <NavItem 
-            className={pathname === '/' ? 'active' : ''}
-            onClick={() => handleNavigation('/')}
+            className={(pathname === '/home' || pathname === '/') ? 'active' : ''}
+            onClick={() => handleNavigation('/home')}
           >
             Home
-          </NavItem>
-          <NavItem 
-            className={pathname === '/dashboard' ? 'active' : ''}
-            onClick={() => handleNavigation('/dashboard')}
-          >
-            Dashboard
           </NavItem>
           <NavItem 
             className={pathname === '/markets' ? 'active' : ''}
