@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAppStore } from '@/stores/appStore';
 import { SplashScreen } from '@/components/SplashScreen/SplashScreen';
 import { HomeContainer } from '@/components/Home';
-import { Landing } from '@/components/Desktop/Landing';
 import { DesktopHome } from '@/components/Desktop/DesktopHome';
 
 export default function Home() {
@@ -15,6 +14,15 @@ export default function Home() {
         setShowSplash(false);
     };
 
+    // Update page title based on device type
+    useEffect(() => {
+        if (deviceDetected) {
+            if (isMobile) {
+                document.title = "KiloLend | LINE Mini Dapp";
+            }
+        }
+    }, [isMobile, deviceDetected]);
+
     // Show splash screen on first load
     if (showSplash) {
         return <SplashScreen onFinish={handleSplashFinish} />;
@@ -24,6 +32,6 @@ export default function Home() {
     if (isMobile && deviceDetected) {
         return <HomeContainer />;
     }
- 
+
     return <DesktopHome />;
 }

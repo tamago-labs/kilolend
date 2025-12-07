@@ -18,11 +18,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KiloLend | LINE Mini Dapp",
+  title: "KiloLend | AI-Powered DeFi on LINE / KAIA",
   description:
-    "KiloLend simplifies DeFi on LINE Mini Dapp with an intelligent AI co-pilot that helps you lend, borrow, swap, and loop on KAIA without complex inputs.",
+    "KiloLend makes KAIA DeFi easy on LINE Mini App with an AI co-pilot that helps you earn yield, borrow assets, swap tokens, and loop — no complex steps required.",
 };
-
 
 export default function RootLayout({
   children,
