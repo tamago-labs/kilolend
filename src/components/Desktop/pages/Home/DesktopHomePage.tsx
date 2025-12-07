@@ -14,61 +14,200 @@ const MainContent = styled.main`
   padding: 32px;
 `;
 
-const DashboardHeader = styled.div`
-  margin-bottom: 32px;
+// Hero Section Styles
+const HeroSection = styled.section`
+  background: white;
+  padding: 80px 32px;
+  margin-bottom: 48px;
+  border-radius: 24px;
+  position: relative;
+  overflow: hidden;
 `;
 
-const PageTitle = styled.h1`
-  font-size: 32px;
-  font-weight: 700;
+const HeroContainer = styled.div`
+  max-width: 1200px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 64px;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+`;
+
+const HeroContent = styled.div`
+  z-index: 2;
+`;
+
+const HeroTitle = styled.h1`
+  font-size: clamp(36px, 4vw, 48px);
+  font-weight: 800;
   color: #1e293b;
-  margin-bottom: 8px;
+  margin-bottom: 24px;
+  line-height: 1.2;
 `;
 
-const PageSubtitle = styled.p`
+const HeroSubtitle = styled.p`
   font-size: 18px;
   color: #64748b;
+  margin-bottom: 40px;
+  line-height: 1.6;
+  max-width: 500px;
 `;
 
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
+const CTAContainer = styled.div`
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
 `;
 
-const StatCard = styled.div`
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+const PrimaryButton = styled.button`
+  background: linear-gradient(135deg, #06C755 0%, #059669 100%);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
   transition: all 0.3s;
+  box-shadow: 0 4px 16px rgba(6, 199, 85, 0.25);
 
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 8px 24px rgba(6, 199, 85, 0.35);
   }
 `;
 
-const StatLabel = styled.div`
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 8px;
-  font-weight: 500;
-`;
-
-const StatValue = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const StatChange = styled.div<{ $positive?: boolean }>`
-  font-size: 14px;
+const SecondaryButton = styled.button`
+  background: white;
+  color: #06C755;
+  border: 2px solid #06C755;
+  padding: 14px 30px;
+  font-size: 16px;
   font-weight: 600;
-  color: ${({ $positive }) => $positive ? '#10b981' : '#ef4444'};
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+
+  &:hover {
+    background: #06C755;
+    color: white;
+    transform: translateY(-2px);
+  }
+`;
+
+// Mobile Mockup Styles
+const MobileMockup = styled.div`
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const PhoneFrame = styled.div`
+  width: 320px;
+  height: 640px;
+  background: #1e293b;
+  border-radius: 40px;
+  padding: 12px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  position: relative;
+`;
+
+const PhoneScreen = styled.div`
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 28px;
+  overflow: hidden;
+  position: relative;
+`;
+
+const LINEHeader = styled.div`
+  background: #00B900;
+  color: white;
+  padding: 16px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+`;
+
+const ChatInterface = styled.div`
+  padding: 16px;
+  height: calc(100% - 48px);
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const ChatBubble = styled.div<{ $isUser?: boolean }>`
+  background: ${({ $isUser }) => $isUser ? '#06C755' : 'white'};
+  color: ${({ $isUser }) => $isUser ? 'white' : '#1e293b'};
+  padding: 12px 16px;
+  border-radius: 18px;
+  max-width: 80%;
+  font-size: 14px;
+  align-self: ${({ $isUser }) => $isUser ? 'flex-end' : 'flex-start'};
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+`;
+
+const AIResponse = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  align-self: flex-start;
+`;
+
+const AIIcon = styled.div`
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(135deg, #06C755 0%, #059669 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 12px;
+  font-weight: bold;
+`;
+
+// Floating AI Characters
+const FloatingCharacter = styled.div<{ $top?: string; $right?: string; $left?: string; $bottom?: string; $delay?: number }>`
+  position: absolute;
+  ${({ $top }) => $top && `top: ${$top};`}
+  ${({ $right }) => $right && `right: ${$right};`}
+  ${({ $left }) => $left && `left: ${$left};`}
+  ${({ $bottom }) => $bottom && `bottom: ${$bottom};`}
+  width: 60px;
+  height: 60px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  animation: float 3s ease-in-out infinite;
+  animation-delay: ${({ $delay }) => $delay}s;
+  z-index: 3;
+  border: 3px solid #06C755;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  &:hover {
+    transform: scale(1.1);
+    transition: transform 0.3s;
+  }
+`;
+
+const CharacterImage = styled.img`
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
 `;
 
 const ActionSection = styled.div`
@@ -239,43 +378,89 @@ export const DesktopHome = () => {
     setMounted(true);
   }, []);
 
+  const handleGetStarted = () => {
+    // Open LINE mini dapp or redirect
+    window.open('https://liff.line.me/2007932254-AVnKMMp9', '_blank');
+  };
+
+  const handleTryDesktop = () => {
+    // Navigate to markets or supply section
+    console.log('Navigate to desktop version');
+  };
+
   if (!mounted) return null;
 
   return (
     <HomeContainer> 
-      
       <MainContent>
-        <DashboardHeader>
-          <PageTitle>Dashboard</PageTitle>
-          <PageSubtitle>Overview of your lending portfolio and market performance</PageSubtitle>
-        </DashboardHeader>
+        {/* New Hero Section */}
+        <HeroSection>
+          {/* Floating AI Characters */}
+          <FloatingCharacter $top="20px" $right="100px" $delay={0}>
+            <CharacterImage src="/images/icon-penguin.png" alt="Penny the Penguin" />
+          </FloatingCharacter>
+          <FloatingCharacter $top="60px" $right="40px" $delay={1}>
+            <CharacterImage src="/images/icon-tiger.png" alt="Tora the Tiger" />
+          </FloatingCharacter>
+          <FloatingCharacter $bottom="40px" $right="80px" $delay={2}>
+            <CharacterImage src="/images/icon-snake.png" alt="Sly the Snake" />
+          </FloatingCharacter>
 
-        <StatsGrid>
-          <StatCard>
-            <StatLabel>Net APY</StatLabel>
-            <StatValue>6.8%</StatValue>
-            <StatChange $positive>+0.3% today</StatChange>
-          </StatCard>
-          
-          <StatCard>
-            <StatLabel>Total Supply</StatLabel>
-            <StatValue>$12,450</StatValue>
-            <StatChange $positive>+$250 today</StatChange>
-          </StatCard>
-          
-          <StatCard>
-            <StatLabel>Total Borrow</StatLabel>
-            <StatValue>$8,200</StatValue>
-            <StatChange $positive>+$120 today</StatChange>
-          </StatCard>
-          
-          <StatCard>
-            <StatLabel>Health Factor</StatLabel>
-            <StatValue>2.45</StatValue>
-            <StatChange $positive>Safe</StatChange>
-          </StatCard>
-        </StatsGrid>
+          <HeroContainer>
+            <HeroContent>
+              <HeroTitle>DeFi Made Easy on LINE — Earn, Borrow & Swap with AI</HeroTitle>
+              <HeroSubtitle>
+                KiloLend lets you earn yield, borrow assets, and swap tokens on KAIA using simple chat commands — no complex inputs, no DeFi knowledge required.
+              </HeroSubtitle>
+              
+              <CTAContainer>
+                <PrimaryButton onClick={handleGetStarted}>
+                  Get Started on LINE
+                </PrimaryButton>
+                <SecondaryButton onClick={handleTryDesktop}>
+                  Try Desktop Version
+                </SecondaryButton>
+              </CTAContainer>
+            </HeroContent>
 
+            <MobileMockup>
+              <PhoneFrame>
+                <PhoneScreen>
+                  <LINEHeader>KiloLend on LINE</LINEHeader>
+                  <ChatInterface>
+                    <ChatBubble $isUser={false}>
+                      Hi! I'm Penny, your AI DeFi assistant. How can I help you today?
+                    </ChatBubble>
+                    
+                    <ChatBubble $isUser={true}>
+                      I want to supply USDT to earn yield
+                    </ChatBubble>
+                    
+                    <AIResponse>
+                      <AIIcon>🐧</AIIcon>
+                      <ChatBubble $isUser={false}>
+                        Great choice! Current USDT APY is 5.2%. Would you like to supply $100 worth?
+                      </ChatBubble>
+                    </AIResponse>
+                    
+                    <ChatBubble $isUser={true}>
+                      Yes, supply $100 USDT
+                    </ChatBubble>
+                    
+                    <AIResponse>
+                      <AIIcon>🐧</AIIcon>
+                      <ChatBubble $isUser={false}>
+                        ✅ Successfully supplied $100 USDT! You're now earning 5.2% APY. Your health factor is 3.2 - very safe!
+                      </ChatBubble>
+                    </AIResponse>
+                  </ChatInterface>
+                </PhoneScreen>
+              </PhoneFrame>
+            </MobileMockup>
+          </HeroContainer>
+        </HeroSection>
+
+        {/* Existing Action Section */}
         <ActionSection>
           <ActionCard $gradient onClick={() => console.log('Supply clicked')}>
             <ActionTitle>Supply Assets</ActionTitle>
@@ -294,6 +479,7 @@ export const DesktopHome = () => {
           </ActionCard>
         </ActionSection>
 
+        {/* Existing Portfolio Section */}
         <PortfolioSection>
           <SectionHeader>
             <SectionTitle>Your Positions</SectionTitle>
