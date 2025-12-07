@@ -1,8 +1,7 @@
 "use client";
 
 import styled from 'styled-components';
-import { useEffect, useState } from 'react';
-import { DesktopHeader } from './DesktopHeader';
+import { useEffect, useState } from 'react'; 
 
 const PortfolioContainer = styled.div`
   min-height: 100vh;

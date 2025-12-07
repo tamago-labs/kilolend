@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAppStore } from '@/stores/appStore';
 import { SplashScreen } from '@/components/SplashScreen/SplashScreen';
 import { HomeContainer } from '@/components/Home';
-import { DesktopHome } from '@/components/Desktop/DesktopHome';
+import { DesktopHome } from '@/components/Desktop/pages/Home/DesktopHomePage';
 
 export default function Home() {
     const { isMobile, deviceDetected } = useAppStore();

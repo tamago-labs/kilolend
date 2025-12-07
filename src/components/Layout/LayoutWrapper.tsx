@@ -2,7 +2,7 @@
 
 import { useAppStore } from '@/stores/appStore';
 import { Bootstrap } from '@/components/Bootstrap/Bootstrap';
-import { DesktopBootstrap } from '@/components/Desktop/DesktopBootstrap';
+import { DesktopBootstrap } from '@/components/Desktop/shared/DesktopBootstrap';
 
 interface LayoutWrapperProps {
   children: React.ReactNode;

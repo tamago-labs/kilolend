@@ -288,6 +288,12 @@ export const DesktopHeader = () => {
           >
             Portfolio
           </NavItem>
+          <NavItem 
+            className={pathname === '/leaderboard' ? 'active' : ''}
+            onClick={() => handleNavigation('/leaderboard')}
+          >
+            Leaderboard
+          </NavItem>
         </Navigation>
       </LeftSection>
       
