@@ -3,7 +3,8 @@
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import { HeroSection } from './components/HeroSection';
-import { MarketSection } from './components/MarketSection'; 
+import { MarketSection } from './components/MarketSection';
+import { AISection } from './components/AISection';
 import { useRouter } from 'next/navigation';
 
 const HomeContainer = styled.div`
@@ -49,6 +50,8 @@ export const DesktopHome = () => {
         <MarketSection
           onGetStarted={handleGetStarted}
         />
+
+        <AISection/>
 
       </MainContent>
     </HomeContainer>

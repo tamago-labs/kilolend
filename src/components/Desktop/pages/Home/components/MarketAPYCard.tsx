@@ -85,8 +85,7 @@ const CTAButton = styled.button`
     pointer-events: auto;
   }
 
-  &:hover {
-    background: #059669;
+  &:hover { 
     transform: scale(1.05);
   }
 
