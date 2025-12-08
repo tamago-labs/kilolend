@@ -1,7 +1,8 @@
 "use client";
 
 import styled from 'styled-components';
-import { MarketAPYCard } from './MarketAPYCard'; 
+import { MarketAPYCard } from './MarketAPYCard';
+import { AILeverageCard } from './AILeverageCard';
 
 // Market Section Styles
 const MarketSectionWrapper = styled.div`
@@ -49,8 +50,8 @@ export const MarketSection = ({ onGetStarted }: MarketSectionProps) => {
 
 
       <BottomRow>
-        <MarketAPYCard /> 
-        
+        <MarketAPYCard />
+        <AILeverageCard />
       </BottomRow>
     </MarketSectionWrapper>
   );

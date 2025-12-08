@@ -276,7 +276,7 @@ const ErrorIcon = styled.div`
 
 // Token name mapping
 const TOKEN_NAMES: Record<string, string> = {
-  'USDT': 'Tether (Official)',
+  'USDT': 'Tether Official',
   'USDC': 'USD Coin',
   'KAIA': 'KAIA Native',
   'SIX': 'Six Protocol',
@@ -295,7 +295,7 @@ export const MarketAPYCard = () => {
   const router = useRouter();
 
   // Get top markets by APY from context
-  const topMarkets = actions.getTopMarketsByAPY(6);
+  const topMarkets = actions.getTopMarketsByAPY(5);
   const isHighAPY = (apy: number) => apy >= 5.0;
 
   const handleNavigateToMarkets = () => {
