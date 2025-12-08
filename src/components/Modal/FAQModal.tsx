@@ -264,20 +264,36 @@ const FAQ_DATA: FAQCategory[] = [
     ]
   },
   {
-    title: "AI Advisor & Features",
-    icon: <Shield size={16} />,
-    items: [ 
+    title: "AI DeFi Co-Pilot",
+    icon: <Zap size={16} />,
+    items: [
       {
-        question: "How do I use the AI recommendations feature?",
-        answer: `<p>Using our AI Advisor is simple and intuitive:</p>
+        question: "What is AI DeFi Co-Pilot?",
+        answer: `<p>The <span class="highlight">AI DeFi Co-Pilot</span> is an intelligent assistant that executes DeFi transactions automatically based on your instructions. Simply tell the AI what you want to achieve, and it handles all the calculations, swaps, and optimizations for you.</p>`
+      },
+      // {
+      //   question: "How do I create an AI-agent wallet?",
+      //   answer: `<p>Getting started with AI Co-Pilot is simple and currently <span class="highlight">free</span> during beta:</p>
+      //   <ul>
+      //     <li><strong>Create AI Wallet:</strong> Set up your AI-agent wallet (100 beta slots available)</li>
+      //     <li><strong>Choose Character:</strong> Select AI personality and model (AWS Nova or Claude)</li>
+      //     <li><strong>Start Chatting:</strong> Just tell AI what you want to do naturally</li>
+      //   </ul>
+      //   <p>AI-agent wallets are hosted in secure enterprise AWS environment, separate from your main wallet.</p>`
+      // },
+      {
+        question: "What can AI Co-Pilot automatically execute?",
+        answer: `<p>AI Co-Pilot leverages our <span class="highlight">KAIA-MCP plugin</span> to interact directly with blockchain protocols:</p>
         <ul>
-          <li><strong>Access:</strong> Click "Ask AI" on the home screen</li>
-          <li><strong>Input:</strong> Describe your goals or choose from quick templates</li>
-          <li><strong>Analysis:</strong> KiloBot analyzes markets and your portfolio</li>
-          <li><strong>Recommendations:</strong> Review AI-generated lending strategies</li>
-          
-        </ul>
-        <p>Try templates like "I want to earn passive income with low risk" or "Help me maximize yields with USDT."</p>`
+          <li><strong>KiloLend:</strong> Lend, borrow, repay, and redeem</li>
+          <li><strong>DragonSwap V3:</strong> Get quotes and execute swaps</li>
+          <li><strong>Price Data:</strong> Real-time prices from CoinMarketCap</li>
+          <li><strong>KAIA Native:</strong> Wrap and unwrap KAIA tokens</li>
+        </ul>`
+      },
+      {
+        question: "Is AI Co-Pilot free to use?",
+        answer: `<p>AI Co-Pilot is currently <span class="highlight">free during beta</span> with 100 AI-agent wallet slots available. After KILO token launch, AI inference will be paid using KILO tokens at reasonable rates.</p>`
       }
     ]
   },
@@ -285,16 +301,16 @@ const FAQ_DATA: FAQCategory[] = [
     title: "Getting Started",
     icon: <Zap size={16} />,
     items: [ 
-      {
-        question: "What tokens can I lend and borrow?",
-        answer: `<p>KiloLend focuses on <span class="highlight">stablecoins</span> with support for major stable assets:</p>
-        <ul>
-          <li><strong>USDT:</strong> Tether USD - Most liquid stablecoin</li> 
-          <li><strong>KAIA:</strong> Native network token for collateral</li>
-          <li><strong>More Assets:</strong> Additional tokens being added regularly</li>
-        </ul>
-        <p>With us, you can either increase exposure by using them as collateral to borrow USDT for buying more, or you can speculate on supported tokens by collateralizing USDT.</p>`
-      },
+      // {
+      //   question: "What tokens can I lend and borrow?",
+      //   answer: `<p>KiloLend focuses on <span class="highlight">stablecoins</span> with support for major stable assets:</p>
+      //   <ul>
+      //     <li><strong>USDT:</strong> Tether USD - Most liquid stablecoin</li> 
+      //     <li><strong>KAIA:</strong> Native network token for collateral</li>
+      //     <li><strong>More Assets:</strong> Additional tokens being added regularly</li>
+      //   </ul>
+      //   <p>With us, you can either increase exposure by using them as collateral to borrow USDT for buying more, or you can speculate on supported tokens by collateralizing USDT.</p>`
+      // },
       {
         question: "What are the fees for using KiloLend?",
         answer: `<p>KiloLend maintains transparent, competitive fee structure:</p>
@@ -307,11 +323,6 @@ const FAQ_DATA: FAQCategory[] = [
       },
       {
         question: "Who is behind KiloLend?",
-        // answer: `
-        // <p>KiloLend is structured under an offshore entity and has delegated 
-        // operations and maintenance to <span class="highlight">Tamago Labs</span>, 
-        // a Web3 software company based in Japan.</p>
-        // `
         answer: `
         <p>KiloLend is a decentralized, non-custodial lending protocol on KAIA blockchain with 
         <span class="highlight">Tamago Labs</span>, a Web3 software company based in Japan, 
