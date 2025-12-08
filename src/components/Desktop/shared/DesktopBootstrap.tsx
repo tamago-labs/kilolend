@@ -4,6 +4,7 @@ import { ReactNode, useEffect } from "react";
 import { useKaiaWalletSecurity } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import styled from 'styled-components';
 import { DesktopHeader } from './DesktopHeader';
+import { DesktopFooter } from "./DesktopFooter"
 import { MarketDataProvider } from '@/components/MarketDataProvider';
 import { MarketProvider } from '@/contexts/MarketContext';
 
@@ -57,6 +58,7 @@ export const DesktopBootstrap = ({ className, children }: DesktopBootstrapProps)
                         <MainContent>
                             {children}
                         </MainContent>
+                        <DesktopFooter />
                     </MarketProvider>
                 </MarketDataProvider>
             )}

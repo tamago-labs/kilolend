@@ -6,7 +6,7 @@ import { HeroSection } from './components/HeroSection';
 import { MarketSection } from './components/MarketSection';
 import { AISection } from './components/AISection';
 import { UserTypesSection } from './components/UserTypesSection';
-import { FAQSection } from './components/FAQSection';
+import { FAQSection } from './components/FAQSection'; 
 import { useRouter } from 'next/navigation';
 
 const HomeContainer = styled.div`
@@ -59,7 +59,7 @@ export const DesktopHome = () => {
 
         <FAQSection/>
 
-      </MainContent>
+      </MainContent> 
     </HomeContainer>
   );
 };
