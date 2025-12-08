@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { HeroSection } from './components/HeroSection';
 import { MarketSection } from './components/MarketSection';
 import { AISection } from './components/AISection';
+import { UserTypesSection } from './components/UserTypesSection';
 import { useRouter } from 'next/navigation';
 
 const HomeContainer = styled.div`
@@ -52,6 +53,8 @@ export const DesktopHome = () => {
         />
 
         <AISection/>
+
+        <UserTypesSection/>
 
       </MainContent>
     </HomeContainer>
