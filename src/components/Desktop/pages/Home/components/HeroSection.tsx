@@ -4,8 +4,7 @@ import styled from 'styled-components';
 import { useState } from 'react';
 
 // Hero Section Styles
-const HeroSectionWrapper = styled.section`
-  background: white;
+const HeroSectionWrapper = styled.section` 
   padding: 80px 32px;
   margin-bottom: 48px;
   border-radius: 24px;

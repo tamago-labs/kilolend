@@ -3,8 +3,8 @@
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import { HeroSection } from './components/HeroSection';
-import { ActionSection } from './components/ActionSection';
-import { PortfolioSection } from './components/PortfolioSection';
+import { MarketSection } from './components/MarketSection'; 
+import { useRouter } from 'next/navigation';
 
 const HomeContainer = styled.div`
   min-height: 100vh;
@@ -20,6 +20,8 @@ const MainContent = styled.main`
 export const DesktopHome = () => {
   const [mounted, setMounted] = useState(false);
 
+  const router = useRouter()
+
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -30,65 +32,24 @@ export const DesktopHome = () => {
   };
 
   const handleTryDesktop = () => {
-    // Navigate to markets or supply section
-    console.log('Navigate to desktop version');
+    router.push("/markets")
   };
-
-  const handleSupplyClick = () => {
-    console.log('Supply clicked');
-  };
-
-  const handleBorrowClick = () => {
-    console.log('Borrow clicked');
-  };
-
-  const handleViewAllClick = () => {
-    console.log('View all clicked');
-  };
-
-  const assets = [
-    {
-      symbol: 'USDT',
-      name: 'USDT',
-      type: 'Supplied' as const,
-      amount: '$8,000',
-      apy: '5.2% APY'
-    },
-    {
-      symbol: 'KAIA',
-      name: 'KAIA',
-      type: 'Supplied' as const,
-      amount: '$4,450',
-      apy: '6.8% APY'
-    },
-    {
-      symbol: 'SIX',
-      name: 'SIX',
-      type: 'Borrowed' as const,
-      amount: '$8,200',
-      apy: '4.1% APR'
-    }
-  ];
+ 
 
   if (!mounted) return null;
 
   return (
-    <HomeContainer> 
+    <HomeContainer>
       <MainContent>
-        <HeroSection 
+        <HeroSection
           onGetStarted={handleGetStarted}
           onTryDesktop={handleTryDesktop}
         />
 
-        <ActionSection 
-          onSupplyClick={handleSupplyClick}
-          onBorrowClick={handleBorrowClick}
+        <MarketSection
+          onGetStarted={handleGetStarted}
         />
 
-        <PortfolioSection 
-          assets={assets}
-          onViewAllClick={handleViewAllClick}
-        />
       </MainContent>
     </HomeContainer>
   );

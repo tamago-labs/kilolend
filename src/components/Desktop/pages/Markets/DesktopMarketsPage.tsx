@@ -2,7 +2,6 @@
 
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
-import { DesktopHeader } from './DesktopHeader';
 
 const MarketsContainer = styled.div`
   min-height: 100vh;
