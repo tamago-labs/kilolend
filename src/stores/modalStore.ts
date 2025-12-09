@@ -22,6 +22,8 @@ export type ModalType =
   | 'leaderboard'
   | 'token-details'
   | 'wallet-address'
+  | 'walletAddress'
+  | 'balances'
   | 'support'
   | 'feedback'
   | 'faucet'
