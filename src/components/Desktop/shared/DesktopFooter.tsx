@@ -79,29 +79,29 @@ const LinkWithIcon = styled.div`
   gap: 8px;
 `;
 
-const SocialLinks = styled.div`
-  display: flex;
-  gap: 16px;
-  margin-top: 8px;
-`;
+// const SocialLinks = styled.div`
+//   display: flex;
+//   gap: 16px;
+//   margin-top: 8px;
+// `;
 
-const SocialLink = styled.a`
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #94a3b8;
-  transition: all 0.2s;
+// const SocialLink = styled.a`
+//   width: 40px;
+//   height: 40px;
+//   border-radius: 8px;
+//   background: rgba(255, 255, 255, 0.1);
+//   display: flex;
+//   align-items: center;
+//   justify-content: center;
+//   color: #94a3b8;
+//   transition: all 0.2s;
 
-  &:hover {
-    background: #06C755;
-    color: white;
-    transform: translateY(-2px);
-  }
-`;
+//   &:hover {
+//     background: #06C755;
+//     color: white;
+//     transform: translateY(-2px);
+//   }
+// `;
 
 const BottomSection = styled.div`
   max-width: 1400px;

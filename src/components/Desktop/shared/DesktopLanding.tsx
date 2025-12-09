@@ -2,8 +2,7 @@
 
 import styled from 'styled-components';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { DesktopHeader } from './DesktopHeader';
+import { useRouter } from 'next/navigation'; 
 
 const LandingContainer = styled.div`
   min-height: 100vh;
