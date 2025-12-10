@@ -4,6 +4,12 @@ import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { MarketData } from '@/contexts/MarketContext';
 import { formatUSD, formatPercent, isValidAmount, parseUserAmount } from '@/utils/formatters';
+import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
+import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
+import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { DesktopTransactionModal } from './DesktopTransactionModal';
+import { validateAmountAgainstBalance, getSafeMaxAmount } from '@/utils/tokenUtils';
 
 const ActionsContainer = styled.div`
   background: white;
@@ -93,9 +99,22 @@ const BalanceInfo = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 8px;
   font-size: 14px;
   color: #64748b;
+`;
+
+const BalanceRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+`;
+
+const BalanceColumn = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 `;
 
 const APYInfo = styled.div`
@@ -160,75 +179,115 @@ export const DesktopMarketActions = ({
   priceData,
 }: DesktopMarketActionsProps) => {
   const [amount, setAmount] = useState('');
-  const [transactionState, setTransactionState] = useState({
-    isProcessing: false,
-    error: null as string | null,
-    success: false
-  });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  
+  const { account } = useWalletAccountStore();
+  const { markets: contractMarkets } = useContractMarketStore();
+  const { balances: tokenBalances, isLoading: balancesLoading } = useMarketTokenBalances();
+  const { calculateBorrowingPower, calculateMaxBorrowAmount } = useBorrowingPower();
+  const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
+  const [maxBorrowData, setMaxBorrowData] = useState<any>(null);
 
-  const resetTransactionState = () => {
-    setTransactionState({
-      isProcessing: false,
-      error: null,
-      success: false
-    });
-  };
+  // Get the market configuration for the current asset
+  const marketConfig = contractMarkets.find(m => m.symbol === displaySymbol);
+  const marketId = marketConfig?.id;
 
-  const supply = async (market: MarketData, amount: string) => {
-    setTransactionState({ isProcessing: true, error: null, success: false });
-    try {
-      // Simulate supply transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setTransactionState({ isProcessing: false, error: null, success: true });
-    } catch (error) {
-      setTransactionState({ isProcessing: false, error: 'Supply failed', success: false });
-    }
-  };
+  // Get user balance for the current asset
+  const userBalance = marketId ? tokenBalances[marketId]?.formattedBalance || '0.00' : '0.00';
+  const fullPrecisionBalance = marketId ? tokenBalances[marketId]?.fullPrecisionBalance || '0' : '0';
 
-  const borrow = async (market: MarketData, amount: string) => {
-    setTransactionState({ isProcessing: true, error: null, success: false });
-    try {
-      // Simulate borrow transaction
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setTransactionState({ isProcessing: false, error: null, success: true });
-    } catch (error) {
-      setTransactionState({ isProcessing: false, error: 'Borrow failed', success: false });
-    }
-  };
-
+  // Load borrowing power data when account changes
   useEffect(() => {
-    if (transactionState.success) {
-      setAmount('');
-      alert(`${activeTab === 'supply' ? 'Supply' : 'Borrow'} successful!`);
-      resetTransactionState();
-    }
-  }, [transactionState.success, activeTab]);
+    const loadBorrowingData = async () => {
+      if (!account || !marketId) return;
 
-  const handleAmountChange = (value: string) => {
-    setAmount(value);
-    if (transactionState.error) {
-      resetTransactionState();
-    }
-  };
+      try {
+        const borrowingPower = await calculateBorrowingPower(account);
+        setBorrowingPowerData(borrowingPower);
+      } catch (error) {
+        console.error('Error loading borrowing data:', error);
+      }
+    };
+    loadBorrowingData();
+  }, [account, marketId]);
 
-  const handleMax = () => {
-    // For demo purposes, set a max amount
-    const maxAmount = activeTab === 'supply' ? '10000' : '5000';
-    setAmount(maxAmount);
-  };
+  // Load max borrow data when asset is selected for borrow tab
+  useEffect(() => {
+    const loadMaxBorrowData = async () => {
+      if (!marketId || !account || activeTab !== 'borrow') return;
 
-  const handleAction = async () => {
-    const validation = { isValid: isValidAmount(amount) };
-    if (!validation.isValid) {
-      setTransactionState({ isProcessing: false, error: 'Please enter a valid amount', success: false });
+      try {
+        const maxBorrow = await calculateMaxBorrowAmount(marketId as any, account);
+        setMaxBorrowData(maxBorrow);
+      } catch (error) {
+        console.error('Error loading max borrow data:', error);
+      }
+    };
+    loadMaxBorrowData();
+  }, [marketId, account, activeTab]);
+
+  // Validate amount against balance or borrow limit
+  useEffect(() => {
+    if (!amount || parseFloat(amount) <= 0) {
+      setValidationError(null);
       return;
     }
 
     if (activeTab === 'supply') {
-      await supply(market, amount);
-    } else {
-      await borrow(market, amount);
+      // Validate against wallet balance
+      const validation = validateAmountAgainstBalance(amount, fullPrecisionBalance, marketId || 'kaia');
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Insufficient balance');
+      } else {
+        setValidationError(null);
+      }
+    } else if (activeTab === 'borrow' && maxBorrowData) {
+      // Validate against max borrow amount
+      const maxAmount = maxBorrowData.maxBorrowAmount || '0';
+      const validation = validateAmountAgainstBalance(amount, maxAmount, marketId || 'kaia');
+      if (!validation.isValid) {
+        setValidationError(validation.error || 'Amount exceeds borrow limit');
+      } else {
+        setValidationError(null);
+      }
     }
+  }, [amount, activeTab, fullPrecisionBalance, maxBorrowData, marketId]);
+
+  const handleAmountChange = (value: string) => {
+    setAmount(value);
+    setValidationError(null);
+  };
+
+  const handleMax = () => {
+    if (activeTab === 'supply') {
+      // Use safe maximum amount calculation for supply
+      const safeAmount = getSafeMaxAmount(fullPrecisionBalance, marketId || 'kaia');
+      setAmount(safeAmount);
+    } else if (activeTab === 'borrow' && maxBorrowData) {
+      // Use max borrow amount for borrow
+      const maxAmount = maxBorrowData.maxBorrowAmount || '0';
+      const safeAmount = getSafeMaxAmount(maxAmount, marketId || 'kaia');
+      setAmount(safeAmount);
+    }
+  };
+
+  const handleAction = () => {
+    if (!amount || parseFloat(amount) <= 0 || validationError) {
+      return;
+    }
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  // Reset amount when switching tabs
+  const handleTabChange = (tab: 'supply' | 'borrow') => {
+    setAmount('');
+    setValidationError(null);
+    onTabChange(tab);
   };
 
   return (
@@ -236,13 +295,13 @@ export const DesktopMarketActions = ({
       <TabContainer>
         <TabButton 
           $active={activeTab === 'supply'}
-          onClick={() => onTabChange('supply')}
+          onClick={() => handleTabChange('supply')}
         >
           Supply
         </TabButton>
         <TabButton 
           $active={activeTab === 'borrow'}
-          onClick={() => onTabChange('borrow')}
+          onClick={() => handleTabChange('borrow')}
         >
           Borrow
         </TabButton>
@@ -260,10 +319,37 @@ export const DesktopMarketActions = ({
             />
             <MaxButton onClick={handleMax}>MAX</MaxButton>
           </InputContainer>
-          <BalanceInfo>
-            <span>Wallet Balance: {formatUSD(10000)}</span>
-            <span>{displaySymbol}</span>
-          </BalanceInfo>
+          {activeTab === 'supply' ? (
+            <BalanceRow>
+              <BalanceColumn>
+                <BalanceInfo>
+                  <span>Wallet Balance: {userBalance}</span>
+                  <span>{displaySymbol}</span>
+                </BalanceInfo>
+              </BalanceColumn>
+              {/* <BalanceColumn>
+                <BalanceInfo>
+                  <span>Currently Supplied: {market.supplyBalance || '0.00'}</span>
+                  <span>{displaySymbol}</span>
+                </BalanceInfo>
+              </BalanceColumn> */}
+            </BalanceRow>
+          ) : (
+            <BalanceRow>
+              <BalanceColumn>
+                <BalanceInfo>
+                  <span>Available to Borrow: {maxBorrowData?.maxBorrowAmount || '0.00'}</span>
+                  <span>{displaySymbol}</span>
+                </BalanceInfo>
+              </BalanceColumn>
+              {/* <BalanceColumn>
+                <BalanceInfo>
+                  <span>Total Borrowing Power: {formatUSD(parseFloat(borrowingPowerData?.totalBorrowValue || '0'))}</span>
+                  <span>USD</span>
+                </BalanceInfo>
+              </BalanceColumn> */}
+            </BalanceRow>
+          )}
         </InputSection>
 
         <APYInfo>
@@ -275,16 +361,30 @@ export const DesktopMarketActions = ({
           </APYValue>
         </APYInfo>
 
-        {transactionState.error && <ErrorMessage>{transactionState.error}</ErrorMessage>}
+        {validationError && <ErrorMessage>{validationError}</ErrorMessage>}
 
         <ActionButton 
           $primary 
-          $disabled={!amount || transactionState.isProcessing}
+          $disabled={!amount || !!validationError || !account}
           onClick={handleAction}
         >
-          {transactionState.isProcessing ? 'Processing...' : `${activeTab === 'supply' ? 'Supply' : 'Borrow'} ${displaySymbol}`}
+          {!account ? 'Wallet Not Connected' : `Preview ${activeTab === 'supply' ? 'Supply' : 'Borrow'}`}
         </ActionButton>
       </ActionContent>
+
+      {isModalOpen && (
+        <DesktopTransactionModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          type={activeTab}
+          amount={amount}
+          market={market}
+          marketConfig={marketConfig}
+          displaySymbol={displaySymbol}
+          borrowingPowerData={borrowingPowerData}
+          maxBorrowData={maxBorrowData}
+        />
+      )}
     </ActionsContainer>
   );
 };

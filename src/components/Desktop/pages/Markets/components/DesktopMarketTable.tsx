@@ -219,7 +219,7 @@ export const DesktopMarketTable = ({
 
   // Format percentage
   const formatPercentage = (value: number) => {
-    return `${value.toFixed(1)}%`;
+    return `${value.toFixed(2)}%`;
   };
 
   // Get token name helper
@@ -252,7 +252,7 @@ export const DesktopMarketTable = ({
     router.push(`/markets/${apiSymbol.toLowerCase()}?action=borrow`);
   };
 
-  if (isLoading && markets.length === 0) {
+  if (isLoading && marketData.length === 0) {
     return <LoadingMessage>Loading market data...</LoadingMessage>;
   }
 
