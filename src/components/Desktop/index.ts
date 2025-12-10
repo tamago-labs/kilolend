@@ -3,6 +3,9 @@ export { DesktopHeader } from './shared/DesktopHeader';
 export { DesktopBootstrap } from './shared/DesktopBootstrap';
 export { DesktopLanding } from './shared/DesktopLanding';
 
+// Modal Components
+export * from './modals';
+
 // Page Components
 export { DesktopHome } from './pages/Home/DesktopHomePage';
 export { DesktopMarkets } from './pages/Markets/DesktopMarketsPage';

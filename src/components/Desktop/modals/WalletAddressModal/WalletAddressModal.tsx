@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import { useState } from 'react';
-import { DesktopBaseModal } from './DesktopBaseModal';
+import { DesktopBaseModal } from '../shared/DesktopBaseModal';
 import { Copy, Check, ExternalLink } from 'react-feather';
 import QRCode from "react-qr-code";
 
@@ -217,7 +217,7 @@ const InfoText = styled.div`
   }
 `;
 
-interface DesktopWalletAddressModalProps {
+export interface DesktopWalletAddressModalProps {
   isOpen: boolean;
   onClose: () => void;
   walletAddress: string;

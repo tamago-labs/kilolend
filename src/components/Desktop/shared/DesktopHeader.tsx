@@ -12,8 +12,7 @@ import { useAppStore } from '@/stores/appStore';
 import { liff } from "@/utils/liff";
 import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
 import { useRouter, usePathname } from 'next/navigation';
-import { DesktopWalletAddressModal } from './DesktopWalletAddressModal';
-import { DesktopBalancesModal } from './DesktopBalancesModal';
+import { DesktopWalletAddressModal, DesktopBalancesModal } from '../modals';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -267,7 +266,7 @@ export const DesktopHeader = () => {
   };
 
   const handleViewBalances = () => {
-    openModal('balances');
+    router.push('/balances');
     setShowDropdown(false);
   };
 
@@ -332,17 +331,14 @@ export const DesktopHeader = () => {
               </ProfileSection>
               
               <DropdownMenu $isOpen={showDropdown}>
-                <DropdownItem onClick={handleViewQR}>
-                  <CreditCard size={16} />
+                <DropdownItem onClick={handleViewQR}> 
                   Wallet Details
                 </DropdownItem>
-                <DropdownItem onClick={handleViewBalances}>
-                  <DollarSign size={16} />
+                <DropdownItem onClick={handleViewBalances}> 
                   View Balances
                 </DropdownItem>
                 <DropdownSeparator />
-                <DisconnectItem onClick={handleDisconnect}>
-                  <LogOut size={16} />
+                <DisconnectItem onClick={handleDisconnect}> 
                   Disconnect Wallet
                 </DisconnectItem>
               </DropdownMenu>
