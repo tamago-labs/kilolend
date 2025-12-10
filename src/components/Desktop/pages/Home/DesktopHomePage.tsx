@@ -8,6 +8,8 @@ import { AISection } from './components/AISection';
 import { UserTypesSection } from './components/UserTypesSection';
 import { FAQSection } from './components/FAQSection'; 
 import { useRouter } from 'next/navigation';
+import { LineMiniDAppModal } from '../../modals';
+import { useModalStore } from '@/stores/modalStore';
 
 const HomeContainer = styled.div`
   min-height: 100vh;
@@ -22,7 +24,7 @@ const MainContent = styled.main`
 
 export const DesktopHome = () => {
   const [mounted, setMounted] = useState(false);
-
+  const { openModal, closeModal, activeModal } = useModalStore();
   const router = useRouter()
 
   useEffect(() => {
@@ -30,8 +32,8 @@ export const DesktopHome = () => {
   }, []);
 
   const handleGetStarted = () => {
-    // Open LINE mini dapp or redirect
-    window.open('https://liff.line.me/2007932254-AVnKMMp9', '_blank');
+    // Open LINE mini dapp modal
+    openModal('lineMiniDApp');
   };
 
   const handleTryDesktop = () => {
@@ -60,6 +62,11 @@ export const DesktopHome = () => {
         <FAQSection/>
 
       </MainContent> 
+
+      <LineMiniDAppModal
+        isOpen={activeModal === 'lineMiniDApp'}
+        onClose={() => closeModal()}
+      />
     </HomeContainer>
   );
 };

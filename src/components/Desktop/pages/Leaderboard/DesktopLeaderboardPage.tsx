@@ -331,8 +331,7 @@ export const DesktopLeaderboard = () => {
       
       <MainContent>
         <PageHeader>
-          <PageTitle>
-            {/*<Trophy size={32} />*/}
+          <PageTitle> 
             Leaderboard
           </PageTitle>
           <PageSubtitle>Top performers in the KiloLend ecosystem</PageSubtitle>

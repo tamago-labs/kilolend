@@ -32,6 +32,7 @@ export type ModalType =
   | 'news'
   | 'ai-deposit'
   | 'ai-withdraw'
+  | 'lineMiniDApp'
   | null;
 
 interface ModalData {

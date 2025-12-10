@@ -12,7 +12,7 @@ import { useAppStore } from '@/stores/appStore';
 import { liff } from "@/utils/liff";
 import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
 import { useRouter, usePathname } from 'next/navigation';
-import { DesktopWalletAddressModal, DesktopBalancesModal } from '../modals';
+import { DesktopWalletAddressModal, DesktopSettingsModal } from '../modals';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -353,10 +353,9 @@ export const DesktopHeader = () => {
         walletAddress={account || ''}
       />
 
-      <DesktopBalancesModal
-        isOpen={activeModal === 'balances'}
+      <DesktopSettingsModal
+        isOpen={activeModal === 'settings'}
         onClose={() => closeModal()}
-        account={account}
       />
     </>
   );
