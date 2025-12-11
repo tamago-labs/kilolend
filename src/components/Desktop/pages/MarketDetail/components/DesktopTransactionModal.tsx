@@ -5,12 +5,15 @@ import { useState, useEffect } from 'react';
 import { BaseModal } from '@/components/Modal/BaseModal';
 import { MarketData } from '@/contexts/MarketContext';
 import { formatUSD, formatPercent } from '@/utils/formatters';
-import { useMarketContract } from '@/hooks/v1/useMarketContract';
+import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
 import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
 import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
 import { useEventTracking } from '@/hooks/useEventTracking';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
+import { useUserPositions } from '@/hooks/v1/useUserPositions';
 import { MARKET_CONFIG_V1 } from '@/utils/contractConfig';
+import { ExternalLink, Check } from 'react-feather';
 
 const ModalContent = styled.div`
   padding: 32px;
@@ -35,7 +38,7 @@ const StepIndicator = styled.div`
 const Step = styled.div<{ $active?: boolean; $completed?: boolean }>`
   display: flex;
   align-items: center;
-  color: ${({ $active, $completed }) => 
+  color: ${({ $active, $completed }) =>
     $completed ? '#06C755' : $active ? '#06C755' : '#94a3b8'};
   font-weight: 600;
   font-size: 14px;
@@ -45,7 +48,7 @@ const StepNumber = styled.div<{ $active?: boolean; $completed?: boolean }>`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: ${({ $active, $completed }) => 
+  background: ${({ $active, $completed }) =>
     $completed ? '#06C755' : $active ? '#06C755' : '#e2e8f0'};
   color: white;
   display: flex;
@@ -110,9 +113,10 @@ const WarningText = styled.div`
 const ActionButton = styled.button<{ $primary?: boolean; $disabled?: boolean }>`
   width: 100%;
   padding: 16px;
-  background: ${({ $primary, $disabled }) => 
+  margin-top: 24px;
+  background: ${({ $primary, $disabled }) =>
     $disabled ? '#e2e8f0' : $primary ? '#06C755' : 'white'};
-  color: ${({ $primary, $disabled }) => 
+  color: ${({ $primary, $disabled }) =>
     $disabled ? '#94a3b8' : $primary ? 'white' : '#06C755'};
   border: 1px solid ${({ $disabled }) => $disabled ? '#e2e8f0' : '#06C755'};
   border-radius: 8px;
@@ -123,8 +127,8 @@ const ActionButton = styled.button<{ $primary?: boolean; $disabled?: boolean }>`
   margin-bottom: 12px;
 
   &:hover {
-    background: ${({ $primary, $disabled }) => 
-      $disabled ? '#e2e8f0' : $primary ? '#059669' : '#06C755'};
+    background: ${({ $primary, $disabled }) =>
+    $disabled ? '#e2e8f0' : $primary ? '#059669' : '#06C755'};
     color: ${({ $disabled }) => $disabled ? '#94a3b8' : 'white'};
   }
 `;
@@ -162,21 +166,20 @@ const LoadingSpinner = styled.div`
 `;
 
 const SuccessIcon = styled.div`
-  width: 64px;
-  height: 64px;
-  background: #06C755;
+  width: 80px;
+  height: 80px;
+  background: #22c55e;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 24px;
-  font-size: 32px;
+  margin: 0 auto 24px auto;
   color: white;
 `;
 
 const SuccessMessage = styled.div`
   text-align: center;
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   color: #1e293b;
   margin-bottom: 8px;
@@ -184,20 +187,64 @@ const SuccessMessage = styled.div`
 
 const SuccessSubtext = styled.div`
   text-align: center;
-  font-size: 14px;
+  font-size: 16px;
   color: #64748b;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  line-height: 1.5;
+`;
+
+const TransactionDetails = styled.div`
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+  text-align: left;
+`;
+
+const DetailRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const DetailLabel = styled.span`
+  font-size: 14px;
+  color: #166534;
+`;
+
+const DetailValue = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #166534;
+`;
+
+const ClickableTransactionHash = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #059669;
+    text-decoration: underline;
+  }
 `;
 
 const RiskSection = styled.div<{ $level: 'low' | 'medium' | 'high' | 'critical' }>`
-  background: ${({ $level }) => 
+  background: ${({ $level }) =>
     $level === 'critical' ? '#7f1d1d' :
-    $level === 'high' ? '#fef2f2' : 
-    $level === 'medium' ? '#fef3c7' : '#f0fdf4'};
-  border: 1px solid ${({ $level }) => 
+      $level === 'high' ? '#fef2f2' :
+        $level === 'medium' ? '#fef3c7' : '#f0fdf4'};
+  border: 1px solid ${({ $level }) =>
     $level === 'critical' ? '#991b1b' :
-    $level === 'high' ? '#ef4444' : 
-    $level === 'medium' ? '#f59e0b' : '#22c55e'};
+      $level === 'high' ? '#ef4444' :
+        $level === 'medium' ? '#f59e0b' : '#22c55e'};
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 16px;
@@ -206,20 +253,20 @@ const RiskSection = styled.div<{ $level: 'low' | 'medium' | 'high' | 'critical' 
 const RiskTitle = styled.div<{ $level: 'low' | 'medium' | 'high' | 'critical' }>`
   font-size: 14px;
   font-weight: 600;
-  color: ${({ $level }) => 
+  color: ${({ $level }) =>
     $level === 'critical' ? '#fef2f2' :
-    $level === 'high' ? '#dc2626' : 
-    $level === 'medium' ? '#92400e' : '#166534'};
+      $level === 'high' ? '#dc2626' :
+        $level === 'medium' ? '#92400e' : '#166534'};
   margin-bottom: 8px;
 `;
 
 const RiskText = styled.p<{ $level: 'low' | 'medium' | 'high' | 'critical' }>`
   margin: 0;
   font-size: 14px;
-  color: ${({ $level }) => 
+  color: ${({ $level }) =>
     $level === 'critical' ? '#fef2f2' :
-    $level === 'high' ? '#dc2626' : 
-    $level === 'medium' ? '#92400e' : '#166534'};
+      $level === 'high' ? '#dc2626' :
+        $level === 'medium' ? '#92400e' : '#166534'};
   line-height: 1.4;
 `;
 
@@ -235,10 +282,10 @@ const HealthFactorBar = styled.div`
 const HealthFactorFill = styled.div<{ $percentage: number; $level: 'low' | 'medium' | 'high' | 'critical' }>`
   height: 100%;
   width: ${({ $percentage }) => Math.min($percentage, 100)}%;
-  background: ${({ $level }) => 
+  background: ${({ $level }) =>
     $level === 'critical' ? '#991b1b' :
-    $level === 'high' ? '#ef4444' : 
-    $level === 'medium' ? '#f59e0b' : '#22c55e'};
+      $level === 'high' ? '#ef4444' :
+        $level === 'medium' ? '#f59e0b' : '#22c55e'};
   transition: all 0.3s ease;
 `;
 
@@ -294,12 +341,23 @@ export const DesktopTransactionModal = ({
   const [error, setError] = useState<string | null>(null);
   const [needsApproval, setNeedsApproval] = useState(false);
   const [needsMarketEntry, setNeedsMarketEntry] = useState(false);
+  const [transactionResult, setTransactionResult] = useState<TransactionResult | null>(null);
 
   const { account } = useWalletAccountStore();
   const { supply, borrow } = useMarketContract();
   const { checkAllowance, approveToken } = useTokenApproval();
   const { enterMarkets, exitMarket, isMarketEntered } = useComptrollerContract();
-  const { startTracking, stopTracking, reset } = useEventTracking(account);
+  const { refreshBalances } = useMarketTokenBalances();
+  const { refreshPositions } = useUserPositions();
+  const {
+    isTracking,
+    trackedEvent,
+    error: trackingError,
+    hasTimedOut,
+    startTracking,
+    stopTracking,
+    reset: resetTracking
+  } = useEventTracking(account);
 
   const marketId = marketConfig?.id;
 
@@ -309,9 +367,67 @@ export const DesktopTransactionModal = ({
       setCurrentStep('preview');
       setIsProcessing(false);
       setError(null);
+      setTransactionResult(null);
+      resetTracking();
       checkRequirements();
     }
   }, [isOpen, type, marketId]);
+
+  // Handle event tracking results
+  useEffect(() => {
+    if (trackedEvent && ((type === 'supply' && trackedEvent.type === 'mint') || (type === 'borrow' && trackedEvent.type === 'borrow'))) {
+      console.log(`${type} transaction confirmed via event tracking:`, trackedEvent);
+
+      // Create transaction result from tracked event
+      const result: TransactionResult = {
+        hash: trackedEvent.transactionHash,
+        status: 'confirmed'
+      };
+
+      setTransactionResult(result);
+      setIsProcessing(false);
+      setCurrentStep('success'); // Move to success step
+
+      // Refresh data after successful transaction
+      setTimeout(() => {
+        refreshBalances();
+        refreshPositions();
+      }, 2000);
+    }
+  }, [trackedEvent, type]);
+
+  // Handle tracking errors
+  useEffect(() => {
+    if (trackingError) {
+      console.error('Event tracking error:', trackingError);
+
+      // Ignore specific blockchain header errors
+      let errorMessage = '';
+      if (typeof trackingError === 'string') {
+        errorMessage = trackingError;
+      } else if (trackingError && typeof trackingError === 'object' && 'message' in trackingError) {
+        errorMessage = String((trackingError as any).message);
+      } else {
+        errorMessage = String(trackingError);
+      }
+
+      if (errorMessage.includes('could not coalesce error')) {
+        // Don't set error state for coalesce errors 
+      }
+
+      setError(trackingError);
+      setIsProcessing(false);
+    }
+  }, [trackingError]);
+
+  // Handle timeout
+  useEffect(() => {
+    if (hasTimedOut) {
+      console.log('Transaction tracking timed out');
+      setError('Transaction tracking timed out. Please check your wallet and try again.');
+      setIsProcessing(false);
+    }
+  }, [hasTimedOut]);
 
   const checkRequirements = async () => {
     if (!marketId || !account) return;
@@ -352,19 +468,20 @@ export const DesktopTransactionModal = ({
       }
 
       // Execute the main transaction
-      const result = type === 'supply' 
+      const result = type === 'supply'
         ? await supply(marketId, amount)
         : await borrow(marketId, amount);
 
-      if (result.status === 'confirmed') {
-        setCurrentStep('success');
-      } else {
-        setError(result.error || 'Transaction failed');
-      }
+      // Start event tracking after transaction is sent
+      console.log(`${type} transaction sent, starting event tracking for ${marketId}`);
+      startTracking(marketId, type === 'supply' ? 'mint' : 'borrow');
+
+      // Don't set success yet - wait for event tracking
+      return;
+
     } catch (error: any) {
       console.error('Transaction error:', error);
       setError(error.message || 'Transaction failed');
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -376,6 +493,10 @@ export const DesktopTransactionModal = ({
     } else {
       onClose();
     }
+  };
+
+  const handleExternalLink = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const renderStepIndicator = () => {
@@ -407,7 +528,7 @@ export const DesktopTransactionModal = ({
   const renderPreview = () => {
     const amountNum = parseFloat(amount || '0');
     const amountUSD = amountNum * market.price;
-    
+
     if (type === 'supply') {
       // Supply preview with comprehensive information
       const expectedCTokens = amountNum * 50; // Fallback calculation
@@ -442,13 +563,6 @@ export const DesktopTransactionModal = ({
             </PreviewRow>
           </PreviewSection>
 
-          {/* <CollateralSection>
-            <CollateralTitle>Use as Collateral</CollateralTitle>
-            <CollateralInfo>
-              This asset will be enabled as collateral, allowing you to borrow against it. You can disable this later if needed.
-            </CollateralInfo>
-          </CollateralSection> */}
-
           {needsApproval && (
             <WarningBox>
               <WarningText>
@@ -465,8 +579,8 @@ export const DesktopTransactionModal = ({
             </WarningBox>
           )}
 
-          <ActionButton 
-            $primary 
+          <ActionButton
+            $primary
             $disabled={isProcessing}
             onClick={handlePreviewAction}
           >
@@ -484,18 +598,18 @@ export const DesktopTransactionModal = ({
       const totalCollateralValue = parseFloat(borrowingPowerData?.totalCollateralValue || '0');
       const totalBorrowValue = parseFloat(borrowingPowerData?.totalBorrowValue || '0');
       const currentHealthFactor = parseFloat(borrowingPowerData?.healthFactor || '999');
-      
+
       const newTotalBorrowValueUSD = totalBorrowValue + amountUSD;
-      const newHealthFactor = newTotalBorrowValueUSD > 0 ? 
+      const newHealthFactor = newTotalBorrowValueUSD > 0 ?
         totalCollateralValue / newTotalBorrowValueUSD : 999;
-      
-      const utilizationBefore = totalCollateralValue > 0 ? 
+
+      const utilizationBefore = totalCollateralValue > 0 ?
         (totalBorrowValue / totalCollateralValue) * 100 : 0;
-      const utilizationAfter = totalCollateralValue > 0 ? 
+      const utilizationAfter = totalCollateralValue > 0 ?
         (newTotalBorrowValueUSD / totalCollateralValue) * 100 : 0;
-      
+
       const yearlyInterest = amountNum * (market.borrowAPY / 100);
-      
+
       let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
       if (newHealthFactor < 1.2 || utilizationAfter > 80) riskLevel = 'critical';
       else if (newHealthFactor < 1.3 || utilizationAfter > 70) riskLevel = 'high';
@@ -553,8 +667,8 @@ export const DesktopTransactionModal = ({
               <span>{newHealthFactor > 10 ? '10+' : newHealthFactor.toFixed(2)}</span>
             </div>
             <HealthFactorBar>
-              <HealthFactorFill 
-                $percentage={Math.min((newHealthFactor / 3) * 100, 100)} 
+              <HealthFactorFill
+                $percentage={Math.min((newHealthFactor / 3) * 100, 100)}
                 $level={riskLevel}
               />
             </HealthFactorBar>
@@ -566,28 +680,28 @@ export const DesktopTransactionModal = ({
           <RiskSection $level={riskLevel}>
             <RiskTitle $level={riskLevel}>
               {riskLevel === 'critical' ? '🚨 CRITICAL RISK' :
-               riskLevel === 'high' ? '⚠️ High Risk' : 
-               riskLevel === 'medium' ? '⚡ Medium Risk' : 
-               '✅ Low Risk'}
+                riskLevel === 'high' ? '⚠️ High Risk' :
+                  riskLevel === 'medium' ? '⚡ Medium Risk' :
+                    '✅ Low Risk'}
             </RiskTitle>
             <RiskText $level={riskLevel}>
-              {riskLevel === 'critical' && 
+              {riskLevel === 'critical' &&
                 `Your health factor will be ${newHealthFactor.toFixed(2)}, which is critically low. Your position is at immediate risk of liquidation! Borrow this amount only if you can add collateral immediately.`
               }
-              {riskLevel === 'high' && 
+              {riskLevel === 'high' &&
                 `Your health factor will be ${newHealthFactor.toFixed(2)}, which is dangerously low. Your position will be at high risk of liquidation. Consider borrowing less or supplying more collateral.`
               }
-              {riskLevel === 'medium' && 
+              {riskLevel === 'medium' &&
                 `Your health factor will be ${newHealthFactor.toFixed(2)}, which indicates moderate risk. Monitor your position closely and be prepared to repay or add collateral if needed.`
               }
-              {riskLevel === 'low' && 
+              {riskLevel === 'low' &&
                 `Your health factor will be ${newHealthFactor.toFixed(2)}, which is relatively safe. You have good collateral coverage for this borrow amount.`
               }
             </RiskText>
           </RiskSection>
 
-          <ActionButton 
-            $primary 
+          <ActionButton
+            $primary
             $disabled={isProcessing}
             onClick={handlePreviewAction}
           >
@@ -613,15 +727,17 @@ export const DesktopTransactionModal = ({
         <PreviewRow>
           <PreviewLabel>Status</PreviewLabel>
           <PreviewValue>
-            {isProcessing ? (
+            {isTracking ? (
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <LoadingSpinner />
-                Processing...
+                In Progress...
               </div>
             ) : error ? (
               <span style={{ color: '#ef4444' }}>Failed</span>
-            ) : (
+            ) : trackedEvent ? (
               <span style={{ color: '#06C755' }}>Complete</span>
+            ) : (
+              <span style={{ color: '#64748b' }}>Processing...</span>
             )}
           </PreviewValue>
         </PreviewRow>
@@ -635,9 +751,9 @@ export const DesktopTransactionModal = ({
         </WarningBox>
       )}
 
-      {!isProcessing && !error && currentStep !== 'success' && (
-        <ActionButton $primary onClick={() => setCurrentStep('success')}>
-          Continue
+      {!isTracking && !trackedEvent && !error && (
+        <ActionButton onClick={() => setCurrentStep('preview')}>
+          Back to Preview
         </ActionButton>
       )}
 
@@ -649,19 +765,61 @@ export const DesktopTransactionModal = ({
     </>
   );
 
-  const renderSuccess = () => (
-    <>
-      <SuccessIcon>✓</SuccessIcon>
-      <SuccessMessage>{type === 'supply' ? 'Supply Successful!' : 'Borrow Successful!'}</SuccessMessage>
-      <SuccessSubtext>
-        You have successfully {type === 'supply' ? 'supplied' : 'borrowed'} {amount} {displaySymbol}
-      </SuccessSubtext>
+  const renderSuccess = () => {
+    const amountNum = parseFloat(amount || '0');
+    const amountUSD = amountNum * market.price;
 
-      <ActionButton $primary onClick={handleClose}>
-        Done
-      </ActionButton>
-    </>
-  );
+    return (
+      <>
+        <SuccessIcon>
+          <Check size={40} />
+        </SuccessIcon>
+        <SuccessMessage>{type === 'supply' ? 'Supply Successful!' : 'Borrow Successful!'}</SuccessMessage>
+        <SuccessSubtext>
+          You have successfully {type === 'supply' ? 'supplied' : 'borrowed'} {amount} {displaySymbol}
+          {type === 'supply' && `. You're now earning ${market.supplyAPY.toFixed(2)}% APY!`}
+        </SuccessSubtext>
+
+        <TransactionDetails>
+          <DetailRow>
+            <DetailLabel>{type === 'supply' ? 'Amount Supplied' : 'Borrowed Amount'}</DetailLabel>
+            <DetailValue>{amount} {displaySymbol}</DetailValue>
+          </DetailRow>
+          <DetailRow>
+            <DetailLabel>USD Value</DetailLabel>
+            <DetailValue>${amountUSD.toFixed(2)}</DetailValue>
+          </DetailRow>
+          <DetailRow>
+            <DetailLabel>{type === 'supply' ? 'Supply APY' : 'Borrow APR'}</DetailLabel>
+            <DetailValue>{formatPercent(type === 'supply' ? market.supplyAPY : market.borrowAPY)}</DetailValue>
+          </DetailRow>
+          {type === 'borrow' && (
+            <DetailRow>
+              <DetailLabel>Estimated Yearly Interest</DetailLabel>
+              <DetailValue>{(amountNum * (market.borrowAPY / 100)).toFixed(4)} {displaySymbol}</DetailValue>
+            </DetailRow>
+          )}
+          <DetailRow>
+            <DetailLabel>Status</DetailLabel>
+            <DetailValue>Confirmed</DetailValue>
+          </DetailRow>
+          {transactionResult?.hash && (
+            <DetailRow>
+              <DetailLabel>Transaction</DetailLabel>
+              <ClickableTransactionHash onClick={() => handleExternalLink(`https://www.kaiascan.io/tx/${transactionResult.hash}`)}>
+                <DetailValue>{`${transactionResult.hash.slice(0, 6)}...${transactionResult.hash.slice(-4)}`}</DetailValue>
+                <ExternalLink size={12} />
+              </ClickableTransactionHash>
+            </DetailRow>
+          )}
+        </TransactionDetails>
+
+        <ActionButton $primary onClick={handleClose}>
+          Close
+        </ActionButton>
+      </>
+    );
+  };
 
   const renderContent = () => {
     switch (currentStep) {
@@ -679,10 +837,6 @@ export const DesktopTransactionModal = ({
   return (
     <BaseModal isOpen={isOpen} onClose={handleClose} title={`${type === 'supply' ? 'Supply' : 'Borrow'} ${displaySymbol}`}>
       <ModalContent>
-        {/* <ModalTitle>
-          {type === 'supply' ? 'Supply' : 'Borrow'} {displaySymbol}
-        </ModalTitle> */}
-
         {renderStepIndicator()}
 
         {renderContent()}
