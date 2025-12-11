@@ -1,7 +1,22 @@
 "use client";
 
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { useEffect, useState } from 'react'; 
+import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import { useContractMarketStore } from '@/stores/contractMarketStore';
+import { useMarketContract } from '@/hooks/v1/useMarketContract'; 
+import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useModalStore } from '@/stores/modalStore';
+
+// Import desktop components
+import { DesktopPortfolioHeader } from './components/DesktopPortfolioHeader';
+import { DesktopPortfolioStats } from './components/DesktopPortfolioStats';
+import { DesktopPortfolioTabs } from './components/DesktopPortfolioTabs';
+import { DesktopPortfolioTable } from './components/DesktopPortfolioTable';
+import { DesktopEmptyState } from './components/DesktopEmptyState';
+
+// Import desktop modals
+import { DesktopWithdrawModal, DesktopRepayModal } from '@/components/Desktop/modals';
 
 const PortfolioContainer = styled.div`
   min-height: 100vh;
@@ -14,377 +29,255 @@ const MainContent = styled.main`
   padding: 32px;
 `;
 
-const PortfolioHeader = styled.div`
-  margin-bottom: 32px;
-`;
-
-const PageTitle = styled.h1`
-  font-size: 32px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const PageSubtitle = styled.p`
-  font-size: 18px;
-  color: #64748b;
-`;
-
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-`;
-
-const StatCard = styled.div`
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-`;
-
-const StatLabel = styled.div`
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 8px;
-  font-weight: 500;
-`;
-
-const StatValue = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const StatChange = styled.div<{ $positive?: boolean }>`
-  font-size: 14px;
-  font-weight: 600;
-  color: ${({ $positive }) => $positive ? '#06C755' : '#ef4444'};
-`;
-
-const PortfolioSection = styled.div`
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  margin-bottom: 24px;
-`;
-
-const SectionHeader = styled.div`
-  padding: 20px 32px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const SectionTitle = styled.h2`
-  font-size: 20px;
-  font-weight: 600;
-  color: #1e293b;
-`;
-
-const ViewAllButton = styled.button`
-  color: #06C755;
-  font-weight: 600;
-  font-size: 14px;
-  cursor: pointer;
-  transition: color 0.3s;
-
-  &:hover {
-    color: #059669;
-  }
-`;
-
-const AssetList = styled.div`
-  padding: 16px 0;
-`;
-
-const AssetItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 32px;
-  border-bottom: 1px solid #f1f5f9;
-  transition: all 0.3s;
-  cursor: pointer;
-
-  &:hover {
-    background: #f8fafc;
-  }
-
-  &:last-child {
-    border-bottom: none;
-  }
-`;
-
-const AssetInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 16px;
-`;
-
-const AssetIcon = styled.div`
-  width: 48px;
-  height: 48px;
-  background: linear-gradient(135deg, #06C755 0%, #059669 100%);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 700;
-  font-size: 14px;
-`;
-
-const AssetDetails = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const AssetName = styled.div`
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-`;
-
-const AssetSymbol = styled.div`
-  font-size: 14px;
-  color: #64748b;
-`;
-
-const AssetStats = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 32px;
-`;
-
-const AssetValue = styled.div`
-  text-align: right;
-`;
-
-const ValueLabel = styled.div`
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 2px;
-`;
-
-const ValueAmount = styled.div`
-  font-size: 18px;
-  font-weight: 600;
-  color: #1e293b;
-`;
-
-const APYValue = styled.div`
-  text-align: right;
-`;
-
-const APYLabel = styled.div`
-  font-size: 12px;
-  color: #64748b;
-  margin-bottom: 2px;
-`;
-
-const APYAmount = styled.div`
-  font-size: 16px;
-  font-weight: 600;
-  color: #06C755;
-`;
-
-const EmptyState = styled.div`
-  text-align: center;
-  padding: 48px;
-  color: #64748b;
-`;
-
-const EmptyStateIcon = styled.div`
-  font-size: 48px;
-  margin-bottom: 16px;
-`;
-
-const EmptyStateText = styled.div`
-  font-size: 16px;
-  margin-bottom: 24px;
-`;
-
-const StartButton = styled.button`
-  background: linear-gradient(135deg, #06C755 0%, #059669 100%);
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(6, 199, 85, 0.3);
-  }
-`;
-
-const mockSuppliedAssets = [
-  {
-    name: 'Tether USD',
-    symbol: 'USDT',
-    balance: '10,000.00',
-    value: '$10,000.00',
-    apy: '5.2%'
-  },
-  {
-    name: 'KAIA Token',
-    symbol: 'KAIA',
-    balance: '5,000.00',
-    value: '$8,500.00',
-    apy: '6.8%'
-  }
-];
-
-const mockBorrowedAssets = [
-  {
-    name: 'SIX Token',
-    symbol: 'SIX',
-    balance: '2,000.00',
-    value: '$1,600.00',
-    apy: '10.5%'
-  }
-];
+interface Position {
+  marketId: string;
+  symbol: string;
+  type: 'supply' | 'borrow';
+  amount: string;
+  usdValue: number;
+  apy: number;
+  icon: string;
+  market: any;
+}
 
 export const DesktopPortfolio = () => {
-  const [mounted, setMounted] = useState(false);
+  const [positions, setPositions] = useState<Position[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
 
+  const [portfolioStats, setPortfolioStats] = useState({
+    totalSupplyValue: 0,
+    totalBorrowValue: 0,
+    netPortfolioValue: 0,
+    healthFactor: 999
+  });
+
+  // Tab and sorting states
+  const [activeTab, setActiveTab] = useState('supply');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('value-desc');
+
+  // Modal states
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false);
+  const [repayModalOpen, setRepayModalOpen] = useState(false);
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+
+  const { account } = useWalletAccountStore();
+  const { markets } = useContractMarketStore();
+  const { getUserPosition } = useMarketContract(); 
+  const { calculateBorrowingPower } = useBorrowingPower();
+  const { openModal } = useModalStore();
+
+  // Fetch user positions and borrowing power
+  const fetchPositions = useCallback(async () => {
+    if (!account || !markets.length) {
+      setPositions([]);
+      setBorrowingPowerData(null);
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const userPositions: Position[] = [];
+
+      // Get borrowing power data
+      const borrowingPower = await calculateBorrowingPower(account);
+      setBorrowingPowerData(borrowingPower);
+
+      for (const market of markets) {
+        if (!market.isActive || !market.marketAddress) continue;
+
+        const position = await getUserPosition(market.id as any, account);
+        if (!position) continue;
+
+        const supplyBalance = parseFloat(position.supplyBalance || '0');
+        const borrowBalance = parseFloat(position.borrowBalance || '0');
+
+        // Add supply position if user has supplied
+        if (supplyBalance > 0) {
+          userPositions.push({
+            marketId: market.id,
+            symbol: market.symbol,
+            type: 'supply',
+            amount: position.supplyBalance,
+            usdValue: supplyBalance * market.price,
+            apy: market.supplyAPY,
+            icon: market.icon,
+            market
+          });
+        }
+
+        // Add borrow position if user has borrowed
+        if (borrowBalance > 0) {
+          userPositions.push({
+            marketId: market.id,
+            symbol: market.symbol,
+            type: 'borrow',
+            amount: position.borrowBalance,
+            usdValue: borrowBalance * market.price,
+            apy: market.borrowAPR,
+            icon: market.icon,
+            market
+          });
+        }
+      }
+
+      setPositions(userPositions);
+
+      // Calculate portfolio stats
+      const totalSupplyValue = userPositions
+        .filter(p => p.type === 'supply')
+        .reduce((sum, p) => sum + p.usdValue, 0);
+
+      const totalBorrowValue = userPositions
+        .filter(p => p.type === 'borrow')
+        .reduce((sum, p) => sum + p.usdValue, 0);
+
+      setPortfolioStats({
+        totalSupplyValue,
+        totalBorrowValue,
+        netPortfolioValue: totalSupplyValue - totalBorrowValue,
+        healthFactor: parseFloat(borrowingPower.healthFactor)
+      });
+
+    } catch (error) {
+      console.error('Error fetching positions:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [account, markets, getUserPosition, calculateBorrowingPower]);
+
+  // Fetch positions when account or markets change
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    fetchPositions();
+  }, [fetchPositions]);
 
-  if (!mounted) return null;
+  const handleAction = (action: string, position: Position) => {
+    setSelectedPosition(position);
 
-  const totalSupplyValue = 18500;
-  const totalBorrowValue = 1600;
-  const netWorth = totalSupplyValue - totalBorrowValue;
-  const healthFactor = 250;
+    switch (action) {
+      case 'withdraw':
+        setWithdrawModalOpen(true);
+        break;
+      case 'repay':
+        setRepayModalOpen(true);
+        break;
+    }
+  };
+
+  const handleCloseModal = () => {
+    setWithdrawModalOpen(false);
+    setRepayModalOpen(false);
+    setSelectedPosition(null);
+    
+    // Refresh data after modal closes
+    setTimeout(() => {
+      fetchPositions();
+    }, 1000);
+  };
+
+  // Filter and sort positions based on active tab and search
+  const getFilteredAndSortedPositions = useCallback(() => {
+    let filteredPositions = positions.filter(p => p.type === activeTab);
+    
+    // Apply search filter
+    if (searchTerm) {
+      filteredPositions = filteredPositions.filter(p => 
+        p.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (p.market?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Apply sorting
+    filteredPositions.sort((a, b) => {
+      switch (sortBy) {
+        case 'value-desc':
+          return b.usdValue - a.usdValue;
+        case 'value-asc':
+          return a.usdValue - b.usdValue;
+        case 'apy-desc':
+          return b.apy - a.apy;
+        case 'apy-asc':
+          return a.apy - b.apy;
+        case 'balance-desc':
+          return parseFloat(b.amount) - parseFloat(a.amount);
+        case 'balance-asc':
+          return parseFloat(a.amount) - parseFloat(b.amount);
+        case 'name-asc':
+          return a.symbol.localeCompare(b.symbol);
+        case 'name-desc':
+          return b.symbol.localeCompare(a.symbol);
+        default:
+          return b.usdValue - a.usdValue;
+      }
+    });
+
+    return filteredPositions;
+  }, [positions, activeTab, searchTerm, sortBy]);
+
+  const filteredPositions = getFilteredAndSortedPositions();
+  const hasPositions = positions.length > 0;
+  const isConnected = !!account && !isLoading;
 
   return (
-    <PortfolioContainer> 
-      
+    <PortfolioContainer>
       <MainContent>
-        <PortfolioHeader>
-          <PageTitle>Portfolio</PageTitle>
-          <PageSubtitle>Track your lending and borrowing positions</PageSubtitle>
-        </PortfolioHeader>
+        <DesktopPortfolioHeader 
+          account={account}
+          isLoading={isLoading}
+        />
 
-        <StatsGrid>
-          <StatCard>
-            <StatLabel>Net Worth</StatLabel>
-            <StatValue>${netWorth.toLocaleString()}</StatValue>
-            <StatChange $positive>+12.5% this month</StatChange>
-          </StatCard>
-          <StatCard>
-            <StatLabel>Total Supply</StatLabel>
-            <StatValue>${totalSupplyValue.toLocaleString()}</StatValue>
-            <StatChange $positive>+8.2% this month</StatChange>
-          </StatCard>
-          <StatCard>
-            <StatLabel>Total Borrow</StatLabel>
-            <StatValue>${totalBorrowValue.toLocaleString()}</StatValue>
-            <StatChange $positive>-2.1% this month</StatChange>
-          </StatCard>
-          <StatCard>
-            <StatLabel>Health Factor</StatLabel>
-            <StatValue>{healthFactor}%</StatValue>
-            <StatChange $positive>Safe</StatChange>
-          </StatCard>
-        </StatsGrid>
+        { account && (
+           <DesktopPortfolioStats 
+          portfolioStats={portfolioStats}
+          borrowingPowerData={borrowingPowerData}
+          isLoading={isLoading}
+        />
+        )
 
-        <PortfolioSection>
-          <SectionHeader>
-            <SectionTitle>Supplied Assets</SectionTitle>
-            <ViewAllButton>View All →</ViewAllButton>
-          </SectionHeader>
-          <AssetList>
-            {mockSuppliedAssets.length > 0 ? (
-              mockSuppliedAssets.map((asset, index) => (
-                <AssetItem key={index}>
-                  <AssetInfo>
-                    <AssetIcon>{asset.symbol}</AssetIcon>
-                    <AssetDetails>
-                      <AssetName>{asset.name}</AssetName>
-                      <AssetSymbol>{asset.symbol}</AssetSymbol>
-                    </AssetDetails>
-                  </AssetInfo>
-                  <AssetStats>
-                    <AssetValue>
-                      <ValueLabel>Balance</ValueLabel>
-                      <ValueAmount>{asset.balance}</ValueAmount>
-                    </AssetValue>
-                    <AssetValue>
-                      <ValueLabel>Value</ValueLabel>
-                      <ValueAmount>{asset.value}</ValueAmount>
-                    </AssetValue>
-                    <APYValue>
-                      <APYLabel>Supply APY</APYLabel>
-                      <APYAmount>{asset.apy}</APYAmount>
-                    </APYValue>
-                  </AssetStats>
-                </AssetItem>
-              ))
-            ) : (
-              <EmptyState>
-                <EmptyStateIcon>💰</EmptyStateIcon>
-                <EmptyStateText>No supplied assets yet</EmptyStateText>
-                <StartButton>Start Supplying</StartButton>
-              </EmptyState>
-            )}
-          </AssetList>
-        </PortfolioSection>
+        }
 
-        <PortfolioSection>
-          <SectionHeader>
-            <SectionTitle>Borrowed Assets</SectionTitle>
-            <ViewAllButton>View All →</ViewAllButton>
-          </SectionHeader>
-          <AssetList>
-            {mockBorrowedAssets.length > 0 ? (
-              mockBorrowedAssets.map((asset, index) => (
-                <AssetItem key={index}>
-                  <AssetInfo>
-                    <AssetIcon>{asset.symbol}</AssetIcon>
-                    <AssetDetails>
-                      <AssetName>{asset.name}</AssetName>
-                      <AssetSymbol>{asset.symbol}</AssetSymbol>
-                    </AssetDetails>
-                  </AssetInfo>
-                  <AssetStats>
-                    <AssetValue>
-                      <ValueLabel>Balance</ValueLabel>
-                      <ValueAmount>{asset.balance}</ValueAmount>
-                    </AssetValue>
-                    <AssetValue>
-                      <ValueLabel>Value</ValueLabel>
-                      <ValueAmount>{asset.value}</ValueAmount>
-                    </AssetValue>
-                    <APYValue>
-                      <APYLabel>Borrow APR</APYLabel>
-                      <APYAmount>{asset.apy}</APYAmount>
-                    </APYValue>
-                  </AssetStats>
-                </AssetItem>
-              ))
-            ) : (
-              <EmptyState>
-                <EmptyStateIcon>🏦</EmptyStateIcon>
-                <EmptyStateText>No borrowed assets yet</EmptyStateText>
-                <StartButton>Start Borrowing</StartButton>
-              </EmptyState>
-            )}
-          </AssetList>
-        </PortfolioSection>
+       
+
+        {hasPositions ? (
+          <>
+            <DesktopPortfolioTabs
+              activeTab={activeTab}
+              searchTerm={searchTerm}
+              sortBy={sortBy}
+              onTabChange={setActiveTab}
+              onSearchChange={setSearchTerm}
+              onSortChange={setSortBy}
+            />
+            
+            <DesktopPortfolioTable
+              positions={filteredPositions}
+              onAction={handleAction}
+              type={activeTab as 'supply' | 'borrow'}
+            />
+          </>
+        ) : (
+          <DesktopEmptyState isConnected={isConnected} />
+        )}
       </MainContent>
+
+      {/* Desktop Modals - Only show when visible state is true */}
+      {withdrawModalOpen && (
+        <DesktopWithdrawModal
+          isOpen={withdrawModalOpen}
+          onClose={handleCloseModal}
+          preSelectedMarket={selectedPosition?.market}
+        />
+      )}
+
+      {repayModalOpen && (
+        <DesktopRepayModal
+          isOpen={repayModalOpen}
+          onClose={handleCloseModal}
+          preSelectedMarket={selectedPosition?.market}
+        />
+      )}
     </PortfolioContainer>
   );
 };
