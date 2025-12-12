@@ -191,7 +191,7 @@ export const DesktopMarketActions = ({
 
   // Get the market configuration for the current asset
   const marketConfig = contractMarkets.find(m => m.symbol === displaySymbol);
-  const marketId = marketConfig?.id;
+  const marketId: any = marketConfig?.id;
 
   // Get user balance for the current asset
   const userBalance = marketId ? tokenBalances[marketId]?.formattedBalance || '0.00' : '0.00';

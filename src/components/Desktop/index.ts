@@ -2,6 +2,7 @@
 export { DesktopHeader } from './shared/DesktopHeader';
 export { DesktopBootstrap } from './shared/DesktopBootstrap';
 export { DesktopLanding } from './shared/DesktopLanding';
+export { DesktopAIChatPanel } from './shared/DesktopAIChatPanel';
 
 // Modal Components
 export * from './modals';

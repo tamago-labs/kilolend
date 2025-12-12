@@ -1,12 +1,15 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useKaiaWalletSecurity } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import styled from 'styled-components';
 import { DesktopHeader } from './DesktopHeader';
 import { DesktopFooter } from "./DesktopFooter"
 import { MarketDataProvider } from '@/components/MarketDataProvider';
 import { MarketProvider } from '@/contexts/MarketContext';
+import { DesktopAIChatPanel } from './DesktopAIChatPanel';
+import { LineMiniDAppModal } from '../modals';
+import { useModalStore } from '@/stores/modalStore';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -31,6 +34,8 @@ export type DesktopBootstrapProps = {
 
 export const DesktopBootstrap = ({ className, children }: DesktopBootstrapProps) => {
     const { isSuccess } = useKaiaWalletSecurity();
+    const [isAIPanelOpen, setIsAIPanelOpen] = useState(false);
+    const { activeModal, closeModal } = useModalStore();
 
     useEffect(() => {
         const preventGoBack = () => {
@@ -49,6 +54,10 @@ export const DesktopBootstrap = ({ className, children }: DesktopBootstrapProps)
         };
     }, []);
 
+    const handleAIToggle = () => {
+        setIsAIPanelOpen(!isAIPanelOpen);
+    };
+
     return (
         <AppContainer className={className}>
             {isSuccess && (
@@ -59,6 +68,14 @@ export const DesktopBootstrap = ({ className, children }: DesktopBootstrapProps)
                             {children}
                         </MainContent>
                         <DesktopFooter />
+                        <DesktopAIChatPanel 
+                            isOpen={isAIPanelOpen} 
+                            onToggle={handleAIToggle} 
+                        />
+                        <LineMiniDAppModal
+                            isOpen={activeModal === 'lineMiniDApp'}
+                            onClose={() => closeModal()}
+                        />
                     </MarketProvider>
                 </MarketDataProvider>
             )}
