@@ -9,7 +9,9 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
 import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
 import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useEventTracking } from '@/hooks/useEventTracking';
 import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils";
+import { ExternalLink } from 'react-feather';
 
 const Container = styled.div`
   height: 100%;
@@ -28,7 +30,7 @@ const StepDot = styled.div<{ $active: boolean; $completed: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: ${({ $active, $completed }) => 
+  background: ${({ $active, $completed }) =>
     $completed ? '#06C755' : $active ? '#06C755' : '#e2e8f0'};
   margin: 0 4px;
   transition: all 0.3s ease;
@@ -238,13 +240,13 @@ const NavButton = styled.button<{ $primary?: boolean }>`
   border: 2px solid;
   
   ${({ $primary }) => $primary ? `
-    background: #ef4444;
+    background: #06C755;
     color: white;
-    border-color: #ef4444;
+    border-color: #06C755;
     
     &:hover {
-      background: #dc2626;
-      border-color: #dc2626;
+      background: #059212;
+      border-color: #059212;
       transform: translateY(-1px);
     }
     
@@ -305,9 +307,9 @@ interface RepayModalProps {
   totalDebt?: string;
 }
 
-export const RepayModal = ({ 
-  isOpen, 
-  onClose, 
+export const RepayModal = ({
+  isOpen,
+  onClose,
   market,
   currentDebt = '0',
   totalDebt = '0'
@@ -327,8 +329,17 @@ export const RepayModal = ({
   const { balances } = useMarketTokenBalances();
   const { checkAllowance, ensureApproval } = useTokenApproval();
   const { calculateBorrowingPower } = useBorrowingPower();
+  const {
+    isTracking,
+    trackedEvent,
+    error: trackingError,
+    hasTimedOut,
+    startTracking,
+    stopTracking,
+    reset: resetTracking
+  } = useEventTracking(account);
 
-  const totalSteps = 3;
+  const totalSteps = 4;
   const maxDebtAmount = parseFloat(totalDebt);
   const walletBalance = market ? parseFloat(balances[market.id]?.formattedBalance || '0') : 0;
   const maxRepayAmount = Math.min(maxDebtAmount, walletBalance);
@@ -362,7 +373,7 @@ export const RepayModal = ({
   useEffect(() => {
     if (amount && parseFloat(amount) > 0 && maxRepayAmount > 0) {
       const validation = validateAmountAgainstBalance(amount, maxRepayAmount.toString(), market?.id || '');
-      
+
       if (!validation.isValid) {
         setValidationError(validation.error || 'Invalid amount');
       } else {
@@ -382,7 +393,7 @@ export const RepayModal = ({
         const borrowingPower = await calculateBorrowingPower(account);
         const repayAmount = parseFloat(amount);
         const repayValue = repayAmount * market.price;
-        
+
         // Calculate new borrowing position
         const currentBorrow = parseFloat(borrowingPower.totalBorrowValue);
         const currentCollateral = parseFloat(borrowingPower.totalCollateralValue);
@@ -406,13 +417,56 @@ export const RepayModal = ({
     calculateRepayData();
   }, [amount, market, account, maxDebtAmount, validationError]);
 
+  // Handle event tracking results
+  useEffect(() => {
+    if (trackedEvent && trackedEvent.type === 'repay') {
+      console.log('Repay transaction confirmed via event tracking:', trackedEvent);
+
+      // Create transaction result from tracked event
+      const result: TransactionResult = {
+        hash: trackedEvent.transactionHash,
+        status: 'confirmed'
+      };
+
+      setTransactionResult(result);
+      setIsTransacting(false);
+      setCurrentStep(4); // Move to success step
+    }
+  }, [trackedEvent]);
+
+  // Handle tracking errors
+  useEffect(() => {
+    if (trackingError) {
+      console.error('Event tracking error:', trackingError);
+      setTransactionResult({
+        hash: '',
+        status: 'failed',
+        error: trackingError
+      });
+      setIsTransacting(false);
+    }
+  }, [trackingError]);
+
+  // Handle timeout
+  useEffect(() => {
+    if (hasTimedOut) {
+      console.log('Transaction tracking timed out');
+      setTransactionResult({
+        hash: '',
+        status: 'failed',
+        error: 'Transaction tracking timed out. Please check your wallet and try again.'
+      });
+      setIsTransacting(false);
+    }
+  }, [hasTimedOut]);
+
   const handleQuickAmount = (percentage: number) => {
     const quickAmount = (maxRepayAmount * percentage / 100).toString();
     const decimals = market?.decimals || 18;
-    
+
     // Use safe decimal truncation to prevent precision errors
     const safeAmount = truncateToSafeDecimals(quickAmount, decimals);
-    
+
     setAmount(safeAmount);
     setSelectedQuickAmount(percentage);
     setValidationError(null);
@@ -420,10 +474,10 @@ export const RepayModal = ({
 
   const handleMaxAmount = () => {
     const decimals = market?.decimals || 18;
-    
+
     // Use safe maximum amount calculation
     const safeAmount = getSafeMaxAmount(maxRepayAmount.toString(), market?.id || '');
-    
+
     setAmount(safeAmount);
     setSelectedQuickAmount(100);
     setValidationError(null);
@@ -431,14 +485,14 @@ export const RepayModal = ({
 
   const canProceed = () => {
     switch (currentStep) {
-      case 1: 
-        return amount && 
-               parseFloat(amount) > 0 && 
-               parseFloat(amount) <= maxRepayAmount &&
-               !validationError;
-      case 2: 
+      case 1:
+        return amount &&
+          parseFloat(amount) > 0 &&
+          parseFloat(amount) <= maxRepayAmount &&
+          !validationError;
+      case 2:
         return true;
-      default: 
+      default:
         return false;
     }
   };
@@ -459,35 +513,36 @@ export const RepayModal = ({
     if (!market || !amount || !account) return;
 
     setIsTransacting(true);
-    
+
     try {
       // Step 1: Handle approval if needed
       if (needsApproval) {
         setIsApproving(true);
         console.log(`Token approval needed for ${market.symbol}`);
-        
+
         const approvalResult = await ensureApproval(market.id, amount);
-        
+
         if (!approvalResult.success) {
           throw new Error(approvalResult.error || 'Token approval failed');
         }
-        
+
         console.log(`Token approval successful for ${market.symbol}`);
         setIsApproving(false);
         setNeedsApproval(false);
       }
-      
+
       // Step 2: Execute repay transaction
       console.log(`Starting repay transaction for ${amount} ${market.symbol}`);
-      const result = await repay(market.id, amount);
-      setTransactionResult(result);
-      
-      if (result.status === 'confirmed') {
-        console.log(`Repay successful: ${amount} ${market.symbol} repaid`);
-        setCurrentStep(3);
-      } else {
-        throw new Error(result.error || 'Repay transaction failed');
-      }
+      await repay(market.id, amount);
+
+      // Start event tracking after transaction is sent
+      console.log(`Repay transaction sent, starting event tracking for ${market.id}`);
+      startTracking(market.id, 'repay');
+      setCurrentStep(3); // Move to confirmation step
+
+      // Don't set success yet - wait for event tracking
+      return;
+
     } catch (error) {
       console.error('Repay process failed:', error);
       setTransactionResult({
@@ -495,10 +550,13 @@ export const RepayModal = ({
         status: 'failed',
         error: error instanceof Error ? error.message : 'Transaction failed. Please try again.'
       });
-    } finally {
       setIsTransacting(false);
       setIsApproving(false);
     }
+  };
+
+  const handleExternalLink = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const renderStepContent = () => {
@@ -531,7 +589,7 @@ export const RepayModal = ({
                 max={maxRepayAmount}
                 step="0.000001"
               />
-              
+
               <QuickAmountButtons>
                 {[25, 50, 75].map(percentage => (
                   <QuickAmountButton
@@ -568,7 +626,7 @@ export const RepayModal = ({
 
             {walletBalance < maxDebtAmount && (
               <InfoCard>
-                Your wallet balance is insufficient to repay the full debt. 
+                Your wallet balance is insufficient to repay the full debt.
                 You can make a partial repayment to improve your health factor.
               </InfoCard>
             )}
@@ -619,7 +677,7 @@ export const RepayModal = ({
 
             {repayData.remainingDebt > 0 && (
               <InfoCard>
-                After this repayment, you will still owe {repayData.remainingDebt.toFixed(6)} {market.symbol}. 
+                After this repayment, you will still owe {repayData.remainingDebt.toFixed(6)} {market.symbol}.
                 Your health factor will improve to {repayData.newHealthFactor.toFixed(2)}.
               </InfoCard>
             )}
@@ -628,19 +686,133 @@ export const RepayModal = ({
 
       case 3:
         return (
-          <SuccessContent>
-            <SuccessIcon>✓</SuccessIcon>
-            <SuccessTitle>Repayment Successful!</SuccessTitle>
-            <SuccessMessage>
-              You have successfully repaid {amount} {market.symbol} of your debt.
-              {repayData?.remainingDebt === 0 && " Your debt has been fully paid off!"}
-            </SuccessMessage>
-            {transactionResult?.hash && (
-              <div style={{ fontSize: '14px', color: '#64748b' }}>
-                Transaction Hash: {transactionResult.hash}
-              </div>
+          <>
+            <AssetCard>
+              <AssetHeader>
+                <AssetIcon src={market.icon} alt={market.symbol} />
+                <AssetInfo>
+                  <AssetName>Repaying {market.symbol}</AssetName>
+                  <AssetDetails>Transaction is being confirmed on the blockchain</AssetDetails>
+                </AssetInfo>
+              </AssetHeader>
+            </AssetCard>
+
+            <TransactionPreview>
+              <PreviewRow>
+                <PreviewLabel>Transaction</PreviewLabel>
+                <PreviewValue>
+                  {isTracking ? (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid #e2e8f0',
+                        borderTop: '2px solid #ef4444',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        marginRight: '8px'
+                      }}></div>
+                      In Progress...
+                    </div>
+                  ) : transactionResult?.status === 'failed' ? (
+                    <span style={{ color: '#ef4444' }}>Failed</span>
+                  ) : trackedEvent ? (
+                    <span style={{ color: '#06C755' }}>Complete</span>
+                  ) : (
+                    <span style={{ color: '#64748b' }}>Processing...</span>
+                  )}
+                </PreviewValue>
+              </PreviewRow>
+            </TransactionPreview>
+
+            {transactionResult?.status === 'failed' && (
+              <ErrorMessage>
+                {transactionResult.error}
+              </ErrorMessage>
             )}
-          </SuccessContent>
+
+            {!isTracking && !trackedEvent && !transactionResult && (
+              <NavButton onClick={() => setCurrentStep(2)}>
+                Back to Preview
+              </NavButton>
+            )}
+
+            {transactionResult?.status === 'failed' && (
+              <NavButton onClick={() => setCurrentStep(2)}>
+                Try Again
+              </NavButton>
+            )}
+          </>
+        );
+
+      case 4:
+        const amountNum = parseFloat(amount || '0');
+        const amountUSD = amountNum * market.price;
+
+        return (
+          <>
+            <SuccessContent>
+              <SuccessIcon>✓</SuccessIcon>
+              <SuccessTitle>Repayment Successful!</SuccessTitle>
+              <SuccessMessage>
+                You have successfully repaid {amount} {market.symbol} of your debt.
+                {repayData?.remainingDebt === 0 && " Your debt has been fully paid off!"}
+              </SuccessMessage>
+            </SuccessContent>
+
+            <TransactionPreview>
+              <PreviewRow>
+                <PreviewLabel>Amount Repaid</PreviewLabel>
+                <PreviewValue>{amount} {market.symbol}</PreviewValue>
+              </PreviewRow>
+              <PreviewRow>
+                <PreviewLabel>USD Value</PreviewLabel>
+                <PreviewValue>${amountUSD.toFixed(2)}</PreviewValue>
+              </PreviewRow>
+              <PreviewRow>
+                <PreviewLabel>Borrow APR</PreviewLabel>
+                <PreviewValue>{market.borrowAPR.toFixed(2)}%</PreviewValue>
+              </PreviewRow>
+              {repayData?.interestSaved && (
+                <PreviewRow>
+                  <PreviewLabel>Annual Interest Saved</PreviewLabel>
+                  <PreviewValue>${repayData.interestSaved.toFixed(2)}</PreviewValue>
+                </PreviewRow>
+              )}
+              <PreviewRow>
+                <PreviewLabel>Status</PreviewLabel>
+                <PreviewValue>Confirmed</PreviewValue>
+              </PreviewRow>
+              {transactionResult?.hash && (
+                <PreviewRow>
+                  <PreviewLabel>Transaction</PreviewLabel>
+                  <PreviewValue
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      color: '#06C755'
+                    }}
+                    onClick={() => handleExternalLink(`https://www.kaiascan.io/tx/${transactionResult.hash}`)}
+                  >
+                    {`${transactionResult.hash.slice(0, 6)}...${transactionResult.hash.slice(-4)}`}
+                    <ExternalLink size={12} />
+                  </PreviewValue>
+                </PreviewRow>
+              )}
+            </TransactionPreview>
+
+            <div style={{ textAlign: "center" }}>
+              <NavButton
+                $primary
+                onClick={onClose}
+              >
+                Close
+              </NavButton>
+            </div>
+
+          </>
         );
 
       default:
@@ -660,6 +832,7 @@ export const RepayModal = ({
       setTransactionResult(null);
       setRepayData(null);
       setValidationError(null);
+      resetTracking();
     }
   }, [isOpen]);
 
@@ -686,13 +859,13 @@ export const RepayModal = ({
               {transactionResult.error}
             </ErrorMessage>
           )}
-          
+
           {validationError && (
             <ErrorMessage>
               {validationError}
             </ErrorMessage>
           )}
-          
+
           {renderStepContent()}
         </StepContent>
 
@@ -712,8 +885,8 @@ export const RepayModal = ({
                 isApproving ? 'Approving Token...' : 'Processing Repayment...'
               ) : (
                 <>
-                  {currentStep === 2 ? 
-                    (needsApproval ? 'Approve & Repay' : 'Confirm Repayment') : 
+                  {currentStep === 2 ?
+                    (needsApproval ? 'Approve & Repay' : 'Confirm Repayment') :
                     'Next'
                   }
                   {currentStep < 2 && <ChevronRight size={16} style={{ marginLeft: '4px' }} />}
