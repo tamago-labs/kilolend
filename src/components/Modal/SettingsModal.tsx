@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { BaseModal } from './BaseModal';
 import { useAppStore } from '@/stores/appStore';
 import { liff } from "@/utils/liff";
+import { APP_VERSION, LINE_LIFF_URL } from '@/config/version';
 
 const SettingsContainer = styled.div`
   display: flex;
@@ -196,7 +197,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
         <Section>
           <InfoRow>
             <InfoLabel>DApp Version</InfoLabel>
-            <InfoValue>0.2.4</InfoValue>
+            <InfoValue>{APP_VERSION}</InfoValue>
           </InfoRow> 
           <InfoRow>
             <InfoLabel>Access Mode</InfoLabel>
@@ -241,7 +242,7 @@ export const SettingsModal = ({ isOpen, onClose }: SettingsModalProps) => {
               <InfoValue>Not connected to LINE</InfoValue>
             </InfoRow>
             <OpenLineButton
-              href="https://liff.line.me/2007932254-AVnKMMp9"
+              href={LINE_LIFF_URL}
               target="_blank"
               rel="noopener noreferrer"
             >

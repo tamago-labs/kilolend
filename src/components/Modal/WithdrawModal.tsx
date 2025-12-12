@@ -7,7 +7,9 @@ import { ChevronRight } from 'react-feather';
 import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useEventTracking } from '@/hooks/useEventTracking';
 import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils";
+import { ExternalLink } from 'react-feather';
 
 const Container = styled.div`
   height: 100%;
@@ -311,8 +313,17 @@ export const WithdrawModal = ({
   const { account } = useWalletAccountStore();
   const { withdraw } = useMarketContract();
   const { calculateBorrowingPower } = useBorrowingPower();
+  const {
+    isTracking,
+    trackedEvent,
+    error: trackingError,
+    hasTimedOut,
+    startTracking,
+    stopTracking,
+    reset: resetTracking
+  } = useEventTracking(account);
 
-  const totalSteps = 3;
+  const totalSteps = 4;
   const maxWithdrawAmount = parseFloat(maxWithdraw);
 
   // Validate amount against max withdraw amount
@@ -360,6 +371,49 @@ export const WithdrawModal = ({
 
     calculateWithdrawData();
   }, [amount, market, account, maxWithdrawAmount]);
+
+  // Handle event tracking results
+  useEffect(() => {
+    if (trackedEvent && trackedEvent.type === 'redeem') {
+      console.log('Withdraw transaction confirmed via event tracking:', trackedEvent);
+
+      // Create transaction result from tracked event
+      const result: TransactionResult = {
+        hash: trackedEvent.transactionHash,
+        status: 'confirmed'
+      };
+
+      setTransactionResult(result);
+      setIsTransacting(false);
+      setCurrentStep(4); // Move to success step
+    }
+  }, [trackedEvent]);
+
+  // Handle tracking errors
+  useEffect(() => {
+    if (trackingError) {
+      console.error('Event tracking error:', trackingError);
+      setTransactionResult({
+        hash: '',
+        status: 'failed',
+        error: trackingError
+      });
+      setIsTransacting(false);
+    }
+  }, [trackingError]);
+
+  // Handle timeout
+  useEffect(() => {
+    if (hasTimedOut) {
+      console.log('Transaction tracking timed out');
+      setTransactionResult({
+        hash: '',
+        status: 'failed',
+        error: 'Transaction tracking timed out. Please check your wallet and try again.'
+      });
+      setIsTransacting(false);
+    }
+  }, [hasTimedOut]);
 
   const handleQuickAmount = (percentage: number) => {
     const quickAmount = (maxWithdrawAmount * percentage / 100).toString();
@@ -418,15 +472,16 @@ export const WithdrawModal = ({
     
     try {
       console.log(`Starting withdraw transaction for ${amount} ${market.symbol}`);
-      const result = await withdraw(market.id, amount);
-      setTransactionResult(result);
+      await withdraw(market.id, amount);
       
-      if (result.status === 'confirmed') {
-        console.log(`Withdraw successful: ${amount} ${market.symbol} withdrawn`);
-        setCurrentStep(3);
-      } else {
-        throw new Error(result.error || 'Withdraw transaction failed');
-      }
+      // Start event tracking after transaction is sent
+      console.log(`Withdraw transaction sent, starting event tracking for ${market.id}`);
+      startTracking(market.id, 'redeem');
+      setCurrentStep(3); // Move to confirmation step
+
+      // Don't set success yet - wait for event tracking
+      return;
+
     } catch (error) {
       console.error('Withdraw process failed:', error);
       setTransactionResult({
@@ -434,9 +489,12 @@ export const WithdrawModal = ({
         status: 'failed',
         error: error instanceof Error ? error.message : 'Transaction failed. Please try again.'
       });
-    } finally {
       setIsTransacting(false);
     }
+  };
+
+  const handleExternalLink = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const renderStepContent = () => {
@@ -551,18 +609,125 @@ export const WithdrawModal = ({
 
       case 3:
         return (
-          <SuccessContent>
-            <SuccessIcon>✓</SuccessIcon>
-            <SuccessTitle>Withdrawal Successful!</SuccessTitle>
-            <SuccessMessage>
-              You have successfully withdrawn {amount} {market.symbol} from your supply position.
-            </SuccessMessage>
-            {transactionResult?.hash && (
-              <div style={{ fontSize: '14px', color: '#64748b' }}>
-                Transaction Hash: {transactionResult.hash}
-              </div>
+          <>
+            <AssetCard>
+              <AssetHeader>
+                <AssetIcon src={market.icon} alt={market.symbol} />
+                <AssetInfo>
+                  <AssetName>Withdrawing {market.symbol}</AssetName>
+                  <AssetDetails>Transaction is being confirmed on the blockchain</AssetDetails>
+                </AssetInfo>
+              </AssetHeader>
+            </AssetCard>
+
+            <TransactionPreview>
+              <PreviewRow>
+                <PreviewLabel>Transaction</PreviewLabel>
+                <PreviewValue>
+                  {isTracking ? (
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid #e2e8f0',
+                        borderTop: '2px solid #06C755',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite',
+                        marginRight: '8px'
+                      }}></div>
+                      In Progress...
+                    </div>
+                  ) : transactionResult?.status === 'failed' ? (
+                    <span style={{ color: '#ef4444' }}>Failed</span>
+                  ) : trackedEvent ? (
+                    <span style={{ color: '#06C755' }}>Complete</span>
+                  ) : (
+                    <span style={{ color: '#64748b' }}>Processing...</span>
+                  )}
+                </PreviewValue>
+              </PreviewRow>
+            </TransactionPreview>
+
+            {transactionResult?.status === 'failed' && (
+              <ErrorMessage>
+                {transactionResult.error}
+              </ErrorMessage>
             )}
-          </SuccessContent>
+
+            {!isTracking && !trackedEvent && !transactionResult && (
+              <NavButton onClick={() => setCurrentStep(2)}>
+                Back to Preview
+              </NavButton>
+            )}
+
+            {transactionResult?.status === 'failed' && (
+              <NavButton onClick={() => setCurrentStep(2)}>
+                Try Again
+              </NavButton>
+            )}
+          </>
+        );
+
+      case 4:
+        const amountNum = parseFloat(amount || '0');
+        const amountUSD = amountNum * market.price;
+        
+        return (
+          <>
+            <SuccessContent>
+              <SuccessIcon>✓</SuccessIcon>
+              <SuccessTitle>Withdrawal Successful!</SuccessTitle>
+              <SuccessMessage>
+                You have successfully withdrawn {amount} {market.symbol} from your supply position.
+              </SuccessMessage>
+            </SuccessContent>
+
+            <TransactionPreview>
+              <PreviewRow>
+                <PreviewLabel>Amount Withdrawn</PreviewLabel>
+                <PreviewValue>{amount} {market.symbol}</PreviewValue>
+              </PreviewRow>
+              <PreviewRow>
+                <PreviewLabel>USD Value</PreviewLabel>
+                <PreviewValue>${amountUSD.toFixed(2)}</PreviewValue>
+              </PreviewRow>
+              <PreviewRow>
+                <PreviewLabel>Supply APY</PreviewLabel>
+                <PreviewValue>{market.supplyAPY.toFixed(2)}%</PreviewValue>
+              </PreviewRow>
+              <PreviewRow>
+                <PreviewLabel>Status</PreviewLabel>
+                <PreviewValue>Confirmed</PreviewValue>
+              </PreviewRow>
+              {transactionResult?.hash && (
+                <PreviewRow>
+                  <PreviewLabel>Transaction</PreviewLabel>
+                  <PreviewValue 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '6px', 
+                      cursor: 'pointer',
+                      color: '#06C755'
+                    }}
+                    onClick={() => handleExternalLink(`https://www.kaiascan.io/tx/${transactionResult.hash}`)}
+                  >
+                    {`${transactionResult.hash.slice(0, 6)}...${transactionResult.hash.slice(-4)}`}
+                    <ExternalLink size={12} />
+                  </PreviewValue>
+                </PreviewRow>
+              )}
+            </TransactionPreview>
+            <div style={{textAlign:"center"}}>
+               <NavButton
+              $primary
+              onClick={onClose}
+            >
+              Close
+            </NavButton>
+            </div>
+           
+          </>
         );
 
       default:
@@ -580,6 +745,7 @@ export const WithdrawModal = ({
       setTransactionResult(null);
       setWithdrawData(null);
       setValidationError(null);
+      resetTracking();
     }
   }, [isOpen]);
 

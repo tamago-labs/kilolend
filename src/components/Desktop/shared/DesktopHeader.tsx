@@ -6,12 +6,13 @@ import { WalletButton } from '@/components/Wallet/Button/WalletButton';
 import { useWalletAccountStore } from "@/components/Wallet/Account/auth.hooks";
 import { useKaiaWalletSdk } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import Blockies from 'react-blockies';
-import { Settings, Clock, Menu, X } from "react-feather"
+import { Settings, Clock, CreditCard, DollarSign, LogOut } from "react-feather"
 import { useModalStore } from '@/stores/modalStore';
 import { useAppStore } from '@/stores/appStore';
 import { liff } from "@/utils/liff";
 import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
 import { useRouter, usePathname } from 'next/navigation';
+import { DesktopWalletAddressModal, DesktopSettingsModal } from '../modals';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -40,11 +41,12 @@ const Logo = styled.div`
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 5px;
 `;
 
 const LogoIcon = styled.img`
-  width: 40px;
-  height: 40px;
+  width: 180px;
+  height: 55px;
 `;
 
 const Navigation = styled.nav`
@@ -72,6 +74,31 @@ const RightSection = styled.div`
   display: flex;
   align-items: center;
   gap: 16px;
+`;
+
+const NetworkBadge = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #1e293b;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  
+  &:hover {
+    border-color: #06C755;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const NetworkIcon = styled.img`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
 `;
 
 const ProfileSection = styled.div`
@@ -190,33 +217,15 @@ const DisconnectItem = styled(DropdownItem)`
 `;
 
 export const DesktopHeader = () => {
-  const { openModal } = useModalStore();
+  const { openModal, closeModal, activeModal } = useModalStore();
   const { account, setAccount } = useWalletAccountStore();
   const [showDropdown, setShowDropdown] = useState(false);
-  const [showChainDropdown, setShowChainDropdown] = useState(false);
   const { disconnectWallet } = useKaiaWalletSdk();
   const router = useRouter();
   const pathname = usePathname();
 
-  const [selectedChain, setSelectedChain] = useState('kaia');
-
-  const chains = [
-    { id: 'kaia', name: 'KAIA Testnet', icon: '🌐' },
-    { id: 'massa', name: 'Massa (Coming Soon)', icon: '⚡' },
-    { id: 'ethereum', name: 'Ethereum (Coming Soon)', icon: '🔷' }
-  ];
-
   const handleNavigation = (path: string) => {
     router.push(path);
-  };
-
-  const handleChainChange = (chainId: string) => {
-    if (chainId !== 'kaia') {
-      alert(`${chainId} network is coming soon!`);
-      return;
-    }
-    setSelectedChain(chainId);
-    setShowChainDropdown(false);
   };
 
   const handleDisconnect = useCallback(() => {
@@ -229,7 +238,6 @@ export const DesktopHeader = () => {
 
   const handleSettings = () => {
     openModal('settings');
-    setShowDropdown(false);
   };
 
   const handleActivities = () => {
@@ -248,6 +256,17 @@ export const DesktopHeader = () => {
     } else { 
       window.open(accountUrl, "_blank"); 
     }
+  };
+
+  const handleViewQR = () => {
+    if (account) {
+      openModal('walletAddress');
+      setShowDropdown(false);
+    }
+  };
+
+  const handleViewBalances = () => {
+    router.push('/balances');
     setShowDropdown(false);
   };
 
@@ -255,105 +274,89 @@ export const DesktopHeader = () => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
   };
 
-  const copyAddress = () => {
-    if (account) {
-      navigator.clipboard.writeText(account);
-      setShowDropdown(false);
-    }
-  };
-
   return (
-    <HeaderContainer>
-      <LeftSection>
-        <Logo>
-          <LogoIcon src="./images/kilolend-logo.png" alt="KiloLend" />
-          KiloLend
-        </Logo>
-        <Navigation>
-          <NavItem 
-            className={pathname === '/' ? 'active' : ''}
-            onClick={() => handleNavigation('/')}
-          >
-            Home
-          </NavItem>
-          <NavItem 
-            className={pathname === '/dashboard' ? 'active' : ''}
-            onClick={() => handleNavigation('/dashboard')}
-          >
-            Dashboard
-          </NavItem>
-          <NavItem 
-            className={pathname === '/markets' ? 'active' : ''}
-            onClick={() => handleNavigation('/markets')}
-          >
-            Markets
-          </NavItem>
-          <NavItem 
-            className={pathname === '/portfolio' ? 'active' : ''}
-            onClick={() => handleNavigation('/portfolio')}
-          >
-            Portfolio
-          </NavItem>
-        </Navigation>
-      </LeftSection>
-      
-      <RightSection>
-        {!account ? (
-          <ConnectButton />
-        ) : (
-          <>
-            <IconButton onClick={handleSettings}>
-              <Settings size={20} />
-            </IconButton>
-            <IconButton onClick={handleActivities}>
-              <Clock size={20} />
-            </IconButton>
-            <ProfileSection onClick={() => setShowDropdown(!showDropdown)}>
-              <ProfileIcon>
-                <Blockies seed={account} size={40} />
-              </ProfileIcon>
-              <ProfileInfo>
-                <ConnectedStatus>Connected</ConnectedStatus>
-                <WalletAddress>{formatAddress(account)}</WalletAddress>
-              </ProfileInfo>
-            </ProfileSection>
-            
-            <DropdownMenu $isOpen={showDropdown}>
-              <DropdownItem onClick={copyAddress}>
-                📋 Copy Address
-              </DropdownItem>
-              <DropdownItem onClick={handleActivities}>
-                🕐 View Transactions
-              </DropdownItem>
-              <DropdownItem onClick={handleSettings}>
-                ⚙️ Settings
-              </DropdownItem>
-              <DropdownSeparator />
-              <DropdownItem onClick={() => setShowChainDropdown(!showChainDropdown)}>
-                🌐 {chains.find(c => c.id === selectedChain)?.name}
-              </DropdownItem>
-              <DisconnectItem onClick={handleDisconnect}>
-                🔌 Disconnect Wallet
-              </DisconnectItem>
-            </DropdownMenu>
-            
-            <DropdownMenu $isOpen={showChainDropdown} style={{ right: '280px' }}>
-              {chains.map((chain) => (
-                <DropdownItem 
-                  key={chain.id}
-                  onClick={() => handleChainChange(chain.id)}
-                  style={{ 
-                    opacity: chain.id === 'kaia' ? 1 : 0.6,
-                    cursor: chain.id === 'kaia' ? 'pointer' : 'not-allowed'
-                  }}
-                >
-                  {chain.icon} {chain.name}
+    <>
+      <HeaderContainer>
+        <LeftSection>
+          {/*<Logo>
+            <LogoIcon src="./images/kilolend-logo-desktop.png" alt="KiloLend" /> 
+          </Logo>*/}
+          <Navigation> 
+            <NavItem 
+              className={(pathname === '/home' || pathname === '/') ? 'active' : ''}
+              onClick={() => handleNavigation('/home')}
+            >
+              Home
+            </NavItem>
+            <NavItem 
+              className={pathname === '/markets' ? 'active' : ''}
+              onClick={() => handleNavigation('/markets')}
+            >
+              Markets
+            </NavItem>
+            <NavItem 
+              className={pathname === '/portfolio' ? 'active' : ''}
+              onClick={() => handleNavigation('/portfolio')}
+            >
+              Portfolio
+            </NavItem>
+            <NavItem 
+              className={pathname === '/leaderboard' ? 'active' : ''}
+              onClick={() => handleNavigation('/leaderboard')}
+            >
+              Leaderboard
+            </NavItem>
+          </Navigation>
+        </LeftSection>
+        
+        <RightSection>
+          {!account ? (
+            <ConnectButton />
+          ) : (
+            <>
+              <IconButton onClick={handleSettings}>
+                <Settings size={20} />
+              </IconButton>
+              <IconButton onClick={handleActivities}>
+                <Clock size={20} />
+              </IconButton>
+              <ProfileSection onClick={() => setShowDropdown(!showDropdown)}>
+                <ProfileIcon>
+                  <Blockies seed={account} size={40} />
+                </ProfileIcon>
+                <ProfileInfo>
+                  <ConnectedStatus>Connected</ConnectedStatus>
+                  <WalletAddress>{formatAddress(account)}</WalletAddress>
+                </ProfileInfo>
+              </ProfileSection>
+              
+              <DropdownMenu $isOpen={showDropdown}>
+                <DropdownItem onClick={handleViewQR}> 
+                  Wallet Details
                 </DropdownItem>
-              ))}
-            </DropdownMenu>
-          </>
-        )}
-      </RightSection>
-    </HeaderContainer>
+                <DropdownItem onClick={handleViewBalances}> 
+                  View Balances
+                </DropdownItem>
+                <DropdownSeparator />
+                <DisconnectItem onClick={handleDisconnect}> 
+                  Disconnect Wallet
+                </DisconnectItem>
+              </DropdownMenu>
+            </>
+          )}
+        </RightSection>
+      </HeaderContainer>
+
+      <DesktopWalletAddressModal
+        isOpen={activeModal === 'walletAddress'}
+        onClose={() => closeModal()}
+        walletAddress={account || ''}
+      />
+
+      <DesktopSettingsModal
+        isOpen={activeModal === 'settings'}
+        onClose={() => closeModal()}
+      />
+    </>
   );
 };

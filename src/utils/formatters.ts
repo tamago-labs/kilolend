@@ -13,6 +13,10 @@ export function formatUSD(value: string | number, decimals: number = 2): string 
   if (num > 0 && num < 0.01 && decimals === 2) {
     return `$${num.toFixed(6)}`;
   }
+
+  if (num > 0 && num < 1.0 && decimals === 2) {
+    return `$${num.toFixed(4)}`;
+  }
   
   // For large amounts, use compact notation
   if (num >= 1000000) {

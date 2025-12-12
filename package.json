@@ -1,6 +1,6 @@
 {
   "name": "dapp",
-  "version": "0.1.0",
+  "version": "0.2.5",
   "type": "module",
   "private": true,
   "scripts": {

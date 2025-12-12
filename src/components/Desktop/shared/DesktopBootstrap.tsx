@@ -1,10 +1,12 @@
 "use client";
 
-import {ReactNode, useEffect} from "react";
-import {useKaiaWalletSecurity} from "@/components/Wallet/Sdk/walletSdk.hooks";
+import { ReactNode, useEffect } from "react";
+import { useKaiaWalletSecurity } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import styled from 'styled-components';
 import { DesktopHeader } from './DesktopHeader';
+import { DesktopFooter } from "./DesktopFooter"
 import { MarketDataProvider } from '@/components/MarketDataProvider';
+import { MarketProvider } from '@/contexts/MarketContext';
 
 const AppContainer = styled.div`
   min-height: 100vh;
@@ -27,12 +29,12 @@ export type DesktopBootstrapProps = {
     children?: ReactNode;
 }
 
-export const DesktopBootstrap = ({className, children}: DesktopBootstrapProps) => {
+export const DesktopBootstrap = ({ className, children }: DesktopBootstrapProps) => {
     const { isSuccess } = useKaiaWalletSecurity();
 
     useEffect(() => {
         const preventGoBack = () => {
-            if(window.location.pathname === '/') {
+            if (window.location.pathname === '/') {
                 const isConfirmed = confirm('Are you sure you want to go back?');
                 if (!isConfirmed) {
                     history.pushState(null, '', window.location.pathname)
@@ -51,10 +53,13 @@ export const DesktopBootstrap = ({className, children}: DesktopBootstrapProps) =
         <AppContainer className={className}>
             {isSuccess && (
                 <MarketDataProvider>
-                    <DesktopHeader />
-                    <MainContent>
-                        {children}
-                    </MainContent>
+                    <MarketProvider>
+                        <DesktopHeader />
+                        <MainContent>
+                            {children}
+                        </MainContent>
+                        <DesktopFooter />
+                    </MarketProvider>
                 </MarketDataProvider>
             )}
         </AppContainer>

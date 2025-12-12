@@ -22,6 +22,8 @@ export type ModalType =
   | 'leaderboard'
   | 'token-details'
   | 'wallet-address'
+  | 'walletAddress'
+  | 'balances'
   | 'support'
   | 'feedback'
   | 'faucet'
@@ -30,6 +32,7 @@ export type ModalType =
   | 'news'
   | 'ai-deposit'
   | 'ai-withdraw'
+  | 'lineMiniDApp'
   | null;
 
 interface ModalData {

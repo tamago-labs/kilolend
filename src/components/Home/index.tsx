@@ -63,7 +63,6 @@ export const HomeContainer = () => {
                 activeTab={activeTab}
                 onTabChange={setActiveTab}
             />
-            {/* New Modal Manager */}
             <GlobalModalManager />
         </PageContainer>
     );

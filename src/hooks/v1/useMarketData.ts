@@ -112,10 +112,7 @@ export const useMarketData = () => {
     error,
     fetchAllMarketData,
     refreshMarket,
-    markets,
-    // prices: priceData.prices,
-    // pricesLoading: priceData.isLoading,
-    // pricesError: priceData.error,
+    markets
   };
 };
 
