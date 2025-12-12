@@ -28,7 +28,7 @@ export interface TrackedEvent {
 export interface EventTrackingOptions {
   userAddress: string;
   marketId: MarketId;
-  eventType: 'mint' | 'borrow';
+  eventType: 'mint' | 'borrow' | 'redeem' | 'repay';
   timeoutMs?: number;
   onEventFound?: (event: TrackedEvent) => void;
   onTimeout?: () => void;
@@ -138,11 +138,24 @@ class EventTrackingService {
         events = await contract.queryFilter(contract.filters.Mint(), fromBlock, toBlock);
       } else if (options.eventType === 'borrow') {
         events = await contract.queryFilter(contract.filters.Borrow(), fromBlock, toBlock);
+      } else if (options.eventType === 'redeem') {
+        events = await contract.queryFilter(contract.filters.Redeem(), fromBlock, toBlock);
+      } else if (options.eventType === 'repay') {
+        events = await contract.queryFilter(contract.filters.RepayBorrow(), fromBlock, toBlock);
       }
 
       // Filter events by user address
       const userEvents = events.filter(event => {
-        const user = options.eventType === 'mint' ? event.args[0] : event.args[0]; // minter or borrower
+        let user: any;
+        if (options.eventType === 'mint') {
+          user = event.args[0]; // minter
+        } else if (options.eventType === 'borrow') {
+          user = event.args[0]; // borrower
+        } else if (options.eventType === 'redeem') {
+          user = event.args[0]; // redeemer
+        } else if (options.eventType === 'repay') {
+          user = event.args[0]; // payer
+        }
         return user.toLowerCase() === options.userAddress.toLowerCase();
       });
 
@@ -179,22 +192,35 @@ class EventTrackingService {
     
     let amount: string;
     let tokenAmount: string;
+    let user: string;
 
     if (options.eventType === 'mint') {
       // Mint event: (address minter, uint256 mintAmount, uint256 mintTokens)
+      user = event.args[0]; // minter
       amount = ethers.formatUnits(event.args[1], marketConfig.decimals); // mintAmount
       tokenAmount = ethers.formatUnits(event.args[2], 8); // mintTokens (cTokens have 8 decimals)
     } else if (options.eventType === 'borrow') {
       // Borrow event: (address borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate)
+      user = event.args[0]; // borrower
       amount = ethers.formatUnits(event.args[1], marketConfig.decimals); // borrowAmount
       tokenAmount = '0'; // No token minting in borrow
+    } else if (options.eventType === 'redeem') {
+      // Redeem event: (address redeemer, uint256 redeemAmount, uint256 redeemTokens)
+      user = event.args[0]; // redeemer
+      amount = ethers.formatUnits(event.args[1], marketConfig.decimals); // redeemAmount
+      tokenAmount = ethers.formatUnits(event.args[2], 8); // redeemTokens (cTokens have 8 decimals)
+    } else if (options.eventType === 'repay') {
+      // RepayBorrow event: (address payer, address borrower, uint repayAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate)
+      user = event.args[0]; // payer
+      amount = ethers.formatUnits(event.args[2], marketConfig.decimals); // repayAmount
+      tokenAmount = '0'; // No token changes in repay
     } else {
       throw new Error(`Unsupported event type: ${options.eventType}`);
     }
 
     return {
       type: options.eventType,
-      user: options.eventType === 'mint' ? event.args[0] : event.args[0],
+      user,
       amount,
       tokenAmount,
       transactionHash: event.transactionHash,

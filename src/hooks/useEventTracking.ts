@@ -10,7 +10,7 @@ interface UseEventTrackingState {
 }
 
 interface UseEventTrackingReturn extends UseEventTrackingState {
-  startTracking: (marketId: MarketId, eventType: 'mint' | 'borrow') => void;
+  startTracking: (marketId: MarketId, eventType: 'mint' | 'borrow' | 'redeem' | 'repay') => void;
   stopTracking: () => void;
   reset: () => void;
 }
@@ -38,7 +38,7 @@ export const useEventTracking = (userAddress: string | null): UseEventTrackingRe
     });
   }, []);
 
-  const startTracking = useCallback((marketId: MarketId, eventType: 'mint' | 'borrow') => {
+  const startTracking = useCallback((marketId: MarketId, eventType: 'mint' | 'borrow' | 'redeem' | 'repay') => {
     if (!userAddress) {
       setState(prev => ({
         ...prev,

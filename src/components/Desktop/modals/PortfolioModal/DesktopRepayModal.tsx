@@ -9,7 +9,9 @@ import { useMarketContract } from '@/hooks/v1/useMarketContract';
 import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
 import { useUserPositions } from '@/hooks/v1/useUserPositions';
 import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useEventTracking } from '@/hooks/useEventTracking';
 import { formatUSD } from '@/utils/formatters';
+import { ExternalLink, Check } from 'react-feather';
 
 const ModalContent = styled.div` 
   max-width: 520px;
@@ -170,6 +172,7 @@ const WarningText = styled.div`
 const ActionButton = styled.button<{ $primary?: boolean; $disabled?: boolean }>`
   width: 100%;
   padding: 16px;
+  margin-top: 24px;
   background: ${({ $primary, $disabled }) => 
     $disabled ? '#e2e8f0' : $primary ? '#06C755' : 'white'};
   color: ${({ $primary, $disabled }) => 
@@ -221,6 +224,77 @@ const LoadingSpinner = styled.div`
   }
 `;
 
+const SuccessIcon = styled.div`
+  width: 80px;
+  height: 80px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px auto;
+  color: white;
+`;
+
+const SuccessMessage = styled.div`
+  text-align: center;
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+`;
+
+const SuccessSubtext = styled.div`
+  text-align: center;
+  font-size: 16px;
+  color: #64748b;
+  margin-bottom: 32px;
+  line-height: 1.5;
+`;
+
+const TransactionDetails = styled.div`
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+  text-align: left;
+`;
+
+const DetailRow = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const DetailLabel = styled.span`
+  font-size: 14px;
+  color: #166534;
+`;
+
+const DetailValue = styled.span`
+  font-size: 14px;
+  font-weight: 600;
+  color: #166534;
+`;
+
+const ClickableTransactionHash = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover {
+    color: #059669;
+    text-decoration: underline;
+  }
+`;
+
 type TransactionStep = 'preview' | 'confirmation' | 'success';
 
 interface DesktopRepayModalProps {
@@ -244,6 +318,15 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
   const { checkAllowance, approveToken } = useTokenApproval();
   const { positions } = useUserPositions();
   const { calculateBorrowingPower } = useBorrowingPower();
+  const {
+    isTracking,
+    trackedEvent,
+    error: trackingError,
+    hasTimedOut,
+    startTracking,
+    stopTracking,
+    reset: resetTracking
+  } = useEventTracking(account);
   const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
 
   useEffect(() => {
@@ -268,8 +351,44 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
       setTransactionResult(null);
       setNeedsApproval(false);
       setAmount('');
+      resetTracking();
     }
   }, [isOpen]);
+
+  // Handle event tracking results
+  useEffect(() => {
+    if (trackedEvent && trackedEvent.type === 'repay') {
+      console.log('Repay transaction confirmed via event tracking:', trackedEvent);
+
+      // Create transaction result from tracked event
+      const result = {
+        hash: trackedEvent.transactionHash,
+        status: 'confirmed'
+      };
+
+      setTransactionResult(result);
+      setIsProcessing(false);
+      setCurrentStep('success'); // Move to success step
+    }
+  }, [trackedEvent]);
+
+  // Handle tracking errors
+  useEffect(() => {
+    if (trackingError) {
+      console.error('Event tracking error:', trackingError);
+      setError(trackingError);
+      setIsProcessing(false);
+    }
+  }, [trackingError]);
+
+  // Handle timeout
+  useEffect(() => {
+    if (hasTimedOut) {
+      console.log('Transaction tracking timed out');
+      setError('Transaction tracking timed out. Please check your wallet and try again.');
+      setIsProcessing(false);
+    }
+  }, [hasTimedOut]);
 
   const selectedMarketPosition = selectedMarket ? positions[selectedMarket.id] : null;
   const selectedMarketDebt = selectedMarketPosition?.borrowBalance || '0';
@@ -333,12 +452,14 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
       }
 
       // Execute repay
-      const result = await repay(selectedMarket.id, amount);
+      await repay(selectedMarket.id, amount);
       
-      // Set transaction result and move to success
-      setTransactionResult(result);
-      setCurrentStep('success');
-      setIsProcessing(false);
+      // Start event tracking after transaction is sent
+      console.log(`Repay transaction sent, starting event tracking for ${selectedMarket.id}`);
+      startTracking(selectedMarket.id, 'repay');
+
+      // Don't set success yet - wait for event tracking
+      return;
 
     } catch (error: any) {
       console.error('Repay error:', error);
@@ -353,6 +474,10 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
     } else {
       onClose();
     }
+  };
+
+  const handleExternalLink = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const isValid = selectedMarket && amount && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(selectedMarketDebt);
@@ -519,17 +644,17 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
         <PreviewRow>
           <PreviewLabel>Status</PreviewLabel>
           <PreviewValue>
-            {isProcessing ? (
+            {isTracking ? (
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <LoadingSpinner />
-                {needsApproval ? 'Approving...' : 'Processing...'}
+                In Progress...
               </div>
             ) : error ? (
               <span style={{ color: '#ef4444' }}>Failed</span>
-            ) : transactionResult ? (
+            ) : trackedEvent ? (
               <span style={{ color: '#06C755' }}>Complete</span>
             ) : (
-              <span style={{ color: '#64748b' }}>Ready</span>
+              <span style={{ color: '#64748b' }}>Processing...</span>
             )}
           </PreviewValue>
         </PreviewRow>
@@ -557,20 +682,43 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
 
   const renderSuccess = () => (
     <>
-      <PreviewSection>
-        <PreviewRow>
-          <PreviewLabel>✅ Repayment Successful!</PreviewLabel>
-          <PreviewValue>{amount} {selectedMarket?.symbol}</PreviewValue>
-        </PreviewRow>
-        <PreviewRow>
-          <PreviewLabel>USD Value</PreviewLabel>
-          <PreviewValue>${amountUSD.toFixed(2)}</PreviewValue>
-        </PreviewRow>
-        <PreviewRow>
-          <PreviewLabel>Status</PreviewLabel>
-          <PreviewValue style={{ color: '#06C755' }}>Confirmed</PreviewValue>
-        </PreviewRow>
-      </PreviewSection>
+      <SuccessIcon>
+        <Check size={40} />
+      </SuccessIcon>
+      <SuccessMessage>Repayment Successful!</SuccessMessage>
+      <SuccessSubtext>
+        You have successfully repaid {amount} {selectedMarket?.symbol}
+      </SuccessSubtext>
+
+      <TransactionDetails>
+        <DetailRow>
+          <DetailLabel>Repayment Amount</DetailLabel>
+          <DetailValue>{amount} {selectedMarket?.symbol}</DetailValue>
+        </DetailRow>
+        <DetailRow>
+          <DetailLabel>USD Value</DetailLabel>
+          <DetailValue>${amountUSD.toFixed(2)}</DetailValue>
+        </DetailRow>
+        <DetailRow>
+          <DetailLabel>Borrow APR</DetailLabel>
+          <DetailValue>{selectedMarket?.borrowAPR.toFixed(2)}%</DetailValue>
+        </DetailRow>
+        {amountUSD > 0 && (
+          <DetailRow>
+            <DetailLabel>Estimated Yearly Interest Savings</DetailLabel>
+            <DetailValue>${(dailyInterestSavings * 365).toFixed(2)}</DetailValue>
+          </DetailRow>
+        )} 
+        {transactionResult?.hash && (
+          <DetailRow>
+            <DetailLabel>Transaction</DetailLabel>
+            <ClickableTransactionHash onClick={() => handleExternalLink(`https://www.kaiascan.io/tx/${transactionResult.hash}`)}>
+              <DetailValue>{`${transactionResult.hash.slice(0, 6)}...${transactionResult.hash.slice(-4)}`}</DetailValue>
+              <ExternalLink size={12} />
+            </ClickableTransactionHash>
+          </DetailRow>
+        )}
+      </TransactionDetails>
 
       <ActionButton $primary onClick={handleClose}>
         Close
