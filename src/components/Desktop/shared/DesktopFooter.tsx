@@ -213,7 +213,7 @@ export const DesktopFooter = () => {
 
       <BottomSection>
         <Copyright>
-          © 2026 KiloLend. All rights reserved.
+          © 2025 KiloLend. All rights reserved.
         </Copyright>
         <LegalLinks>
           <FooterLink href="/terms">Terms</FooterLink>
