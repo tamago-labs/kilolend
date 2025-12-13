@@ -36,8 +36,8 @@ const BrandSection = styled.div`
 `;
 
 const Logo = styled.img`
-  height: 60px;
-  width: 200px; 
+  height: 66px;
+  width: 209px; 
   margin-bottom: 8px;
 `;
 

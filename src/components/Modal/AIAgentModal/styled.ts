@@ -303,8 +303,8 @@ export const Message = styled.div<{ $isUser?: boolean }>`
   justify-content: ${({ $isUser }) => $isUser ? 'flex-end' : 'flex-start'};
 `;
 
-export const MessageBubble = styled.div<{ $isUser?: boolean }>`
-  max-width: 70%;
+export const MessageBubble = styled.div<{ $isUser?: boolean , $isCompact?:boolean}>` 
+  max-width: ${({ $isCompact }) => $isCompact ? '100%' : '80%'};
   padding: 12px 16px;
   border-radius: 12px;
   background: ${({ $isUser }) => $isUser ? '#06C755' : 'white'};
@@ -313,7 +313,7 @@ export const MessageBubble = styled.div<{ $isUser?: boolean }>`
   white-space: pre-wrap;
   word-wrap: break-word;
   overflow-wrap: break-word;
-  line-height: 1.5;
+  line-height: 1.4;
 `;
 
 export const ChatInputContainer = styled.div`

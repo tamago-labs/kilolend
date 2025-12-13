@@ -3,7 +3,7 @@ import type { AgentPreset } from '@/types/aiAgent';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { aiWalletService } from '@/services/aiWalletService';
 import { aiChatServiceV1, TextProcessor, type MessageResponse } from '@/services/AIChatServiceV1';
-// import { MarkdownRenderer } from './MarkdownRenderer';
+import { MarkdownRenderer } from './MarkdownRenderer';
 import { EmptyState } from './EmptyState';
 import {
   ChatContainer,
@@ -45,6 +45,8 @@ interface ChatInterfaceProps {
   onSettingsClick: () => void;
   onBalancesClick: () => void;
   onConversationDeleteSuccess: () => void;
+  selectedSession: number;
+  setSelectedSession: (session: number) => void;
 }
 
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
@@ -54,42 +56,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   onSettingsClick,
   onBalancesClick,
   onConversationDeleteSuccess,
+  selectedSession,
+  setSelectedSession,
 }) => {
   
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [currentStreamingText, setCurrentStreamingText] = useState('');
-  const [selectedSession, setSelectedSession] = useState(1);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { account } = useWalletAccountStore();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  // Simple markdown parser for bold (**text**), italic (*text*), and headers (# ## ###)
-  const parseSimpleMarkdown = (text: string): string => {
-    if (!text) return '';
-    
-    // First escape HTML to prevent XSS
-    let processed = text
-      .replace(/&/g, '&')
-      .replace(/</g, '<')
-      .replace(/>/g, '>')
-      .replace(/"/g, '"')
-      .replace(/'/g, '&#39;');
-    // Process headers (# ## ###) - all become bold
-    processed = processed.replace(/^(#{1,3})\s+(.+)$/gm, '<strong>$2</strong>');
-    
-    // Process bold text (**text**)
-    processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    
-    // Process italic text (*text*)
-    processed = processed.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    return processed;
   };
 
   // Load message history from backend
@@ -270,14 +250,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               disabled={isLoading}
               title="AI Wallet Balances"
             >
-              💰
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path>
+              </svg>
             </BalancesButton>
             <SettingsButton
               onClick={onSettingsClick}
               disabled={isLoading}
               title="Agent Settings"
             >
-              ⚙️
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"></path>
+              </svg>
             </SettingsButton>
           </div>
         </div>
@@ -290,14 +275,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {messages.map((message) => (
           <Message key={message.id} $isUser={message.isUser}>
-            <MessageBubble $isUser={message.isUser}>
+            <MessageBubble $isUser={message.isUser} $isCompact={true}>
               {message.isUser ? (
                 message.text || "🤔"
               ) : (
-                <span 
-                  dangerouslySetInnerHTML={{ 
-                    __html: parseSimpleMarkdown(message.text) 
-                  }} 
+                <MarkdownRenderer 
+                  content={message.text} 
+                  isUser={false} 
+                  compact={true}
                 />
               )}
             </MessageBubble>
@@ -306,7 +291,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         {isLoading && !currentStreamingText && (
           <Message $isUser={false}>
-            <MessageBubble $isUser={false}>
+            <MessageBubble $isUser={false} $isCompact={true}>
               <span style={{ display: 'flex', alignItems: 'center' }}>
                 <span>{character.name} is processing</span>
                 <LoadingIndicator />

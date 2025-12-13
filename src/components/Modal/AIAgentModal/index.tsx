@@ -38,6 +38,7 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
   const [creationError, setCreationError] = useState<string | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showBalancesModal, setShowBalancesModal] = useState(false);
+  const [selectedSession, setSelectedSession] = useState(1);
   const { account, setAccount } = useWalletAccountStore();
 
   const resetModal = () => {
@@ -195,6 +196,8 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
           onSettingsClick={handleSettingsClick}
           onBalancesClick={handleBalancesClick}
           onConversationDeleteSuccess={handleConversationDeleteSuccess}
+          selectedSession={selectedSession}
+          setSelectedSession={setSelectedSession}
         />
       );
     }
@@ -322,7 +325,7 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
         <AgentSettingsModal
           character={selectedCharacter}
           model={selectedModel}
-          selectedSession={1} // Default session, could be managed separately
+          selectedSession={selectedSession}
           onClose={handleSettingsClose}
           onDeleteSuccess={handleDeleteSuccess}
           onConversationDeleteSuccess={handleConversationDeleteSuccess}

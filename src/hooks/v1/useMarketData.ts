@@ -25,11 +25,11 @@ export const useMarketData = () => {
         return;
       }
 
-      console.log(`Fetching market info for ${marketId}...`);
+      // console.log(`Fetching market info for ${marketId}...`);
       const marketInfo = await getMarketInfo(marketId);
 
       if (marketInfo) {
-        console.log(`Market info for ${marketId}:`, marketInfo);
+        // console.log(`Market info for ${marketId}:`, marketInfo);
 
         // Use BigNumber for safe calculations
         const safeMarketInfo = {
