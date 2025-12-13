@@ -436,6 +436,8 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
             onBalancesClick={handleBalancesClick}
             onMessagesUpdate={setMessages}
             isLoading={isLoading}
+            selectedSession={selectedSession}
+            setSelectedSession={setSelectedSession}
           />
         );
 
@@ -469,6 +471,7 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
         return null;
     }
   };
+ 
 
   return (
     <>

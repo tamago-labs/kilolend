@@ -391,6 +391,7 @@ export const AgentSettingsModal: React.FC<AgentSettingsModalProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   const [isDeletingConversation, setIsDeletingConversation] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  
 
   const handleDeleteAgent = async () => {
     if (!account) return;

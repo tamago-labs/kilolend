@@ -237,6 +237,8 @@ interface ChatActiveStateProps {
   onBalancesClick?: () => void;
   onMessagesUpdate?: (messages: ChatMessage[]) => void;
   isLoading?: boolean;
+  selectedSession: number;
+  setSelectedSession: (session: number) => void;
 }
 
 const WELCOME_SUGGESTIONS = [
@@ -253,9 +255,10 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
   onSettings,
   onBalancesClick,
   onMessagesUpdate,
-  isLoading = false
+  isLoading = false,
+  selectedSession,
+  setSelectedSession
 }) => {
-  const [selectedSession, setSelectedSession] = useState(1);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { account } = useWalletAccountStore();
