@@ -9,6 +9,8 @@ export { DesktopWithdrawModal, DesktopRepayModal } from './PortfolioModal';
 // Shared Modal Components
 export { DesktopBaseModal } from './shared';
 
+export { DesktopAIChatPanel } from "./DesktopAIChatPanel"
+
 //  
 export type { DesktopWalletAddressModalProps } from './WalletAddressModal';
 export type { DesktopSettingsModalProps } from './SettingsModal';

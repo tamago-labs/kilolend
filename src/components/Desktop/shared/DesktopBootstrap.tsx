@@ -6,9 +6,8 @@ import styled from 'styled-components';
 import { DesktopHeader } from './DesktopHeader';
 import { DesktopFooter } from "./DesktopFooter"
 import { MarketDataProvider } from '@/components/MarketDataProvider';
-import { MarketProvider } from '@/contexts/MarketContext';
-import { DesktopAIChatPanel } from './DesktopAIChatPanel';
-import { LineMiniDAppModal } from '../modals';
+import { MarketProvider } from '@/contexts/MarketContext'; 
+import { LineMiniDAppModal, DesktopAIChatPanel  } from '../modals';
 import { useModalStore } from '@/stores/modalStore';
 
 const AppContainer = styled.div`
