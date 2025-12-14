@@ -7,15 +7,13 @@ import { SupplyModal } from './SupplyModal';
 import { BorrowModal } from './BorrowModal';
 import { WithdrawModal } from './WithdrawModal';
 import { RepayModal } from './RepayModal';
-import { SettingsModal } from './SettingsModal';
-import { AIRecommendationModal } from './AIRecommendationModal';
+import { SettingsModal } from './SettingsModal'; 
 import { FAQModal } from './FAQModal';
 import { WalletAddressModal } from './WalletAddressModal';
 import { SendModal } from './SendModal';
 import { LeaderboardModal } from './LeaderboardModal';
 import { KiloPointsModal } from "./KiloModal"
-import { InviteModal } from './InviteModal';
-import { AIChatModal } from './AIChatModal';
+import { InviteModal } from './InviteModal'; 
 import { NewsModal } from './NewsModal';
 import { DepositModal } from '../Profile/DepositModal';
 import { WithdrawModal as AIWithdrawModal } from '../Profile/WithdrawModal';
@@ -68,23 +66,7 @@ export const GlobalModalManager = () => {
             totalDebt={modalData.totalDebt}
           />
         );
-
-      case 'ai-chat-new':
-        return (
-          <AIChatModal
-            isOpen={isOpen}
-            onClose={closeModal}
-          />
-        );
-
-      case 'ai-recommendations':
-        return (
-          <AIRecommendationModal
-            isOpen={isOpen}
-            onClose={closeModal}
-          />
-        );
-
+ 
       case 'settings':
         return (
           <SettingsModal
