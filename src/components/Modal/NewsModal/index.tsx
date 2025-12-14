@@ -83,9 +83,14 @@ const CloseButton = styled.button`
 // Hardcoded news data
 const newsItems = [
   {
+  image: './images/poster-desktop.png',
+  title: 'Web Version Is Live',
+  description: 'KiloLend is now available on desktop. Enjoy a wider, clearer experience beyond LINE Mini Dapp.'
+},
+  {
     image: "./images/poster-agent-v1.png",
     title: 'New AI DeFi Co-Pilot',
-    description: 'Read our latest blog for our newly upgraded AI-agent support lend, borrow, swap and loop across KAIA'
+    description: 'Read our latest blog for our upgraded AI-agent support lend, borrow, swap and loop across KAIA'
   },
   {
     image: './images/poster-v1.png',
