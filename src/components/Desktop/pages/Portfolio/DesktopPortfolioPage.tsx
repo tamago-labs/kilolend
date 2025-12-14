@@ -29,6 +29,74 @@ const MainContent = styled.main`
   padding: 32px;
 `;
 
+const LoadingState = styled.div`
+  text-align: center;
+  padding: 80px 24px;
+  color: #64748b;
+  font-size: 16px;
+`;
+
+const LoadingSpinner = styled.div`
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #06C755;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 24px;
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+
+const LoadingTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+`;
+
+const LoadingSubtitle = styled.p`
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 32px;
+`;
+
+const PortfolioStatsSkeleton = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+`;
+
+const StatCardSkeleton = styled.div`
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+`;
+
+const StatSkeletonLine = styled.div<{ $width?: string; $height?: string }>`
+  width: ${props => props.$width || '100%'};
+  height: ${props => props.$height || '16px'};
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  margin-bottom: 8px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
 interface Position {
   marketId: string;
   symbol: string;
@@ -216,9 +284,41 @@ export const DesktopPortfolio = () => {
     return filteredPositions;
   }, [positions, activeTab, searchTerm, sortBy]);
 
+  // Loading state component
+  const renderLoadingState = () => (
+    <LoadingState>
+      <LoadingSpinner />
+      <LoadingTitle>Loading Your Portfolio</LoadingTitle>
+      <LoadingSubtitle>Fetching your positions and calculating borrowing power...</LoadingSubtitle>
+      
+      <PortfolioStatsSkeleton>
+        <StatCardSkeleton>
+          <StatSkeletonLine $width="60%" $height="12px" />
+          <StatSkeletonLine $width="40%" $height="24px" />
+          <StatSkeletonLine $width="80%" $height="14px" />
+        </StatCardSkeleton>
+        <StatCardSkeleton>
+          <StatSkeletonLine $width="60%" $height="12px" />
+          <StatSkeletonLine $width="40%" $height="24px" />
+          <StatSkeletonLine $width="80%" $height="14px" />
+        </StatCardSkeleton>
+        <StatCardSkeleton>
+          <StatSkeletonLine $width="60%" $height="12px" />
+          <StatSkeletonLine $width="40%" $height="24px" />
+          <StatSkeletonLine $width="80%" $height="14px" />
+        </StatCardSkeleton>
+        <StatCardSkeleton>
+          <StatSkeletonLine $width="60%" $height="12px" />
+          <StatSkeletonLine $width="40%" $height="24px" />
+          <StatSkeletonLine $width="80%" $height="14px" />
+        </StatCardSkeleton>
+      </PortfolioStatsSkeleton>
+    </LoadingState>
+  );
+
   const filteredPositions = getFilteredAndSortedPositions();
   const hasPositions = positions.length > 0;
-  const isConnected = !!account && !isLoading;
+  const isConnected = !!account;
 
   return (
     <PortfolioContainer>
@@ -228,37 +328,43 @@ export const DesktopPortfolio = () => {
           isLoading={isLoading}
         />
 
-        { account && (
-           <DesktopPortfolioStats 
-          portfolioStats={portfolioStats}
-          borrowingPowerData={borrowingPowerData}
-          isLoading={isLoading}
-        />
-        )
-
-        }
-
-       
-
-        {hasPositions ? (
-          <>
-            <DesktopPortfolioTabs
-              activeTab={activeTab}
-              searchTerm={searchTerm}
-              sortBy={sortBy}
-              onTabChange={setActiveTab}
-              onSearchChange={setSearchTerm}
-              onSortChange={setSortBy}
-            />
-            
-            <DesktopPortfolioTable
-              positions={filteredPositions}
-              onAction={handleAction}
-              type={activeTab as 'supply' | 'borrow'}
-            />
-          </>
+        {/* Show loading state when account is connected and data is loading */}
+        {account && isLoading ? (
+          renderLoadingState()
         ) : (
-          <DesktopEmptyState isConnected={isConnected} />
+          <>
+            {/* Show portfolio stats when account is connected and not loading */}
+            {account && (
+              <DesktopPortfolioStats 
+                portfolioStats={portfolioStats}
+                borrowingPowerData={borrowingPowerData}
+                isLoading={isLoading}
+              />
+            )}
+
+            {/* Show portfolio content when user has positions */}
+            {hasPositions ? (
+              <>
+                <DesktopPortfolioTabs
+                  activeTab={activeTab}
+                  searchTerm={searchTerm}
+                  sortBy={sortBy}
+                  onTabChange={setActiveTab}
+                  onSearchChange={setSearchTerm}
+                  onSortChange={setSortBy}
+                />
+                
+                <DesktopPortfolioTable
+                  positions={filteredPositions}
+                  onAction={handleAction}
+                  type={activeTab as 'supply' | 'borrow'}
+                />
+              </>
+            ) : (
+              /* Show empty state when user has no positions */
+              <DesktopEmptyState isConnected={isConnected} />
+            )}
+          </>
         )}
       </MainContent>
 

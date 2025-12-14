@@ -1,3 +1,5 @@
+import React from 'react';
+
 export type DesktopAIState = 
   | 'idle'
   | 'wallet-creation'
@@ -41,7 +43,7 @@ export interface AIModel {
 export interface ChatMessage {
   id: string;
   type: 'user' | 'agent' | 'system';
-  content: string;
+  content: string | React.ReactNode;
   timestamp: Date;
   agent?: AgentPreset;
 }

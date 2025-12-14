@@ -190,6 +190,7 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
   const [messages, setMessages] = useState<any[]>([]);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showBalancesModal, setShowBalancesModal] = useState(false);
+  const [isMessageLoading, setIsMessageLoading] = useState(false);
   const { account } = useWalletAccountStore();
   
   const {
@@ -245,6 +246,7 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
     };
 
     setMessages(prev => [...prev, userMessage]);
+    setIsMessageLoading(true);
 
     try {
       // Create a temporary AI message for streaming
@@ -286,6 +288,7 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
                   : msg
               )
             );
+            setIsMessageLoading(false);
             
             // Reload message history to get the final state from backend
             try {
@@ -304,6 +307,7 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
           },
           onError: (error: Error) => {
             console.error('Streaming error:', error);
+            setIsMessageLoading(false);
             // Remove the streaming message and add an error message
             setMessages(prev => {
               const filtered = prev.filter(msg => !msg.isStreaming);
@@ -325,6 +329,7 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
 
     } catch (error) {
       console.error('Failed to send message:', error);
+      setIsMessageLoading(false);
       
       // Remove the streaming message and add an error message
       setMessages(prev => {
@@ -435,7 +440,7 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
             onSettings={handleSettings}
             onBalancesClick={handleBalancesClick}
             onMessagesUpdate={setMessages}
-            isLoading={isLoading}
+            isLoading={isMessageLoading}
             selectedSession={selectedSession}
             setSelectedSession={setSelectedSession}
           />

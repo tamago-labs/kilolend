@@ -273,21 +273,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <EmptyState characterName={character.name} />
         )}
 
-        {messages.map((message) => (
-          <Message key={message.id} $isUser={message.isUser}>
-            <MessageBubble $isUser={message.isUser} $isCompact={true}>
-              {message.isUser ? (
-                message.text || "🤔"
-              ) : (
-                <MarkdownRenderer 
-                  content={message.text} 
-                  isUser={false} 
-                  compact={true}
-                />
-              )}
-            </MessageBubble>
-          </Message>
-        ))}
+        {messages.map((message) => {
+          // Skip rendering empty user messages
+          if (message.isUser && (!message.text || message.text.trim() === '')) {
+            return null;
+          }
+          
+          return (
+            <Message key={message.id} $isUser={message.isUser}>
+              <MessageBubble $isUser={message.isUser} $isCompact={true}>
+                {message.isUser ? (
+                  message.text
+                ) : (
+                  <MarkdownRenderer 
+                    content={message.text} 
+                    isUser={false} 
+                    compact={true}
+                  />
+                )}
+              </MessageBubble>
+            </Message>
+          );
+        })}
 
         {isLoading && !currentStreamingText && (
           <Message $isUser={false}>

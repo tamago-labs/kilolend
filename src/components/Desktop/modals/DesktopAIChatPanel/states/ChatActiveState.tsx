@@ -6,6 +6,44 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { aiChatServiceV1, type MessageResponse } from '@/services/AIChatServiceV1';
 import type { ChatMessage, AgentPreset } from '../types';
 
+// Loading indicator component
+const LoadingIndicator = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin-left: 8px;
+
+  &::before,
+  &::after {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: loadingDots 1.4s infinite ease-in-out;
+  }
+
+  &::before {
+    animation-delay: -0.32s;
+  }
+
+  &::after {
+    animation-delay: 0.32s;
+  }
+
+  @keyframes loadingDots {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+`;
+
 const Container = styled.div`
   display: flex;
   flex-direction: column;
@@ -410,7 +448,12 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
                 message={{
                   id: 'loading',
                   type: 'agent',
-                  content: 'Thinking...',
+                  content: (
+                    <span style={{ display: 'flex', alignItems: 'center' }}>
+                      <span>{agent.name} is processing</span>
+                      <LoadingIndicator />
+                    </span>
+                  ),
                   timestamp: new Date()
                 }}
                 agent={agent}

@@ -110,6 +110,19 @@ interface ChatMessageProps {
 }
 
 export const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, agent }) => {
+  // Check if message content is empty or whitespace-only
+  const isEmptyContent = () => {
+    if (typeof message.content === 'string') {
+      return message.content.trim() === '';
+    }
+    return false; // React nodes are considered non-empty
+  };
+
+  // Skip rendering empty user messages
+  if (message.type === 'user' && isEmptyContent()) {
+    return null;
+  }
+
   const renderMessageContent = () => {
     if (message.type === 'system') {
       return <MessageContent>{message.content}</MessageContent>;
@@ -129,10 +142,14 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, agen
             <AgentName>{agent.name}</AgentName>
           </AgentHeader>
           <MessageContent>
-            <MarkdownRenderer 
-              content={message.content} 
-              isUser={false}
-            />
+            {typeof message.content === 'string' ? (
+              <MarkdownRenderer 
+                content={message.content} 
+                isUser={false}
+              />
+            ) : (
+              message.content
+            )}
           </MessageContent>
         </>
       );
@@ -140,10 +157,14 @@ export const ChatMessageComponent: React.FC<ChatMessageProps> = ({ message, agen
 
     return (
       <MessageContent>
-        <MarkdownRenderer 
-          content={message.content} 
-          isUser={true}
-        />
+        {typeof message.content === 'string' ? (
+          <MarkdownRenderer 
+            content={message.content} 
+            isUser={true}
+          />
+        ) : (
+          message.content
+        )}
       </MessageContent>
     );
   };
