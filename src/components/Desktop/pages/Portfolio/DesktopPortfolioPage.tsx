@@ -133,8 +133,7 @@ export const DesktopPortfolio = () => {
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
   const { getUserPosition } = useMarketContract(); 
-  const { calculateBorrowingPower } = useBorrowingPower();
-  const { openModal } = useModalStore();
+  const { calculateBorrowingPower } = useBorrowingPower(); 
 
   // Fetch user positions and borrowing power
   const fetchPositions = useCallback(async () => {
@@ -214,7 +213,7 @@ export const DesktopPortfolio = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [account, markets, getUserPosition, calculateBorrowingPower]);
+  }, [account, markets]);
 
   // Fetch positions when account or markets change
   useEffect(() => {
@@ -329,7 +328,7 @@ export const DesktopPortfolio = () => {
         />
 
         {/* Show loading state when account is connected and data is loading */}
-        {account && isLoading ? (
+        {(account && isLoading && borrowingPowerData === null) ? (
           renderLoadingState()
         ) : (
           <>
