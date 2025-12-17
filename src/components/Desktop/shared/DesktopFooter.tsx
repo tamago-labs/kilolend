@@ -7,8 +7,7 @@ import { Twitter, MessageCircle, GitHub, Mail, ExternalLink } from 'react-feathe
 const FooterWrapper = styled.footer`
   background: #1e293b;
   color: #e2e8f0;
-  padding: 80px 32px 32px; 
-  border-radius: 24px 24px 0 0;
+  padding: 80px 32px 32px;  
 `;
 
 const FooterContainer = styled.div`

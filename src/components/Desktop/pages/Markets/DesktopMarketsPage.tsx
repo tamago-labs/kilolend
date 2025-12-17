@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { DesktopMarketStats } from '@/components/Desktop/pages/Markets/components/DesktopMarketStats';
 import { DesktopMarketFilters } from '@/components/Desktop/pages/Markets/components/DesktopMarketFilters';
 import { DesktopMarketTable } from '@/components/Desktop/pages/Markets/components/DesktopMarketTable';
+import { KiloPointsBanner } from '@/components/Desktop/pages/Markets/components/KiloPointsBanner';
 
 const MarketsContainer = styled.div`
   min-height: 100vh;
@@ -70,6 +71,8 @@ export const DesktopMarkets = () => {
           activeFilter={activeFilter}
           sortBy={sortBy}
         />
+
+        <KiloPointsBanner />
       </MainContent>
     </MarketsContainer>
   );
