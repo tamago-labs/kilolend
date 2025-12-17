@@ -13,6 +13,7 @@ import { liff } from "@/utils/liff";
 import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
 import { useRouter, usePathname } from 'next/navigation';
 import { DesktopWalletAddressModal, DesktopSettingsModal } from '../modals';
+import { signatureService } from '@/services/signatureService';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -229,12 +230,20 @@ export const DesktopHeader = () => {
   };
 
   const handleDisconnect = useCallback(() => {
+
+    // Clear signature state on disconnect
+      if (account) {
+        signatureService.clearSignatureState(account);
+      }
+
     disconnectWallet().then(() => {
+
       setAccount(null);
       sessionStorage.removeItem('ACCOUNT');
       setShowDropdown(false);
+
     });
-  }, [disconnectWallet, setAccount]);
+  }, [disconnectWallet, setAccount, account]);
 
   const handleSettings = () => {
     openModal('settings');

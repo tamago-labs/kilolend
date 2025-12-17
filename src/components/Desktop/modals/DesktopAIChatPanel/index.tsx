@@ -216,6 +216,10 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
     hasAgent,
     canProceedToModel,
     canProceedToChat,
+    isSignedIn,
+    isCheckingSignature,
+    signatureError,
+    handleSignMessage,
   } = useDesktopAIState();
 
   // Handle keyboard shortcuts
@@ -236,7 +240,7 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
   }, [isOpen, onToggle]);
 
   const handleSendMessage = async (message: string) => {
-    if (!selectedCharacter || !account) return;
+    if (!selectedCharacter || !account || !isSignedIn) return;
 
     const userMessage = {
       id: Date.now().toString(),
@@ -443,6 +447,10 @@ export const DesktopAIChatPanel: React.FC<DesktopAIChatPanelProps> = ({
             isLoading={isMessageLoading}
             selectedSession={selectedSession}
             setSelectedSession={setSelectedSession}
+            isSignedIn={isSignedIn}
+            isCheckingSignature={isCheckingSignature}
+            signatureError={signatureError}
+            onSignMessage={handleSignMessage}
           />
         );
 

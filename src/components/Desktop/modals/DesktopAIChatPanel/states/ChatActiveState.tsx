@@ -96,20 +96,34 @@ const AgentName = styled.h4`
   margin: 0;
 `;
 
-const AgentStatus = styled.span`
+const AgentStatus = styled.span<{ $status: 'online' | 'signing-required' | 'loading' }>`
   font-size: 12px;
-  color: #06C755;
+  color: ${props => {
+    switch (props.$status) {
+      case 'online': return '#06C755';
+      case 'signing-required': return '#f59e0b';
+      case 'loading': return '#64748b';
+      default: return '#64748b';
+    }
+  }};
   display: flex;
   align-items: center;
   gap: 4px;
 `;
 
-const StatusDot = styled.div`
+const StatusDot = styled.div<{ $status: 'online' | 'signing-required' | 'loading' }>`
   width: 6px;
   height: 6px;
-  background: #06C755;
+  background: ${props => {
+    switch (props.$status) {
+      case 'online': return '#06C755';
+      case 'signing-required': return '#f59e0b';
+      case 'loading': return '#64748b';
+      default: return '#64748b';
+    }
+  }};
   border-radius: 50%;
-  animation: pulse 2s infinite;
+  animation: ${props => props.$status === 'online' ? 'pulse 2s infinite' : 'none'};
   
   @keyframes pulse {
     0%, 100% { opacity: 1; }
@@ -267,6 +281,87 @@ const Suggestion = styled.button`
   }
 `;
 
+// Signature prompt components
+const SignaturePromptContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 40px 20px;
+  text-align: center;
+`;
+
+const SignaturePromptIcon = styled.div`
+  width: 64px;
+  height: 64px;
+  background: #fef3c7;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  color: #f59e0b;
+  font-size: 28px;
+`;
+
+const SignaturePromptTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+`;
+
+const SignaturePromptText = styled.p`
+  font-size: 14px;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 24px 0;
+  max-width: 400px;
+`;
+
+const SignMessageButton = styled.button<{ $loading?: boolean }>`
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #06C755, #059212);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: ${props => props.$loading ? 'not-allowed' : 'pointer'};
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(6, 199, 85, 0.3);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.7;
+  }
+`;
+
+const ErrorMessage = styled.div`
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  color: #dc2626;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 400px;
+`;
+
 interface ChatActiveStateProps {
   agent: AgentPreset;
   messages: ChatMessage[];
@@ -277,6 +372,10 @@ interface ChatActiveStateProps {
   isLoading?: boolean;
   selectedSession: number;
   setSelectedSession: (session: number) => void;
+  isSignedIn: boolean;
+  isCheckingSignature: boolean;
+  signatureError: string | null;
+  onSignMessage: () => void;
 }
 
 const WELCOME_SUGGESTIONS = [
@@ -295,7 +394,11 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
   onMessagesUpdate,
   isLoading = false,
   selectedSession,
-  setSelectedSession
+  setSelectedSession,
+  isSignedIn,
+  isCheckingSignature,
+  signatureError,
+  onSignMessage
 }) => {
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -303,7 +406,7 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
 
   // Load message history from backend
   const loadMessageHistory = async () => {
-    if (!account || !onMessagesUpdate) return;
+    if (!account || !onMessagesUpdate || !isSignedIn) return;
 
     setIsLoadingHistory(true);
     try {
@@ -329,10 +432,10 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
 
   // Load messages on component mount and when account or session changes
   useEffect(() => {
-    if (account && onMessagesUpdate) {
+    if (account && onMessagesUpdate && isSignedIn) {
       loadMessageHistory();
     }
-  }, [account, selectedSession, onMessagesUpdate]);
+  }, [account, selectedSession, onMessagesUpdate, isSignedIn]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -340,7 +443,19 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
   }, [messages]);
 
   const handleSuggestionClick = (suggestion: string) => {
-    onSendMessage(suggestion);
+    if (isSignedIn) {
+      onSendMessage(suggestion);
+    }
+  };
+
+  const getStatusInfo = () => {
+    if (isCheckingSignature) {
+      return { status: 'loading' as const, text: 'Checking...' };
+    }
+    if (isSignedIn) {
+      return { status: 'online' as const, text: 'Online' };
+    }
+    return { status: 'signing-required' as const, text: 'Signing Required' };
   };
 
   const renderWelcomeMessage = () => (
@@ -369,7 +484,7 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
           <Suggestion
             key={index}
             onClick={() => handleSuggestionClick(suggestion)}
-            disabled={isLoading}
+            disabled={isLoading || !isSignedIn}
           >
             {suggestion}
           </Suggestion>
@@ -377,6 +492,41 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
       </Suggestions>
     </WelcomeMessage>
   );
+
+  const renderSignaturePrompt = () => (
+    <SignaturePromptContainer> 
+      <SignaturePromptTitle>Signing Required</SignaturePromptTitle>
+      <SignaturePromptText>
+        Your session has expired or is invalid. Please sign the message to continue chatting with {agent.name}.
+      </SignaturePromptText>
+      <SignMessageButton 
+        onClick={onSignMessage} 
+        $loading={isLoading}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <>
+            <LoadingIndicator />
+            Signing...
+          </>
+        ) : (
+          'Sign Message'
+        )}
+      </SignMessageButton>
+      {signatureError && (
+        <ErrorMessage>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          {signatureError}
+        </ErrorMessage>
+      )}
+    </SignaturePromptContainer>
+  );
+
+  const statusInfo = getStatusInfo();
 
   return (
     <Container>
@@ -391,9 +541,9 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
           />
           <AgentDetails>
             <AgentName>{agent.name}</AgentName>
-            <AgentStatus>
-              <StatusDot />
-              Online
+            <AgentStatus $status={statusInfo.status}>
+              <StatusDot $status={statusInfo.status} />
+              {statusInfo.text}
             </AgentStatus>
           </AgentDetails>
         </AgentIdentityRow>
@@ -404,7 +554,7 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
             <SessionSelector
               value={selectedSession}
               onChange={(e) => setSelectedSession(Number(e.target.value))}
-              disabled={isLoading}
+              disabled={isLoading || !isSignedIn}
             >
               {Array.from({ length: 8 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
@@ -415,13 +565,13 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             {onBalancesClick && (
-              <ActionButton onClick={onBalancesClick} disabled={isLoading} title="AI Wallet Balances">
+              <ActionButton onClick={onBalancesClick} disabled={isLoading || !isSignedIn} title="AI Wallet Balances">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path>
                 </svg>
               </ActionButton>
             )}
-            <ActionButton onClick={onSettings} disabled={isLoading} title="Settings">
+            <ActionButton onClick={onSettings} disabled={isLoading || !isSignedIn} title="Settings">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"></path>
@@ -432,7 +582,9 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
       </Header>
       
       <MessagesContainer>
-        {messages.length === 0 ? (
+        {!isSignedIn ? (
+          renderSignaturePrompt()
+        ) : messages.length === 0 ? (
           renderWelcomeMessage()
         ) : (
           <>
@@ -466,8 +618,8 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
       
       <ChatInput
         onSendMessage={onSendMessage}
-        disabled={isLoading}
-        placeholder={`Message ${agent.name}...`}
+        disabled={isLoading || !isSignedIn}
+        placeholder={isSignedIn ? `Message ${agent.name}...` : 'Please sign in to chat...'}
       />
     </Container>
   );

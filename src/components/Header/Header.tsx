@@ -10,7 +10,8 @@ import { Settings, Clock } from "react-feather"
 import { useModalStore } from '@/stores/modalStore';
 import { useAppStore } from '@/stores/appStore';
 import { liff } from "@/utils/liff";
-import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
+import { KAIA_SCAN_URL } from "@/utils/ethersConfig";
+import { signatureService } from '@/services/signatureService';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -191,11 +192,18 @@ export const Header = () => {
   const { disconnectWallet } = useKaiaWalletSdk();
 
   const handleDisconnect = useCallback(() => {
+
+    // Clear signature state on disconnect
+    if (account) {
+      signatureService.clearSignatureState(account);
+    }
+
     disconnectWallet().then(() => {
       setAccount(null);
       sessionStorage.removeItem('ACCOUNT');
+
     });
-  }, [disconnectWallet])
+  }, [disconnectWallet, account])
 
   const handleSettings = () => {
     openModal('settings');
@@ -214,8 +222,8 @@ export const Header = () => {
         url: accountUrl,
         external: true,
       });
-    } else { 
-      window.open(accountUrl, "_blank"); 
+    } else {
+      window.open(accountUrl, "_blank");
     }
 
   }
@@ -273,9 +281,9 @@ export const Header = () => {
                 navigator.clipboard.writeText(account);
                 setShowDropdown(false);
               }}>
-                📋 Copy Address
+                Copy Address
               </DropdownItem>
-              <DropdownItem>🌐 KAIA Testnet</DropdownItem>
+              <DropdownItem>KAIA Testnet</DropdownItem>
               <DisconnectRow onClick={handleDisconnect}>
                 Disconnect Wallet
               </DisconnectRow>
