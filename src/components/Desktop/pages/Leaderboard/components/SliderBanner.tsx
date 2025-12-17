@@ -172,7 +172,7 @@ const infoSlides = [
   },
   {
     title: "How Points Work",
-    content: "Points = TVL (50%) + Net Contribution (50%) × Multiplier. Invite friends to increase your multiplier.",
+    content: "Points = TVL (50%) + Net Contribution (50%) × Multiplier. Invite friends to get more.",
     icon: "/images/icon-rewards.png"
   },
   {

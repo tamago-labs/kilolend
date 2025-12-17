@@ -290,7 +290,7 @@ export const DesktopPortfolio = () => {
       <LoadingTitle>Loading Your Portfolio</LoadingTitle>
       <LoadingSubtitle>Fetching your positions and calculating borrowing power...</LoadingSubtitle>
       
-      <PortfolioStatsSkeleton>
+      {/* <PortfolioStatsSkeleton>
         <StatCardSkeleton>
           <StatSkeletonLine $width="60%" $height="12px" />
           <StatSkeletonLine $width="40%" $height="24px" />
@@ -311,7 +311,7 @@ export const DesktopPortfolio = () => {
           <StatSkeletonLine $width="40%" $height="24px" />
           <StatSkeletonLine $width="80%" $height="14px" />
         </StatCardSkeleton>
-      </PortfolioStatsSkeleton>
+      </PortfolioStatsSkeleton> */}
     </LoadingState>
   );
 
