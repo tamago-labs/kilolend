@@ -1,10 +1,13 @@
 import React, { useState, useRef, useEffect } from 'react';
+import styled from 'styled-components';
 import type { AgentPreset } from '@/types/aiAgent';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { aiWalletService } from '@/services/aiWalletService';
 import { aiChatServiceV1, TextProcessor, type MessageResponse } from '@/services/AIChatServiceV1';
 import { MarkdownRenderer } from './MarkdownRenderer';
 import { EmptyState } from './EmptyState';
+import { SigningPrompt } from './SigningPrompt';
+import { useModalSigningState } from './hooks/useModalSigningState';
 import {
   ChatContainer,
   ChatHeader,
@@ -21,6 +24,58 @@ import {
   SessionSelector,
   LoadingIndicator
 } from './styled';
+
+// Status indicator components
+const AgentStatus = styled.span<{ $status: 'online' | 'signing-required' | 'loading' | 'error' }>`
+  font-size: 12px;
+  color: ${props => {
+    switch (props.$status) {
+      case 'online': return '#06C755';
+      case 'signing-required': return '#f59e0b';
+      case 'loading': return '#64748b';
+      case 'error': return '#dc2626';
+      default: return '#64748b';
+    }
+  }};
+  display: flex;
+  align-items: center;
+  gap: 4px;
+`;
+
+const StatusDot = styled.div<{ $status: 'online' | 'signing-required' | 'loading' | 'error' }>`
+  width: 6px;
+  height: 6px;
+  background: ${props => {
+    switch (props.$status) {
+      case 'online': return '#06C755';
+      case 'signing-required': return '#f59e0b';
+      case 'loading': return '#64748b';
+      case 'error': return '#dc2626';
+      default: return '#64748b';
+    }
+  }};
+  border-radius: 50%;
+  animation: ${props => props.$status === 'online' ? 'pulse 2s infinite' : 'none'};
+  
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+`;
+
+const HistoryLoadingIndicator = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #64748b;
+  font-size: 14px;
+  
+  span {
+    margin-bottom: 8px;
+  }
+`;
 
 interface ChatMessage {
   id: string;
@@ -67,6 +122,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { account } = useWalletAccountStore();
+  
+  // Signing state management
+  const {
+    isSignedIn,
+    isCheckingSignature,
+    signingStatus,
+    signatureError,
+    handleSignMessage,
+    clearError
+  } = useModalSigningState();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -74,7 +139,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Load message history from backend
   const loadMessageHistory = async () => {
-    if (!account) return;
+    if (!account || !isSignedIn) return;
 
     setIsLoadingHistory(true);
     try {
@@ -99,10 +164,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Load messages on component mount and when account or session changes
   useEffect(() => {
-    if (account) {
+    if (account && isSignedIn) {
       loadMessageHistory();
     }
-  }, [account, selectedSession]);
+  }, [account, selectedSession, isSignedIn]);
 
   useEffect(() => {
     scrollToBottom();
@@ -122,7 +187,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
 
   const handleSendMessage = async () => {
-    if (!inputText.trim() || isLoading || !account) return;
+    if (!inputText.trim() || isLoading || !account || !isSignedIn) return;
 
     const userMessage: ChatMessage = {
       id: `user-${Date.now()}`,
@@ -210,6 +275,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     onClose(); // Close the chat modal after successful deletion
   };
 
+  const getStatusText = () => {
+    switch (signingStatus) {
+      case 'loading': return 'Checking...';
+      case 'online': return 'Online';
+      case 'signing-required': return 'Signing Required';
+      case 'error': return 'Error';
+      default: return 'Offline';
+    }
+  };
+
   return (
     <ChatContainer>
       <ChatHeader style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -227,7 +302,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               objectFit: 'cover'
             }}
           />
-          <ChatTitle>{character.name}</ChatTitle>
+          <div>
+            <ChatTitle>{character.name}</ChatTitle>
+            <AgentStatus $status={signingStatus}>
+              <StatusDot $status={signingStatus} />
+              {getStatusText()}
+            </AgentStatus>
+          </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -235,7 +316,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             <SessionSelector
               value={selectedSession}
               onChange={(e) => setSelectedSession(Number(e.target.value))}
-              disabled={isLoading || isLoadingHistory}
+              disabled={isLoading || isLoadingHistory || !isSignedIn}
             >
               {Array.from({ length: 8 }, (_, i) => (
                 <option key={i + 1} value={i + 1}>
@@ -247,64 +328,75 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <div style={{ display: 'flex', gap: '8px' }}>
             <BalancesButton
               onClick={onBalancesClick}
-              disabled={isLoading}
+              disabled={isLoading || !isSignedIn}
               title="AI Wallet Balances"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path>
-              </svg>
+              Balances
             </BalancesButton>
             <SettingsButton
               onClick={onSettingsClick}
-              disabled={isLoading}
+              disabled={isLoading || !isSignedIn}
               title="Agent Settings"
             >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"></path>
-              </svg>
+              Settings
             </SettingsButton>
           </div>
         </div>
       </ChatHeader>
 
       <ChatMessages>
-        {messages.length === 0 && !isLoading && !isLoadingHistory && (
-          <EmptyState characterName={character.name} />
-        )}
+        {!isSignedIn ? (
+          <SigningPrompt
+            agentName={character.name}
+            isLoading={isCheckingSignature}
+            signatureError={signatureError}
+            onSignMessage={handleSignMessage}
+          />
+        ) : isLoadingHistory ? (
+          <HistoryLoadingIndicator>
+            <span>Loading conversation history...</span>
+            <LoadingIndicator />
+          </HistoryLoadingIndicator>
+        ) : (
+          <>
+            {messages.length === 0 && !isLoading && (
+              <EmptyState characterName={character.name} />
+            )}
 
-        {messages.map((message) => {
-          // Skip rendering empty user messages
-          if (message.isUser && (!message.text || message.text.trim() === '')) {
-            return null;
-          }
-          
-          return (
-            <Message key={message.id} $isUser={message.isUser}>
-              <MessageBubble $isUser={message.isUser} $isCompact={true}>
-                {message.isUser ? (
-                  message.text
-                ) : (
-                  <MarkdownRenderer 
-                    content={message.text} 
-                    isUser={false} 
-                    compact={true}
-                  />
-                )}
-              </MessageBubble>
-            </Message>
-          );
-        })}
+            {messages.map((message) => {
+              // Skip rendering empty user messages
+              if (message.isUser && (!message.text || message.text.trim() === '')) {
+                return null;
+              }
+              
+              return (
+                <Message key={message.id} $isUser={message.isUser}>
+                  <MessageBubble $isUser={message.isUser} $isCompact={true}>
+                    {message.isUser ? (
+                      message.text
+                    ) : (
+                      <MarkdownRenderer 
+                        content={message.text} 
+                        isUser={false} 
+                        compact={true}
+                      />
+                    )}
+                  </MessageBubble>
+                </Message>
+              );
+            })}
 
-        {isLoading && !currentStreamingText && (
-          <Message $isUser={false}>
-            <MessageBubble $isUser={false} $isCompact={true}>
-              <span style={{ display: 'flex', alignItems: 'center' }}>
-                <span>{character.name} is processing</span>
-                <LoadingIndicator />
-              </span>
-            </MessageBubble>
-          </Message>
+            {isLoading && !currentStreamingText && (
+              <Message $isUser={false}>
+                <MessageBubble $isUser={false} $isCompact={true}>
+                  <span style={{ display: 'flex', alignItems: 'center' }}>
+                    <span>{character.name} is processing</span>
+                    <LoadingIndicator />
+                  </span>
+                </MessageBubble>
+              </Message>
+            )}
+          </>
         )}
 
         <div ref={messagesEndRef} />
@@ -316,12 +408,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyPress={handleKeyPress}
-            placeholder="Ask me anything about your wallet, trading, or portfolio..."
-            disabled={isLoading}
+            placeholder={isSignedIn ? "Ask me anything about your wallet, trading, or portfolio..." : "Please sign in to chat..."}
+            disabled={isLoading || !isSignedIn}
           />
           <SendButton
             onClick={handleSendMessage}
-            disabled={!inputText.trim() || isLoading}
+            disabled={!inputText.trim() || isLoading || !isSignedIn}
           >
             Send
           </SendButton>

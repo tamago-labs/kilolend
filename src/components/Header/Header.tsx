@@ -282,8 +282,7 @@ export const Header = () => {
                 setShowDropdown(false);
               }}>
                 Copy Address
-              </DropdownItem>
-              <DropdownItem>KAIA Testnet</DropdownItem>
+              </DropdownItem> 
               <DisconnectRow onClick={handleDisconnect}>
                 Disconnect Wallet
               </DisconnectRow>

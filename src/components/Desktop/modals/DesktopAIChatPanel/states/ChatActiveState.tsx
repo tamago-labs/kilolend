@@ -11,7 +11,6 @@ const LoadingIndicator = styled.span`
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  margin-left: 8px;
 
   &::before,
   &::after {
@@ -158,9 +157,8 @@ const SessionSelector = styled.select`
 `;
 
 const ActionButton = styled.button`
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
+  padding: 6px 12px;
+  border-radius: 6px;
   border: 1px solid #e2e8f0;
   background: white;
   color: #64748b;
@@ -169,6 +167,9 @@ const ActionButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
   
   &:hover {
     background: #f8fafc;
@@ -360,6 +361,20 @@ const ErrorMessage = styled.div`
   align-items: center;
   gap: 8px;
   max-width: 400px;
+`;
+
+const HistoryLoadingIndicator = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  color: #64748b;
+  font-size: 14px;
+  
+  span {
+    margin-bottom: 8px;
+  }
 `;
 
 interface ChatActiveStateProps {
@@ -566,16 +581,11 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
           <div style={{ display: 'flex', gap: '8px' }}>
             {onBalancesClick && (
               <ActionButton onClick={onBalancesClick} disabled={isLoading || !isSignedIn} title="AI Wallet Balances">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"></path>
-                </svg>
+                Balances
               </ActionButton>
             )}
             <ActionButton onClick={onSettings} disabled={isLoading || !isSignedIn} title="Settings">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M12 1v6m0 6v6m4.22-13.22l4.24 4.24M1.54 1.54l4.24 4.24M20.46 20.46l-4.24-4.24M1.54 20.46l4.24-4.24"></path>
-              </svg>
+              Settings
             </ActionButton>
           </div>
         </StatusControlsRow>
@@ -584,6 +594,11 @@ export const ChatActiveState: React.FC<ChatActiveStateProps> = ({
       <MessagesContainer>
         {!isSignedIn ? (
           renderSignaturePrompt()
+        ) : isLoadingHistory ? (
+          <HistoryLoadingIndicator>
+            <span>Loading conversation history...</span>
+            <LoadingIndicator />
+          </HistoryLoadingIndicator>
         ) : messages.length === 0 ? (
           renderWelcomeMessage()
         ) : (
