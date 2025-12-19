@@ -56,7 +56,7 @@ interface AIModel {
   name: string;
   provider: string;
   description: string;
-  riskLevel: 'aggressive' | 'conservative';
+  capabilityLevel: 'advanced' | 'standard';
   icon: string;
 }
 
@@ -126,11 +126,11 @@ export const ReviewStep: React.FC<ReviewStepProps> = ({
                 </div>
                 <div style={{
                   fontSize: '12px', padding: '4px 8px', borderRadius: '6px', display: 'inline-block',
-                  background: selectedModel.riskLevel === 'aggressive' ? '#fef2f2' : '#f0fdf4',
-                  color: selectedModel.riskLevel === 'aggressive' ? '#dc2626' : '#06C755',
-                  border: `1px solid ${selectedModel.riskLevel === 'aggressive' ? '#fecaca' : '#bbf7d0'}`
+                  background: selectedModel.capabilityLevel === 'advanced' ? '#dbeafe' : '#f3f4f6',
+                  color: selectedModel.capabilityLevel === 'advanced' ? '#1e40af' : '#374151',
+                  border: `1px solid ${selectedModel.capabilityLevel === 'advanced' ? '#93c5fd' : '#d1d5db'}`
                 }}>
-                  {selectedModel.riskLevel === 'aggressive' ? 'Risk Aggressive' : 'Risk Conservative'}
+                  {selectedModel.capabilityLevel === 'advanced' ? 'Advanced' : 'Standard'}
                 </div>
               </div>
             </ReviewModel>

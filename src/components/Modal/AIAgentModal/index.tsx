@@ -18,7 +18,7 @@ interface AIModel {
   name: string;
   provider: string;
   description: string;
-  riskLevel: 'aggressive' | 'conservative';
+  capabilityLevel: 'advanced' | 'standard';
   icon: string;
 }
 
@@ -143,16 +143,16 @@ export const AIAgentModal: React.FC<AIAgentModalProps> = ({ isOpen, onClose }) =
             id: 'claude-sonnet-4.5',
             name: 'Claude Sonnet 4.5',
             provider: 'Anthropic',
-            description: 'Advanced reasoning with aggressive trading strategies for maximum returns',
-            riskLevel: 'aggressive' as const,
+            description: 'Advanced reasoning for complex trading strategies',
+            capabilityLevel: 'advanced' as const,
             icon: '/images/icon-robot.png'
           },
           {
             id: 'aws-nova-pro',
             name: 'AWS Nova Pro',
             provider: 'Amazon Web Services',
-            description: 'Conservative approach focused on capital preservation and steady growth',
-            riskLevel: 'conservative' as const,
+            description: 'Reliable execution for straightforward trades',
+            capabilityLevel: 'standard' as const,
             icon: '/images/icon-credit-card.png'
           }
         ];

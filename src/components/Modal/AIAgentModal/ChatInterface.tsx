@@ -89,7 +89,7 @@ interface AIModel {
   name: string;
   provider: string;
   description: string;
-  riskLevel: 'aggressive' | 'conservative';
+  capabilityLevel: 'advanced' | 'standard';
   icon: string;
 }
 
@@ -331,14 +331,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               disabled={isLoading || !isSignedIn}
               title="AI Wallet Balances"
             >
-              Balances
+              💰
             </BalancesButton>
             <SettingsButton
               onClick={onSettingsClick}
               disabled={isLoading || !isSignedIn}
               title="Agent Settings"
             >
-              Settings
+              ⚙️
             </SettingsButton>
           </div>
         </div>

@@ -36,7 +36,7 @@ export interface AIModel {
   name: string;
   provider: string;
   description: string;
-  riskLevel: 'aggressive' | 'conservative';
+  capabilityLevel: 'advanced' | 'standard';
   icon: string;
 }
 

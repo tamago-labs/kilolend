@@ -9,17 +9,8 @@ import { ChatActiveState } from './states/ChatActiveState';
 import { aiChatServiceV1 } from '@/services/AIChatServiceV1';
 import { AgentSettingsModal } from '@/components/Modal/AIAgentModal/AgentSettingsModal';
 import { AIWalletBalancesModal } from '@/components/Modal/AIAgentModal/AIWalletBalancesModal';
-import type { DesktopAIChatPanelProps } from './types';
+import type { DesktopAIChatPanelProps, AIModel } from './types';
 import type { AgentPreset } from '@/types/aiAgent';
-
-interface AIModel {
-  id: string;
-  name: string;
-  provider: string;
-  description: string;
-  riskLevel: 'aggressive' | 'conservative';
-  icon: string;
-}
 
 const PanelContainer = styled.div<{ $isOpen: boolean }>`
   position: fixed;

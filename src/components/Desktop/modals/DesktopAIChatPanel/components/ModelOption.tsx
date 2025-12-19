@@ -99,7 +99,7 @@ const ModelDescription = styled.p`
   margin: 0 0 12px 0;
 `;
 
-const RiskBadge = styled.span<{ $level: 'aggressive' | 'conservative' }>`
+const CapabilityBadge = styled.span<{ $level: 'advanced' | 'standard' }>`
   display: inline-flex;
   align-items: center;
   gap: 4px;
@@ -108,12 +108,12 @@ const RiskBadge = styled.span<{ $level: 'aggressive' | 'conservative' }>`
   font-size: 11px;
   font-weight: 600;
   
-  ${props => props.$level === 'aggressive' ? `
-    background: rgba(239, 68, 68, 0.1);
-    color: #dc2626;
+  ${props => props.$level === 'advanced' ? `
+    background: rgba(59, 130, 246, 0.1);
+    color: #1e40af;
   ` : `
-    background: rgba(6, 199, 85, 0.1);
-    color: #059212;
+    background: rgba(107, 114, 128, 0.1);
+    color: #374151;
   `}
 `;
 
@@ -140,9 +140,9 @@ export const ModelOption: React.FC<ModelOptionProps> = ({ model, selected, onSel
       
       <ModelDescription>{model.description}</ModelDescription>
       
-      <RiskBadge $level={model.riskLevel}>
-        {model.riskLevel === 'aggressive' ? '🔥 High Risk' : '🛡️ Conservative'}
-      </RiskBadge>
+      <CapabilityBadge $level={model.capabilityLevel}>
+        {model.capabilityLevel === 'advanced' ? 'Advanced' : 'Standard'}
+      </CapabilityBadge>
     </Option>
   );
 };

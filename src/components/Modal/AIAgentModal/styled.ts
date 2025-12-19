@@ -216,14 +216,14 @@ export const ModelDescription = styled.p`
   margin-bottom: 12px;
 `;
 
-export const RiskBadge = styled.span<{ $risk: 'aggressive' | 'conservative' }>`
-  background: ${({ $risk }) => $risk === 'aggressive' ? '#fef2f2' : '#f0fdf4'};
-  color: ${({ $risk }) => $risk === 'aggressive' ? '#dc2626' : '#06C755'};
+export const CapabilityBadge = styled.span<{ $capability: 'advanced' | 'standard' }>`
+  background: ${({ $capability }) => $capability === 'advanced' ? '#dbeafe' : '#f3f4f6'};
+  color: ${({ $capability }) => $capability === 'advanced' ? '#1e40af' : '#374151'};
   font-size: 11px;
   font-weight: 600;
   padding: 4px 8px;
   border-radius: 6px;
-  border: 1px solid ${({ $risk }) => $risk === 'aggressive' ? '#fecaca' : '#bbf7d0'};
+  border: 1px solid ${({ $capability }) => $capability === 'advanced' ? '#93c5fd' : '#d1d5db'};
 `;
 
 // Review Step Styles
