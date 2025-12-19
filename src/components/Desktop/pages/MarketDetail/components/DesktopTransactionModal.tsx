@@ -557,10 +557,10 @@ export const DesktopTransactionModal = ({
               <PreviewLabel>Expected Yearly Earnings</PreviewLabel>
               <PreviewValue>${yearlyEarnings.toFixed(2)}</PreviewValue>
             </PreviewRow>
-            <PreviewRow>
+            {/*<PreviewRow>
               <PreviewLabel>You will receive</PreviewLabel>
               <PreviewValue>{expectedCTokens.toFixed(2)} c{displaySymbol}</PreviewValue>
-            </PreviewRow>
+            </PreviewRow>*/}
           </PreviewSection>
 
           {needsApproval && (
@@ -743,7 +743,7 @@ export const DesktopTransactionModal = ({
         </PreviewRow>
       </PreviewSection>
 
-      {error && (
+      {(error && isTracking) && (
         <WarningBox>
           <WarningText>
             ❌ {error}
