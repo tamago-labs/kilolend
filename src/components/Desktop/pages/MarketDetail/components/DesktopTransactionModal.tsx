@@ -743,7 +743,7 @@ export const DesktopTransactionModal = ({
         </PreviewRow>
       </PreviewSection>
 
-      {(error && isTracking) && (
+      {(error && !isTracking) && (
         <WarningBox>
           <WarningText>
             ❌ {error}

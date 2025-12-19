@@ -613,7 +613,7 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
         </WarningBox>
       )}
 
-      {error && (
+      {((error && !isTracking)) && (
         <WarningBox>
           <WarningText>❌ {error}</WarningText>
         </WarningBox>

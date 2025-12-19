@@ -604,6 +604,9 @@ global.pointBot = bot;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Middleware for JSON parsing
+app.use(express.json());
+
 // Health check endpoint
 app.get('/health', (req, res) => {
   const health = bot.getHealthStatus();
@@ -615,8 +618,46 @@ app.get('/health', (req, res) => {
   }
 });
 
+// Manual trigger endpoint for daily point calculation
+app.post('/trigger-daily-update', async (req, res) => {
+  try {
+    console.log('\n🚀 MANUAL TRIGGER: Daily Point Update Requested');
+    console.log('='.repeat(60));
+    
+    // Get current date
+    const currentDate = new Date().toISOString().split('T')[0];
+    
+    // Initialize all existing users to ensure everyone is included
+    console.log('📊 Re-initializing all existing users...');
+    await bot.initializeExistingUsers();
+    
+    // Force daily summary calculation for current date
+    const distributions = await bot.statsManager.printDailySummary(bot.kiloCalculator, bot.balanceManager);
+    
+    console.log('='.repeat(60));
+    console.log('✅ Manual daily update completed successfully');
+    
+    res.json({
+      success: true,
+      date: currentDate,
+      message: 'Daily point calculation triggered successfully',
+      distributionsProcessed: distributions ? distributions.length : 0,
+      timestamp: new Date().toISOString()
+    });
+    
+  } catch (error) {
+    console.error('❌ Manual trigger failed:', error.message);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Start the Express server
 app.listen(PORT, () => {
   console.log(`🌐 Health check server running on port ${PORT}`);
   console.log(`📊 Health check available at: /health`);
+  console.log(`🔧 Manual trigger available at: /trigger-daily-update (POST)`);
 });

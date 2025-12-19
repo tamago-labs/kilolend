@@ -545,7 +545,7 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
         </WarningBox>
       )}
 
-      {error && (
+      {((error && !isTracking)) && (
         <WarningBox>
           <WarningText>❌ {error}</WarningText>
         </WarningBox>
