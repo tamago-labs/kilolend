@@ -1,6 +1,7 @@
 const { ethers } = require('ethers');
 const dotenv = require('dotenv');
 const express = require('express');
+const cors = require('cors');
 const KiloPointCalculator = require('./src/KiloPointCalculator.js');
 const PriceManager = require('./src/PriceManager.js');
 const StatsManager = require('./src/StatsManager.js');
@@ -604,8 +605,9 @@ global.pointBot = bot;
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware for JSON parsing
+// Middleware for JSON parsing and CORS
 app.use(express.json());
+app.use(cors());
 
 // Health check endpoint
 app.get('/health', (req, res) => {
