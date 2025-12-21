@@ -626,8 +626,11 @@ app.post('/trigger-daily-update', async (req, res) => {
     console.log('\n🚀 MANUAL TRIGGER: Daily Point Update Requested');
     console.log('='.repeat(60));
     
-    // Get current date
+    // Force current date override - this ensures we calculate for TODAY, not yesterday
     const currentDate = new Date().toISOString().split('T')[0];
+    bot.statsManager.currentDate = currentDate;
+    
+    console.log(`📅 Forced date to: ${currentDate} (manual override)`);
     
     // Initialize all existing users to ensure everyone is included
     console.log('📊 Re-initializing all existing users...');
