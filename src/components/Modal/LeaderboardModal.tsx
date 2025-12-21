@@ -259,6 +259,24 @@ interface LeaderboardData {
   share: number
 }
 
+const TRIGGER_ENDPOINT = 'https://7pdgsmb6ay.ap-southeast-1.awsapprunner.com/trigger-daily-update';
+
+// Trigger daily update endpoint
+const triggerDailyUpdate = async () => {
+  try {
+    await fetch(TRIGGER_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Daily update trigger sent successfully');
+  } catch (error) {
+    console.error('Failed to trigger daily update:', error);
+    // Don't throw error - this is fire-and-forget
+  }
+};
+
 interface LeaderboardResponse {
   success: boolean;
   data?: {
@@ -343,8 +361,39 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: any
         const response = await fetch(
           `https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/leaderboard/${dateString}`
         );
+        
+        // Handle 404 specifically as no data scenario
+        if (response.status === 404) {
+          // Trigger daily update endpoint
+          await triggerDailyUpdate();
+          
+          // Set specific message for no data scenario
+          setLeaderboardData({
+            success: false,
+            message: '⏳ Today\'s leaderboard is being updated... Please check back shortly.'
+          });
+          return;
+        }
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
-        setLeaderboardData(data);
+        
+        // Check if no data is available
+        if (!data.success || !data.data?.leaderboard?.length) {
+          // Trigger daily update endpoint
+          triggerDailyUpdate();
+          
+          // Set specific message for no data scenario
+          setLeaderboardData({
+            success: false,
+            message: 'Leaderboard is being updated, come back in a few minutes'
+          });
+        } else {
+          setLeaderboardData(data);
+        }
       } catch (error) {
         console.error('Failed to fetch leaderboard:', error);
         setLeaderboardData({

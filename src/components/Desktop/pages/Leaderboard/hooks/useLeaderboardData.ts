@@ -40,6 +40,23 @@ export interface UserPointsResponse {
 }
 
 const LEADERBOARD_API_BASE = 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod';
+const TRIGGER_ENDPOINT = 'https://7pdgsmb6ay.ap-southeast-1.awsapprunner.com/trigger-daily-update';
+
+// Trigger daily update endpoint
+const triggerDailyUpdate = async () => {
+  try {
+    await fetch(TRIGGER_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Daily update trigger sent successfully');
+  } catch (error) {
+    console.error('Failed to trigger daily update:', error);
+    // Don't throw error - this is fire-and-forget
+  }
+};
 
 export const useLeaderboardData = (selectedDate: string) => {
   const [data, setData] = useState<LeaderboardResponse | null>(null);
@@ -53,12 +70,38 @@ export const useLeaderboardData = (selectedDate: string) => {
     try {
       const response = await fetch(`${LEADERBOARD_API_BASE}/leaderboard/${selectedDate}`);
       
+      // Handle 404 specifically as no data scenario
+      if (response.status === 404) {
+        // Trigger daily update endpoint
+        await triggerDailyUpdate();
+        
+        // Set specific message for no data scenario
+        setData({
+          success: false,
+          message: '⏳ Today\'s leaderboard is being updated... Please check back shortly.'
+        });
+        return;
+      }
+      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       
       const result: LeaderboardResponse = await response.json();
-      setData(result);
+      
+      // Check if no data is available
+      if (!result.success || !result.data?.leaderboard?.length) {
+        // Trigger daily update endpoint
+        triggerDailyUpdate();
+        
+        // Set specific message for no data scenario
+        setData({
+          success: false,
+          message: 'Leaderboard is being updated, come back in a few minutes'
+        });
+      } else {
+        setData(result);
+      }
     } catch (err) {
       console.error('Failed to fetch leaderboard:', err);
       setError(err instanceof Error ? err.message : 'Failed to load leaderboard data');
