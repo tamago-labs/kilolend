@@ -365,7 +365,7 @@ export const LeaderboardModal = ({ isOpen, onClose, title = "Leaderboard" }: any
         // Handle 404 specifically as no data scenario
         if (response.status === 404) {
           // Trigger daily update endpoint
-          await triggerDailyUpdate();
+          triggerDailyUpdate();
           
           // Set specific message for no data scenario
           setLeaderboardData({
