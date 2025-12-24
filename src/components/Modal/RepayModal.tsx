@@ -7,6 +7,7 @@ import { ChevronRight } from 'react-feather';
 import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
+import { useUserPositions } from '@/hooks/v1/useUserPositions';
 import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
 import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
 import { useEventTracking } from '@/hooks/useEventTracking';
@@ -326,7 +327,8 @@ export const RepayModal = ({
 
   const { account } = useWalletAccountStore();
   const { repay } = useMarketContract();
-  const { balances } = useMarketTokenBalances();
+  const { balances, refreshBalances } = useMarketTokenBalances();
+  const { refreshPositions } = useUserPositions();
   const { checkAllowance, ensureApproval } = useTokenApproval();
   const { calculateBorrowingPower } = useBorrowingPower();
   const {
@@ -431,6 +433,12 @@ export const RepayModal = ({
       setTransactionResult(result);
       setIsTransacting(false);
       setCurrentStep(4); // Move to success step
+
+      // Refresh data after successful transaction
+      setTimeout(() => {
+        refreshBalances();
+        refreshPositions();
+      }, 2000);
     }
   }, [trackedEvent]);
 

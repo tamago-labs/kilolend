@@ -6,6 +6,8 @@ import { BaseModal } from './BaseModal';
 import { ChevronRight } from 'react-feather';
 import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
+import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
+import { useUserPositions } from '@/hooks/v1/useUserPositions';
 import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
 import { useEventTracking } from '@/hooks/useEventTracking';
 import { truncateToSafeDecimals, validateAmountAgainstBalance, getSafeMaxAmount } from "@/utils/tokenUtils";
@@ -28,7 +30,7 @@ const StepDot = styled.div<{ $active: boolean; $completed: boolean }>`
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: ${({ $active, $completed }) => 
+  background: ${({ $active, $completed }) =>
     $completed ? '#06C755' : $active ? '#06C755' : '#e2e8f0'};
   margin: 0 4px;
   transition: all 0.3s ease;
@@ -295,9 +297,9 @@ interface WithdrawModalProps {
   maxWithdraw?: string;
 }
 
-export const WithdrawModal = ({ 
-  isOpen, 
-  onClose, 
+export const WithdrawModal = ({
+  isOpen,
+  onClose,
   market,
   currentSupply = '0',
   maxWithdraw = '0'
@@ -312,6 +314,8 @@ export const WithdrawModal = ({
 
   const { account } = useWalletAccountStore();
   const { withdraw } = useMarketContract();
+  const { refreshBalances } = useMarketTokenBalances();
+  const { refreshPositions } = useUserPositions();
   const { calculateBorrowingPower } = useBorrowingPower();
   const {
     isTracking,
@@ -330,7 +334,7 @@ export const WithdrawModal = ({
   useEffect(() => {
     if (amount && parseFloat(amount) > 0 && maxWithdrawAmount > 0) {
       const validation = validateAmountAgainstBalance(amount, maxWithdrawAmount.toString(), market?.id || '');
-      
+
       if (!validation.isValid) {
         setValidationError(validation.error || 'Invalid amount');
       } else {
@@ -350,7 +354,7 @@ export const WithdrawModal = ({
         const borrowingPower = await calculateBorrowingPower(account);
         const withdrawAmount = parseFloat(amount);
         const withdrawValue = withdrawAmount * market.price;
-        
+
         // Calculate if withdrawal affects borrowing power
         const currentCollateral = parseFloat(borrowingPower.totalCollateralValue);
         const currentBorrow = parseFloat(borrowingPower.totalBorrowValue);
@@ -386,6 +390,12 @@ export const WithdrawModal = ({
       setTransactionResult(result);
       setIsTransacting(false);
       setCurrentStep(4); // Move to success step
+
+      // Refresh data after successful transaction
+      setTimeout(() => {
+        refreshBalances();
+        refreshPositions();
+      }, 2000);
     }
   }, [trackedEvent]);
 
@@ -418,10 +428,10 @@ export const WithdrawModal = ({
   const handleQuickAmount = (percentage: number) => {
     const quickAmount = (maxWithdrawAmount * percentage / 100).toString();
     const decimals = market?.decimals || 18;
-    
+
     // Use safe decimal truncation to prevent precision errors
     const safeAmount = truncateToSafeDecimals(quickAmount, decimals);
-    
+
     setAmount(safeAmount);
     setSelectedQuickAmount(percentage);
     setValidationError(null);
@@ -429,10 +439,10 @@ export const WithdrawModal = ({
 
   const handleMaxAmount = () => {
     const decimals = market?.decimals || 18;
-    
+
     // Use safe maximum amount calculation
     const safeAmount = getSafeMaxAmount(maxWithdrawAmount.toString(), market?.id || '');
-    
+
     setAmount(safeAmount);
     setSelectedQuickAmount(100);
     setValidationError(null);
@@ -440,15 +450,15 @@ export const WithdrawModal = ({
 
   const canProceed = () => {
     switch (currentStep) {
-      case 1: 
-        return amount && 
-               parseFloat(amount) > 0 && 
-               parseFloat(amount) <= maxWithdrawAmount &&
-               withdrawData?.canWithdraw &&
-               !validationError;
-      case 2: 
+      case 1:
+        return amount &&
+          parseFloat(amount) > 0 &&
+          parseFloat(amount) <= maxWithdrawAmount &&
+          withdrawData?.canWithdraw &&
+          !validationError;
+      case 2:
         return true;
-      default: 
+      default:
         return false;
     }
   };
@@ -469,11 +479,11 @@ export const WithdrawModal = ({
     if (!market || !amount || !account) return;
 
     setIsTransacting(true);
-    
+
     try {
       console.log(`Starting withdraw transaction for ${amount} ${market.symbol}`);
       await withdraw(market.id, amount);
-      
+
       // Start event tracking after transaction is sent
       console.log(`Withdraw transaction sent, starting event tracking for ${market.id}`);
       startTracking(market.id, 'redeem');
@@ -527,7 +537,7 @@ export const WithdrawModal = ({
                 max={maxWithdrawAmount}
                 step="0.000001"
               />
-              
+
               <QuickAmountButtons>
                 {[25, 50, 75].map(percentage => (
                   <QuickAmountButton
@@ -559,7 +569,7 @@ export const WithdrawModal = ({
 
             {withdrawData && !withdrawData.canWithdraw && (
               <WarningCard>
-                This withdrawal would reduce your health factor below safe levels. 
+                This withdrawal would reduce your health factor below safe levels.
                 Consider repaying some debt first.
               </WarningCard>
             )}
@@ -600,7 +610,7 @@ export const WithdrawModal = ({
 
             {withdrawData.newHealthFactor < 2 && withdrawData.newHealthFactor > 1.1 && (
               <WarningCard>
-                Your health factor will be {withdrawData.newHealthFactor.toFixed(2)} after this withdrawal. 
+                Your health factor will be {withdrawData.newHealthFactor.toFixed(2)} after this withdrawal.
                 Monitor your position closely.
               </WarningCard>
             )}
@@ -671,7 +681,7 @@ export const WithdrawModal = ({
       case 4:
         const amountNum = parseFloat(amount || '0');
         const amountUSD = amountNum * market.price;
-        
+
         return (
           <>
             <SuccessContent>
@@ -702,11 +712,11 @@ export const WithdrawModal = ({
               {transactionResult?.hash && (
                 <PreviewRow>
                   <PreviewLabel>Transaction</PreviewLabel>
-                  <PreviewValue 
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '6px', 
+                  <PreviewValue
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
                       cursor: 'pointer',
                       color: '#06C755'
                     }}
@@ -718,15 +728,15 @@ export const WithdrawModal = ({
                 </PreviewRow>
               )}
             </TransactionPreview>
-            <div style={{textAlign:"center"}}>
-               <NavButton
-              $primary
-              onClick={onClose}
-            >
-              Close
-            </NavButton>
+            <div style={{ textAlign: "center" }}>
+              <NavButton
+                $primary
+                onClick={onClose}
+              >
+                Close
+              </NavButton>
             </div>
-           
+
           </>
         );
 
@@ -772,13 +782,13 @@ export const WithdrawModal = ({
               {transactionResult.error}
             </ErrorMessage>
           )}
-          
+
           {validationError && (
             <ErrorMessage>
               {validationError}
             </ErrorMessage>
           )}
-          
+
           {renderStepContent()}
         </StepContent>
 
