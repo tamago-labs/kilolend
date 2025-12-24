@@ -355,7 +355,6 @@ const ActionButtonsContainer = styled.div`
   gap: 12px;
   
   @media (max-width: 480px) {
-    flex-direction: column;
     gap: 8px;
   }
 `;

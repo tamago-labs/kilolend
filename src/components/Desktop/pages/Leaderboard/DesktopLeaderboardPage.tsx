@@ -62,7 +62,7 @@ const ContentGrid = styled.div`
   gap: 32px;
   align-items: start;
   
-  @media (max-width: 1200px) {
+  @media (max-width: 800px) {
     grid-template-columns: 1fr;
     gap: 24px;
   }
