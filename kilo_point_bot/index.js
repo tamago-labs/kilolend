@@ -632,6 +632,8 @@ app.post('/trigger-daily-update', async (req, res) => {
     
     console.log(`📅 Forced date to: ${currentDate} (manual override)`);
     
+    bot.statsManager.reset();
+
     // Initialize all existing users to ensure everyone is included
     console.log('📊 Re-initializing all existing users...');
     await bot.initializeExistingUsers();
