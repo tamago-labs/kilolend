@@ -313,7 +313,7 @@ interface HeroSectionProps {
 }
 
 export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) => {
-  const [isTooltipVisible, setIsTooltipVisible] = useState(false);
+  const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
 
   return (
     <HeroSectionWrapper>
@@ -321,7 +321,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
         <HeroContent>
           <HeroTitle>DeFi Made Easy on LINE — Earn, Borrow & Swap with AI</HeroTitle>
           <HeroSubtitle>
-            KiloLend lets you earn yield, borrow assets, and swap tokens on KAIA using simple chat commands — no complex inputs, no DeFi knowledge required.
+            KiloLend lets you earn yield, borrow assets, and swap tokens using simple chat commands — no complex inputs, no DeFi knowledge required.
           </HeroSubtitle>
           
           <CTAContainer>
@@ -335,20 +335,33 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
 
           {/* Blockchain Support Section */}
           <BlockchainSupport>
-            <SupportLabel>Blockchain supported now:</SupportLabel>
+            <SupportLabel>Blockchains supported:</SupportLabel>
             <BlockchainIcon 
-              onMouseEnter={() => setIsTooltipVisible(true)}
-              onMouseLeave={() => setIsTooltipVisible(false)}
+              onMouseEnter={() => setTooltipVisible('kaia')}
+              onMouseLeave={() => setTooltipVisible(null)}
             >
               <IconImage 
-                src="https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png" 
+                src="/images/blockchain-icons/kaia-token-icon.png" 
                 alt="KAIA" 
               />
-              <Tooltip $visible={isTooltipVisible}>
+              <Tooltip $visible={tooltipVisible === 'kaia'}>
                 KAIA Mainnet
               </Tooltip>
             </BlockchainIcon>
+            <BlockchainIcon 
+              onMouseEnter={() => setTooltipVisible('kub')}
+              onMouseLeave={() => setTooltipVisible(null)}
+            >
+              <IconImage 
+                src="/images/blockchain-icons/kub-chain-icon.png" 
+                alt="KUB" 
+              />
+              <Tooltip $visible={tooltipVisible === 'kub'}>
+                KUB Chain
+              </Tooltip>
+            </BlockchainIcon>
           </BlockchainSupport>
+
         </HeroContent>
 
         <MobileMockup>
