@@ -1,23 +1,14 @@
 # KiloLend
 
-**KiloLend** is a stablecoin-focused decentralized lending protocol on **LINE Mini Dapp** that integrates an intelligent AI agent with a distinct character to help onboard new Web3 users. Interest rates adjust dynamically based on market utilization and the risk model assigned to each asset class, supported by real-time oracles like **Pyth** and **Orakl**, while the AI powered by the **AWS Bedrock AI engine** using the **Claude 4** model.
-
-<img width="1920" height="1080" alt="Kilolend - KRW Stablecoin Hackathon  (1)" src="https://github.com/user-attachments/assets/e609d4b4-1ba4-4373-9160-1ccd26802615" />
-
-## Links
-
-- LINE Mini Dapp: https://liff.line.me/2007932254-AVnKMMp9
-- Web Access: https://kilolend.xyz/
-- Dune Analytics: https://dune.com/pisuthd/kilolend-protocol-analytics
+**KiloLend** is a stablecoin-focused decentralized lending protocol on **LINE Mini Dapp** that integrates an intelligent AI agent with a distinct character to help onboard new Web3 users. Interest rates adjust dynamically based on market utilization and the risk model assigned to each asset class, supported by **cross-chain price oracle infrastructure**, while the AI powered by the **AWS Bedrock AI engine** using the **Claude 4** model.
 
 ## Highlighted Features
 
-- **Live on KAIA Mainnet**, built with **LINE Dapp Starter** and **LIFF SDK**
-- **Compound V2 Fork** – built on battle-tested Compound V2 code with minimal modifications
-- **Stablecoin-focused** – custom risk models supporting seamless stablecoin ↔ volatile asset lending
+- **Live on Mainnet**, launched via LINE Mini Dapp stack using LINE Dapp Starter and LIFF SDK, with multi-chain expansion in progress
+- **Battle-tested Lending Architecture** – built on proven money market design patterns adapted for KiloLend
+- **Stablecoin-focused** – optimized risk models supporting stablecoin and volatile asset lending pairs
 - **Gamification with KILO Points** – earned by active users and converted 1:1 into KILO tokens at launch
-- **AI Agent Chat** – distinct LINE-style characters that help analyze portfolio performance and lending markets in real time
-- **Social Growth System** – invite friends to multiply KILO points with up to 2x multipliers
+- **AI DeFi Co-pilot Agent** – executes DeFi strategies across multiple protocols through intent-based chat commands, handling routing, execution, and on-chain transactions automatically
 
 ## System Overview
 
@@ -235,32 +226,6 @@ npm run dev:https
 # or
 pnpm dev:https
 ```
-
-## Roadmap
-
-### Q3/2025 (Complete)
-- Successfully launched V1 on KAIA Mainnet with full lending protocol functionality  
-- Started off-chain KILO points program
-- Supported 5 assets: USDT, KAIA, BORA, SIX, MBX with different risk models  
-- Client-side AI agent assistance for user guidance  
-
-### Q4/2025
-- Implement autonomous agent framework 
-- MCP plugin to facilitate agent operations and support major DeFi protocols on KAIA
-- Enable automated execution based on user-defined strategies
-- Complete tokenomics design and prepare TGE documentation   
-
-### Q1/2026
-- Conduct full security audits and optimize performance
-- Execute Token Generation Event (TGE) and public token launch   
-- Integrate token utilities across the platform ecosystem  
-- Begin token distribution to early adopters and community members
-
-### Q2/2026
-- Enable purchase of various stablecoins via credit card and other methods
-- Expand partnership network with institutional clients and DeFi protocols  
-- Launch V2 of lending contracts with KILO token integration  
-- Enhance yield opportunities and optimization features
 
 ## Deployment (KAIA Mainnet)
 
