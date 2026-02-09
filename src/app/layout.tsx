@@ -6,6 +6,10 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/components/Query/QueryClient.hooks";
 import StyledComponentsRegistry from "@/components/StyledComponentsRegistry";
 import { GoogleAnalytics } from '@next/third-parties/google'
+import { WagmiProvider } from 'wagmi'
+import { config } from '@/wagmi_config';
+
+import Providers from "./providers";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,11 +36,11 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`} style={{ margin: 0, backgroundColor: '#f1f5f9' }}>
         <StyledComponentsRegistry>
-          <QueryClientProvider client={queryClient}>
+          <Providers>
             <LayoutWrapper>
               {children}
-            </LayoutWrapper>
-          </QueryClientProvider>
+            </LayoutWrapper> 
+          </Providers>
         </StyledComponentsRegistry>
       </body>
       <GoogleAnalytics gaId="G-QNBVXZZR9E" />

@@ -2,6 +2,7 @@
 
 import styled from 'styled-components';
 import { useState } from 'react';
+import { useChain } from '@/contexts/ChainContext';
 
 // Hero Section Styles
 const HeroSectionWrapper = styled.section` 
@@ -313,7 +314,17 @@ interface HeroSectionProps {
 }
 
 export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) => {
+  const { selectedChain } = useChain();
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
+
+  const getPrimaryButtonText = () => {
+    if (selectedChain === 'kaia') {
+      return 'Get Started on LINE';
+    } else if (selectedChain === 'kub') {
+      return 'Connect Web3 Wallet';
+    }
+    return 'Get Started';
+  };
 
   return (
     <HeroSectionWrapper>
@@ -321,12 +332,12 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
         <HeroContent>
           <HeroTitle>DeFi Made Easy on LINE — Earn, Borrow & Swap with AI</HeroTitle>
           <HeroSubtitle>
-            KiloLend lets you earn yield, borrow assets, and swap tokens using simple chat commands — no complex inputs, no DeFi knowledge required.
+            KiloLend lets you earn yield, borrow assets, and swap tokens across blockchains using simple chat commands — no complex inputs, no DeFi knowledge required.
           </HeroSubtitle>
-          
+
           <CTAContainer>
             <PrimaryButton onClick={onGetStarted}>
-              Get Started on LINE
+              {getPrimaryButtonText()}
             </PrimaryButton>
             <SecondaryButton onClick={onTryDesktop}>
               Try Desktop Version
@@ -336,25 +347,25 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
           {/* Blockchain Support Section */}
           <BlockchainSupport>
             <SupportLabel>Blockchains supported:</SupportLabel>
-            <BlockchainIcon 
+            <BlockchainIcon
               onMouseEnter={() => setTooltipVisible('kaia')}
               onMouseLeave={() => setTooltipVisible(null)}
             >
-              <IconImage 
-                src="/images/blockchain-icons/kaia-token-icon.png" 
-                alt="KAIA" 
+              <IconImage
+                src="/images/blockchain-icons/kaia-token-icon.png"
+                alt="KAIA"
               />
               <Tooltip $visible={tooltipVisible === 'kaia'}>
                 KAIA Mainnet
               </Tooltip>
             </BlockchainIcon>
-            <BlockchainIcon 
+            <BlockchainIcon
               onMouseEnter={() => setTooltipVisible('kub')}
               onMouseLeave={() => setTooltipVisible(null)}
             >
-              <IconImage 
-                src="/images/blockchain-icons/kub-chain-icon.png" 
-                alt="KUB" 
+              <IconImage
+                src="/images/blockchain-icons/kub-chain-icon.png"
+                alt="KUB"
               />
               <Tooltip $visible={tooltipVisible === 'kub'}>
                 KUB Chain
@@ -420,9 +431,9 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
                     🐍 You can borrow 50 KAIA! Your health factor is strong at 2.0 🛡️
                   </AnimatedChatBubble>
                 </AIResponse>
- 
- 
- 
+
+
+
               </ChatInterface>
             </PhoneScreen>
           </PhoneFrame>

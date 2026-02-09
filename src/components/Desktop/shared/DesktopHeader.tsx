@@ -6,14 +6,18 @@ import { WalletButton } from '@/components/Wallet/Button/WalletButton';
 import { useWalletAccountStore } from "@/components/Wallet/Account/auth.hooks";
 import { useKaiaWalletSdk } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import Blockies from 'react-blockies';
+import { ChainToggle } from "@/components/Wallet/ChainToggle/ChainToggle"; 
+import { useChain } from '@/contexts/ChainContext';
 import { Settings, Clock, CreditCard, DollarSign, LogOut } from "react-feather"
 import { useModalStore } from '@/stores/modalStore';
 import { useAppStore } from '@/stores/appStore';
 import { liff } from "@/utils/liff";
 import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
 import { useRouter, usePathname } from 'next/navigation';
-import { DesktopWalletAddressModal, DesktopSettingsModal } from '../modals';
+import { DesktopWalletAddressModal, DesktopSettingsModal, NetworkSwitchModal } from '../modals';
 import { signatureService } from '@/services/signatureService';
+import { useAccount, useChainId } from 'wagmi';
+import { kaia, kubChain } from '@/wagmi_config';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -77,7 +81,7 @@ const RightSection = styled.div`
   gap: 16px;
 `;
 
-const NetworkBadge = styled.div`
+const NetworkBadge = styled.div<{ $clickable?: boolean }>`
   display: flex;
   align-items: center;
   gap: 8px;
@@ -89,10 +93,11 @@ const NetworkBadge = styled.div`
   font-size: 14px;
   font-weight: 500;
   transition: all 0.2s;
+  cursor: ${({ $clickable }) => $clickable ? 'pointer' : 'default'};
   
   &:hover {
-    border-color: #06C755;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-color: ${({ $clickable }) => $clickable ? '#06C755' : '#e2e8f0'};
+    box-shadow: ${({ $clickable }) => $clickable ? '0 2px 8px rgba(0, 0, 0, 0.1)' : 'none'};
   }
 `;
 
@@ -222,9 +227,48 @@ export const DesktopHeader = () => {
   const { account, setAccount } = useWalletAccountStore();
   const [showDropdown, setShowDropdown] = useState(false);
   const { disconnectWallet } = useKaiaWalletSdk();
+  const { selectedChain } = useChain();
+  const { isConnected: isWeb3Connected } = useAccount();
+  const wagmiChainId = useChainId();
   const router = useRouter();
   const pathname = usePathname();
+  const [showNetworkModal, setShowNetworkModal] = useState(false);
+ 
+  // Determine the actual network to display
+  const getNetworkInfo = () => {
+    if (selectedChain === 'kaia') {
+      // Using LINE SDK - always KAIA chain
+      return {
+        name: 'KAIA',
+        icon: '/images/blockchain-icons/kaia-token-icon.png',
+        alt: 'KAIA'
+      };
+    } else if (selectedChain === 'kub' && isWeb3Connected) {
+      // Using Web3 wallet - check actual chain
+      if (wagmiChainId === kaia.id) {
+        return {
+          name: 'KAIA',
+          icon: '/images/blockchain-icons/kaia-token-icon.png',
+          alt: 'KAIA'
+        };
+      } else if (wagmiChainId === kubChain.id) {
+        return {
+          name: 'KUB',
+          icon: '/images/blockchain-icons/kub-chain-icon.png',
+          alt: 'KUB'
+        };
+      }
+    }
+    
+    // Fallback - shouldn't happen but provide safe default
+    return {
+      name: 'KAIA',
+      icon: '/images/blockchain-icons/kaia-token-icon.png',
+      alt: 'KAIA'
+    };
+  };
 
+  const networkInfo = getNetworkInfo();
   const handleNavigation = (path: string) => {
     router.push(path);
   };
@@ -320,9 +364,22 @@ export const DesktopHeader = () => {
         
         <RightSection>
           {!account ? (
-            <ConnectButton />
+            <>
+              <ChainToggle />
+              <ConnectButton />
+            </>
           ) : (
             <>
+              <NetworkBadge 
+                $clickable={selectedChain === 'kub'}
+                onClick={() => selectedChain === 'kub' && setShowNetworkModal(true)}
+              >
+                <NetworkIcon 
+                  src={networkInfo.icon}
+                  alt={networkInfo.alt}
+                />
+                {networkInfo.name}
+              </NetworkBadge>
               <IconButton onClick={handleSettings}>
                 <Settings size={20} />
               </IconButton>
@@ -337,7 +394,7 @@ export const DesktopHeader = () => {
                   <ConnectedStatus>Connected</ConnectedStatus>
                   <WalletAddress>{formatAddress(account)}</WalletAddress>
                 </ProfileInfo>
-              </ProfileSection>
+              </ProfileSection> 
               
               <DropdownMenu $isOpen={showDropdown}>
                 <DropdownItem onClick={handleViewQR}> 
@@ -353,7 +410,7 @@ export const DesktopHeader = () => {
               </DropdownMenu>
             </>
           )}
-        </RightSection>
+        </RightSection> 
       </HeaderContainer>
 
       <DesktopWalletAddressModal
@@ -365,6 +422,11 @@ export const DesktopHeader = () => {
       <DesktopSettingsModal
         isOpen={activeModal === 'settings'}
         onClose={() => closeModal()}
+      />
+
+      <NetworkSwitchModal
+        isOpen={showNetworkModal}
+        onClose={() => setShowNetworkModal(false)}
       />
     </>
   );
