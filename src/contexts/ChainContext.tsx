@@ -2,61 +2,93 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
-export type ChainType = 'kaia' | 'kub';
+export type AuthMethod = 'line_sdk' | 'web3_wallet';
 
-interface ChainContextType {
-  selectedChain: ChainType;
-  setSelectedChain: (chain: ChainType) => void;
-  isChainConnected: boolean;
+interface AuthContextType {
+  selectedAuthMethod: AuthMethod;
+  setSelectedAuthMethod: (authMethod: AuthMethod) => void;
+  isAuthConnected: boolean;
 }
 
-const ChainContext = createContext<ChainContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const useChain = () => {
-  const context = useContext(ChainContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useChain must be used within a ChainProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };
 
-interface ChainProviderProps {
+// Backward compatibility - keep the old hook name for now
+export const useChain = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useChain must be used within an AuthProvider');
+  }
+  // Map old interface to new one for backward compatibility
+  return {
+    selectedChain: context.selectedAuthMethod,
+    setSelectedChain: context.setSelectedAuthMethod,
+    isChainConnected: context.isAuthConnected,
+  };
+};
+
+interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const ChainProvider = ({ children }: ChainProviderProps) => {
-  const [selectedChain, setSelectedChainState] = useState<ChainType>('kaia');
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [selectedAuthMethod, setSelectedAuthMethodState] = useState<AuthMethod>('line_sdk');
 
-  // Load selected chain from localStorage on mount
+  // Load selected auth method from localStorage on mount
   useEffect(() => {
-    const storedChain = localStorage.getItem('selectedChain') as ChainType;
-    if (storedChain && (storedChain === 'kaia' || storedChain === 'kub')) {
-      setSelectedChainState(storedChain);
+    // Check for old key first for migration
+    const oldStoredChain = localStorage.getItem('selectedChain');
+    if (oldStoredChain) {
+      // Migrate old values to new ones
+      if (oldStoredChain === 'kaia') {
+        setSelectedAuthMethodState('line_sdk');
+        localStorage.setItem('selectedAuthMethod', 'line_sdk');
+        localStorage.removeItem('selectedChain');
+      } else if (oldStoredChain === 'kub') {
+        setSelectedAuthMethodState('web3_wallet');
+        localStorage.setItem('selectedAuthMethod', 'web3_wallet');
+        localStorage.removeItem('selectedChain');
+      }
+    } else {
+      const storedAuthMethod = localStorage.getItem('selectedAuthMethod') as AuthMethod;
+      if (storedAuthMethod && (storedAuthMethod === 'line_sdk' || storedAuthMethod === 'web3_wallet')) {
+        setSelectedAuthMethodState(storedAuthMethod);
+      }
     }
   }, []);
 
-  // Save selected chain to localStorage when it changes
+  // Save selected auth method to localStorage when it changes
   useEffect(() => {
-    localStorage.setItem('selectedChain', selectedChain);
-  }, [selectedChain]);
+    localStorage.setItem('selectedAuthMethod', selectedAuthMethod);
+  }, [selectedAuthMethod]);
 
-  const setSelectedChain = (chain: ChainType) => {
-    setSelectedChainState(chain);
+  const setSelectedAuthMethod = (authMethod: AuthMethod) => {
+    setSelectedAuthMethodState(authMethod);
   };
 
-  // For now, we'll consider chain "connected" when it's selected
+  // For now, we'll consider auth "connected" when it's selected
   // Later this could be enhanced to check actual wallet connection status
-  const isChainConnected = true;
+  const isAuthConnected = true;
 
   return (
-    <ChainContext.Provider
+    <AuthContext.Provider
       value={{
-        selectedChain,
-        setSelectedChain,
-        isChainConnected,
+        selectedAuthMethod,
+        setSelectedAuthMethod,
+        isAuthConnected,
       }}
     >
       {children}
-    </ChainContext.Provider>
+    </AuthContext.Provider>
   );
 };
+
+// Keep the old ChainProvider name for backward compatibility
+export const ChainProvider = AuthProvider;

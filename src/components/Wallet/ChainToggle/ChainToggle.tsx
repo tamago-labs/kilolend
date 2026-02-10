@@ -24,16 +24,17 @@ const ChainOption = styled.div<{ $active: boolean }>`
   cursor: pointer;
   transition: all 0.2s ease;
   font-size: 14px;
-  font-weight: 500;
-  background: ${({ $active }) => $active ? 'white' : 'transparent'};
-  color: ${({ $active }) => $active ? '#1e293b' : '#64748b'};
+  font-weight: 600;
+  background: ${({ $active }) => $active ? '#06C755' : 'transparent'};
+  color: ${({ $active }) => $active ? 'white' : '#64748b'};
   border: 1px solid ${({ $active }) => $active ? '#06C755' : 'transparent'};
-  box-shadow: ${({ $active }) => $active ? '0 2px 8px rgba(6, 199, 85, 0.15)' : 'none'};
+  box-shadow: ${({ $active }) => $active ? '0 2px 8px rgba(6, 199, 85, 0.25)' : 'none'};
   position: relative;
 
   &:hover {
-    background: ${({ $active }) => $active ? 'white' : '#f1f5f9'};
-    color: #1e293b;
+    background: ${({ $active }) => $active ? '#05b54e' : '#f1f5f9'};
+    color: ${({ $active }) => $active ? 'white' : '#1e293b'};
+    box-shadow: ${({ $active }) => $active ? '0 4px 12px rgba(6, 199, 85, 0.35)' : 'none'};
   }
 `;
 
@@ -76,8 +77,8 @@ export const ChainToggle = () => {
   return (
     <ChainToggleContainer>
       <ChainOption
-        $active={selectedChain === 'kaia'}
-        onClick={() => setSelectedChain('kaia')}
+        $active={selectedChain === 'line_sdk'}
+        onClick={() => setSelectedChain('line_sdk')}
         onMouseEnter={() => setTooltipVisible('social')}
         onMouseLeave={() => setTooltipVisible(null)}
       > 
@@ -87,8 +88,8 @@ export const ChainToggle = () => {
         </Tooltip>
       </ChainOption>
       <ChainOption 
-        $active={selectedChain === 'kub'}
-        onClick={() => setSelectedChain('kub')}
+        $active={selectedChain === 'web3_wallet'}
+        onClick={() => setSelectedChain('web3_wallet')}
         onMouseEnter={() => setTooltipVisible('web3')}
         onMouseLeave={() => setTooltipVisible(null)}
       >
@@ -99,4 +100,4 @@ export const ChainToggle = () => {
       </ChainOption>
     </ChainToggleContainer>
   );
-}; 
+};

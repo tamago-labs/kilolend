@@ -236,14 +236,14 @@ export const DesktopHeader = () => {
  
   // Determine the actual network to display
   const getNetworkInfo = () => {
-    if (selectedChain === 'kaia') {
+    if (selectedChain === 'line_sdk') {
       // Using LINE SDK - always KAIA chain
       return {
         name: 'KAIA',
         icon: '/images/blockchain-icons/kaia-token-icon.png',
         alt: 'KAIA'
       };
-    } else if (selectedChain === 'kub' && isWeb3Connected) {
+    } else if (selectedChain === 'web3_wallet' && isWeb3Connected) {
       // Using Web3 wallet - check actual chain
       if (wagmiChainId === kaia.id) {
         return {
@@ -371,8 +371,8 @@ export const DesktopHeader = () => {
           ) : (
             <>
               <NetworkBadge 
-                $clickable={selectedChain === 'kub'}
-                onClick={() => selectedChain === 'kub' && setShowNetworkModal(true)}
+                $clickable={selectedChain === 'web3_wallet'}
+                onClick={() => selectedChain === 'web3_wallet' && setShowNetworkModal(true)}
               >
                 <NetworkIcon 
                   src={networkInfo.icon}

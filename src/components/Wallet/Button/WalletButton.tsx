@@ -32,9 +32,9 @@ export const WalletButton = () => {
  
 
   const handleClick = async () => {
-    if (selectedChain === 'kaia') {
+    if (selectedChain === 'line_sdk') {
       await handleKaiaConnect();
-    } else if (selectedChain === 'kub') {
+    } else if (selectedChain === 'web3_wallet') {
       setShowWalletModal(true);
     }
   };
@@ -59,7 +59,7 @@ export const WalletButton = () => {
   };
 
   const getButtonIcon = () => {
-    if (selectedChain === 'kub') {
+    if (selectedChain === 'web3_wallet') {
       return (
         <>
           {/* <img 

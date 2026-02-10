@@ -22,9 +22,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "KiloLend | DeFi Lending on KAIA for LINE Users",
+  title: "KiloLend | AI-Agent Native DeFi Platform",
   description:
-    "KiloLend brings DeFi lending on KAIA to LINE with an AI co-pilot that handles lending, borrowing, and swaps — no spreadsheets, no complex workflows.",
+    "KiloLend is an AI-agent-native DeFi platform for lending, borrowing, and swapping assets, built for autonomous agents and smart wallets with on-chain execution.",
 };
 
 export default function RootLayout({

@@ -318,9 +318,9 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
 
   const getPrimaryButtonText = () => {
-    if (selectedChain === 'kaia') {
+    if (selectedChain === 'line_sdk') {
       return 'Get Started on LINE';
-    } else if (selectedChain === 'kub') {
+    } else if (selectedChain === 'web3_wallet') {
       return 'Connect Web3 Wallet';
     }
     return 'Get Started';

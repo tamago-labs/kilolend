@@ -60,7 +60,7 @@ export const WalletSelectionModal = ({ isOpen, onClose, onWalletSelect }: Wallet
             fontSize: '14px', 
             color: '#64748b' 
           }}>
-            Choose your preferred wallet to connect to the dapp
+            Choose your preferred wallet to connect with us
           </p>
         </div>
 
@@ -96,7 +96,7 @@ export const WalletSelectionModal = ({ isOpen, onClose, onWalletSelect }: Wallet
             e.currentTarget.style.color = '#64748b';
           }}
         >
-          Cancel
+          Close
         </button>
       </div>
     </div>
