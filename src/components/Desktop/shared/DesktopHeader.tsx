@@ -222,6 +222,24 @@ const DisconnectItem = styled(DropdownItem)`
   }
 `;
 
+const BrandContainer = styled.div`
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  margin-right: 32px;
+`;
+
+const BrandName = styled.div`
+  font-size: 24px;
+  font-weight: bold;
+  font-style: italic;
+  color: #06C755; 
+  
+  &:hover { 
+    transform: translateY(-1px);
+  }
+`;
+
 export const DesktopHeader = () => {
   const { openModal, closeModal, activeModal } = useModalStore();
   const { account, setAccount } = useWalletAccountStore();
@@ -273,6 +291,10 @@ export const DesktopHeader = () => {
     router.push(path);
   };
 
+  const handleBrandClick = () => {
+    router.push('/home');
+  };
+
   const handleDisconnect = useCallback(() => {
 
     // Clear signature state on disconnect
@@ -319,9 +341,7 @@ export const DesktopHeader = () => {
     }
 
     const accountUrl = `${blockExplorerUrl}/address/${account}?tabId=txList&page=1`;
-
-    console.log("accountUrl:", accountUrl)
-
+ 
     if (liff.isInClient()) {
       liff.openWindow({
         url: accountUrl,
@@ -339,10 +359,21 @@ export const DesktopHeader = () => {
     }
   };
 
-  const handleViewBalances = () => {
-    router.push('/balances');
+  const handleViewPortfolio = () => {
+    router.push('/portfolio');
     setShowDropdown(false);
   };
+
+  const handleApiKeys = () => {
+    router.push('/api-keys');
+    setShowDropdown(false);
+  };
+
+  const handleAgentWallets = () => {
+    router.push('/agent-wallets');
+    setShowDropdown(false);
+  };
+
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -351,34 +382,40 @@ export const DesktopHeader = () => {
   return (
     <>
       <HeaderContainer>
-        <LeftSection>
-          {/*<Logo>
-            <LogoIcon src="./images/kilolend-logo-desktop.png" alt="KiloLend" /> 
-          </Logo>*/}
-          <Navigation> 
-            <NavItem 
+        <LeftSection> 
+          <BrandContainer onClick={handleBrandClick}>
+            <BrandName>KiloLend</BrandName>
+          </BrandContainer>
+          <Navigation>  
+            {/*<NavItem 
               className={(pathname === '/home' || pathname === '/') ? 'active' : ''}
               onClick={() => handleNavigation('/home')}
             >
               Home
-            </NavItem>
+            </NavItem>*/}
             <NavItem 
               className={pathname === '/markets' ? 'active' : ''}
               onClick={() => handleNavigation('/markets')}
             >
-              Markets
+              Earn & Borrow
+            </NavItem>
+            <NavItem 
+              className={pathname === '/swap' ? 'active' : ''}
+              onClick={() => handleNavigation('/swap')}
+            >
+              Swap
+            </NavItem> 
+            <NavItem 
+              className={pathname === '/leaderboard' ? 'active' : ''}
+              onClick={() => handleNavigation('/leaderboard')}
+            >
+              Leaderboard
             </NavItem>
             <NavItem 
               className={pathname === '/portfolio' ? 'active' : ''}
               onClick={() => handleNavigation('/portfolio')}
             >
               Portfolio
-            </NavItem>
-            <NavItem 
-              className={pathname === '/leaderboard' ? 'active' : ''}
-              onClick={() => handleNavigation('/leaderboard')}
-            >
-              Leaderboard
             </NavItem>
           </Navigation>
         </LeftSection>
@@ -417,12 +454,21 @@ export const DesktopHeader = () => {
                 </ProfileInfo>
               </ProfileSection> 
               
-              <DropdownMenu $isOpen={showDropdown}>
-                <DropdownItem onClick={handleViewQR}> 
+              <DropdownMenu $isOpen={showDropdown}> 
+                { selectedChain === 'line_sdk' && (
+                  <DropdownItem onClick={handleViewQR}> 
                   Wallet Details
                 </DropdownItem>
-                <DropdownItem onClick={handleViewBalances}> 
-                  View Balances
+                  ) 
+                } 
+                <DropdownItem onClick={handleViewPortfolio}> 
+                  My Portfolio
+                </DropdownItem>
+                 <DropdownItem onClick={handleAgentWallets}> 
+                  Agent Wallets
+                </DropdownItem>
+                <DropdownItem onClick={handleApiKeys}> 
+                  Agent API Keys
                 </DropdownItem>
                 <DropdownSeparator />
                 <DisconnectItem onClick={handleDisconnect}> 

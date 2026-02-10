@@ -126,7 +126,7 @@ export const SplashScreen = ({ onFinish }: SplashScreenProps) => {
       </LogoContainer>
       <LoadingContainer>
         <Spinner />
-        <LoadingText>{"DeFi Lending Made Simple on LINE"}</LoadingText>
+        <LoadingText>{"DeFi Made Simple for Everyone"}</LoadingText>
       </LoadingContainer>
     </SplashContainer>
   );

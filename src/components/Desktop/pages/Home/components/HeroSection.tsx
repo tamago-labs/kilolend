@@ -61,6 +61,8 @@ const PrimaryButton = styled.button`
   cursor: pointer;
   transition: all 0.3s;
   box-shadow: 0 4px 16px rgba(6, 199, 85, 0.25);
+  min-width: 160px;
+  width: 200px;
 
   &:hover {
     transform: translateY(-2px);
@@ -78,6 +80,8 @@ const SecondaryButton = styled.button`
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s;
+  min-width: 160px;
+  width: 200px;
 
   &:hover {
     background: #06C755;
@@ -147,14 +151,7 @@ const Tooltip = styled.div<{ $visible?: boolean }>`
   }
 `;
 
-// Mobile Mockup Styles
-const MobileMockup = styled.div`
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
+// Phone components must be defined before MobileMockup to avoid hoisting issues
 const PhoneFrame = styled.div`
   width: 320px;
   height: 640px;
@@ -163,6 +160,7 @@ const PhoneFrame = styled.div`
   padding: 12px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   position: relative;
+  transition: box-shadow 0.3s ease;
 `;
 
 const PhoneScreen = styled.div`
@@ -308,6 +306,24 @@ const LoadingDots = styled.div<{ $delay?: number; $duration?: number }>`
   }
 `;
 
+// Mobile Mockup Styles - defined after PhoneFrame to avoid hoisting issues
+const MobileMockup = styled.div`
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-8px);
+    
+    ${PhoneFrame} {
+      box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+    }
+  }
+`;
+
 interface HeroSectionProps {
   onGetStarted: () => void;
   onTryDesktop: () => void;
@@ -316,15 +332,7 @@ interface HeroSectionProps {
 export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) => {
   const { selectedChain } = useChain();
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
-
-  const getPrimaryButtonText = () => {
-    // if (selectedChain === 'line_sdk') {
-    //   return 'Get Started on LINE';
-    // } else if (selectedChain === 'web3_wallet') {
-    //   return 'Connect Web3 Wallet';
-    // }
-    return 'Get Started on LINE';
-  };
+ 
 
   return (
     <HeroSectionWrapper>
@@ -337,10 +345,10 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
 
           <CTAContainer>
             <PrimaryButton onClick={onGetStarted}>
-              {getPrimaryButtonText()}
+              Use as Human
             </PrimaryButton>
             <SecondaryButton onClick={onTryDesktop}>
-              Use With AI-Agent
+              Use as AI-Agent
             </SecondaryButton>
           </CTAContainer>
 
@@ -375,7 +383,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
 
         </HeroContent>
 
-        <MobileMockup>
+        <MobileMockup onClick={onGetStarted}>
           <PhoneFrame>
             <PhoneScreen>
               <LINEHeader>KiloLend on LINE</LINEHeader>
