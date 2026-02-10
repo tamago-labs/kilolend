@@ -299,7 +299,28 @@ export const DesktopHeader = () => {
       return;
     }
 
-    const accountUrl = `${KAIA_SCAN_URL}/address/${account}?tabId=txList&page=1`;
+    // Determine the correct block explorer URL based on the current chain
+    let blockExplorerUrl;
+    if (selectedChain === 'line_sdk') {
+      // Using LINE SDK - always KAIA chain
+      blockExplorerUrl = KAIA_SCAN_URL;
+    } else if (selectedChain === 'web3_wallet' && isWeb3Connected) {
+      // Using Web3 wallet - check actual chain
+      console.log("wagmiChainId", wagmiChainId, kaia.id, kubChain.id )
+      if (wagmiChainId === kaia.id) {
+        blockExplorerUrl = KAIA_SCAN_URL;
+      } else if (wagmiChainId === kubChain.id) {
+        blockExplorerUrl = "https://www.kubscan.com";
+      } else {
+        blockExplorerUrl = KAIA_SCAN_URL; // fallback
+      }
+    } else {
+      blockExplorerUrl = KAIA_SCAN_URL; // fallback
+    }
+
+    const accountUrl = `${blockExplorerUrl}/address/${account}?tabId=txList&page=1`;
+
+    console.log("accountUrl:", accountUrl)
 
     if (liff.isInClient()) {
       liff.openWindow({

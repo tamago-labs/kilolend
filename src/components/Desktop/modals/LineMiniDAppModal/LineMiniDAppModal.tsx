@@ -55,6 +55,29 @@ const QRDescription = styled.p`
   line-height: 1.5;
 `;
 
+const ChainNotice = styled.div`
+  background: #fef3c7;
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+`;
+
+const ChainNoticeIcon = styled.div`
+  color: #f59e0b;
+  font-size: 20px;
+  flex-shrink: 0;
+`;
+
+const ChainNoticeText = styled.div`
+  font-size: 14px;
+  color: #92400e;
+  line-height: 1.5;
+`;
+
 const ActionSection = styled.div`
   display: flex;
   flex-direction: column;
@@ -128,6 +151,7 @@ export const LineMiniDAppModal = ({ isOpen, onClose }: LineMiniDAppModalProps) =
   return (
     <DesktopBaseModal isOpen={isOpen} onClose={onClose} title="LINE Mini DApp">
       <ModalContainer>
+       
         <QRSection>
           <QRInstructions>
             <QRTitle>Scan to Open in LINE</QRTitle>
@@ -160,6 +184,12 @@ export const LineMiniDAppModal = ({ isOpen, onClose }: LineMiniDAppModalProps) =
          
         </ActionSection>
         </QRSection>
+         <ChainNotice>
+          <ChainNoticeIcon>⚠️</ChainNoticeIcon>
+          <ChainNoticeText>
+            <strong>KAIA Chain Support:</strong> LINE Mini DApp currently works with KAIA chain only.
+          </ChainNoticeText>
+        </ChainNotice>
 
         
       </ModalContainer>

@@ -318,21 +318,21 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
 
   const getPrimaryButtonText = () => {
-    if (selectedChain === 'line_sdk') {
-      return 'Get Started on LINE';
-    } else if (selectedChain === 'web3_wallet') {
-      return 'Connect Web3 Wallet';
-    }
-    return 'Get Started';
+    // if (selectedChain === 'line_sdk') {
+    //   return 'Get Started on LINE';
+    // } else if (selectedChain === 'web3_wallet') {
+    //   return 'Connect Web3 Wallet';
+    // }
+    return 'Get Started on LINE';
   };
 
   return (
     <HeroSectionWrapper>
       <HeroContainer>
         <HeroContent>
-          <HeroTitle>DeFi Made Easy on LINE — Earn, Borrow & Swap with AI</HeroTitle>
+          <HeroTitle>DeFi Built for AI Agents — Simple for You</HeroTitle>
           <HeroSubtitle>
-            KiloLend lets you earn yield, borrow assets, and swap tokens across blockchains using simple chat commands — no complex inputs, no DeFi knowledge required.
+           KiloLend brings AI-agent-powered DeFi to everyone, enabling automated lending, borrowing, and swaps with simple user access and LINE-based login.
           </HeroSubtitle>
 
           <CTAContainer>
@@ -340,7 +340,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
               {getPrimaryButtonText()}
             </PrimaryButton>
             <SecondaryButton onClick={onTryDesktop}>
-              Try Desktop Version
+              Use With AI-Agent
             </SecondaryButton>
           </CTAContainer>
 
