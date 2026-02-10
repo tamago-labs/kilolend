@@ -5,8 +5,7 @@ import styled from 'styled-components';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract } from '@/hooks/v1/useMarketContract'; 
-import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
-import { useModalStore } from '@/stores/modalStore';
+import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower'; 
 
 // Import desktop components
 import { DesktopPortfolioHeader } from './components/DesktopPortfolioHeader';
@@ -289,29 +288,6 @@ export const DesktopPortfolio = () => {
       <LoadingSpinner />
       <LoadingTitle>Loading Your Portfolio</LoadingTitle>
       <LoadingSubtitle>Fetching your positions and calculating borrowing power...</LoadingSubtitle>
-      
-      {/* <PortfolioStatsSkeleton>
-        <StatCardSkeleton>
-          <StatSkeletonLine $width="60%" $height="12px" />
-          <StatSkeletonLine $width="40%" $height="24px" />
-          <StatSkeletonLine $width="80%" $height="14px" />
-        </StatCardSkeleton>
-        <StatCardSkeleton>
-          <StatSkeletonLine $width="60%" $height="12px" />
-          <StatSkeletonLine $width="40%" $height="24px" />
-          <StatSkeletonLine $width="80%" $height="14px" />
-        </StatCardSkeleton>
-        <StatCardSkeleton>
-          <StatSkeletonLine $width="60%" $height="12px" />
-          <StatSkeletonLine $width="40%" $height="24px" />
-          <StatSkeletonLine $width="80%" $height="14px" />
-        </StatCardSkeleton>
-        <StatCardSkeleton>
-          <StatSkeletonLine $width="60%" $height="12px" />
-          <StatSkeletonLine $width="40%" $height="24px" />
-          <StatSkeletonLine $width="80%" $height="14px" />
-        </StatCardSkeleton>
-      </PortfolioStatsSkeleton> */}
     </LoadingState>
   );
 

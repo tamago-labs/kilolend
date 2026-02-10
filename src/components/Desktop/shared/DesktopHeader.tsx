@@ -8,7 +8,7 @@ import { useKaiaWalletSdk } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import Blockies from 'react-blockies';
 import { ChainToggle } from "@/components/Wallet/ChainToggle/ChainToggle"; 
 import { useChain } from '@/contexts/ChainContext';
-import { Settings, Clock, CreditCard, DollarSign, LogOut } from "react-feather"
+import { Settings, Clock, CreditCard, DollarSign, LogOut, ChevronDown } from "react-feather"
 import { useModalStore } from '@/stores/modalStore';
 import { useAppStore } from '@/stores/appStore';
 import { liff } from "@/utils/liff";
@@ -240,10 +240,51 @@ const BrandName = styled.div`
   }
 `;
 
+const NavDropdownContainer = styled.div`
+  position: relative;
+`;
+
+const NavDropdownMenu = styled.div<{ $isOpen: boolean }>`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 12px;
+  display: ${props => props.$isOpen ? 'block' : 'none'};
+  min-width: 200px;
+  z-index: 100;
+  margin-top: 8px;
+`;
+
+const NavDropdownItem = styled.div`
+  padding: 12px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1e293b;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  &:hover {
+    background: #f8fafc;
+  }
+  
+  &.active {
+    color: #06C755;
+    background: rgba(6, 199, 85, 0.1);
+  }
+`;
+
 export const DesktopHeader = () => {
   const { openModal, closeModal, activeModal } = useModalStore();
   const { account, setAccount } = useWalletAccountStore();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNavDropdown, setShowNavDropdown] = useState(false);
   const { disconnectWallet } = useKaiaWalletSdk();
   const { selectedChain } = useChain();
   const { isConnected: isWeb3Connected } = useAccount();
@@ -411,12 +452,27 @@ export const DesktopHeader = () => {
             >
               Leaderboard
             </NavItem>
-            <NavItem 
-              className={pathname === '/portfolio' ? 'active' : ''}
-              onClick={() => handleNavigation('/portfolio')}
-            >
-              Portfolio
-            </NavItem>
+            <NavDropdownContainer>
+              <NavItem 
+                className={(pathname === '/portfolio' || showNavDropdown) ? 'active' : ''}
+                onClick={() => setShowNavDropdown(!showNavDropdown)}
+                style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                More
+                <ChevronDown size={16} style={{ transition: 'transform 0.2s', transform: showNavDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+              </NavItem>
+              <NavDropdownMenu $isOpen={showNavDropdown}>
+                <NavDropdownItem 
+                  className={pathname === '/portfolio' ? 'active' : ''}
+                  onClick={() => {
+                    handleNavigation('/portfolio');
+                    setShowNavDropdown(false);
+                  }}
+                >
+                  My Portfolio
+                </NavDropdownItem>
+              </NavDropdownMenu>
+            </NavDropdownContainer>
           </Navigation>
         </LeftSection>
         

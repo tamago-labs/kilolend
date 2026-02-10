@@ -28,7 +28,7 @@ export const DesktopPortfolioHeader = ({ account, isLoading }: DesktopPortfolioH
   return (
     <HeaderContainer>
       <PageTitle>Portfolio</PageTitle>
-      <PageSubtitle>Track your lending and borrowing positions</PageSubtitle>
+      <PageSubtitle>Manage your lending activities and view your wallet balances</PageSubtitle>
     </HeaderContainer>
   );
 };

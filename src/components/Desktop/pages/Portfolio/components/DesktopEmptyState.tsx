@@ -75,7 +75,7 @@ export const DesktopEmptyState = ({ isConnected = false }: DesktopEmptyStateProp
         </EmptyStateGraphic>
         <EmptyStateTitle>Connect Your Wallet</EmptyStateTitle>
         <EmptyStateDescription>
-          Please connect your wallet to view your portfolio positions
+          Connect your wallet to manage positions and view available balances
         </EmptyStateDescription>
       </EmptyStateContainer>
     );

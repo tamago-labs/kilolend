@@ -1,7 +1,7 @@
 "use client";
 
-import { DesktopPortfolio } from '@/components/Desktop/pages/Portfolio/DesktopPortfolioPage';
+import { DesktopPortfolioV2 } from '@/components/Desktop/pages/Portfolio/DesktopPortfolioV2Page';
 
 export default function PortfolioPage() {
-  return <DesktopPortfolio />;
+  return <DesktopPortfolioV2 />;
 }
