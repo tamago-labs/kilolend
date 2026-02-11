@@ -74,7 +74,7 @@ function WalletOption({
       
       {/* Wallet Name */}
       <div style={{ flex: 1 }}>
-        <div>{connector.name}</div>
+        <div style={{ fontWeight : "600" }}>{connector.name}</div>
         {!ready && (
           <div style={{ fontSize: '12px', color: '#64748b', marginTop: '2px' }}>
             Not available

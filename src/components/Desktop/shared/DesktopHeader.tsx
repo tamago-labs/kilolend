@@ -428,7 +428,7 @@ export const DesktopHeader = () => {
             <BrandName>KiloLend</BrandName>
           </BrandContainer>
           <Navigation>  
-            {/*<NavItem 
+          {/*  <NavItem 
               className={(pathname === '/home' || pathname === '/') ? 'active' : ''}
               onClick={() => handleNavigation('/home')}
             >
@@ -469,7 +469,25 @@ export const DesktopHeader = () => {
                     setShowNavDropdown(false);
                   }}
                 >
-                  My Portfolio
+                  Portfolio
+                </NavDropdownItem>
+                <NavDropdownItem 
+                  className={pathname === '/agent-wallets' ? 'active' : ''}
+                  onClick={() => {
+                    handleNavigation('/agent-wallets');
+                    setShowNavDropdown(false);
+                  }}
+                >
+                  Setup AI-Wallet
+                </NavDropdownItem>
+                 <NavDropdownItem 
+                  className={''}
+                  onClick={() => {
+                    handleNavigation('https://docs.kilolend.xyz');
+                    setShowNavDropdown(false);
+                  }}
+                >
+                  Documentation
                 </NavDropdownItem>
               </NavDropdownMenu>
             </NavDropdownContainer>
@@ -518,7 +536,7 @@ export const DesktopHeader = () => {
                   ) 
                 } 
                 <DropdownItem onClick={handleViewPortfolio}> 
-                  My Portfolio
+                  Portfolio
                 </DropdownItem>
                  <DropdownItem onClick={handleAgentWallets}> 
                   Agent Wallets

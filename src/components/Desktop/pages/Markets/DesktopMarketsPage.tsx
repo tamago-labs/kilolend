@@ -51,7 +51,7 @@ export const DesktopMarkets = () => {
     <MarketsContainer> 
       <MainContent>
         <MarketsHeader>
-          <PageTitle>Markets</PageTitle>
+          <PageTitle>Lending Markets</PageTitle>
           <PageSubtitle>Browse and compare lending rates across all supported assets</PageSubtitle>
         </MarketsHeader>
 

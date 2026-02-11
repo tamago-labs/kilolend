@@ -142,10 +142,9 @@ export const DesktopFooter = () => {
         <BrandSection>
           <Logo src="/images/kilolend-logo-desktop.png" alt="KiloLend" />
           <BrandDescription>
-            AI-powered DeFi lending protocol on KAIA blockchain. 
-            Supply assets, borrow tokens, and let our AI agent optimize your DeFi strategy.
+            KiloLend brings AI-agent-powered DeFi to everyone, enabling automated lending, borrowing, and swaps with simple user access and LINE-based login.
           </BrandDescription>
-         {/* <SocialLinks>
+          {/* <SocialLinks>
             <SocialLink href="https://twitter.com/kilolend" target="_blank" rel="noopener noreferrer">
               <Twitter size={18} />
             </SocialLink>
@@ -164,10 +163,10 @@ export const DesktopFooter = () => {
         {/* Product Links */}
         <FooterSection>
           <SectionTitle>Product</SectionTitle>
-          <FooterLink href="/markets">Markets</FooterLink>
+          <FooterLink href="/markets">Lending Markets</FooterLink>
+          <FooterLink href="/swap">DEX</FooterLink>
           <FooterLink href="/portfolio">Portfolio</FooterLink>
           <FooterLink href="/leaderboard">Leaderboard</FooterLink>
-          {/*<FooterLink href="/home">AI Co-Pilot</FooterLink>*/}
         </FooterSection>
 
         {/* Resources */}
@@ -198,7 +197,7 @@ export const DesktopFooter = () => {
         <FooterSection>
           <SectionTitle>Community</SectionTitle>
           <FooterLink href="https://x.com/kilolend_xyz" target="_blank" rel="noopener noreferrer">Twitter/X</FooterLink>
-          <FooterLink href="https://lin.ee/r8bOhDU" target="_blank" rel="noopener noreferrer">LINE Official</FooterLink> 
+          <FooterLink href="https://lin.ee/r8bOhDU" target="_blank" rel="noopener noreferrer">LINE Official</FooterLink>
           <FooterLink href="https://github.com/tamago-labs/kilolend" target="_blank" rel="noopener noreferrer">GitHub</FooterLink>
         </FooterSection>
 
@@ -206,17 +205,17 @@ export const DesktopFooter = () => {
         <FooterSection>
           <SectionTitle>Legal</SectionTitle>
           <FooterLink href="/terms">Terms of Service</FooterLink>
-          <FooterLink href="/privacy">Privacy Policy</FooterLink> 
+          <FooterLink href="/privacy">Privacy Policy</FooterLink>
         </FooterSection>
       </FooterContainer>
 
       <BottomSection>
         <Copyright>
-          © 2025 KiloLend. All rights reserved.
+          © 2026 KiloLend. All rights reserved.
         </Copyright>
         <LegalLinks>
           <FooterLink href="/terms">Terms</FooterLink>
-          <FooterLink href="/privacy">Privacy</FooterLink> 
+          <FooterLink href="/privacy">Privacy</FooterLink>
         </LegalLinks>
       </BottomSection>
     </FooterWrapper>

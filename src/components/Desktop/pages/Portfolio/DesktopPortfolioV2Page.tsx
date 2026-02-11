@@ -18,6 +18,7 @@ import { DesktopWithdrawModal, DesktopRepayModal } from '@/components/Desktop/mo
 
 // Import components from Balances
 import { MainWalletSection } from '../Balances/components/MainWalletSection';
+import { AgentWalletsBanner } from './components/AgentWalletsBanner';
 
 const PortfolioContainer = styled.div`
   min-height: 100vh;
@@ -469,6 +470,7 @@ export const DesktopPortfolioV2 = () => {
           isLoading={isLoading}
         />
 
+       
         {/* Show loading state when account is connected and data is loading */}
         {(account && isLoading && borrowingPowerData === null) ? (
           renderLoadingState()
@@ -513,6 +515,7 @@ export const DesktopPortfolioV2 = () => {
               </StatsGrid>
             )}
 
+
             {/* Side Tab Navigation */}
             <SideTabContainer>
               <SideTabNavigation>
@@ -537,7 +540,7 @@ export const DesktopPortfolioV2 = () => {
                       Lending Positions
                     </ContentTitle>
                     <ContentSubtitle>
-                      Your active supply and borrow positions with interest rates. Manage your lending activities and track your earnings.
+                      Manage your lending activities and track your earnings.
                     </ContentSubtitle>
                     
                     {hasPositions ? (
@@ -567,7 +570,7 @@ export const DesktopPortfolioV2 = () => {
                       Wallet Balances
                     </ContentTitle>
                     <ContentSubtitle>
-                      Your available token balances that can be used for lending or borrowing. These are tokens currently in your wallet.
+                      Your available token balances that can be used for lending or borrowing.
                     </ContentSubtitle>
                     
                     {hasBalances ? (
@@ -584,6 +587,12 @@ export const DesktopPortfolioV2 = () => {
             </SideTabContainer>
           </>
         )}
+
+        
+             {/* Show AI-Agent Wallets Banner for connected users */}
+            {account && <AgentWalletsBanner />}
+
+
       </MainContent>
 
       {/* Desktop Modals - Only show when visible state is true */}
