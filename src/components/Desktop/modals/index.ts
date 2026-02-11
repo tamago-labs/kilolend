@@ -3,6 +3,7 @@ export { DesktopWalletAddressModal } from './WalletAddressModal';
 export { DesktopSettingsModal } from './SettingsModal';
 export { LineMiniDAppModal } from './LineMiniDAppModal';
 export { NetworkSwitchModal } from './NetworkSwitchModal';
+export { DesktopAIAgentModal } from './DesktopAIAgentModal';
 
 // Portfolio Modals
 export { DesktopWithdrawModal, DesktopRepayModal } from './PortfolioModal';
@@ -17,3 +18,4 @@ export type { DesktopWalletAddressModalProps } from './WalletAddressModal';
 export type { DesktopSettingsModalProps } from './SettingsModal';
 export type { LineMiniDAppModalProps } from './LineMiniDAppModal';
 export type { DesktopBaseModalProps } from './shared';
+export type { DesktopAIAgentModalProps } from './DesktopAIAgentModal';

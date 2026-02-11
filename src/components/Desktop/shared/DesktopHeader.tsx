@@ -438,7 +438,7 @@ export const DesktopHeader = () => {
               className={pathname === '/markets' ? 'active' : ''}
               onClick={() => handleNavigation('/markets')}
             >
-              Earn & Borrow
+              Lending
             </NavItem>
             <NavItem 
               className={pathname === '/swap' ? 'active' : ''}
@@ -497,7 +497,7 @@ export const DesktopHeader = () => {
         <RightSection>
           {!account ? (
             <>
-              <ChainToggle />
+              {/*<ChainToggle />*/}
               <ConnectButton />
             </>
           ) : (
@@ -541,9 +541,9 @@ export const DesktopHeader = () => {
                  <DropdownItem onClick={handleAgentWallets}> 
                   Agent Wallets
                 </DropdownItem>
-                <DropdownItem onClick={handleApiKeys}> 
+                {/*<DropdownItem onClick={handleApiKeys}> 
                   Agent API Keys
-                </DropdownItem>
+                </DropdownItem>*/}
                 <DropdownSeparator />
                 <DisconnectItem onClick={handleDisconnect}> 
                   Disconnect Wallet

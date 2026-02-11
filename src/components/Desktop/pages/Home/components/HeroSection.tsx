@@ -327,9 +327,10 @@ const MobileMockup = styled.div`
 interface HeroSectionProps {
   onGetStarted: () => void;
   onTryDesktop: () => void;
+  onAIAgent?: () => void;
 }
 
-export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) => {
+export const HeroSection = ({ onGetStarted, onTryDesktop, onAIAgent }: HeroSectionProps) => {
   const { selectedChain } = useChain();
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
  
@@ -347,7 +348,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
             <PrimaryButton onClick={onGetStarted}>
               Use as Human
             </PrimaryButton>
-            <SecondaryButton onClick={onTryDesktop}>
+            <SecondaryButton onClick={onAIAgent || onTryDesktop}>
               Use as AI-Agent
             </SecondaryButton>
           </CTAContainer>
@@ -364,7 +365,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop }: HeroSectionProps) =>
                 alt="KAIA"
               />
               <Tooltip $visible={tooltipVisible === 'kaia'}>
-                KAIA Mainnet
+                KAIA Chain
               </Tooltip>
             </BlockchainIcon>
             <BlockchainIcon

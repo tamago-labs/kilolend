@@ -8,7 +8,7 @@ import { AISection } from './components/AISection';
 import { UserTypesSection } from './components/UserTypesSection';
 import { FAQSection } from './components/FAQSection'; 
 import { useRouter } from 'next/navigation';
-import { LineMiniDAppModal } from '../../modals';
+import { LineMiniDAppModal, DesktopAIAgentModal } from '../../modals';
 import { useModalStore } from '@/stores/modalStore';
 
 const HomeContainer = styled.div`
@@ -39,6 +39,10 @@ export const DesktopHome = () => {
   const handleTryDesktop = () => {
     router.push("/markets")
   };
+
+  const handleAIAgent = () => {
+    openModal('ai-agent');
+  };
  
 
   if (!mounted) return null;
@@ -49,6 +53,7 @@ export const DesktopHome = () => {
         <HeroSection
           onGetStarted={handleGetStarted}
           onTryDesktop={handleTryDesktop}
+          onAIAgent={handleAIAgent}
         />
 
         <MarketSection
@@ -65,6 +70,11 @@ export const DesktopHome = () => {
 
       <LineMiniDAppModal
         isOpen={activeModal === 'lineMiniDApp'}
+        onClose={() => closeModal()}
+      />
+      
+      <DesktopAIAgentModal
+        isOpen={activeModal === 'ai-agent'}
         onClose={() => closeModal()}
       />
     </HomeContainer>

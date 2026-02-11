@@ -272,9 +272,8 @@ export const DesktopAgentWalletsPage = () => {
       <PortfolioContainer>
         <MainContent>
           <PageHeader>
-          <PageTitle> 
-            <Cpu size={32} />
-            AI Wallet
+          <PageTitle>  
+            Agent Wallets
           </PageTitle>
           <PageSubtitle>Manage your AI agent wallet for autonomous trading</PageSubtitle>
         </PageHeader>
@@ -298,9 +297,8 @@ export const DesktopAgentWalletsPage = () => {
     <PortfolioContainer>
       <MainContent>
         <PageHeader>
-          <PageTitle> 
-            <Cpu size={32} />
-            AI Wallet
+          <PageTitle>  
+            Agent Wallets
           </PageTitle>
           <PageSubtitle>Manage your AI agent wallet for autonomous trading</PageSubtitle>
         </PageHeader>

@@ -97,7 +97,7 @@ export const DesktopLeaderboard = () => {
       <MainContent>
         <PageHeader>
           <PageTitle> 
-            KILO Points Leaderboard
+            Leaderboard
           </PageTitle>
           <PageSubtitle>Earn KILO points daily and climb the ranks - your points are 1:1 redeemable for tokens at launch</PageSubtitle>
         </PageHeader>
