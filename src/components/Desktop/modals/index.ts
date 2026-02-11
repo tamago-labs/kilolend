@@ -4,6 +4,7 @@ export { DesktopSettingsModal } from './SettingsModal';
 export { LineMiniDAppModal } from './LineMiniDAppModal';
 export { NetworkSwitchModal } from './NetworkSwitchModal';
 export { DesktopAIAgentModal } from './DesktopAIAgentModal';
+export { DesktopWalletConnectionModal } from './DesktopWalletConnectionModal';
 
 // Portfolio Modals
 export { DesktopWithdrawModal, DesktopRepayModal } from './PortfolioModal';

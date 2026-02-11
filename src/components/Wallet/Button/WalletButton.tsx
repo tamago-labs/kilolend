@@ -59,19 +59,6 @@ export const WalletButton = () => {
   };
 
   const getButtonIcon = () => {
-    if (selectedChain === 'web3_wallet') {
-      return (
-        <>
-          {/* <img 
-          src="/images/blockchain-icons/kub-chain-icon.png" 
-          alt="KUB Chain" 
-          width="20" 
-          height="20"
-          style={{ borderRadius: '50%' }}
-        /> */}
-        </>
-      );
-    }
     return <Logo className={styles.icon} />;
   };
 

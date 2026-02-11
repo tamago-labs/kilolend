@@ -2,11 +2,9 @@
 
 import styled from 'styled-components';
 import { useState, useCallback } from 'react';
-import { WalletButton } from '@/components/Wallet/Button/WalletButton';
 import { useWalletAccountStore } from "@/components/Wallet/Account/auth.hooks";
 import { useKaiaWalletSdk } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import Blockies from 'react-blockies';
-import { ChainToggle } from "@/components/Wallet/ChainToggle/ChainToggle"; 
 import { useChain } from '@/contexts/ChainContext';
 import { Settings, Clock, CreditCard, DollarSign, LogOut, ChevronDown } from "react-feather"
 import { useModalStore } from '@/stores/modalStore';
@@ -14,7 +12,8 @@ import { useAppStore } from '@/stores/appStore';
 import { liff } from "@/utils/liff";
 import { KAIA_SCAN_URL } from "@/utils/ethersConfig"
 import { useRouter, usePathname } from 'next/navigation';
-import { DesktopWalletAddressModal, DesktopSettingsModal, NetworkSwitchModal } from '../modals';
+import { DesktopWalletAddressModal, DesktopSettingsModal, NetworkSwitchModal, DesktopWalletConnectionModal } from '../modals';
+import { Logo } from "@/components/Assets/Logo";
 import { signatureService } from '@/services/signatureService';
 import { useAccount, useChainId } from 'wagmi';
 import { kaia, kubChain } from '@/wagmi_config';
@@ -39,7 +38,7 @@ const LeftSection = styled.div`
   gap: 24px;
 `;
 
-const Logo = styled.div`
+const BrandLogo = styled.div`
   font-size: 24px;
   font-weight: 700;
   color: #1e293b;
@@ -171,10 +170,33 @@ const IconButton = styled.button`
   }
 `;
 
-const ConnectButton = styled(WalletButton)`
-  padding: 12px 24px;
-  font-size: 16px;
+const ConnectButton = styled.button`
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  min-width: 280px;
+  height: 48px;
+  color: #ffffff;
+  background-color: #06c755;
   border-radius: 12px;
+  border: none;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #05b54e;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(6, 199, 85, 0.3);
+  }
+`;
+
+const ConnectIcon = styled(Logo)`
+  width: 22px;
+  height: 22px;
+  fill: white;
 `;
 
 const DropdownMenu = styled.div<{ $isOpen: boolean }>`
@@ -292,7 +314,7 @@ export const DesktopHeader = () => {
   const router = useRouter();
   const pathname = usePathname();
   const [showNetworkModal, setShowNetworkModal] = useState(false);
- 
+
   // Determine the actual network to display
   const getNetworkInfo = () => {
     if (selectedChain === 'line_sdk') {
@@ -318,7 +340,7 @@ export const DesktopHeader = () => {
         };
       }
     }
-    
+
     // Fallback - shouldn't happen but provide safe default
     return {
       name: 'KAIA',
@@ -339,9 +361,9 @@ export const DesktopHeader = () => {
   const handleDisconnect = useCallback(() => {
 
     // Clear signature state on disconnect
-      if (account) {
-        signatureService.clearSignatureState(account);
-      }
+    if (account) {
+      signatureService.clearSignatureState(account);
+    }
 
     disconnectWallet().then(() => {
 
@@ -369,7 +391,7 @@ export const DesktopHeader = () => {
       blockExplorerUrl = KAIA_SCAN_URL;
     } else if (selectedChain === 'web3_wallet' && isWeb3Connected) {
       // Using Web3 wallet - check actual chain
-      console.log("wagmiChainId", wagmiChainId, kaia.id, kubChain.id )
+      console.log("wagmiChainId", wagmiChainId, kaia.id, kubChain.id)
       if (wagmiChainId === kaia.id) {
         blockExplorerUrl = KAIA_SCAN_URL;
       } else if (wagmiChainId === kubChain.id) {
@@ -382,14 +404,14 @@ export const DesktopHeader = () => {
     }
 
     const accountUrl = `${blockExplorerUrl}/address/${account}?tabId=txList&page=1`;
- 
+
     if (liff.isInClient()) {
       liff.openWindow({
         url: accountUrl,
         external: true,
       });
-    } else { 
-      window.open(accountUrl, "_blank"); 
+    } else {
+      window.open(accountUrl, "_blank");
     }
   };
 
@@ -423,37 +445,37 @@ export const DesktopHeader = () => {
   return (
     <>
       <HeaderContainer>
-        <LeftSection> 
+        <LeftSection>
           <BrandContainer onClick={handleBrandClick}>
             <BrandName>KiloLend</BrandName>
           </BrandContainer>
-          <Navigation>  
-          {/*  <NavItem 
+          <Navigation>
+            {/*  <NavItem 
               className={(pathname === '/home' || pathname === '/') ? 'active' : ''}
               onClick={() => handleNavigation('/home')}
             >
               Home
             </NavItem>*/}
-            <NavItem 
+            <NavItem
               className={pathname === '/markets' ? 'active' : ''}
               onClick={() => handleNavigation('/markets')}
             >
               Lending
             </NavItem>
-            <NavItem 
+            <NavItem
               className={pathname === '/swap' ? 'active' : ''}
               onClick={() => handleNavigation('/swap')}
             >
               Swap
-            </NavItem> 
-            <NavItem 
+            </NavItem>
+            <NavItem
               className={pathname === '/leaderboard' ? 'active' : ''}
               onClick={() => handleNavigation('/leaderboard')}
             >
               Leaderboard
             </NavItem>
             <NavDropdownContainer>
-              <NavItem 
+              <NavItem
                 className={(pathname === '/portfolio' || showNavDropdown) ? 'active' : ''}
                 onClick={() => setShowNavDropdown(!showNavDropdown)}
                 style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
@@ -462,7 +484,7 @@ export const DesktopHeader = () => {
                 <ChevronDown size={16} style={{ transition: 'transform 0.2s', transform: showNavDropdown ? 'rotate(180deg)' : 'rotate(0deg)' }} />
               </NavItem>
               <NavDropdownMenu $isOpen={showNavDropdown}>
-                <NavDropdownItem 
+                <NavDropdownItem
                   className={pathname === '/portfolio' ? 'active' : ''}
                   onClick={() => {
                     handleNavigation('/portfolio');
@@ -471,7 +493,7 @@ export const DesktopHeader = () => {
                 >
                   Portfolio
                 </NavDropdownItem>
-                <NavDropdownItem 
+                <NavDropdownItem
                   className={pathname === '/agent-wallets' ? 'active' : ''}
                   onClick={() => {
                     handleNavigation('/agent-wallets');
@@ -480,7 +502,7 @@ export const DesktopHeader = () => {
                 >
                   Setup AI-Wallet
                 </NavDropdownItem>
-                 <NavDropdownItem 
+                <NavDropdownItem
                   className={''}
                   onClick={() => {
                     handleNavigation('https://docs.kilolend.xyz');
@@ -493,20 +515,20 @@ export const DesktopHeader = () => {
             </NavDropdownContainer>
           </Navigation>
         </LeftSection>
-        
+
         <RightSection>
           {!account ? (
-            <>
-              {/*<ChainToggle />*/}
-              <ConnectButton />
-            </>
+            <ConnectButton onClick={() => openModal('walletConnection')}>
+              <ConnectIcon />
+              Connect
+            </ConnectButton>
           ) : (
             <>
-              <NetworkBadge 
+              <NetworkBadge
                 $clickable={selectedChain === 'web3_wallet'}
                 onClick={() => selectedChain === 'web3_wallet' && setShowNetworkModal(true)}
               >
-                <NetworkIcon 
+                <NetworkIcon
                   src={networkInfo.icon}
                   alt={networkInfo.alt}
                 />
@@ -526,32 +548,32 @@ export const DesktopHeader = () => {
                   <ConnectedStatus>Connected</ConnectedStatus>
                   <WalletAddress>{formatAddress(account)}</WalletAddress>
                 </ProfileInfo>
-              </ProfileSection> 
-              
-              <DropdownMenu $isOpen={showDropdown}> 
-                { selectedChain === 'line_sdk' && (
-                  <DropdownItem onClick={handleViewQR}> 
-                  Wallet Details
-                </DropdownItem>
-                  ) 
-                } 
-                <DropdownItem onClick={handleViewPortfolio}> 
+              </ProfileSection>
+
+              <DropdownMenu $isOpen={showDropdown}>
+                {selectedChain === 'line_sdk' && (
+                  <DropdownItem onClick={handleViewQR}>
+                    Wallet Details
+                  </DropdownItem>
+                )
+                }
+                <DropdownItem onClick={handleViewPortfolio}>
                   Portfolio
                 </DropdownItem>
-                 <DropdownItem onClick={handleAgentWallets}> 
+                <DropdownItem onClick={handleAgentWallets}>
                   Agent Wallets
                 </DropdownItem>
-                {/*<DropdownItem onClick={handleApiKeys}> 
+                <DropdownItem onClick={handleApiKeys}>
                   Agent API Keys
-                </DropdownItem>*/}
+                </DropdownItem>
                 <DropdownSeparator />
-                <DisconnectItem onClick={handleDisconnect}> 
+                <DisconnectItem onClick={handleDisconnect}>
                   Disconnect Wallet
                 </DisconnectItem>
               </DropdownMenu>
             </>
           )}
-        </RightSection> 
+        </RightSection>
       </HeaderContainer>
 
       <DesktopWalletAddressModal
@@ -568,6 +590,11 @@ export const DesktopHeader = () => {
       <NetworkSwitchModal
         isOpen={showNetworkModal}
         onClose={() => setShowNetworkModal(false)}
+      />
+
+      <DesktopWalletConnectionModal
+        isOpen={activeModal === 'walletConnection'}
+        onClose={() => closeModal()}
       />
     </>
   );
