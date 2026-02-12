@@ -15,8 +15,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { DesktopWalletAddressModal, DesktopSettingsModal, NetworkSwitchModal, DesktopWalletConnectionModal } from '../modals';
 import { Logo } from "@/components/Assets/Logo";
 import { signatureService } from '@/services/signatureService';
-import { useAccount, useChainId } from 'wagmi';
-import { kaia, kubChain } from '@/wagmi_config';
+import { useConnection, useChainId, useDisconnect } from 'wagmi';
+import { kaia, kubChain, etherlink } from '@/wagmi_config';
 
 const HeaderContainer = styled.header`
   display: flex;
@@ -309,7 +309,9 @@ export const DesktopHeader = () => {
   const [showNavDropdown, setShowNavDropdown] = useState(false);
   const { disconnectWallet } = useKaiaWalletSdk();
   const { selectedChain } = useChain();
-  const { isConnected: isWeb3Connected } = useAccount();
+  const { isConnected: isWeb3Connected } = useConnection();
+  
+  const disconnect = useDisconnect();
   const wagmiChainId = useChainId();
   const router = useRouter();
   const pathname = usePathname();
@@ -337,6 +339,12 @@ export const DesktopHeader = () => {
           name: 'KUB',
           icon: '/images/blockchain-icons/kub-chain-icon.png',
           alt: 'KUB'
+        };
+      } else if (wagmiChainId === etherlink.id) {
+        return {
+          name: 'Etherlink',
+          icon: '/images/blockchain-icons/etherlink-icon.png',
+          alt: 'Etherlink'
         };
       }
     }
@@ -372,7 +380,12 @@ export const DesktopHeader = () => {
       setShowDropdown(false);
 
     });
-  }, [disconnectWallet, setAccount, account]);
+
+    // Additional wagmi disconnect for web3_wallet mode
+    if (selectedChain === 'web3_wallet') {
+      disconnect.mutate()
+    }
+  }, [disconnectWallet, disconnect, setAccount, account, selectedChain]);
 
   const handleSettings = () => {
     openModal('settings');
@@ -390,12 +403,13 @@ export const DesktopHeader = () => {
       // Using LINE SDK - always KAIA chain
       blockExplorerUrl = KAIA_SCAN_URL;
     } else if (selectedChain === 'web3_wallet' && isWeb3Connected) {
-      // Using Web3 wallet - check actual chain
-      console.log("wagmiChainId", wagmiChainId, kaia.id, kubChain.id)
+      // Using Web3 wallet - check actual chain 
       if (wagmiChainId === kaia.id) {
         blockExplorerUrl = KAIA_SCAN_URL;
       } else if (wagmiChainId === kubChain.id) {
         blockExplorerUrl = "https://www.kubscan.com";
+      } else if (wagmiChainId === etherlink.id) {
+        blockExplorerUrl = "https://explorer.etherlink.com";
       } else {
         blockExplorerUrl = KAIA_SCAN_URL; // fallback
       }

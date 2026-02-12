@@ -8,7 +8,7 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { WalletSelectionModal } from '@/components/Wallet/WalletSelectionModal/WalletSelectionModal';
 import { useConnect, useAccount } from 'wagmi';
 import { kubChain } from '@/wagmi_config';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const ModalContainer = styled.div`
   display: flex;
@@ -123,7 +123,7 @@ export const DesktopWalletConnectionModal = ({ isOpen, onClose }: DesktopWalletC
 
       // Set the auth method to line_sdk
       setSelectedChain('line_sdk');
-      
+
       // Connect using LINE Mini Dapp SDK
       const [account] = await connectAndSign("connect");
       sessionStorage.setItem('ACCOUNT', account);
@@ -140,17 +140,24 @@ export const DesktopWalletConnectionModal = ({ isOpen, onClose }: DesktopWalletC
     setShowWalletSelection(true);
   };
 
+  useEffect(() => {
+    if (wagmiAddress) {
+      sessionStorage.setItem('ACCOUNT', wagmiAddress);
+      setAccount(wagmiAddress);
+    }
+  }, [wagmiAddress])
+
   const handleWalletSelect = async (connector: any) => {
-    try { 
+    try {
       await wagmiConnect({ connector, chainId: kubChain.id });
       setShowWalletSelection(false);
       onClose();
 
       // Store the connected account in our existing store for consistency
-      if (wagmiAddress) {
-        sessionStorage.setItem('ACCOUNT', wagmiAddress);
-        setAccount(wagmiAddress);
-      }
+      // if (wagmiAddress) {
+      //   sessionStorage.setItem('ACCOUNT', wagmiAddress);
+      //   setAccount(wagmiAddress);
+      // }
     } catch (error) {
       console.log('Wallet connection error:', error);
     }
@@ -166,7 +173,7 @@ export const DesktopWalletConnectionModal = ({ isOpen, onClose }: DesktopWalletC
               {/*<CardIcon>L</CardIcon>*/}
               <CardTitle>LINE & Social Login</CardTitle>
               <CardDescription>
-                Connect using LINE, Google, Apple, Naver, Kakao, OKX Wallet, or KAIA Wallet.
+                Connect using LINE, Google, Apple, Naver, Kakao, or KAIA Wallet.
               </CardDescription>
               <Badge>Available on KAIA</Badge>
             </ConnectionCard>
@@ -178,7 +185,7 @@ export const DesktopWalletConnectionModal = ({ isOpen, onClose }: DesktopWalletC
               <CardDescription>
                 Connect using MetaMask, Trust Wallet, or other browser extension wallets.
               </CardDescription>
-              <Badge>Available on KAIA & KUB</Badge>
+              <Badge>Available on KAIA, KUB & Etherlink</Badge>
             </ConnectionCard>
           </ConnectionOptions>
 

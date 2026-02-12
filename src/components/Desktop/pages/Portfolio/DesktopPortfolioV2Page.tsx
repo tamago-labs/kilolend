@@ -4,9 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from '@/hooks/v1/useMarketContract'; 
-import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower'; 
-import { useTokenBalances } from '@/hooks/useTokenBalances';
+import { useMarketContract } from '@/hooks/v1/useMarketContract';
+import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useTokenBalancesV2 } from '@/hooks/useTokenBalancesV2';
 import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 
 // Import desktop components from Portfolio
@@ -120,7 +120,7 @@ const DebtBadge = styled.span<{ $hasDebt: boolean }>`
   font-weight: 600;
   background: ${({ $hasDebt }) => $hasDebt ? '#fef3c7' : '#f0fdf4'};
   color: ${({ $hasDebt }) => $hasDebt ? '#92400e' : '#166534'};
-  border: 1px solid ${({ $hasDebt }) => $hasDebt ? 'transparent' : '#06C755'};
+  border: 1px solid ${({ $hasDebt }) => $hasDebt ? 'transparent' : 'transparent'};
 `;
 
 const HealthIndicator = styled.div<{ $level: 'safe' | 'warning' | 'danger' }>`
@@ -131,15 +131,15 @@ const HealthIndicator = styled.div<{ $level: 'safe' | 'warning' | 'danger' }>`
   border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
-  background: ${({ $level }) => 
+  background: ${({ $level }) =>
     $level === 'safe' ? '#f0fdf4' :
-    $level === 'warning' ? '#fef3c7' :
-    '#fef2f2'
+      $level === 'warning' ? '#fef3c7' :
+        '#fef2f2'
   };
-  color: ${({ $level }) => 
+  color: ${({ $level }) =>
     $level === 'safe' ? '#166534' :
-    $level === 'warning' ? '#92400e' :
-    '#991b1b'
+      $level === 'warning' ? '#92400e' :
+        '#991b1b'
   };
 `;
 
@@ -222,6 +222,27 @@ const ContentSubtitle = styled.p`
   line-height: 1.6;
 `;
 
+const ChainIndicator = styled.div<{ $supported: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  background: ${({ $supported }) => $supported ? '#f0fdf4' : '#fef2f2'};
+  color: ${({ $supported }) => $supported ? '#166534' : '#991b1b'};
+  border: 1px solid ${({ $supported }) => $supported ? '#bbf7d0' : '#fecaca'};
+`;
+
+const ChainIcon = styled.div<{ $supported: boolean }>`
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: ${({ $supported }) => $supported ? '#06C755' : '#ef4444'};
+`;
+
 interface Position {
   marketId: string;
   symbol: string;
@@ -237,7 +258,7 @@ export const DesktopPortfolioV2 = () => {
   // Wallet and market states
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
-  const { balances } = useTokenBalances();
+  const { balances, isKUBChain, isKAIAChain, isEtherlinkChain, isCorrectChain } = useTokenBalancesV2();
   const { prices } = usePriceUpdates({
     symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX"]
   });
@@ -254,7 +275,7 @@ export const DesktopPortfolioV2 = () => {
     healthFactor: 999
   });
 
-  // Side tab state - Lending Positions is default (first)
+  // Side tab state - Lending Positions is default
   const [activeSideTab, setActiveSideTab] = useState<'lending' | 'wallet'>('lending');
 
   // Tab and sorting states (for lending positions)
@@ -268,12 +289,12 @@ export const DesktopPortfolioV2 = () => {
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
 
   // Hooks
-  const { getUserPosition } = useMarketContract(); 
-  const { calculateBorrowingPower } = useBorrowingPower(); 
+  const { getUserPosition } = useMarketContract();
+  const { calculateBorrowingPower } = useBorrowingPower();
 
   // Calculate wallet balance value
   const calculateWalletBalanceValue = useCallback(() => {
-    return balances.reduce((total, token) => {
+    return balances.reduce((total: number, token: any) => {
       const priceKey = token.symbol === 'MBX' ? 'MARBLEX' : token.symbol;
       const price = prices[priceKey];
       const balance = parseFloat(token.balance || '0');
@@ -383,7 +404,7 @@ export const DesktopPortfolioV2 = () => {
     setWithdrawModalOpen(false);
     setRepayModalOpen(false);
     setSelectedPosition(null);
-    
+
     // Refresh data after modal closes
     setTimeout(() => {
       fetchPositions();
@@ -393,10 +414,10 @@ export const DesktopPortfolioV2 = () => {
   // Filter and sort positions based on active tab and search
   const getFilteredAndSortedPositions = useCallback(() => {
     let filteredPositions = positions.filter(p => p.type === activeTab);
-    
+
     // Apply search filter
     if (searchTerm) {
-      filteredPositions = filteredPositions.filter(p => 
+      filteredPositions = filteredPositions.filter(p =>
         p.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.market?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -465,12 +486,12 @@ export const DesktopPortfolioV2 = () => {
   return (
     <PortfolioContainer>
       <MainContent>
-        <DesktopPortfolioHeader 
+        <DesktopPortfolioHeader
           account={account}
           isLoading={isLoading}
         />
 
-       
+
         {/* Show loading state when account is connected and data is loading */}
         {(account && isLoading && borrowingPowerData === null) ? (
           renderLoadingState()
@@ -501,7 +522,7 @@ export const DesktopPortfolioV2 = () => {
                   <StatLabel>Total Borrow</StatLabel>
                   <StatValue>${portfolioStats.totalBorrowValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</StatValue>
                   <DebtBadge $hasDebt={hasDebt}>
-                    {hasDebt ? 'Active Debt' : '✅ No Debt'}
+                    {hasDebt ? 'Active Debt' : 'No Debt'}
                   </DebtBadge>
                 </StatCard>
 
@@ -519,13 +540,13 @@ export const DesktopPortfolioV2 = () => {
             {/* Side Tab Navigation */}
             <SideTabContainer>
               <SideTabNavigation>
-                <SideTabButton 
+                <SideTabButton
                   $active={activeSideTab === 'lending'}
                   onClick={() => setActiveSideTab('lending')}
                 >
                   Lending Positions
                 </SideTabButton>
-                <SideTabButton 
+                <SideTabButton
                   $active={activeSideTab === 'wallet'}
                   onClick={() => setActiveSideTab('wallet')}
                 >
@@ -542,7 +563,7 @@ export const DesktopPortfolioV2 = () => {
                     <ContentSubtitle>
                       Manage your lending activities and track your earnings.
                     </ContentSubtitle>
-                    
+
                     {hasPositions ? (
                       <>
                         <DesktopPortfolioTabs
@@ -553,7 +574,7 @@ export const DesktopPortfolioV2 = () => {
                           onSearchChange={setSearchTerm}
                           onSortChange={setSortBy}
                         />
-                        
+
                         <DesktopPortfolioTable
                           positions={filteredPositions}
                           onAction={handleAction}
@@ -572,9 +593,15 @@ export const DesktopPortfolioV2 = () => {
                     <ContentSubtitle>
                       Your available token balances that can be used for lending or borrowing.
                     </ContentSubtitle>
-                    
+
+                    {/* Chain Indicator */}
+                    <ChainIndicator $supported={isCorrectChain}>
+                      <ChainIcon $supported={isCorrectChain} />
+                      {isEtherlinkChain ? 'Etherlink Chain' : isKUBChain ? 'KUB Chain' : isKAIAChain ? 'KAIA Chain' : 'Unsupported Chain'}
+                    </ChainIndicator>
+
                     {hasBalances ? (
-                      <MainWalletSection 
+                      <MainWalletSection
                         balances={balances}
                         prices={prices}
                       />
@@ -588,9 +615,9 @@ export const DesktopPortfolioV2 = () => {
           </>
         )}
 
-        
-             {/* Show AI-Agent Wallets Banner for connected users */}
-            {account && <AgentWalletsBanner />}
+
+        {/* Show AI-Agent Wallets Banner for connected users */}
+        {account && <AgentWalletsBanner />}
 
 
       </MainContent>

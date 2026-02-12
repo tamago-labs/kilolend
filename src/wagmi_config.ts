@@ -1,9 +1,9 @@
 import { createConfig, http } from 'wagmi'
 import { defineChain } from "viem"
 import { injected, metaMask } from 'wagmi/connectors'
-import { kaia } from 'wagmi/chains'
+import { kaia, etherlink } from 'wagmi/chains'
 
-export { kaia }
+export { kaia, etherlink }
 
 export const kubChain = defineChain({
   id: 96,
@@ -23,10 +23,11 @@ export const kubChain = defineChain({
 })
 
 export const config = createConfig({
-  chains: [kubChain, kaia],
+  chains: [kubChain, kaia, etherlink],
   transports: {
     [kubChain.id]: http(),
     [kaia.id]: http(),
+    [etherlink.id]: http()
   },
   connectors: [
     injected(),
