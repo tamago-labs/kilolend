@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract } from '@/hooks/v1/useMarketContract';
@@ -20,228 +19,31 @@ import { DesktopWithdrawModal, DesktopRepayModal } from '@/components/Desktop/mo
 import { MainWalletSection } from '../Balances/components/MainWalletSection';
 import { AgentWalletsBanner } from './components/AgentWalletsBanner';
 
-const PortfolioContainer = styled.div`
-  min-height: 100vh;
-  background: #f8fafc;
-`;
-
-const MainContent = styled.main`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 32px;
-`;
-
-const LoadingState = styled.div`
-  text-align: center;
-  padding: 80px 24px;
-  color: #64748b;
-  font-size: 16px;
-`;
-
-const LoadingSpinner = styled.div`
-  width: 48px;
-  height: 48px;
-  border: 4px solid #e2e8f0;
-  border-top: 4px solid #06C755;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 24px;
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-const LoadingTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const LoadingSubtitle = styled.p`
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 32px;
-`;
-
-// Enhanced Stats Grid for PortfolioV2
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-`;
-
-const StatCard = styled.div`
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-
-  &:hover { 
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  }
-`;
-
-const StatLabel = styled.div`
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 8px;
-  font-weight: 500;
-`;
-
-const StatValue = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const StatChange = styled.div<{ $positive?: boolean }>`
-  font-size: 14px;
-  font-weight: 600;
-  color: ${({ $positive }) => $positive ? '#06C755' : '#ef4444'};
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-const DebtBadge = styled.span<{ $hasDebt: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${({ $hasDebt }) => $hasDebt ? '#fef3c7' : '#f0fdf4'};
-  color: ${({ $hasDebt }) => $hasDebt ? '#92400e' : '#166534'};
-  border: 1px solid ${({ $hasDebt }) => $hasDebt ? 'transparent' : 'transparent'};
-`;
-
-const HealthIndicator = styled.div<{ $level: 'safe' | 'warning' | 'danger' }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${({ $level }) =>
-    $level === 'safe' ? '#f0fdf4' :
-      $level === 'warning' ? '#fef3c7' :
-        '#fef2f2'
-  };
-  color: ${({ $level }) =>
-    $level === 'safe' ? '#166534' :
-      $level === 'warning' ? '#92400e' :
-        '#991b1b'
-  };
-`;
-
-// Side Tab Navigation
-const SideTabContainer = styled.div`
-  display: flex;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  margin-bottom: 32px;
-`;
-
-const SideTabNavigation = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 250px;
-  background: #f8fafc;
-  border-right: 1px solid #e2e8f0;
-`;
-
-const SideTabButton = styled.button<{ $active: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  background: ${({ $active }) => $active ? 'rgba(6, 199, 85, 0.1)' : 'transparent'};
-  color: ${({ $active }) => $active ? '#06C755' : '#64748b'};
-  border: none;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-left: 4px solid ${({ $active }) => $active ? '#06C755' : 'transparent'};
-  text-align: left;
-  width: 100%;
-
-  &:hover {
-    background: ${({ $active }) => $active ? 'rgba(6, 199, 85, 0.15)' : '#f1f5f9'};
-    color: ${({ $active }) => $active ? '#06C755' : '#1e293b'};
-  }
-
-  &:first-child {
-    border-top-left-radius: 16px;
-  }
-
-   
-`;
-
-const SideTabContent = styled.div`
-  flex: 1;
-  padding: 32px;
-  background: white;
-`;
-
-const ContentContainer = styled.div`
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  padding: 32px;
-  min-height: 400px;
-`;
-
-const ContentTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const ContentSubtitle = styled.p`
-  font-size: 16px;
-  color: #64748b;
-  margin-bottom: 32px;
-  line-height: 1.6;
-`;
-
-const ChainIndicator = styled.div<{ $supported: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  margin-bottom: 24px;
-  background: ${({ $supported }) => $supported ? '#f0fdf4' : '#fef2f2'};
-  color: ${({ $supported }) => $supported ? '#166534' : '#991b1b'};
-  border: 1px solid ${({ $supported }) => $supported ? '#bbf7d0' : '#fecaca'};
-`;
-
-const ChainIcon = styled.div<{ $supported: boolean }>`
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: ${({ $supported }) => $supported ? '#06C755' : '#ef4444'};
-`;
+// Import styled components
+import {
+  PortfolioContainer,
+  MainContent,
+  LoadingState,
+  LoadingSpinner,
+  LoadingTitle,
+  LoadingSubtitle,
+  StatsGrid,
+  StatCard,
+  StatLabel,
+  StatValue,
+  StatChange,
+  DebtBadge,
+  HealthIndicator,
+  SideTabContainer,
+  SideTabNavigation,
+  SideTabButton,
+  SideTabContent,
+  ContentContainer,
+  ContentTitle,
+  ContentSubtitle,
+  ChainIndicator,
+  ChainIcon
+} from './DesktopPortfolioV2Page.styles';
 
 interface Position {
   marketId: string;
@@ -258,6 +60,7 @@ export const DesktopPortfolioV2 = () => {
   // Wallet and market states
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
+
   const { balances, isKUBChain, isKAIAChain, isEtherlinkChain, isCorrectChain } = useTokenBalancesV2();
   const { prices } = usePriceUpdates({
     symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX"]
@@ -383,9 +186,9 @@ export const DesktopPortfolioV2 = () => {
   }, [account, markets, getUserPosition, calculateBorrowingPower]);
 
   // Fetch positions when account or markets change
-  useEffect(() => {
-    fetchPositions();
-  }, [fetchPositions]);
+  // useEffect(() => {
+  //   fetchPositions();
+  // }, [fetchPositions]);
 
   const handleAction = (action: string, position: Position) => {
     setSelectedPosition(position);

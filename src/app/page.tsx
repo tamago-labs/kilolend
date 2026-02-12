@@ -7,8 +7,7 @@ import { HomeContainer } from '@/components/Home';
 import { DesktopHome } from '@/components/Desktop/pages/Home/DesktopHomePage';
 
 export default function Home() {
-    const { isMobile, deviceDetected } = useAppStore();
-    const [showSplash, setShowSplash] = useState(true);
+    const { isMobile, deviceDetected, showSplash, setShowSplash } = useAppStore(); 
 
     const handleSplashFinish = () => {
         setShowSplash(false);

@@ -6,9 +6,9 @@ import { useChain } from '@/contexts/ChainContext';
 import { useKaiaWalletSdk } from '@/components/Wallet/Sdk/walletSdk.hooks';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { WalletSelectionModal } from '@/components/Wallet/WalletSelectionModal/WalletSelectionModal';
-import { useConnect, useAccount } from 'wagmi';
+import { useConnect, useConnection } from 'wagmi';
 import { kubChain } from '@/wagmi_config';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 const ModalContainer = styled.div`
   display: flex;
@@ -111,11 +111,12 @@ interface DesktopWalletConnectionModalProps {
 }
 
 export const DesktopWalletConnectionModal = ({ isOpen, onClose }: DesktopWalletConnectionModalProps) => {
-  const { setSelectedChain } = useChain();
+  const { setSelectedChain, selectedChain } = useChain();
   const { connectAndSign } = useKaiaWalletSdk();
   const { setAccount } = useWalletAccountStore();
-  const { connect: wagmiConnect } = useConnect();
-  const { address: wagmiAddress } = useAccount();
+  const connect = useConnect();
+  const { address: wagmiAddress } = useConnection();
+  const [tick, setTick ] = useState(0)
   const [showWalletSelection, setShowWalletSelection] = useState(false);
 
   const handleSocialLogin = async () => {
@@ -134,22 +135,28 @@ export const DesktopWalletConnectionModal = ({ isOpen, onClose }: DesktopWalletC
     }
   };
 
+  const increaseTick = useCallback(() => {
+    if (selectedChain === "web3_wallet") {
+      setTick(tick+1)
+    } 
+  },[selectedChain, tick])
+
   const handleWeb3Wallet = () => {
     // Set the auth method to web3_wallet
     setSelectedChain('web3_wallet');
     setShowWalletSelection(true);
   };
 
-  useEffect(() => {
-    if (wagmiAddress) {
+  useEffect(() => {  
+    if (wagmiAddress) {  
       sessionStorage.setItem('ACCOUNT', wagmiAddress);
       setAccount(wagmiAddress);
     }
-  }, [wagmiAddress])
+  }, [ wagmiAddress, tick])
 
   const handleWalletSelect = async (connector: any) => {
-    try {
-      await wagmiConnect({ connector, chainId: kubChain.id });
+    try { 
+      await connect.mutate({ connector, chainId: kubChain.id })
       setShowWalletSelection(false);
       onClose();
 
@@ -160,9 +167,11 @@ export const DesktopWalletConnectionModal = ({ isOpen, onClose }: DesktopWalletC
       // }
     } catch (error) {
       console.log('Wallet connection error:', error);
-    }
-  };
+    } 
+    increaseTick()
 
+  };
+ 
   return (
     <>
       <DesktopBaseModal isOpen={isOpen && !showWalletSelection} onClose={onClose} title="Connect Your Wallet" width="480px">

@@ -310,7 +310,7 @@ export const DesktopHeader = () => {
   const { disconnectWallet } = useKaiaWalletSdk();
   const { selectedChain } = useChain();
   const { isConnected: isWeb3Connected } = useConnection();
-  
+ 
   const disconnect = useDisconnect();
   const wagmiChainId = useChainId();
   const router = useRouter();
@@ -358,6 +358,7 @@ export const DesktopHeader = () => {
   };
 
   const networkInfo = getNetworkInfo();
+
   const handleNavigation = (path: string) => {
     router.push(path);
   };
@@ -374,17 +375,16 @@ export const DesktopHeader = () => {
     }
 
     disconnectWallet().then(() => {
-
       setAccount(null);
       sessionStorage.removeItem('ACCOUNT');
       setShowDropdown(false);
-
     });
 
     // Additional wagmi disconnect for web3_wallet mode
-    if (selectedChain === 'web3_wallet') {
+    if (selectedChain === 'web3_wallet') { 
       disconnect.mutate()
     }
+
   }, [disconnectWallet, disconnect, setAccount, account, selectedChain]);
 
   const handleSettings = () => {
