@@ -8,8 +8,7 @@ export interface UnifiedTokenBalance {
   balance: string;
   decimals: number;
   address?: string;
-  isNative?: boolean;
-  usdValue?: number;
+  isNative?: boolean; 
 }
 
 export const useTokenBalancesV2 = () => {
@@ -17,9 +16,13 @@ export const useTokenBalancesV2 = () => {
   
   // Use LINE SDK balances for line_sdk auth method
   const lineSdkBalances = useTokenBalances();
+
+  console.log("lineSdkBalances:", lineSdkBalances)
   
   // Use Web3 balances for web3_wallet auth method
   const web3Balances = useWeb3TokenBalances();
+
+  console.log("web3Balances:", web3Balances)
 
   // Determine which hook to use based on auth method
   if (selectedAuthMethod === 'line_sdk') {
@@ -31,7 +34,6 @@ export const useTokenBalancesV2 = () => {
       decimals: balance.decimals,
       address: balance.address,
       isNative: balance.symbol === 'KAIA', // KAIA is the native token for LINE SDK
-      usdValue: 0, // TODO: Add price fetching if needed
     }));
 
     return {
@@ -50,8 +52,7 @@ export const useTokenBalancesV2 = () => {
       balance: balance.balance,
       decimals: balance.decimals,
       address: balance.address,
-      isNative: balance.isNative,
-      usdValue: balance.usdValue,
+      isNative: balance.isNative
     }));
 
     return {

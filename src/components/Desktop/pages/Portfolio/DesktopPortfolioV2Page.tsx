@@ -66,6 +66,7 @@ export const DesktopPortfolioV2 = () => {
     symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX"]
   });
 
+
   // Portfolio positions state
   const [positions, setPositions] = useState<Position[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -398,10 +399,10 @@ export const DesktopPortfolioV2 = () => {
                     </ContentSubtitle>
 
                     {/* Chain Indicator */}
-                    <ChainIndicator $supported={isCorrectChain}>
+                   {/* <ChainIndicator $supported={isCorrectChain}>
                       <ChainIcon $supported={isCorrectChain} />
                       {isEtherlinkChain ? 'Etherlink Chain' : isKUBChain ? 'KUB Chain' : isKAIAChain ? 'KAIA Chain' : 'Unsupported Chain'}
-                    </ChainIndicator>
+                    </ChainIndicator>*/}
 
                     {hasBalances ? (
                       <MainWalletSection

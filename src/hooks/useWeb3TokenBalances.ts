@@ -1,7 +1,18 @@
-import { useBalance, useConnection, useChainId } from 'wagmi';
+import { useBalance, useReadContract, useConnection, useChainId } from 'wagmi';
 import { useMemo, useCallback } from 'react';
 import { kubChain, kaia, etherlink } from '@/wagmi_config';
 import { KUB_TOKENS, KAIA_TOKENS, ETHERLINK_TOKENS, KUBTokenKey, KAIATokenKey, EtherlinkTokenKey, TokenConfig } from '@/config/tokens';
+
+// ERC20 ABI for balanceOf function
+const erc20Abi = [
+  {
+    inputs: [{ name: 'account', type: 'address' }],
+    name: 'balanceOf',
+    outputs: [{ name: '', type: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+] as const;
 
 export interface Web3TokenBalance {
   symbol: string;
@@ -10,9 +21,9 @@ export interface Web3TokenBalance {
   decimals: number;
   address?: string;
   isNative: boolean;
-  usdValue?: number;
   isLoading: boolean;
   error?: string;
+  rawBalance?: string; // Keep raw wei value for reference
 }
 
 export const useWeb3TokenBalances = () => {
@@ -26,44 +37,86 @@ export const useWeb3TokenBalances = () => {
   const isSupportedChain = isKUBChain || isKAIAChain || isEtherlinkChain;
 
   // Create balance queries for ALL possible tokens to maintain consistent hook order
-  const kubBalanceQueries = Object.values(KUB_TOKENS).map((tokenConfig) =>
-    useBalance({
-      address: address,
-      token: tokenConfig.isNative ? undefined : ('address' in tokenConfig ? tokenConfig.address as `0x${string}` : undefined),
-      chainId: isKUBChain ? kubChain.id : undefined,
-      query: {
-        enabled: !!address && isKUBChain,
-        refetchOnWindowFocus: false,
-        staleTime: 30000, // 30 seconds
-      },
-    })
-  );
+  const kubBalanceQueries = Object.values(KUB_TOKENS).map((tokenConfig) => {
+    if (tokenConfig.isNative) {
+      return useBalance({
+        address: address,
+        chainId: kubChain.id,
+        query: {
+          enabled: !!address && isKUBChain,
+          refetchOnWindowFocus: false,
+          staleTime: 30000,
+        },
+      });
+    } else {
+      return useReadContract({
+        address: tokenConfig.address as `0x${string}` & {}, // Type assertion to remove undefined
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [address as any],
+        chainId: kubChain.id,
+        query: {
+          enabled: !!address && isKUBChain,
+          refetchOnWindowFocus: false,
+          staleTime: 30000,
+        },
+      });
+    }
+  });
 
-  const kaiaBalanceQueries = Object.values(KAIA_TOKENS).map((tokenConfig) =>
-    useBalance({
-      address: address,
-      token: tokenConfig.isNative ? undefined : ('address' in tokenConfig ? tokenConfig.address as `0x${string}` : undefined),
-      chainId: isKAIAChain ? kaia.id : undefined,
-      query: {
-        enabled: !!address && isKAIAChain,
-        refetchOnWindowFocus: false,
-        staleTime: 30000, // 30 seconds
-      },
-    })
-  );
+  const kaiaBalanceQueries = Object.values(KAIA_TOKENS).map((tokenConfig) => {
+    if (tokenConfig.isNative) {
+      return useBalance({
+        address: address,
+        chainId: kaia.id,
+        query: {
+          enabled: !!address && isKAIAChain,
+          refetchOnWindowFocus: false,
+          staleTime: 30000,
+        },
+      });
+    } else {
+      return useReadContract({
+        address: tokenConfig.address as `0x${string}` & {}, // Type assertion to remove undefined
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [address as any],
+        chainId: kaia.id,
+        query: {
+          enabled: !!address && isKAIAChain,
+          refetchOnWindowFocus: false,
+          staleTime: 30000,
+        },
+      });
+    }
+  });
 
-  const etherlinkBalanceQueries = Object.values(ETHERLINK_TOKENS).map((tokenConfig) =>
-    useBalance({
-      address: address,
-      token: tokenConfig.isNative ? undefined : ('address' in tokenConfig ? tokenConfig.address as `0x${string}` : undefined),
-      chainId: isEtherlinkChain ? etherlink.id : undefined,
-      query: {
-        enabled: !!address && isEtherlinkChain,
-        refetchOnWindowFocus: false,
-        staleTime: 30000, // 30 seconds
-      },
-    })
-  );
+  const etherlinkBalanceQueries = Object.values(ETHERLINK_TOKENS).map((tokenConfig) => {
+    if (tokenConfig.isNative) {
+      return useBalance({
+        address: address,
+        chainId: etherlink.id,
+        query: {
+          enabled: !!address && isEtherlinkChain,
+          refetchOnWindowFocus: false,
+          staleTime: 30000,
+        },
+      });
+    } else {
+      return useReadContract({
+        address: tokenConfig.address as `0x${string}` & {}, // Type assertion to remove undefined
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [address as any],
+        chainId: etherlink.id,
+        query: {
+          enabled: !!address && isEtherlinkChain,
+          refetchOnWindowFocus: false,
+          staleTime: 30000,
+        },
+      });
+    }
+  });
 
   // Combine all balance data based on current chain
   const balances = useMemo(() => {
@@ -75,52 +128,124 @@ export const useWeb3TokenBalances = () => {
     if (isKUBChain) {
       return Object.values(KUB_TOKENS).map((tokenConfig, index) => {
         const query = kubBalanceQueries[index];
-        const balance = query.data?.value?.toString() || '0';
+        let rawBalance: string;
+        let formattedBalance: string;
+
+        if (tokenConfig.isNative) {
+          rawBalance = (query.data as any)?.value?.toString() || '0';
+        } else {
+          rawBalance = query.data?.toString() || '0';
+        }
+
+        // Format the balance: divide by 10^decimals to get human-readable value
+        const divisor = BigInt(10 ** tokenConfig.decimals);
+        const balanceBigInt = BigInt(rawBalance);
+        const whole = balanceBigInt / divisor;
+        const fraction = balanceBigInt % divisor;
+        
+        // Convert fraction to string with leading zeros
+        const fractionStr = fraction.toString().padStart(tokenConfig.decimals, '0');
+        // Remove trailing zeros
+        const trimmedFraction = fractionStr.replace(/0+$/, '');
+        
+        if (trimmedFraction === '' || trimmedFraction === '0') {
+          formattedBalance = whole.toString();
+        } else {
+          formattedBalance = `${whole}.${trimmedFraction}`;
+        }
 
         return {
           symbol: tokenConfig.symbol,
           name: tokenConfig.name,
-          balance,
+          balance: formattedBalance,
           decimals: tokenConfig.decimals,
           address: ('address' in tokenConfig) ? tokenConfig.address : undefined,
           isNative: tokenConfig.isNative,
-          usdValue: 0, // TODO: Add price fetching if needed
           isLoading: query.isLoading,
           error: query.error?.message,
+          rawBalance,
         } as Web3TokenBalance;
       });
     } else if (isKAIAChain) {
       return Object.values(KAIA_TOKENS).map((tokenConfig, index) => {
         const query = kaiaBalanceQueries[index];
-        const balance = query.data?.value?.toString() || '0';
+        let rawBalance: string;
+        let formattedBalance: string;
+
+        if (tokenConfig.isNative) {
+          rawBalance = (query.data as any)?.value?.toString() || '0';
+        } else {
+          rawBalance = query.data?.toString() || '0';
+        }
+
+        // Format the balance: divide by 10^decimals to get human-readable value
+        const divisor = BigInt(10 ** tokenConfig.decimals);
+        const balanceBigInt = BigInt(rawBalance);
+        const whole = balanceBigInt / divisor;
+        const fraction = balanceBigInt % divisor;
+        
+        // Convert fraction to string with leading zeros
+        const fractionStr = fraction.toString().padStart(tokenConfig.decimals, '0');
+        // Remove trailing zeros
+        const trimmedFraction = fractionStr.replace(/0+$/, '');
+        
+        if (trimmedFraction === '' || trimmedFraction === '0') {
+          formattedBalance = whole.toString();
+        } else {
+          formattedBalance = `${whole}.${trimmedFraction}`;
+        }
 
         return {
           symbol: tokenConfig.symbol,
           name: tokenConfig.name,
-          balance,
+          balance: formattedBalance,
           decimals: tokenConfig.decimals,
           address: ('address' in tokenConfig) ? tokenConfig.address : undefined,
           isNative: tokenConfig.isNative,
-          usdValue: 0, // TODO: Add price fetching if needed
           isLoading: query.isLoading,
           error: query.error?.message,
+          rawBalance,
         } as Web3TokenBalance;
       });
     } else if (isEtherlinkChain) {
       return Object.values(ETHERLINK_TOKENS).map((tokenConfig, index) => {
         const query = etherlinkBalanceQueries[index];
-        const balance = query.data?.value?.toString() || '0';
+        let rawBalance: string;
+        let formattedBalance: string;
+
+        if (tokenConfig.isNative) {
+          rawBalance = (query.data as any)?.value?.toString() || '0';
+        } else {
+          rawBalance = query.data?.toString() || '0';
+        }
+
+        // Format the balance: divide by 10^decimals to get human-readable value
+        const divisor = BigInt(10 ** tokenConfig.decimals);
+        const balanceBigInt = BigInt(rawBalance);
+        const whole = balanceBigInt / divisor;
+        const fraction = balanceBigInt % divisor;
+        
+        // Convert fraction to string with leading zeros
+        const fractionStr = fraction.toString().padStart(tokenConfig.decimals, '0');
+        // Remove trailing zeros
+        const trimmedFraction = fractionStr.replace(/0+$/, '');
+        
+        if (trimmedFraction === '' || trimmedFraction === '0') {
+          formattedBalance = whole.toString();
+        } else {
+          formattedBalance = `${whole}.${trimmedFraction}`;
+        }
 
         return {
           symbol: tokenConfig.symbol,
           name: tokenConfig.name,
-          balance,
+          balance: formattedBalance,
           decimals: tokenConfig.decimals,
           address: ('address' in tokenConfig) ? tokenConfig.address : undefined,
           isNative: tokenConfig.isNative,
-          usdValue: 0, // TODO: Add price fetching if needed
           isLoading: query.isLoading,
           error: query.error?.message,
+          rawBalance,
         } as Web3TokenBalance;
       });
     }
