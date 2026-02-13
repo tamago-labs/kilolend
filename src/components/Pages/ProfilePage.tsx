@@ -261,23 +261,7 @@ export const ProfilePage = () => {
 
       {/* External Links Section */}
       <ExternalLinksSection />
-
-      {/* Modals */}
-      {/* {depositModalData && (
-        <DepositModal
-          aiWalletAddress={depositModalData.aiWalletAddress || ''}
-          onClose={() => openModal('ai-deposit', undefined)}
-          onSuccess={depositModalData.onSuccess}
-        />
-      )}
-
-      {withdrawModalData && (
-        <WithdrawModal
-          aiWalletAddress={withdrawModalData.aiWalletAddress || ''}
-          onClose={() => openModal('ai-withdraw', undefined)}
-          onSuccess={withdrawModalData.onSuccess}
-        />
-      )} */}
+ 
     </PageContainer>
   );
 };

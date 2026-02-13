@@ -23,7 +23,7 @@ import { AgentWalletsBanner } from './components/AgentWalletsBanner';
 
 import { useInterval } from 'usehooks-ts'
 
-import { MARKET_CONFIG_V1 } from '@/utils/contractConfig'; 
+import { MARKET_CONFIG_V1 } from '@/utils/contractConfig';
 
 
 // Import styled components
@@ -42,6 +42,8 @@ import {
   ContentSubtitle,
 } from './DesktopPortfolioV2Page.styles';
 import { useAuth } from '@/contexts/ChainContext';
+import { DesktopWithdrawModalWeb3 } from '../../modals/PortfolioModal/DesktopWithdrawModalWeb3';
+import { DesktopRepayModalWeb3 } from '../../modals/PortfolioModal/DesktopRepayModalWeb3';
 
 interface Position {
   marketId: string;
@@ -56,6 +58,8 @@ interface Position {
 
 export const DesktopPortfolioV2 = () => {
 
+  const { selectedAuthMethod } = useAuth()
+
   const [delay, setDelay] = useState<number>(1000)
   const chainId = useChainId();
 
@@ -63,7 +67,7 @@ export const DesktopPortfolioV2 = () => {
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
 
-  const { balances, isKUBChain, isKAIAChain, isEtherlinkChain, isCorrectChain } = useTokenBalancesV2();
+  const { balances, refetch } = useTokenBalancesV2();
   const { prices } = usePriceUpdates({
     symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX"]
   });
@@ -115,7 +119,7 @@ export const DesktopPortfolioV2 = () => {
       setBorrowingPowerData(null);
       return;
     }
-
+  
     setIsLoading(true);
 
     try {
@@ -127,8 +131,9 @@ export const DesktopPortfolioV2 = () => {
 
       for (const market of markets) {
         if (!market.isActive || !market.marketAddress) continue;
-
+ 
         const position = await getUserPosition(market.id as any, account);
+ 
         if (!position) continue;
 
         const supplyBalance = parseFloat(position.supplyBalance || '0');
@@ -187,14 +192,7 @@ export const DesktopPortfolioV2 = () => {
       setIsLoading(false);
     }
   }, [account, markets, getUserPosition, calculateBorrowingPower]);
-
-  // console.log("fetchPositions:", fetchPositions)
-
-  // Fetch positions when account or markets change
-  // useEffect(() => {
-  //   fetchPositions();
-  // }, [fetchPositions]);
-
+ 
 
   useEffect(() => {
     if (account && chainId) {
@@ -203,8 +201,8 @@ export const DesktopPortfolioV2 = () => {
   }, [account, chainId])
 
   useInterval(
-    () => { 
-      if (account && (markets.length ===  (Object.keys(MARKET_CONFIG_V1)).length)) {
+    () => {  
+      if (account && !isLoading && (markets.length === (Object.keys(MARKET_CONFIG_V1)).length)) {
         fetchPositions()
         setDelay(60000)
       }
@@ -233,6 +231,7 @@ export const DesktopPortfolioV2 = () => {
     // Refresh data after modal closes
     setTimeout(() => {
       fetchPositions();
+      refetch();
     }, 1000);
   };
 
@@ -391,15 +390,13 @@ export const DesktopPortfolioV2 = () => {
           </>
         )}
 
-
         {/* Show AI-Agent Wallets Banner for connected users */}
         {account && <AgentWalletsBanner />}
-
 
       </MainContent>
 
       {/* Desktop Modals - Only show when visible state is true */}
-      {withdrawModalOpen && (
+      {(withdrawModalOpen && selectedAuthMethod === "line_sdk") && (
         <DesktopWithdrawModal
           isOpen={withdrawModalOpen}
           onClose={handleCloseModal}
@@ -407,13 +404,30 @@ export const DesktopPortfolioV2 = () => {
         />
       )}
 
-      {repayModalOpen && (
+      {(withdrawModalOpen && selectedAuthMethod === "web3_wallet") && (
+        <DesktopWithdrawModalWeb3
+          isOpen={withdrawModalOpen}
+          onClose={handleCloseModal}
+          preSelectedMarket={selectedPosition?.market}
+        />
+      )}
+
+      {(repayModalOpen && selectedAuthMethod === "line_sdk") && (
         <DesktopRepayModal
           isOpen={repayModalOpen}
           onClose={handleCloseModal}
           preSelectedMarket={selectedPosition?.market}
         />
       )}
+
+      {(repayModalOpen && selectedAuthMethod === "web3_wallet") && (
+        <DesktopRepayModalWeb3
+          isOpen={repayModalOpen}
+          onClose={handleCloseModal}
+          preSelectedMarket={selectedPosition?.market}
+        />
+      )}
+
     </PortfolioContainer>
   );
 };

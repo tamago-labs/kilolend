@@ -307,7 +307,7 @@ const useWeb3BorrowingPower = () => {
   }, [address, isSupportedChain, userPositions, markets, getAssetsInQuery.data, getAccountLiquidityQuery.data, prices]);
 
   // Get user position for a specific market
-  const getUserPosition = useCallback((marketId: MarketId) => {
+  const getUserPosition = useCallback((marketId: any) => {
     return userPositions.find((p) => p.marketId === marketId) || null;
   }, [userPositions]);
 
