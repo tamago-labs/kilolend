@@ -1,7 +1,9 @@
 import { useCallback } from 'react';
 import { ethers } from 'ethers'; 
-import { CTOKEN_ABI } from '@/utils/contractABIs';
-import { MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig';
+import { useReadContract, useWriteContract, useChainId, useConnection } from 'wagmi';
+import { kaia } from 'wagmi/chains';
+import { CTOKEN_ABI, COMPTROLLER_ABI } from '@/utils/contractABIs';
+import { CONTRACT_ADDRESSES_V1, MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig';
 import {
   getContract,
   parseTokenAmount, 
@@ -10,6 +12,7 @@ import { useKaiaWalletSdk } from '@/components/Wallet/Sdk/walletSdk.hooks';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useAppStore } from '@/stores/appStore';
+import { useAuth } from '@/contexts/ChainContext';
 
 export interface MarketInfo {
   totalSupply: string;
@@ -47,7 +50,10 @@ interface MarketContractHook {
   accrueInterest: (marketId: MarketId) => Promise<TransactionResult>;
 }
 
-export const useMarketContract = (): MarketContractHook => {
+/**
+ * LINE SDK-based market contract hook
+ */
+const useLineSdkMarketContract = (): MarketContractHook => {
   const { sendTransaction } = useKaiaWalletSdk();
   const { account } = useWalletAccountStore();
   const { getMarketById } = useContractMarketStore();
@@ -211,7 +217,7 @@ export const useMarketContract = (): MarketContractHook => {
         }
  
         // Create contract interface for encoding transaction data
-        // For payable functions (mint, repayBorrow), we need the correct ABI
+        // For payable functions (mint, repayBorrow), we need to correct ABI
         let iface: ethers.Interface;
         if (value && (methodName === 'mint' || methodName === 'repayBorrow')) {
           // Use CEther ABI for payable functions
@@ -338,4 +344,261 @@ export const useMarketContract = (): MarketContractHook => {
     repay,
     accrueInterest,
   };
+};
+
+/**
+ * Web3-based market contract hook using wagmi
+ */
+const useWeb3MarketContract = (): MarketContractHook => {
+  const { address } = useConnection();
+  const chainId = useChainId();
+  const isKAIAChain = chainId === kaia.id;
+  const { getMarketById } = useContractMarketStore();
+
+  const getMarketInfo = useCallback(async (marketId: MarketId): Promise<MarketInfo | null> => {
+    try {
+      const marketConfig = MARKET_CONFIG_V1[marketId];
+
+      if (!marketConfig.marketAddress) {
+        console.warn(`Market ${marketId} is collateral-only`);
+        return null;
+      }
+
+      const contract = await getContract(marketConfig.marketAddress, CTOKEN_ABI, false);
+      if (!contract) throw new Error('Failed to create contract instance');
+
+      // Get current block data
+      const [
+        totalSupply,
+        totalBorrows,
+        getCash,
+        supplyRatePerBlock,
+        borrowRatePerBlock,
+        exchangeRate
+      ] = await Promise.all([
+        contract.totalSupply(),
+        contract.totalBorrows(),
+        contract.getCash(),
+        contract.supplyRatePerBlock(),
+        contract.borrowRatePerBlock(),
+        contract.exchangeRateStored(),
+      ]);
+ 
+      // Utilization = borrows / (cash + borrows)
+      const totalLiquidity = getCash + totalBorrows;
+      const utilizationRate =
+        totalLiquidity > BigInt(0)
+          ? Number((totalBorrows * BigInt(10000)) / totalLiquidity) / 100
+          : 0;
+
+      // Blocks per year (~2s block time on Kaia)
+      const blocksPerYear = BigInt(365 * 24 * 60 * 60 / 2);
+
+      // APY calculations
+      const scale = BigInt(10) ** BigInt(18);
+
+      // Calculate supply APY
+      const supplyAPY = Number(
+        (supplyRatePerBlock * blocksPerYear * BigInt(10000)) / scale
+      ) / 100;
+
+      // Calculate borrow APR
+      const borrowAPR = Number(
+        (borrowRatePerBlock * blocksPerYear * BigInt(10000)) / scale
+      ) / 100;
+
+      // Calculate total supply in underlying tokens
+      const totalSupplyUnderlying =
+        (BigInt(totalSupply.toString()) * BigInt(exchangeRate.toString())) /
+        BigInt(10 ** 18)
+        
+      const totalSupplyFormatted =
+        totalSupplyUnderlying / BigInt(10 ** marketConfig.decimals);
+
+      const totalBorrowFormatted =
+        BigInt(totalBorrows.toString()) / BigInt(10 ** marketConfig.decimals);
+
+      // Get real token price from market store
+      const market = getMarketById(marketId);
+      const tokenPrice = market?.price
+        ? BigInt(Math.floor(market.price * 1e6))
+        : BigInt(1_000_000);
+
+      const totalSupplyUSD =
+        (totalSupplyFormatted * tokenPrice) / BigInt(1e6);
+      const totalBorrowUSD =
+        (totalBorrowFormatted * tokenPrice) / BigInt(1e6);
+  
+      return {
+        totalSupply: Number(totalSupplyUSD).toFixed(2),
+        totalBorrow: Number(totalBorrowUSD).toFixed(2),
+        supplyAPY: supplyAPY,
+        borrowAPR: borrowAPR,
+        utilizationRate: utilizationRate,
+        exchangeRate: ethers.formatUnits(exchangeRate, 18),
+        marketAddress: marketConfig.marketAddress,
+        tokenAddress: marketConfig.tokenAddress,
+      };
+    } catch (error) {
+      console.error(`Error getting market info for ${marketId}:`, error);
+
+      return {
+        totalSupply: '0.00',
+        totalBorrow: '0.00',
+        supplyAPY: 0,
+        borrowAPR: 5,
+        utilizationRate: 0,
+        exchangeRate: '1.0',
+      };
+    }
+  }, [getMarketById]);
+
+  const getUserPosition = useCallback(
+    async (marketId: any, userAddress: string): Promise<UserPosition | null> => {
+      try {
+        const CONFIG: any = MARKET_CONFIG_V1
+        const marketConfig = CONFIG[marketId];
+        if (!marketConfig.marketAddress) return null;
+
+        const contract = await getContract(marketConfig.marketAddress, CTOKEN_ABI, false);
+        if (!contract) throw new Error('Failed to create contract instance');
+
+        const [accountSnapshot, cTokenBalance] = await Promise.all([
+          contract.getAccountSnapshot(userAddress),
+          contract.balanceOf(userAddress),
+        ]);
+
+        const [error, , borrowBalance, exchangeRateMantissa] = accountSnapshot;
+
+        if (Number(error) !== 0) {
+          console.error('Error getting account snapshot:', error);
+          return null;
+        }
+
+        const supplyBalance = (BigInt(cTokenBalance) * BigInt(exchangeRateMantissa)) / (BigInt(10) ** BigInt(18));
+
+        return {
+          supplyBalance: ethers.formatUnits(supplyBalance, marketConfig.decimals),
+          borrowBalance: ethers.formatUnits(borrowBalance, marketConfig.decimals),
+          collateralValue: '0',
+          maxBorrowAmount: '0',
+          isHealthy: true,
+          cTokenBalance: ethers.formatUnits(cTokenBalance, 8),
+        };
+      } catch (error) {
+        console.error(`Error getting user position for ${marketId}:`, error);
+        return null;
+      }
+    },
+    []
+  );
+
+  const supply = useCallback(
+    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
+      try {
+        const marketConfig = MARKET_CONFIG_V1[marketId];
+        const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
+        
+        const args = marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
+          ? [] // Native KAIA - value will be in the transaction
+          : [parsedAmount]; // ERC20 token
+
+        // Note: For Web3 wallets, you'll need to implement proper transaction sending
+        // This is a placeholder - you'd use useWriteContract here
+        return {
+          hash: '',
+          status: 'failed',
+          error: 'Web3 transaction sending not implemented yet'
+        };
+      } catch (error: any) {
+        return {
+          hash: '',
+          status: 'failed',
+          error: error.message
+        };
+      }
+    },
+    []
+  );
+
+  const withdraw = useCallback(
+    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
+      // Placeholder for Web3 implementation
+      return {
+        hash: '',
+        status: 'failed',
+        error: 'Web3 transaction sending not implemented yet'
+      };
+    },
+    []
+  );
+
+  const borrow = useCallback(
+    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
+      // Placeholder for Web3 implementation
+      return {
+        hash: '',
+        status: 'failed',
+        error: 'Web3 transaction sending not implemented yet'
+      };
+    },
+    []
+  );
+
+  const repay = useCallback(
+    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
+      // Placeholder for Web3 implementation
+      return {
+        hash: '',
+        status: 'failed',
+        error: 'Web3 transaction sending not implemented yet'
+      };
+    },
+    []
+  );
+
+  const accrueInterest = useCallback(
+    async (marketId: MarketId): Promise<TransactionResult> => {
+      // Placeholder for Web3 implementation
+      return {
+        hash: '',
+        status: 'failed',
+        error: 'Web3 transaction sending not implemented yet'
+      };
+    },
+    []
+  );
+
+  return {
+    getMarketInfo,
+    getUserPosition,
+    supply,
+    withdraw,
+    borrow,
+    repay,
+    accrueInterest,
+  };
+};
+
+/**
+ * Unified market contract hook that supports both LINE SDK and Web3 Wallet modes
+ * Similar to useBorrowingPowerV2 pattern
+ */
+export const useMarketContract = (): MarketContractHook => {
+  const { selectedAuthMethod } = useAuth();
+
+  // Use LINE SDK market contract for line_sdk auth method
+  const lineSdkMarketContract = useLineSdkMarketContract();
+
+  // Use Web3 market contract for web3_wallet auth method
+  const web3MarketContract = useWeb3MarketContract();
+
+  // Determine which hook to use based on auth method
+  if (selectedAuthMethod === 'line_sdk') {
+    // For LINE SDK, use existing hook
+    return lineSdkMarketContract;
+  } else {
+    // For Web3 wallets, use new hook
+    return web3MarketContract;
+  }
 };

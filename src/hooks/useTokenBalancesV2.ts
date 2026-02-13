@@ -17,12 +17,8 @@ export const useTokenBalancesV2 = () => {
   // Use LINE SDK balances for line_sdk auth method
   const lineSdkBalances = useTokenBalances();
 
-  console.log("lineSdkBalances:", lineSdkBalances)
-  
   // Use Web3 balances for web3_wallet auth method
   const web3Balances = useWeb3TokenBalances();
-
-  console.log("web3Balances:", web3Balances)
 
   // Determine which hook to use based on auth method
   if (selectedAuthMethod === 'line_sdk') {

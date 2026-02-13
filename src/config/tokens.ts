@@ -73,13 +73,13 @@ export type KAIATokenKey = keyof typeof KAIA_TOKENS;
 export const ETHERLINK_TOKENS = {
   XTZ: {
     symbol: 'XTZ',
-    name: 'XTZ',
+    name: 'Tezos',
     decimals: 18,
     isNative: true,
   },
   WXTZ: {
     symbol: 'WXTZ',
-    name: 'Wrapped XTZ',
+    name: 'Wrapped Tezos',
     decimals: 18,
     address: '0xc9B53AB2679f573e480d01e0f49e2B5CFB7a3EAb',
     isNative: false,

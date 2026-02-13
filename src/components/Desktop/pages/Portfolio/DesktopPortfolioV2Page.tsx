@@ -3,8 +3,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from '@/hooks/v1/useMarketContract';
-import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useMarketContract } from '@/hooks/v2/useMarketContract';
+import { useChainId } from "wagmi"
+import { useBorrowingPowerV2 } from '@/hooks/v2/useBorrowingPower';
 import { useTokenBalancesV2 } from '@/hooks/useTokenBalancesV2';
 import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 
@@ -13,11 +14,17 @@ import { DesktopPortfolioHeader } from './components/DesktopPortfolioHeader';
 import { DesktopPortfolioTabs } from './components/DesktopPortfolioTabs';
 import { DesktopPortfolioTable } from './components/DesktopPortfolioTable';
 import { DesktopEmptyState } from './components/DesktopEmptyState';
+import { PortfolioStats } from './components/PortfolioStats';
 import { DesktopWithdrawModal, DesktopRepayModal } from '@/components/Desktop/modals';
 
 // Import components from Balances
 import { MainWalletSection } from '../Balances/components/MainWalletSection';
 import { AgentWalletsBanner } from './components/AgentWalletsBanner';
+
+import { useInterval } from 'usehooks-ts'
+
+import { MARKET_CONFIG_V1 } from '@/utils/contractConfig'; 
+
 
 // Import styled components
 import {
@@ -27,23 +34,14 @@ import {
   LoadingSpinner,
   LoadingTitle,
   LoadingSubtitle,
-  StatsGrid,
-  StatCard,
-  StatLabel,
-  StatValue,
-  StatChange,
-  DebtBadge,
-  HealthIndicator,
   SideTabContainer,
   SideTabNavigation,
   SideTabButton,
   SideTabContent,
-  ContentContainer,
   ContentTitle,
   ContentSubtitle,
-  ChainIndicator,
-  ChainIcon
 } from './DesktopPortfolioV2Page.styles';
+import { useAuth } from '@/contexts/ChainContext';
 
 interface Position {
   marketId: string;
@@ -57,6 +55,10 @@ interface Position {
 }
 
 export const DesktopPortfolioV2 = () => {
+
+  const [delay, setDelay] = useState<number>(1000)
+  const chainId = useChainId();
+
   // Wallet and market states
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
@@ -94,7 +96,7 @@ export const DesktopPortfolioV2 = () => {
 
   // Hooks
   const { getUserPosition } = useMarketContract();
-  const { calculateBorrowingPower } = useBorrowingPower();
+  const { calculateBorrowingPower, isLoading: isBorrowingPowerLoading } = useBorrowingPowerV2();
 
   // Calculate wallet balance value
   const calculateWalletBalanceValue = useCallback(() => {
@@ -186,10 +188,29 @@ export const DesktopPortfolioV2 = () => {
     }
   }, [account, markets, getUserPosition, calculateBorrowingPower]);
 
+  // console.log("fetchPositions:", fetchPositions)
+
   // Fetch positions when account or markets change
   // useEffect(() => {
   //   fetchPositions();
   // }, [fetchPositions]);
+
+
+  useEffect(() => {
+    if (account && chainId) {
+      setDelay(1000)
+    }
+  }, [account, chainId])
+
+  useInterval(
+    () => { 
+      if (account && (markets.length ===  (Object.keys(MARKET_CONFIG_V1)).length)) {
+        fetchPositions()
+        setDelay(60000)
+      }
+    },
+    delay,
+  )
 
   const handleAction = (action: string, position: Position) => {
     setSelectedPosition(position);
@@ -263,28 +284,15 @@ export const DesktopPortfolioV2 = () => {
     </LoadingState>
   );
 
+  // Combined loading state for portfolio stats
+  const isDataLoading = isLoading || isBorrowingPowerLoading;
+
   // Enhanced stats calculation
   const walletBalanceValue = calculateWalletBalanceValue();
   const totalNetWorth = walletBalanceValue + portfolioStats.netPortfolioValue;
   const hasPositions = positions.length > 0;
   const hasBalances = balances.length > 0;
   const isConnected = !!account;
-  const hasDebt = portfolioStats.totalBorrowValue > 0;
-
-  const getHealthLevel = (healthFactor: number): 'safe' | 'warning' | 'danger' => {
-    if (healthFactor >= 1.5) return 'safe';
-    if (healthFactor >= 1.2) return 'warning';
-    return 'danger';
-  };
-
-  const getHealthText = (healthFactor: number): string => {
-    if (healthFactor >= 1.5) return 'Safe';
-    if (healthFactor >= 1.2) return 'Warning';
-    return 'Danger';
-  };
-
-  const healthLevel = getHealthLevel(portfolioStats.healthFactor);
-  const healthText = getHealthText(portfolioStats.healthFactor);
   const filteredPositions = getFilteredAndSortedPositions();
 
   return (
@@ -292,54 +300,24 @@ export const DesktopPortfolioV2 = () => {
       <MainContent>
         <DesktopPortfolioHeader
           account={account}
-          isLoading={isLoading}
+          isLoading={isDataLoading}
         />
-
 
         {/* Show loading state when account is connected and data is loading */}
         {(account && isLoading && borrowingPowerData === null) ? (
           renderLoadingState()
         ) : (
           <>
-            {/* Enhanced Portfolio Stats */}
+            {/* Portfolio Stats */}
             {account && (
-              <StatsGrid>
-                {/* Total Net Worth card removed */}
-
-                <StatCard>
-                  <StatLabel>Available Balance</StatLabel>
-                  <StatValue>${walletBalanceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</StatValue>
-                  <StatChange $positive={true}>
-                    Wallet Tokens
-                  </StatChange>
-                </StatCard>
-
-                <StatCard>
-                  <StatLabel>Total Supply</StatLabel>
-                  <StatValue>${portfolioStats.totalSupplyValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</StatValue>
-                  <StatChange $positive={true}>
-                    Earning Interest
-                  </StatChange>
-                </StatCard>
-
-                <StatCard>
-                  <StatLabel>Total Borrow</StatLabel>
-                  <StatValue>${portfolioStats.totalBorrowValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</StatValue>
-                  <DebtBadge $hasDebt={hasDebt}>
-                    {hasDebt ? 'Active Debt' : 'No Debt'}
-                  </DebtBadge>
-                </StatCard>
-
-                <StatCard>
-                  <StatLabel>Health Factor</StatLabel>
-                  <StatValue>{portfolioStats.healthFactor.toFixed(2)}</StatValue>
-                  <HealthIndicator $level={healthLevel}>
-                    {healthText}
-                  </HealthIndicator>
-                </StatCard>
-              </StatsGrid>
+              <PortfolioStats
+                walletBalanceValue={walletBalanceValue}
+                totalSupplyValue={portfolioStats.totalSupplyValue}
+                totalBorrowValue={portfolioStats.totalBorrowValue}
+                healthFactor={portfolioStats.healthFactor}
+                isLoading={isDataLoading}
+              />
             )}
-
 
             {/* Side Tab Navigation */}
             <SideTabContainer>
@@ -397,12 +375,6 @@ export const DesktopPortfolioV2 = () => {
                     <ContentSubtitle>
                       Your available token balances that can be used for lending or borrowing.
                     </ContentSubtitle>
-
-                    {/* Chain Indicator */}
-                   {/* <ChainIndicator $supported={isCorrectChain}>
-                      <ChainIcon $supported={isCorrectChain} />
-                      {isEtherlinkChain ? 'Etherlink Chain' : isKUBChain ? 'KUB Chain' : isKAIAChain ? 'KAIA Chain' : 'Unsupported Chain'}
-                    </ChainIndicator>*/}
 
                     {hasBalances ? (
                       <MainWalletSection

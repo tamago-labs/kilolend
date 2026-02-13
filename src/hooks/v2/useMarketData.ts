@@ -64,8 +64,11 @@ export const useMarketData = () => {
       // console.log('All markets to fetch:', marketIds);
 
       // Fetch market data for all markets
-      const fetchPromises = marketIds.map(marketId => fetchMarketInfo(marketId));
-      await Promise.allSettled(fetchPromises);
+      // const fetchPromises = marketIds.map(marketId => fetchMarketInfo(marketId));
+      // await Promise.allSettled(fetchPromises);
+      for (let marketId of marketIds) {
+        await fetchMarketInfo(marketId)
+      }
 
       setLastUpdate(new Date());
       // console.log('Finished fetching all market data');
@@ -97,11 +100,11 @@ export const useMarketData = () => {
     fetchAllMarketData();
 
     // Set up periodic refresh every 30 seconds
-    // const interval = setInterval(() => {
-    //   fetchAllMarketData();
-    // }, 30000);
+    const interval = setInterval(() => {
+      fetchAllMarketData();
+    }, 30000);
 
-    // return () => clearInterval(interval);
+    return () => clearInterval(interval);
   }, []);
 
   return {

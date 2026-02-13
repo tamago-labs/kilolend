@@ -222,3 +222,48 @@ export const ChainIcon = styled.div<{ $supported: boolean }>`
   border-radius: 50%;
   background: ${({ $supported }) => $supported ? '#06C755' : '#ef4444'};
 `;
+
+// Skeleton Loading Components
+export const SkeletonWrapper = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+export const SkeletonPulse = styled.div<{ width?: string; height?: string; $marginBottom?: string }>`
+  width: ${({ width }) => width || '100%'};
+  height: ${({ height }) => height || '16px'};
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  border-radius: 4px;
+  margin-bottom: ${({ $marginBottom }) => $marginBottom || '0'};
+  animation: pulse 1.5s ease-in-out infinite;
+
+  @keyframes pulse {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+`;
+
+export const SkeletonStatCard = styled(StatCard)`
+  padding: 24px;
+`;
+
+export const SkeletonStatLabel = styled(SkeletonPulse)`
+  width: 120px;
+  height: 14px;
+  margin-bottom: 12px;
+`;
+
+export const SkeletonStatValue = styled(SkeletonPulse)`
+  width: 180px;
+  height: 28px;
+  margin-bottom: 8px;
+`;
+
+export const SkeletonStatChange = styled(SkeletonPulse)`
+  width: 100px;
+  height: 14px;
+`;
