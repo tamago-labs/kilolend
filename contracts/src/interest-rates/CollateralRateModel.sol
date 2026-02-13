@@ -5,12 +5,17 @@ import "./JumpRateModelV2.sol";
 
 contract CollateralRateModel is JumpRateModelV2 {
     
-    constructor() JumpRateModelV2(
+    /**
+     * @notice Construct a new collateral rate model
+     * @param blocksPerYear_ The approximate number of blocks per year for the blockchain
+     */
+    constructor(uint blocksPerYear_) JumpRateModelV2(
          0.001e18,   // baseRatePerYear: 0.1% fixed APY
          0,          // multiplierPerYear: 0 (no utilization sensitivity)
          0,          // jumpMultiplierPerYear: 0 (no jump)
          0.80e18,    // kink: irrelevant but kept for compatibility
-         msg.sender  // owner
+         msg.sender, // owner
+         blocksPerYear_
     ) {}
      
 }

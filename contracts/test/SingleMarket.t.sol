@@ -50,9 +50,9 @@ contract SingleMarketTest is Test {
         usdt = new MockToken("Tether USD", "USDT", 6, 10000000e6);
         wKAIA = new MockToken("Wrapped KAIA", "wKAIA", 18, 1000000e18);
         
-        // Deploy rate models
-        stableRateModel = new StablecoinJumpRateModel();
-        collateralRateModel = new CollateralRateModel();
+        // Deploy rate models with blocksPerYear for Kaia (1 second block time)
+        stableRateModel = new StablecoinJumpRateModel(31536000);
+        collateralRateModel = new CollateralRateModel(31536000);
         
         // Deploy cTokens
         cUSDT = new CErc20Immutable(

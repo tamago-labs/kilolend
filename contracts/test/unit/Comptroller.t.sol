@@ -32,12 +32,14 @@ contract ComptrollerTest is Test {
         usdt = new MockToken("Tether USD", "USDT", 6, INITIAL_USDT_SUPPLY);
         
         // Deploy interest rate model (5% base, 15% slope, 300% jump, 80% kink)
+        // with blocksPerYear for Kaia (1 second block time)
         interestRateModel = new JumpRateModelV2(
-            5e16,   // 5% base rate
-            15e16,  // 15% multiplier
-            300e16, // 300% jump multiplier  
-            8e17,   // 80% kink
-            admin
+            5e16,         // 5% base rate
+            15e16,        // 15% multiplier
+            300e16,       // 300% jump multiplier
+            8e17,         // 80% kink
+            admin,        // owner
+            31536000      // blocksPerYear for Kaia (1 second block time)
         );
         
         // Deploy cToken

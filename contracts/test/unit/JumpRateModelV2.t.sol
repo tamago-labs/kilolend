@@ -20,7 +20,8 @@ contract JumpRateModelV2Test is Test {
             MULTIPLIER,
             JUMP_MULTIPLIER,
             KINK,
-            admin
+            admin,
+            31536000  // blocksPerYear for Kaia (1 second block time)
         );
     }
     
