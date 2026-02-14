@@ -134,9 +134,25 @@ interface MainWalletSectionProps {
 }
 
 export const MainWalletSection = ({ balances, prices }: MainWalletSectionProps) => {
+  
   const getTokenIcon = (symbol: string) => {
     if (symbol === 'KAIA') {
       return 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png';
+    }
+    if (symbol === 'KUB' || symbol === 'KKUB') {
+      return 'https://s2.coinmarketcap.com/static/img/coins/64x64/16093.png';
+    }
+    if (symbol === 'KUSDT') {
+      return 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png';
+    }
+    if (symbol === 'XTZ') {
+      return 'https://s2.coinmarketcap.com/static/img/coins/64x64/2011.png';
+    }
+    if (symbol === 'WXTZ') {
+      return 'https://s2.coinmarketcap.com/static/img/coins/64x64/35930.png';
+    }
+    if (symbol === 'USDC') {
+      return 'https://s2.coinmarketcap.com/static/img/coins/64x64/3408.png';
     }
     const tokenConfig = KAIA_MAINNET_TOKENS[symbol as keyof typeof KAIA_MAINNET_TOKENS];
     return tokenConfig?.icon || 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png';

@@ -20,8 +20,12 @@ abstract contract BaseJumpRateModelV2 is InterestRateModel {
 
     /**
      * @notice The approximate number of blocks per year that is assumed by the interest rate model
+     * @dev Configurable per blockchain to support different block times:
+     *      - Kaia: 31,536,000 (1 second block time)
+     *      - KUB: ~10,512,000 (~3 second block time)
+     *      - Etherlink: ~15,768,000 (~2 second block time)
      */
-    uint public constant blocksPerYear = 31536000; // Kaia: 1 second block time, 365 * 24 * 60 * 60
+    uint public immutable blocksPerYear;
 
     /**
      * @notice The multiplier of utilization rate that gives the slope of the interest rate
@@ -50,9 +54,11 @@ abstract contract BaseJumpRateModelV2 is InterestRateModel {
      * @param jumpMultiplierPerYear The multiplierPerBlock after hitting a specified utilization point
      * @param kink_ The utilization point at which the jump multiplier is applied
      * @param owner_ The address of the owner, i.e. the Timelock contract (which has the ability to update parameters directly)
+     * @param blocksPerYear_ The approximate number of blocks per year for the blockchain
      */
-    constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_) {
+    constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_, uint blocksPerYear_) {
         owner = owner_;
+        blocksPerYear = blocksPerYear_;
 
         updateJumpRateModelInternal(baseRatePerYear,  multiplierPerYear, jumpMultiplierPerYear, kink_);
     }

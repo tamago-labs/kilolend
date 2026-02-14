@@ -130,22 +130,32 @@ contract DeployProtocol is Script {
     function _deployInterestRateModels(address deployer) internal {
         console.log("\n2. Deploying Interest Rate Models...");
         
+        // For Kaia mainnet: 1 second block time = 31,536,000 blocks per year
+        uint256 blocksPerYear = 31536000;
+        
         // Stablecoin rate model (for USDT)
         // - 1% base rate, 4% slope before kink, 109% jump after 80% utilization
-        stablecoinRateModel = new StablecoinJumpRateModel();
+        stablecoinRateModel = new StablecoinJumpRateModel(blocksPerYear);
         console.log("StablecoinJumpRateModel:", address(stablecoinRateModel));
         
         // Volatile asset rate model (for SIX, BORA, MBX, KAIA)
         // - 3% base rate, 15% slope before kink, 200% jump after 80% utilization
         volatileRateModel = new JumpRateModelV2(
-            0.03e18,    // 3% base rate
-            0.15e18,    // 15% multiplier before kink
-            2.00e18,    // 200% jump multiplier after kink
-            0.80e18,    // 80% kink point
-            payable(deployer) // owner
+            0.03e18,         // 3% base rate per year
+            0.15e18,         // 15% multiplier per year before kink
+            2.00e18,         // 200% jump multiplier per year after kink
+            0.80e18,         // 80% kink point
+            payable(deployer), // owner
+            blocksPerYear     // blocks per year for Kaia
         );
         console.log("VolatileRateModel:", address(volatileRateModel));
     }
+    
+    // NOTE: For new deployments on other chains (KUB Chain, Etherlink, etc.),
+    // use the appropriate blocksPerYear value:
+    // - Kaia: 31,536,000 (1 second block time)
+    // - KUB Chain: 6,307,200 (5 second block time)
+    // - Etherlink: 39,420,000 (0.8 second block time)
     
     function _deployCTokens(address deployer) internal {
         console.log("\n3. Deploying cTokens...");

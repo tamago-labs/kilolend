@@ -9,6 +9,7 @@ import "../interfaces/InterestRateModel.sol";
   * @title Compound's JumpRateModel Contract V2 for V2 cTokens
   * @author Arr00
   * @notice Supports only for V2 cTokens
+  * @dev Configurable blocksPerYear parameter for multi-chain support
   */
 contract JumpRateModelV2 is InterestRateModel, BaseJumpRateModelV2  {
 
@@ -23,6 +24,15 @@ contract JumpRateModelV2 is InterestRateModel, BaseJumpRateModelV2  {
         return getBorrowRateInternal(cash, borrows, reserves);
     }
 
-    constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_)
-    BaseJumpRateModelV2(baseRatePerYear,multiplierPerYear,jumpMultiplierPerYear,kink_,owner_) {}
+    /**
+     * @notice Construct a new jump rate model
+     * @param baseRatePerYear The approximate target base APR, as a mantissa (scaled by 1e18)
+     * @param multiplierPerYear The rate of increase in interest rate wrt utilization (scaled by 1e18)
+     * @param jumpMultiplierPerYear The multiplierPerBlock after hitting a specified utilization point
+     * @param kink_ The utilization point at which the jump multiplier is applied
+     * @param owner_ The address of the owner (e.g., Timelock contract)
+     * @param blocksPerYear_ The approximate number of blocks per year for the blockchain
+     */
+    constructor(uint baseRatePerYear, uint multiplierPerYear, uint jumpMultiplierPerYear, uint kink_, address owner_, uint blocksPerYear_)
+    BaseJumpRateModelV2(baseRatePerYear, multiplierPerYear, jumpMultiplierPerYear, kink_, owner_, blocksPerYear_) {}
 }

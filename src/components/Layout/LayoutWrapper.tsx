@@ -12,10 +12,6 @@ interface LayoutWrapperProps {
 export const LayoutWrapper = ({ children }: LayoutWrapperProps) => {
   const { isMobile, deviceDetected } = useAppStore();
 
-  // if (!deviceDetected) {
-  //   return <div>{children}</div>
-  // }
-
   // Mobile: Use mobile Bootstrap with width constraints
   if (isMobile && deviceDetected) {
     return <Bootstrap>{children}</Bootstrap>;

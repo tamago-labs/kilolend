@@ -15,8 +15,12 @@ contract WhitePaperInterestRateModel is InterestRateModel {
 
     /**
      * @notice The approximate number of blocks per year that is assumed by the interest rate model
+     * @dev Configurable per blockchain to support different block times:
+     *      - Kaia: 31,536,000 (1 second block time)
+     *      - BSC/KUB: ~10,512,000 (~3 second block time)
+     *      - Etherlink: ~15,768,000 (~2 second block time)
      */
-    uint public constant blocksPerYear = 31536000; // Kaia: 1 second block time, 365 * 24 * 60 * 60
+    uint public immutable blocksPerYear;
 
     /**
      * @notice The multiplier of utilization rate that gives the slope of the interest rate
@@ -32,8 +36,10 @@ contract WhitePaperInterestRateModel is InterestRateModel {
      * @notice Construct an interest rate model
      * @param baseRatePerYear The approximate target base APR, as a mantissa (scaled by BASE)
      * @param multiplierPerYear The rate of increase in interest rate wrt utilization (scaled by BASE)
+     * @param blocksPerYear_ The approximate number of blocks per year for the blockchain
      */
-    constructor(uint baseRatePerYear, uint multiplierPerYear) {
+    constructor(uint baseRatePerYear, uint multiplierPerYear, uint blocksPerYear_) {
+        blocksPerYear = blocksPerYear_;
         baseRatePerBlock = baseRatePerYear / blocksPerYear;
         multiplierPerBlock = multiplierPerYear / blocksPerYear;
 

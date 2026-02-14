@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { useMarketData } from '@/hooks/v1/useMarketData';
+import { useMarketData } from '@/hooks/v2/useMarketData';
 
 interface MarketDataProviderProps {
   children: ReactNode;

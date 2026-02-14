@@ -80,17 +80,7 @@ export const usePriceUpdates = ({
         }
       });
 
-      // Add USDT as stable coin if not in API (always $1.00)
-      if (symbols.includes('USDT') && !priceMap['USDT']) {
-        priceMap['USDT'] = {
-          symbol: 'USDT',
-          price: 1.0001,
-          change24h: 0.01,
-          market_cap: 0,
-          volume_24h: 0,
-          lastUpdated: new Date()
-        };
-      }
+      
  
       return priceMap;
     } catch (err) {

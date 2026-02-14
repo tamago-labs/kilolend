@@ -3,6 +3,7 @@
 import styled from 'styled-components';
 import { useState } from 'react';
 import { useChain } from '@/contexts/ChainContext';
+import { etherlink } from '@/wagmi_config';
 
 // Hero Section Styles
 const HeroSectionWrapper = styled.section` 
@@ -365,7 +366,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop, onAIAgent }: HeroSecti
                 alt="KAIA"
               />
               <Tooltip $visible={tooltipVisible === 'kaia'}>
-                KAIA Chain
+                KAIA
               </Tooltip>
             </BlockchainIcon>
             <BlockchainIcon
@@ -378,6 +379,18 @@ export const HeroSection = ({ onGetStarted, onTryDesktop, onAIAgent }: HeroSecti
               />
               <Tooltip $visible={tooltipVisible === 'kub'}>
                 KUB Chain
+              </Tooltip>
+            </BlockchainIcon>
+            <BlockchainIcon
+              onMouseEnter={() => setTooltipVisible('etherlink')}
+              onMouseLeave={() => setTooltipVisible(null)}
+            >
+              <IconImage
+                src="/images/blockchain-icons/etherlink-icon.png"
+                alt="Etherlink"
+              />
+              <Tooltip $visible={tooltipVisible === 'etherlink'}>
+                Etherlink
               </Tooltip>
             </BlockchainIcon>
           </BlockchainSupport>

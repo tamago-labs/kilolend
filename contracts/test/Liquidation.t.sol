@@ -35,11 +35,12 @@ contract LiquidationTest is Test {
         eth = new MockToken("Wrapped ETH", "ETH", 18, 10000e18); // Mock ETH
         
         interestRateModel = new JumpRateModelV2(
-            2e16,   // 2% base rate
-            10e16,  // 10% multiplier
-            200e16, // 200% jump multiplier
-            8e17,   // 80% kink
-            admin
+            2e16,         // 2% base rate
+            10e16,        // 10% multiplier
+            200e16,       // 200% jump multiplier
+            8e17,         // 80% kink
+            admin,        // owner
+            31536000      // blocksPerYear for Kaia (1 second block time)
         );
         
         // Deploy cTokens
