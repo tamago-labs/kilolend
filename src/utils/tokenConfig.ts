@@ -145,10 +145,11 @@ export const FAUCET_CONFIG = {
 // Price API configuration
 export const PRICE_API_CONFIG = {
   endpoint: 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices',
-  supportedTokens: ['KAIA', 'USDT', 'STAKED_KAIA' , 'MARBLEX', 'BORA', 'SIX'] as const,
+  supportedTokens: ['KAIA', 'USDT', 'STAKED_KAIA', 'MARBLEX', 'BORA', 'SIX', 'KUB', 'XTZ'] as const,
   // Map API symbols to our token symbols
   symbolMapping: {
-    'MARBLEX': 'MBX' // API uses MARBLEX, we use MBX
+    'MARBLEX': 'MBX', // API uses MARBLEX, we use MBX
+    'TEZOS': 'XTZ'    // Etherlink uses XTZ (Tezos) as native token
   },
 };
 

@@ -61,7 +61,7 @@ export const DesktopBootstrap = ({ className, children }: DesktopBootstrapProps)
         <AppContainer className={className}>
             {isSuccess && (
                 <MarketDataProvider>
-                    <MarketProvider>
+                    <MarketProvider> 
                         <DesktopHeader />
                         <MainContent>
                             {children}

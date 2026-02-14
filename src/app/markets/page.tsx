@@ -1,9 +1,9 @@
 "use client";
 
-import { DesktopMarkets } from '@/components/Desktop/pages/Markets/DesktopMarketsPage';
+import { DesktopMarketsV2 } from '@/components/Desktop/pages/Markets/v2';
 
 export default function MarketsPage() {
   return (
-    <DesktopMarkets />
+    <DesktopMarketsV2 />
   );
 }

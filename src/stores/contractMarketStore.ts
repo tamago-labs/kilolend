@@ -3,12 +3,14 @@ import { create } from 'zustand';
 // Enhanced market interface with contract data
 export interface ContractMarket {
   id: string;
+  chainId: number;
+  chainName: string;
   name: string;
   symbol: string;
   icon: string;
-  iconType: any;  
+  iconType: any;
   decimals: number;
-  
+
   // Market data from contracts
   supplyAPY: number;
   borrowAPR: number;
@@ -20,10 +22,11 @@ export interface ContractMarket {
 
   marketAddress?: string;
   tokenAddress?: string;
-  
+
   // Status
-  isActive: boolean; 
-  
+  isActive: boolean;
+  isCollateralOnly?: boolean;
+
   // Contract-specific data
   contractData?: any;
   lastUpdated?: number;
@@ -49,105 +52,8 @@ export interface ContractMarketState {
   getBestBorrowMarket: () => ContractMarket | undefined;
 }
 
-// Initial markets based on deployed contract configuration
-const initialContractMarkets: ContractMarket[] = [
-  {
-    id: 'usdt',
-    name: 'Tether USD',
-    symbol: 'USDT',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/825.png',
-    iconType: 'image' as const, 
-    decimals: 6,
-    supplyAPY: 2,
-    borrowAPR: 3,
-    totalSupply: 0,
-    totalBorrow: 0,
-    utilization: 0,
-    price: 1.0,
-    priceChange24h: 0.02,
-    isActive: true
-  },
-  {
-    id: 'six',
-    name: 'SIX Token',
-    symbol: 'SIX',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3327.png',
-    iconType: 'image' as const, 
-    decimals: 18,
-    supplyAPY: 8,
-    borrowAPR: 9,
-    totalSupply: 0,
-    totalBorrow: 0,
-    utilization: 0,
-    price: 0.016,
-    priceChange24h: 1.2,
-    isActive: true
-  },
-  {
-    id: 'bora',
-    name: 'BORA Token',
-    symbol: 'BORA',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/3801.png',
-    iconType: 'image' as const, 
-    decimals: 18,
-    supplyAPY: 7,
-    borrowAPR: 8,
-    totalSupply: 0,
-    totalBorrow: 0,
-    utilization: 0,
-    price: 0.09,
-    priceChange24h: -0.5,
-    isActive: true
-  },
-  {
-    id: 'mbx',
-    name: 'MARBLEX Token',
-    symbol: 'MBX',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/18895.png',
-    iconType: 'image' as const, 
-    decimals: 18,
-    supplyAPY: 6,
-    borrowAPR: 7,
-    totalSupply: 0,
-    totalBorrow: 0,
-    utilization: 0,
-    price: 0.1,
-    priceChange24h: 0.8,
-    isActive: true
-  },
-  {
-    id: 'kaia',
-    name: 'KAIA',
-    symbol: 'KAIA',
-    icon: 'https://s2.coinmarketcap.com/static/img/coins/64x64/32880.png',
-    iconType: 'image' as const, 
-    decimals: 18,
-    supplyAPY: 1,
-    borrowAPR: 2,
-    totalSupply: 0,
-    totalBorrow: 0,
-    utilization: 0,
-    price: 0.09,
-    priceChange24h: -1.2,
-    isActive: true
-  },
-  {
-    id: 'staked-kaia',
-    name: 'Lair Staked KAIA',
-    symbol: 'stKAIA',
-    icon: 'https://assets.coingecko.com/coins/images/40001/standard/token_stkaia.png',
-    iconType: 'image' as const, 
-    decimals: 18,
-    supplyAPY: 1,
-    borrowAPR: 2,
-    totalSupply: 0,
-    totalBorrow: 0,
-    utilization: 0,
-    price: 0.09,
-    priceChange24h: 0.1,
-    isActive: true
-  }
-];
+// Initial markets - empty since we fetch all markets from multi-chain hook
+const initialContractMarkets: ContractMarket[] = [];
 
 export const useContractMarketStore = create<ContractMarketState>((set, get) => ({
   markets: initialContractMarkets,
@@ -161,24 +67,56 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
 
   updateMarketData: (marketId: string, data: any) => {
     set((state) => {
+      // Check if market already exists
+      const existingMarket = state.markets.find(m => m.id === marketId);
 
-      const updatedMarkets = state.markets.map(market => {
-        if (market.id === marketId) {
-          return {
-            ...market,
-            supplyAPY: data.supplyAPY || 0,
-            borrowAPR: data.borrowAPR || 0,
-            totalSupply: parseFloat(data.totalSupply || '0'),
-            totalBorrow: parseFloat(data.totalBorrow || '0'),
-            utilization: data.utilizationRate || market.utilization,
-            marketAddress: data.marketAddress,
-            tokenAddress: data.tokenAddress,
-            contractData: data,
-            lastUpdated: Date.now()
-          };
-        }
-        return market;
-      });
+      let updatedMarkets;
+
+      if (existingMarket) {
+        // Update existing market
+        updatedMarkets = state.markets.map(market => {
+          if (market.id === marketId) {
+            return {
+              ...market,
+              supplyAPY: data.supplyAPY || 0,
+              borrowAPR: data.borrowAPR || 0,
+              totalSupply: parseFloat(data.totalSupply || '0'),
+              totalBorrow: parseFloat(data.totalBorrow || '0'),
+              utilization: data.utilizationRate || market.utilization,
+              price: data.price !== undefined ? data.price : market.price,
+              marketAddress: data.marketAddress,
+              tokenAddress: data.tokenAddress,
+              contractData: data,
+              lastUpdated: Date.now()
+            };
+          }
+          return market;
+        });
+      } else {
+        // Add new market (from KUB or Etherlink)
+        const newMarket: ContractMarket = {
+          id: data.id,
+          chainId: data.chainId,
+          chainName: data.chainName,
+          name: data.name,
+          symbol: data.symbol,
+          icon: data.icon,
+          iconType: 'image' as const,
+          decimals: data.decimals,
+          supplyAPY: data.supplyAPY || 0,
+          borrowAPR: data.borrowAPR || 0,
+          totalSupply: parseFloat(data.totalSupply || '0'),
+          totalBorrow: parseFloat(data.totalBorrow || '0'),
+          utilization: data.utilizationRate || 0,
+          price: data.price || 1,
+          priceChange24h: 0,
+          isActive: data.isActive !== undefined ? data.isActive : true,
+          isCollateralOnly: data.isCollateralOnly || false,
+          contractData: data,
+          lastUpdated: Date.now()
+        };
+        updatedMarkets = [...state.markets, newMarket];
+      }
       
       // Calculate aggregate stats
       const lendingMarkets = updatedMarkets 
