@@ -8,7 +8,7 @@ import "../../src/KiloPriceOracle.sol";
  * @title DeployKUBOracle
  * @notice Deploy KiloPriceOracle for KUB Chain (Chain ID 96)
  * @dev Usage: 
- *   forge script script/core/3-DeployKUBOracle.s.sol --rpc-url $KUB_RPC_URL --broadcast
+ *   forge script script/core/3-DeployKUBOracle.s.sol --rpc-url $KUB_RPC_URL --broadcast --legacy
  */
 contract DeployKUBOracle is Script {
     

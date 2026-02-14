@@ -6,22 +6,21 @@ import "../../src/Comptroller.sol";
 import "../../src/KiloPriceOracle.sol";
 import "../../src/tokens/CEther.sol";
 import "../../src/tokens/CErc20Immutable.sol";
-import "../../src/interest-rates/StablecoinJumpRateModel.sol";
 import "../../src/interest-rates/JumpRateModelV2.sol";
 
 /**
  * @title DeployKUBProtocol
  * @notice Deploy all protocol contracts and configure KiloLend on KUB Chain (Chain ID 96)
  * @dev Usage: 
- *   forge script script/core/4-DeployKUBProtocol.s.sol --rpc-url $KUB_RPC_URL --broadcast
+ *   forge script script/core/4-DeployKUBProtocol.s.sol --rpc-url $KUB_RPC_URL --broadcast --legacy
  */
 contract DeployKUBProtocol is Script {
     
     // Token addresses on KUB Chain
     address public constant KUSDT = 0x7d984C24d2499D840eB3b7016077164e15E5faA6;
     
-    // Oracle address (update this after deployment from script 4)
-    address public ORACLE;
+    // Oracle address
+    address public constant ORACLE = 0xE370336C3074E76163b2f9B07876d0Cb3425488D;
     
     // Deployment configuration
     uint256 public constant INITIAL_EXCHANGE_RATE = 0.2e18; // 0.2 cToken per underlying (Compound default)
@@ -44,7 +43,7 @@ contract DeployKUBProtocol is Script {
     
     // Deployed contracts
     Comptroller public comptroller;
-    StablecoinJumpRateModel public stablecoinRateModel;
+    JumpRateModelV2 public stablecoinRateModel;
     JumpRateModelV2 public volatileRateModel;
     CErc20Immutable public cKUSDT;
     CEther public cKUB;
@@ -53,10 +52,6 @@ contract DeployKUBProtocol is Script {
         string memory privateKeyString = vm.envString("PRIVATE_KEY");
         uint256 deployerPrivateKey = _parsePrivateKey(privateKeyString);
         address deployer = vm.addr(deployerPrivateKey);
-        
-        // Get oracle address from environment variable or prompt
-        string memory oracleAddressString = vm.envString("KUB_ORACLE_ADDRESS");
-        ORACLE = vm.parseAddress(oracleAddressString);
         
         console.log("===========================================");
         console.log("Deploying Complete KiloLend Protocol");
@@ -120,17 +115,24 @@ contract DeployKUBProtocol is Script {
         console.log("   Blocks per year:", BLOCKS_PER_YEAR);
         
         // Stablecoin rate model (for KUSDT)
-        // - 1% base rate, 4% slope before kink, 109% jump after 80% utilization
-        stablecoinRateModel = new StablecoinJumpRateModel(BLOCKS_PER_YEAR);
-        console.log("StablecoinJumpRateModel:", address(stablecoinRateModel));
+        // - 2.5% base rate, 15% slope before kink, 150% jump after 85% utilization
+        stablecoinRateModel = new JumpRateModelV2(
+            25000000000000000, // 2.5% base rate per year (0.025 * 1e18)
+            150000000000000000, // 15% multiplier per year before kink (0.15 * 1e18)
+            1500000000000000000, // 150% jump multiplier per year after kink (1.50 * 1e18)
+            850000000000000000, // 85% kink point (0.85 * 1e18)
+            payable(deployer), // owner
+            BLOCKS_PER_YEAR   // blocks per year for KUB Chain
+        );
+        console.log("StablecoinRateModel:", address(stablecoinRateModel));
         
         // Volatile asset rate model (for KUB)
         // - 3% base rate, 15% slope before kink, 200% jump after 80% utilization
         volatileRateModel = new JumpRateModelV2(
-            0.03e18,         // 3% base rate per year
-            0.15e18,         // 15% multiplier per year before kink
-            2.00e18,         // 200% jump multiplier per year after kink
-            0.80e18,         // 80% kink point
+            30000000000000000, // 3% base rate per year (0.03 * 1e18)
+            150000000000000000, // 15% multiplier per year before kink (0.15 * 1e18)
+            2000000000000000000, // 200% jump multiplier per year after kink (2.00 * 1e18)
+            800000000000000000, // 80% kink point (0.80 * 1e18)
             payable(deployer), // owner
             BLOCKS_PER_YEAR   // blocks per year for KUB Chain
         );
@@ -237,8 +239,8 @@ contract DeployKUBProtocol is Script {
         console.log("Oracle:", ORACLE);
         
         console.log("\nInterest Rate Models:");
-        console.log("StablecoinJumpRateModel:", address(stablecoinRateModel));
-        console.log("VolatileRateModel:", address(volatileRateModel)); 
+        console.log("StablecoinRateModel:", address(stablecoinRateModel));
+        console.log("VolatileRateModel:", address(volatileRateModel));
         
         console.log("\nBorrowable Markets:");
         console.log("cKUSDT (Stablecoin):", address(cKUSDT));
