@@ -24,10 +24,12 @@ export interface ChainMarketInfo {
   utilizationRate: number;
   exchangeRate: string;
   price?: number;
+  priceChange24h?: number;
+  volume24h?: number;
 }
 
 // Helper function to fetch prices from backend API
-const fetchRealPrices = async (symbols: string[]): Promise<Record<string, { price: number }>> => {
+const fetchRealPrices = async (symbols: string[]): Promise<Record<string, { price: number, priceChange24h: number, volume24h: number  }>> => {
   try {
     const response = await fetch(PRICE_API_CONFIG.endpoint);
     
@@ -42,7 +44,7 @@ const fetchRealPrices = async (symbols: string[]): Promise<Record<string, { pric
     }
 
     // Convert API data to our format
-    const priceMap: Record<string, { price: number }> = {};
+    const priceMap: Record<string, { price: number, priceChange24h: number, volume24h: number }> = {};
 
     // Process API data and map symbols
     apiData.data.forEach((tokenData: any) => {
@@ -55,7 +57,9 @@ const fetchRealPrices = async (symbols: string[]): Promise<Record<string, { pric
 
       if (symbols.includes(mappedSymbol)) {
         priceMap[mappedSymbol] = {
-          price: tokenData.price
+          price: tokenData.price,
+          priceChange24h: tokenData.percent_change_24h,
+          volume24h: tokenData.volume_24h
         };
       }
     });
@@ -85,7 +89,7 @@ export const useMultiChainMarketData = () => {
   const fetchChainMarkets = useCallback(async (
     chainId: ChainId,
     provider: ethers.JsonRpcProvider,
-    prices: Record<string, { price: number }>
+    prices: Record<string, { price: number, priceChange24h: number, volume24h: number  }>
   ): Promise<ChainMarketInfo[]> => {
     const config = CHAIN_CONFIGS[chainId];
     const contracts = CHAIN_CONTRACTS[chainId];
@@ -180,7 +184,9 @@ export const useMultiChainMarketData = () => {
           borrowAPR,
           utilizationRate,
           exchangeRate: ethers.formatUnits(exchangeRate, 18),
-          price: tokenPrice
+          price: tokenPrice,
+          priceChange24h: priceData?.priceChange24h || 0,
+          volume24h: priceData?.volume24h || 0
         });
 
         console.log(`✅ Fetched ${chainId}-${marketKey}:`, {

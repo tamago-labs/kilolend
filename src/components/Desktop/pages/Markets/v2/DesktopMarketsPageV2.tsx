@@ -69,7 +69,7 @@ export const DesktopMarketsV2 = () => {
     <MarketsContainer>
       <MainContent>
         <MarketsHeader>
-          <PageTitle>Multi-Chain Lending Markets</PageTitle>
+          <PageTitle>Lending Markets</PageTitle>
           <PageSubtitle>Browse and compare lending rates across KAIA, KUB, and Etherlink</PageSubtitle>
         </MarketsHeader>
 

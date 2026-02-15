@@ -19,6 +19,7 @@ export interface ContractMarket {
   utilization: number;
   price: number;
   priceChange24h: number;
+  volume24h?: number;
 
   marketAddress?: string;
   tokenAddress?: string;
@@ -41,7 +42,7 @@ export interface ContractMarketState {
   avgUtilization: number;
   isLoading: boolean;
   lastUpdate: number;
-  
+
   // Actions
   updateMarketData: (marketId: string, data: any) => void;
   updatePriceData: (prices: any) => void;
@@ -84,6 +85,8 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
               totalBorrow: parseFloat(data.totalBorrow || '0'),
               utilization: data.utilizationRate || market.utilization,
               price: data.price !== undefined ? data.price : market.price,
+              priceChange24h: data.priceChange24h,
+              volume24h: data.volume24h,
               marketAddress: data.marketAddress,
               tokenAddress: data.tokenAddress,
               contractData: data,
@@ -109,7 +112,8 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
           totalBorrow: parseFloat(data.totalBorrow || '0'),
           utilization: data.utilizationRate || 0,
           price: data.price || 1,
-          priceChange24h: 0,
+          priceChange24h: data.priceChange24h,
+          volume24h: data.volume24h,
           isActive: data.isActive !== undefined ? data.isActive : true,
           isCollateralOnly: data.isCollateralOnly || false,
           contractData: data,
@@ -117,16 +121,16 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
         };
         updatedMarkets = [...state.markets, newMarket];
       }
-      
+
       // Calculate aggregate stats
-      const lendingMarkets = updatedMarkets 
+      const lendingMarkets = updatedMarkets
       const totalTVL = lendingMarkets.reduce((sum, m) => sum + m.totalSupply + m.totalBorrow, 0);
       const bestSupplyAPY = Math.max(...lendingMarkets.map(m => m.supplyAPY));
       const bestBorrowAPR = Math.min(...lendingMarkets.filter(m => m.borrowAPR > 0).map(m => m.borrowAPR));
-      const avgUtilization = lendingMarkets.length > 0 
-        ? lendingMarkets.reduce((sum, m) => sum + m.utilization, 0) / lendingMarkets.length 
+      const avgUtilization = lendingMarkets.length > 0
+        ? lendingMarkets.reduce((sum, m) => sum + m.utilization, 0) / lendingMarkets.length
         : 0;
-      
+
       return {
         markets: updatedMarkets,
         totalTVL,
@@ -142,15 +146,15 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
     set((state) => {
       const updatedMarkets = state.markets.map(market => {
         let symbolToCheck = market.symbol.toUpperCase();
-        
-        if (symbolToCheck === "STKAIA") { 
+
+        if (symbolToCheck === "STKAIA") {
           symbolToCheck = "STAKED_KAIA"
         }
 
         // Get real price from the prices data
         let newPrice = market.price; // Keep existing as fallback
         let priceChange24h = market.priceChange24h;
-        
+
         if (prices && prices[symbolToCheck]) {
           newPrice = prices[symbolToCheck].price;
           priceChange24h = prices[symbolToCheck].change24h || 0;
@@ -162,7 +166,7 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
           priceChange24h
         };
       });
-      
+
       return {
         markets: updatedMarkets,
         priceData: prices,
@@ -184,15 +188,15 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
   },
 
   getBestSupplyMarket: () => {
-    const lendingMarkets = get().markets.filter(m =>  m.isActive);
-    return lendingMarkets.reduce((best, current) => 
+    const lendingMarkets = get().markets.filter(m => m.isActive);
+    return lendingMarkets.reduce((best, current) =>
       current.supplyAPY > best.supplyAPY ? current : best
     );
   },
 
   getBestBorrowMarket: () => {
     const lendingMarkets = get().markets.filter(m => m.isActive && m.borrowAPR > 0);
-    return lendingMarkets.reduce((best, current) => 
+    return lendingMarkets.reduce((best, current) =>
       current.borrowAPR < best.borrowAPR ? current : best
     );
   }
