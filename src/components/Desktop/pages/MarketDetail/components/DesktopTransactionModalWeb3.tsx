@@ -364,7 +364,7 @@ export const DesktopTransactionModalWeb3 = ({
           await approveToken(marketId, amount);
         }
 
-        if (needsMarketEntry) {
+        if (needsMarketEntry && market.marketAddress) {
           await enterMarkets([market.marketAddress]);
         }
       }

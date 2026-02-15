@@ -78,16 +78,7 @@ export const useMarketContract = (): MarketContractHook => {
         contract.borrowRatePerBlock(),
         contract.exchangeRateStored(),
       ]);
-
-      // console.log("Raw market data for", marketId, {
-      //   totalSupply: totalSupply.toString(),
-      //   totalBorrows: totalBorrows.toString(),
-      //   getCash: getCash.toString(),
-      //   supplyRatePerBlock: supplyRatePerBlock.toString(),
-      //   borrowRatePerBlock: borrowRatePerBlock.toString(),
-      //   exchangeRate: exchangeRate.toString(),
-      // });
-
+ 
       // Utilization = borrows / (cash + borrows)
       const totalLiquidity = getCash + totalBorrows;
       const utilizationRate =
@@ -161,12 +152,15 @@ export const useMarketContract = (): MarketContractHook => {
   }, [getMarketById]);
 
   const getUserPosition = useCallback(
-    async (marketId: any, userAddress: string): Promise<UserPosition | null> => {
+    async (marketIdRaw: any, userAddress: string): Promise<UserPosition | null> => {
       try {
-        // Skip if marketId starts with non-KAIA chain prefixes (LINE SDK only supports KAIA)
-        if (typeof marketId === 'string' && (marketId.startsWith('kub-') || marketId.startsWith('etherlink-'))) {
-          console.warn(`Skipping ${marketId}: LINE SDK only supports KAIA chain markets`);
-          return null;
+
+        let marketId = marketIdRaw
+        if (marketId.indexOf("kaia-") !== -1) {
+          marketId = marketId.split("kaia-")[1]
+        }
+        if (marketId === "stkaia") {
+          marketId = "staked-kaia"
         }
 
         const CONFIG: any = MARKET_CONFIG

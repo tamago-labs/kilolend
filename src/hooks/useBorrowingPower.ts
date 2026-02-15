@@ -1,10 +1,23 @@
 import { useCallback } from 'react';
 import BigNumber from 'bignumber.js';
-import { useChainId } from 'wagmi';
 import { useMarketContract } from './useMarketContract';
-import { useComptrollerContract } from './useComptrollerContract';
+import { useComptrollerContract } from './v1/useComptrollerContract';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { MarketId } from '@/utils/contractConfig';
+
+// Helper function to map Kaia market ID to cToken address
+const getKaiaCTokenAddress = (marketId: string): string | undefined => {
+  const cTokenMapping: Record<string, string> = {
+    'usdt': '0x20A2Cbc68fbee094754b2F03d15B1F5466f1F649',
+    'six': '0x287770f1236AdbE3F4dA4f29D0f1a776f303C966',
+    'bora': '0xA7247a6f5EaC85354642e0E90B515E2dC027d5F4',
+    'mbx': '0xa024B1DE3a6022FB552C2ED9a8050926Fb22d7b6',
+    'kaia': '0x2029f3E3C667EBd68b1D29dbd61dc383BdbB56e5',
+    'staked-kaia': '0x8A424cCf2D2B7D85F1DFb756307411D2BBc73e07',
+    'stkaia': '0x8A424cCf2D2B7D85F1DFb756307411D2BBc73e07'
+  };
+  return cTokenMapping[marketId.toLowerCase()];
+};
 
 export interface BorrowingPowerData {
   totalCollateralValue: string;
@@ -28,7 +41,6 @@ export interface MarketBorrowingData {
 }
 
 export const useBorrowingPower = () => {
-  const chainId = useChainId();
   const { getUserPosition } = useMarketContract();
   const { getAccountLiquidity, getAssetsIn, getEnteredMarketIds, getMarketInfo } = useComptrollerContract();
   const { markets } = useContractMarketStore();
@@ -39,6 +51,7 @@ export const useBorrowingPower = () => {
   const calculateBorrowingPower = useCallback(
     async (userAddress: string): Promise<BorrowingPowerData> => {
       try {
+
         // Get account liquidity from comptroller (this gives us real borrowing power)
         const accountLiquidity = await getAccountLiquidity(userAddress);
         
@@ -49,26 +62,34 @@ export const useBorrowingPower = () => {
         let totalCollateralValue = new BigNumber(0);
         let totalBorrowValue = new BigNumber(0);
 
-        // Filter markets by current chain ID to prevent cross-chain RPC calls
-        const currentChainMarkets = markets.filter(market => market.chainId === chainId);
-        console.log(`BorrowingPower: Filtered to ${currentChainMarkets.length}/${markets.length} markets for chain ${chainId}`);
+        const filtered = markets.filter( item => item.id.indexOf("kaia") !== -1)
 
         // Calculate totals by checking all user positions
-        for (const market of currentChainMarkets) {
-          if (!market.isActive) continue;
+        for (const market of filtered) {
+  
+          if (!market.isActive) continue; 
           
-          const m: any = market;
-          const position = await getUserPosition(m.id, userAddress);
+          const m: any = market; 
+          let marketId = m.id.split("kaia-")[1]
+          if (marketId === "stkaia") {
+            marketId = "staked-kaia"
+          }
+ 
+          const position = await getUserPosition(marketId, userAddress);
+
           if (!position) continue;
 
           const supplyBalance = new BigNumber(position.supplyBalance || '0');
           const borrowBalance = new BigNumber(position.borrowBalance || '0');
           const marketPrice = new BigNumber(market.price || '0');
 
+          // Get cToken address from marketId
+          const cTokenAddress = getKaiaCTokenAddress(marketId);
+
           // Add to collateral value if market is entered
-          if (supplyBalance.isGreaterThan(0) && enteredMarkets.includes(market.marketAddress || '')) {
+          if (cTokenAddress && supplyBalance.isGreaterThan(0) && enteredMarkets.includes(cTokenAddress)) {
             // Get real collateral factor from comptroller
-            const marketInfo = await getMarketInfo(market.marketAddress || '');
+            const marketInfo = await getMarketInfo(cTokenAddress);
             const collateralValue = supplyBalance
               .multipliedBy(marketPrice)
               .multipliedBy(marketInfo.collateralFactor / 100);
@@ -126,7 +147,7 @@ export const useBorrowingPower = () => {
         };
       }
     },
-    [chainId, getUserPosition, markets, getAccountLiquidity, getAssetsIn, getEnteredMarketIds, getMarketInfo]
+    [getUserPosition, markets, getAccountLiquidity, getAssetsIn, getEnteredMarketIds, getMarketInfo]
   );
 
   /**
@@ -148,8 +169,16 @@ export const useBorrowingPower = () => {
         const position = await getUserPosition(marketId, userAddress);
         const currentDebt = position?.borrowBalance || '0';
 
+        // Extract market key from marketId (e.g., 'kaia-usdt' -> 'usdt')
+        const marketKey = marketId.split('kaia-')[1];
+        const cTokenAddress = getKaiaCTokenAddress(marketKey);
+        
+        if (!cTokenAddress) {
+          throw new Error('cToken address not found for market');
+        }
+
         // Get real collateral factor from comptroller
-        const marketInfo = await getMarketInfo(market.marketAddress || '');
+        const marketInfo = await getMarketInfo(cTokenAddress);
         
         // Check if user is in this market (has supplied and entered)
         const isUserInMarket = borrowingPower.enteredMarketIds.includes(marketId);

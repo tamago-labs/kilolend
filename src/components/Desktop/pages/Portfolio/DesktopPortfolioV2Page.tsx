@@ -69,7 +69,7 @@ export const DesktopPortfolioV2 = () => {
 
   const { balances, refetch } = useTokenBalancesV2();
   const { prices } = usePriceUpdates({
-    symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX"]
+    symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX", "XTZ" , "KUB"]
   });
 
 
@@ -134,15 +134,11 @@ export const DesktopPortfolioV2 = () => {
       const borrowingPower = await calculateBorrowingPower(account);
       setBorrowingPowerData(borrowingPower);
 
-
       for (const market of currentChainMarkets) {
-
-
         if (!market.isActive) continue;
  
-
         const position = await getUserPosition(market.id as any, account);
- 
+
         if (!position) continue;
 
         const supplyBalance = parseFloat(position.supplyBalance || '0');
