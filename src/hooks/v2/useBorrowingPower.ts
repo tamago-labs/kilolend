@@ -2,10 +2,10 @@ import { useMemo, useCallback } from 'react';
 import { useReadContract, useChainId, useConnection } from 'wagmi';
 import { kaia } from 'wagmi/chains';
 import { CTOKEN_ABI, COMPTROLLER_ABI } from '@/utils/contractABIs';
-import { CONTRACT_ADDRESSES_V1, MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig';
+import { CHAIN_CONFIGS, CHAIN_CONTRACTS, CHAIN_MARKETS, ChainId, MarketKey } from '@/utils/chainConfig';
 import { formatUnits } from 'viem';
 import { usePriceUpdates } from '../usePriceUpdates';
-import { useBorrowingPower } from '../v1/useBorrowingPower';
+import { useBorrowingPower } from '../useBorrowingPower';
 import { useAuth } from '@/contexts/ChainContext';
 
 export interface BorrowingPowerData {
@@ -29,19 +29,99 @@ export interface MarketBorrowingData {
   isUserInMarket?: boolean;
 }
 
+// Helper function to get market address from chain config
+const getMarketAddress = (chainId: ChainId, marketId: string): string => {
+  const parts = marketId.split('-');
+  const marketKey = parts[1] as MarketKey;
+  const chainContracts = CHAIN_CONTRACTS[chainId] as any;
+  
+  if (chainId === 'kaia') {
+    switch(marketKey) {
+      case 'usdt': return chainContracts.cUSDT;
+      case 'six': return chainContracts.cSIX;
+      case 'bora': return chainContracts.cBORA;
+      case 'mbx': return chainContracts.cMBX;
+      case 'kaia': return chainContracts.cKAIA;
+      case 'stkaia': return chainContracts.cStKAIA || chainContracts.cstKAIA;
+      default: return '';
+    }
+  } else if (chainId === 'kub') {
+    switch(marketKey) {
+      case 'kusdt': return chainContracts.cKUSDT;
+      case 'kub': return chainContracts.cKUB;
+      default: return '';
+    }
+  } else if (chainId === 'etherlink') {
+    switch(marketKey) {
+      case 'usdt': return chainContracts.cUSDT;
+      case 'xtz': return chainContracts.cXTZ;
+      default: return '';
+    }
+  }
+  return '';
+};
+
+// Helper function to get token address from chain config
+const getTokenAddress = (chainId: ChainId, marketId: string): string => {
+  const parts = marketId.split('-');
+  const marketKey = parts[1] as MarketKey;
+  const chainContracts = CHAIN_CONTRACTS[chainId] as any;
+  
+  if (chainId === 'kaia') {
+    switch(marketKey) {
+      case 'usdt': return chainContracts.USDT;
+      case 'six': return chainContracts.SIX;
+      case 'bora': return chainContracts.BORA;
+      case 'mbx': return chainContracts.MBX;
+      case 'kaia': return chainContracts.KAIA;
+      case 'stkaia': return '0x42952b873ed6f7f0a7e4992e2a9818e3a9001995';
+      default: return '';
+    }
+  } else if (chainId === 'kub') {
+    switch(marketKey) {
+      case 'kusdt': return chainContracts.KUSDT;
+      case 'kub': return chainContracts.KUB;
+      default: return '';
+    }
+  } else if (chainId === 'etherlink') {
+    switch(marketKey) {
+      case 'usdt': return chainContracts.USDT;
+      case 'xtz': return chainContracts.XTZ;
+      default: return '';
+    }
+  }
+  return '';
+};
+
+// Type for market ID
+type MarketId = string;
+
 /**
  * Web3-based borrowing power calculation using wagmi
- * Supports KAIA, KUB, and Etherlink chains (uses KAIA contracts for all)
+ * Supports KAIA, KUB, and Etherlink chains with proper chain filtering
  */
 const useWeb3BorrowingPower = () => {
   const { address } = useConnection();
   const chainId = useChainId();
-  const isKAIAChain = chainId === kaia.id;
-  // For now, all chains use KAIA contract
-  const isSupportedChain = isKAIAChain;
-
-  // Get all markets
-  const markets = useMemo(() => Object.values(MARKET_CONFIG_V1), []);
+  
+  // Determine current chain
+  const currentChainId = chainId === 8217 ? 'kaia' : chainId === 96 ? 'kub' : chainId === 42793 ? 'etherlink' : null;
+  const isSupportedChain = currentChainId !== null;
+  
+  // Get chain-specific config
+  const chainConfig = currentChainId ? CHAIN_CONFIGS[currentChainId] : null;
+  const chainContracts = currentChainId ? CHAIN_CONTRACTS[currentChainId] : null;
+  const chainMarkets = currentChainId ? CHAIN_MARKETS[currentChainId] : null;
+  
+  // Get all markets for current chain
+  const markets = useMemo(() => {
+    if (!currentChainId || !chainMarkets) return [];
+    return Object.values(chainMarkets).map(market => ({
+      ...market,
+      marketAddress: getMarketAddress(currentChainId, market.id),
+      tokenAddress: getTokenAddress(currentChainId, market.id)
+    }));
+  }, [currentChainId, chainMarkets]);
 
   // Get token prices
   const tokenSymbols = markets.map((m) => m.symbol);
@@ -54,9 +134,9 @@ const useWeb3BorrowingPower = () => {
       abi: CTOKEN_ABI,
       functionName: 'getAccountSnapshot',
       args: address ? [address] : undefined,
-      chainId: isKAIAChain ? kaia.id : undefined,
+      chainId: chainId,
       query: {
-        enabled: !!address && isKAIAChain && !!market.marketAddress,
+        enabled: !!address && isSupportedChain && !!market.marketAddress,
         refetchOnWindowFocus: false,
         staleTime: 30000,
       },
@@ -69,9 +149,9 @@ const useWeb3BorrowingPower = () => {
       abi: CTOKEN_ABI,
       functionName: 'balanceOf',
       args: address ? [address] : undefined,
-      chainId: isKAIAChain ? kaia.id : undefined,
+      chainId: chainId,
       query: {
-        enabled: !!address && isKAIAChain && !!market.marketAddress,
+        enabled: !!address && isSupportedChain && !!market.marketAddress,
         refetchOnWindowFocus: false,
         staleTime: 30000,
       },
@@ -83,9 +163,9 @@ const useWeb3BorrowingPower = () => {
       address: market.marketAddress as `0x${string}`,
       abi: CTOKEN_ABI,
       functionName: 'exchangeRateStored',
-      chainId: isKAIAChain ? kaia.id : undefined,
+      chainId: chainId,
       query: {
-        enabled: isKAIAChain && !!market.marketAddress,
+        enabled: isSupportedChain && !!market.marketAddress,
         refetchOnWindowFocus: false,
         staleTime: 60000,
       },
@@ -93,39 +173,41 @@ const useWeb3BorrowingPower = () => {
   });
 
   // Comptroller queries
+  const comptrollerAddress = chainContracts?.Comptroller;
+  
   const getAssetsInQuery = useReadContract({
-    address: CONTRACT_ADDRESSES_V1.Comptroller as `0x${string}`,
+    address: comptrollerAddress as `0x${string}`,
     abi: COMPTROLLER_ABI,
     functionName: 'getAssetsIn',
     args: address ? [address] : undefined,
-    chainId: isKAIAChain ? kaia.id : undefined,
+    chainId: chainId,
     query: {
-      enabled: !!address && isKAIAChain,
+      enabled: !!address && isSupportedChain && !!comptrollerAddress,
       refetchOnWindowFocus: false,
       staleTime: 30000,
     },
   });
 
   const getAccountLiquidityQuery = useReadContract({
-    address: CONTRACT_ADDRESSES_V1.Comptroller as `0x${string}`,
+    address: comptrollerAddress as `0x${string}`,
     abi: COMPTROLLER_ABI,
     functionName: 'getAccountLiquidity',
     args: address ? [address] : undefined,
-    chainId: isKAIAChain ? kaia.id : undefined,
+    chainId: chainId,
     query: {
-      enabled: !!address && isKAIAChain,
+      enabled: !!address && isSupportedChain && !!comptrollerAddress,
       refetchOnWindowFocus: false,
       staleTime: 30000,
     },
   });
 
   const getAllMarketsQuery = useReadContract({
-    address: CONTRACT_ADDRESSES_V1.Comptroller as `0x${string}`,
+    address: comptrollerAddress as `0x${string}`,
     abi: COMPTROLLER_ABI,
     functionName: 'getAllMarkets',
-    chainId: isKAIAChain ? kaia.id : undefined,
+    chainId: chainId,
     query: {
-      enabled: isKAIAChain,
+      enabled: isSupportedChain && !!comptrollerAddress,
       refetchOnWindowFocus: false,
       staleTime: 60000,
     },
@@ -134,13 +216,13 @@ const useWeb3BorrowingPower = () => {
   // Get market info (collateral factor) for all markets
   const marketInfoQueries = markets.map((market) => {
     return useReadContract({
-      address: CONTRACT_ADDRESSES_V1.Comptroller as `0x${string}`,
+      address: comptrollerAddress as `0x${string}`,
       abi: COMPTROLLER_ABI,
       functionName: 'markets',
       args: [market.marketAddress],
-      chainId: isKAIAChain ? kaia.id : undefined,
+      chainId: chainId,
       query: {
-        enabled: isKAIAChain && !!market.marketAddress,
+        enabled: isSupportedChain && !!market.marketAddress && !!comptrollerAddress,
         refetchOnWindowFocus: false,
         staleTime: 60000,
       },
@@ -153,9 +235,9 @@ const useWeb3BorrowingPower = () => {
       address: market.marketAddress as `0x${string}`,
       abi: CTOKEN_ABI,
       functionName: 'getCash',
-      chainId: isKAIAChain ? kaia.id : undefined,
+      chainId: chainId,
       query: {
-        enabled: isKAIAChain && !!market.marketAddress,
+        enabled: isSupportedChain && !!market.marketAddress,
         refetchOnWindowFocus: false,
         staleTime: 30000,
       },
@@ -170,7 +252,13 @@ const useWeb3BorrowingPower = () => {
 
     const enteredMarkets = getAssetsInQuery.data as string[] || [];
 
-    return markets.map((market, index) => {
+    // Filter markets by current chain to prevent cross-chain issues
+    const currentChainMarkets = markets.filter(market => {
+      // MARKET_CONFIG_V1 only has KAIA markets, but add filter for future-proofing
+      return true; // All markets in V1 config are KAIA
+    });
+
+    return currentChainMarkets.map((market, index) => {
       const snapshotQuery = marketPositionQueries[index];
       const cTokenBalanceQuery = cTokenBalanceQueries[index];
       const exchangeRateQuery = exchangeRateQueries[index];

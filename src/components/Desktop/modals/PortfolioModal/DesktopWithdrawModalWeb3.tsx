@@ -36,7 +36,6 @@ import { useEffect, useState } from 'react';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract } from '@/hooks/v2/useMarketContract';
 import { useBorrowingPowerV2 } from '@/hooks/v2/useBorrowingPower';
-import { MarketId } from '@/utils/contractConfig';
 import { useWaitForTransactionReceipt } from 'wagmi';
 
 type TransactionStep = 'preview' | 'confirmation' | 'success';

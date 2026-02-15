@@ -2,6 +2,7 @@
 
 import styled from 'styled-components';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useChain } from '@/contexts/ChainContext';
 import { etherlink } from '@/wagmi_config';
 
@@ -332,6 +333,7 @@ interface HeroSectionProps {
 }
 
 export const HeroSection = ({ onGetStarted, onTryDesktop, onAIAgent }: HeroSectionProps) => {
+  const router = useRouter();
   const { selectedChain } = useChain();
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
  
@@ -346,7 +348,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop, onAIAgent }: HeroSecti
           </HeroSubtitle>
 
           <CTAContainer>
-            <PrimaryButton onClick={onGetStarted}>
+            <PrimaryButton onClick={() => router.push('/markets')}>
               Use as Human
             </PrimaryButton>
             <SecondaryButton onClick={onAIAgent || onTryDesktop}>
@@ -452,10 +454,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop, onAIAgent }: HeroSecti
                   <AnimatedChatBubble $isUser={false} $delay={10}>
                     🐍 You can borrow 50 KAIA! Your health factor is strong at 2.0 🛡️
                   </AnimatedChatBubble>
-                </AIResponse>
-
-
-
+                </AIResponse> 
               </ChatInterface>
             </PhoneScreen>
           </PhoneFrame>

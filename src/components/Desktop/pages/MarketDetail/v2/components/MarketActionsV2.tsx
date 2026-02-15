@@ -8,6 +8,8 @@ import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
 import { validateAmountAgainstBalance, getSafeMaxAmount } from '@/utils/tokenUtils';
+import { useAuth } from '@/contexts/ChainContext';
+import { DesktopTransactionModalWeb3 } from '../../components/DesktopTransactionModalWeb3';
 
 const ActionsContainer = styled.div`
   background: white;
@@ -174,8 +176,10 @@ export const MarketActionsV2 = ({
 }: MarketActionsV2Props) => {
   const [amount, setAmount] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   const { account } = useWalletAccountStore();
+  const { selectedAuthMethod } = useAuth();
   const { balances: tokenBalances, isLoading: balancesLoading } = useMarketTokenBalances();
   const { calculateBorrowingPower, calculateMaxBorrowAmount } = useBorrowingPower();
   const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
@@ -267,8 +271,14 @@ export const MarketActionsV2 = ({
     if (!amount || parseFloat(amount) <= 0 || validationError) {
       return;
     }
-    // TODO: Open transaction modal for multi-chain
-    console.log('Action:', activeTab, 'Amount:', amount, 'Chain:', market.chainName);
+    // Open appropriate transaction modal based on auth method
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setAmount('');
+    setValidationError(null);
   };
 
   // Reset amount when switching tabs
@@ -279,74 +289,89 @@ export const MarketActionsV2 = ({
   };
 
   return (
-    <ActionsContainer>
-      <TabContainer>
-        <TabButton 
-          $active={activeTab === 'supply'}
-          onClick={() => handleTabChange('supply')}
-        >
-          Supply
-        </TabButton>
-        <TabButton 
-          $active={activeTab === 'borrow'}
-          onClick={() => handleTabChange('borrow')}
-        >
-          Borrow
-        </TabButton>
-      </TabContainer>
+    <>
+      <ActionsContainer>
+        <TabContainer>
+          <TabButton 
+            $active={activeTab === 'supply'}
+            onClick={() => handleTabChange('supply')}
+          >
+            Supply
+          </TabButton>
+          <TabButton 
+            $active={activeTab === 'borrow'}
+            onClick={() => handleTabChange('borrow')}
+          >
+            Borrow
+          </TabButton>
+        </TabContainer>
 
-      <ActionContent>
-        <InputSection>
-          <InputLabel>Amount</InputLabel>
-          <InputContainer>
-            <AmountInput
-              type="number"
-              placeholder="0.00"
-              value={amount}
-              onChange={(e) => handleAmountChange(e.target.value)}
-            />
-            <MaxButton onClick={handleMax}>MAX</MaxButton>
-          </InputContainer>
-          {activeTab === 'supply' ? (
-            <BalanceRow>
-              <BalanceColumn>
-                <BalanceInfo>
-                  <span>Wallet Balance: {userBalance}</span>
-                  <span>{market.symbol}</span>
-                </BalanceInfo>
-              </BalanceColumn>
-            </BalanceRow>
-          ) : (
-            <BalanceRow>
-              <BalanceColumn>
-                <BalanceInfo>
-                  <span>Available to Borrow: {maxBorrowData?.maxBorrowAmount || '0.00'}</span>
-                  <span>{market.symbol}</span>
-                </BalanceInfo>
-              </BalanceColumn>
-            </BalanceRow>
-          )}
-        </InputSection>
+        <ActionContent>
+          <InputSection>
+            <InputLabel>Amount</InputLabel>
+            <InputContainer>
+              <AmountInput
+                type="number"
+                placeholder="0.00"
+                value={amount}
+                onChange={(e) => handleAmountChange(e.target.value)}
+              />
+              <MaxButton onClick={handleMax}>MAX</MaxButton>
+            </InputContainer>
+            {activeTab === 'supply' ? (
+              <BalanceRow>
+                <BalanceColumn>
+                  <BalanceInfo>
+                    <span>Wallet Balance: {userBalance}</span>
+                    <span>{market.symbol}</span>
+                  </BalanceInfo>
+                </BalanceColumn>
+              </BalanceRow>
+            ) : (
+              <BalanceRow>
+                <BalanceColumn>
+                  <BalanceInfo>
+                    <span>Available to Borrow: {maxBorrowData?.maxBorrowAmount || '0.00'}</span>
+                    <span>{market.symbol}</span>
+                  </BalanceInfo>
+                </BalanceColumn>
+              </BalanceRow>
+            )}
+          </InputSection>
 
-        <APYInfo>
-          <APYLabel>
-            {activeTab === 'supply' ? 'Supply APY' : 'Borrow APR'}
-          </APYLabel>
-          <APYValue>
-            {formatPercent(activeTab === 'supply' ? market.supplyAPY : market.borrowAPR)}
-          </APYValue>
-        </APYInfo>
+          <APYInfo>
+            <APYLabel>
+              {activeTab === 'supply' ? 'Supply APY' : 'Borrow APR'}
+            </APYLabel>
+            <APYValue>
+              {formatPercent(activeTab === 'supply' ? market.supplyAPY : market.borrowAPR)}
+            </APYValue>
+          </APYInfo>
 
-        {validationError && <ErrorMessage>{validationError}</ErrorMessage>}
+          {validationError && <ErrorMessage>{validationError}</ErrorMessage>}
 
-        <ActionButton 
-          $primary 
-          $disabled={!amount || !!validationError || !account}
-          onClick={handleAction}
-        >
-          {!account ? 'Wallet Not Connected' : `Preview ${activeTab === 'supply' ? 'Supply' : 'Borrow'}`}
-        </ActionButton>
-      </ActionContent>
-    </ActionsContainer>
+          <ActionButton 
+            $primary 
+            $disabled={!amount || !!validationError || !account}
+            onClick={handleAction}
+          >
+            {!account ? 'Wallet Not Connected' : `Preview ${activeTab === 'supply' ? 'Supply' : 'Borrow'}`}
+          </ActionButton>
+        </ActionContent>
+      </ActionsContainer>
+
+      {/* Render appropriate modal based on auth method */}
+      {selectedAuthMethod === 'web3_wallet' && (
+        <DesktopTransactionModalWeb3
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          type={activeTab}
+          amount={amount}
+          market={market}
+          borrowingPowerData={borrowingPowerData}
+          maxBorrowData={maxBorrowData}
+        />
+      )}
+    </>
   );
 };

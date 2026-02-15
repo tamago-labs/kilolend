@@ -73,6 +73,7 @@ export const DesktopPortfolioV2 = () => {
   });
 
 
+
   // Portfolio positions state
   const [positions, setPositions] = useState<Position[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -125,13 +126,21 @@ export const DesktopPortfolioV2 = () => {
     try {
       const userPositions: Position[] = [];
 
+      // Filter markets by current chain ID
+      const currentChainMarkets = markets.filter(market => market.chainId === chainId);
+      console.log(`Fetching positions for chain ${chainId}, found ${currentChainMarkets.length} markets`);
+
       // Get borrowing power data
       const borrowingPower = await calculateBorrowingPower(account);
       setBorrowingPowerData(borrowingPower);
 
-      for (const market of markets) {
-        if (!market.isActive || !market.marketAddress) continue;
+
+      for (const market of currentChainMarkets) {
+
+
+        if (!market.isActive) continue;
  
+
         const position = await getUserPosition(market.id as any, account);
  
         if (!position) continue;
@@ -191,7 +200,7 @@ export const DesktopPortfolioV2 = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [account, markets, getUserPosition, calculateBorrowingPower]);
+  }, [account, markets, chainId, getUserPosition, calculateBorrowingPower]);
  
 
   useEffect(() => {
@@ -202,7 +211,7 @@ export const DesktopPortfolioV2 = () => {
 
   useInterval(
     () => {  
-      if (account && !isLoading && (markets.length === (Object.keys(MARKET_CONFIG_V1)).length)) {
+      if (account && !isLoading) {
         fetchPositions()
         setDelay(60000)
       }

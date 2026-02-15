@@ -163,6 +163,12 @@ export const useMarketContract = (): MarketContractHook => {
   const getUserPosition = useCallback(
     async (marketId: any, userAddress: string): Promise<UserPosition | null> => {
       try {
+        // Skip if marketId starts with non-KAIA chain prefixes (LINE SDK only supports KAIA)
+        if (typeof marketId === 'string' && (marketId.startsWith('kub-') || marketId.startsWith('etherlink-'))) {
+          console.warn(`Skipping ${marketId}: LINE SDK only supports KAIA chain markets`);
+          return null;
+        }
+
         const CONFIG: any = MARKET_CONFIG
         const marketConfig = CONFIG[marketId];
         if (!marketConfig.marketAddress) return null;

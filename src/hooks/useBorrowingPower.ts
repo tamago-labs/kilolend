@@ -1,9 +1,10 @@
 import { useCallback } from 'react';
 import BigNumber from 'bignumber.js';
+import { useChainId } from 'wagmi';
 import { useMarketContract } from './useMarketContract';
 import { useComptrollerContract } from './useComptrollerContract';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import {  MarketId } from '@/utils/contractConfig';
+import { MarketId } from '@/utils/contractConfig';
 
 export interface BorrowingPowerData {
   totalCollateralValue: string;
@@ -27,6 +28,7 @@ export interface MarketBorrowingData {
 }
 
 export const useBorrowingPower = () => {
+  const chainId = useChainId();
   const { getUserPosition } = useMarketContract();
   const { getAccountLiquidity, getAssetsIn, getEnteredMarketIds, getMarketInfo } = useComptrollerContract();
   const { markets } = useContractMarketStore();
@@ -47,8 +49,12 @@ export const useBorrowingPower = () => {
         let totalCollateralValue = new BigNumber(0);
         let totalBorrowValue = new BigNumber(0);
 
+        // Filter markets by current chain ID to prevent cross-chain RPC calls
+        const currentChainMarkets = markets.filter(market => market.chainId === chainId);
+        console.log(`BorrowingPower: Filtered to ${currentChainMarkets.length}/${markets.length} markets for chain ${chainId}`);
+
         // Calculate totals by checking all user positions
-        for (const market of markets) {
+        for (const market of currentChainMarkets) {
           if (!market.isActive) continue;
           
           const m: any = market;
@@ -120,7 +126,7 @@ export const useBorrowingPower = () => {
         };
       }
     },
-    [getUserPosition, markets, getAccountLiquidity, getAssetsIn, getEnteredMarketIds, getMarketInfo]
+    [chainId, getUserPosition, markets, getAccountLiquidity, getAssetsIn, getEnteredMarketIds, getMarketInfo]
   );
 
   /**

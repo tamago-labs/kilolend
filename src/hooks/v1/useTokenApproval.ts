@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { ethers } from 'ethers';
 import BigNumber from 'bignumber.js';
 import { ERC20_ABI } from '@/utils/contractABIs';
-import { MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig';
+import { getMarketConfig } from '@/hooks/v2/useMarketContract';
 import { getContract, parseTokenAmount } from '@/utils/contractUtils';
 import { useKaiaWalletSdk } from '@/components/Wallet/Sdk/walletSdk.hooks';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
@@ -28,7 +28,7 @@ export const useTokenApproval = () => {
    * Check current allowance for a token
    */
   const checkAllowance = useCallback(async (
-    marketId: MarketId,
+    marketId: string,
     amount: string
   ): Promise<TokenAllowance> => {
     try {
@@ -36,8 +36,8 @@ export const useTokenApproval = () => {
         return { allowance: '0', hasEnoughAllowance: false };
       }
 
-      const marketConfig = MARKET_CONFIG_V1[marketId];
-      if (!marketConfig.marketAddress || !marketConfig.tokenAddress) {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig || !marketConfig.marketAddress || !marketConfig.tokenAddress) {
         return { allowance: '0', hasEnoughAllowance: false };
       }
 
@@ -71,7 +71,7 @@ export const useTokenApproval = () => {
    * Approve token spending
    */
   const approveToken = useCallback(async (
-    marketId: MarketId,
+    marketId: string,
     amount?: string
   ): Promise<ApprovalResult> => {
     try {
@@ -79,8 +79,8 @@ export const useTokenApproval = () => {
         throw new Error('Wallet not connected');
       }
 
-      const marketConfig = MARKET_CONFIG_V1[marketId];
-      if (!marketConfig.marketAddress || !marketConfig.tokenAddress) {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig || !marketConfig.marketAddress || !marketConfig.tokenAddress) {
         throw new Error('Invalid market configuration');
       }
 
@@ -132,7 +132,7 @@ export const useTokenApproval = () => {
    * Check if approval is needed and approve if necessary
    */
   const ensureApproval = useCallback(async (
-    marketId: MarketId,
+    marketId: string,
     amount: string
   ): Promise<ApprovalResult> => {
     try {

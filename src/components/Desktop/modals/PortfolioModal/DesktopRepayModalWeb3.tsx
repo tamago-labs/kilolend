@@ -36,7 +36,7 @@ import { ExternalLink, Check } from 'react-feather';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useEffect, useState } from 'react';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from '@/hooks/v2/useMarketContract';
+import { useMarketContract, getMarketConfig } from '@/hooks/v2/useMarketContract';
 import { useBorrowingPowerV2 } from '@/hooks/v2/useBorrowingPower';
 import { useTokenApprovalWeb3 } from '@/hooks/v2/useTokenApprovalWeb3';
 import { useWaitForTransactionReceipt } from 'wagmi';
@@ -198,26 +198,32 @@ export const DesktopRepayModalWeb3 = ({ isOpen, onClose, preSelectedMarket }: De
         setIsApproving(false);
 
         try {
+            // Get market config to get tokenAddress
+            const marketConfig = getMarketConfig(selectedMarket.id);
+            if (!marketConfig) {
+                throw new Error('Market config not found');
+            }
+
             // Check if token approval is needed (for ERC20 tokens)
-            if (selectedMarket?.tokenAddress !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
+            if (marketConfig.tokenAddress !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
                 const approvalStatus = await checkAllowance(selectedMarket.id, amount);
                 if (!approvalStatus.hasEnoughAllowance) {
                     setNeedsApproval(true);
                     setIsApproving(true);
 
-                const approvalResult = await approveToken(selectedMarket.id, amount);
-                if (!approvalResult.success) {
-                    throw new Error(approvalResult.error || 'Approval failed');
-                }
+                    const approvalResult = await approveToken(selectedMarket.id, amount);
+                    if (!approvalResult.success) {
+                        throw new Error(approvalResult.error || 'Approval failed');
+                    }
 
-                // Set approval transaction hash for receipt tracking
-                if (approvalResult.hash) {
-                    setApprovalTxHash(approvalResult.hash as `0x${string}`);
-                    console.log('Approval transaction sent, hash:', approvalResult.hash);
-                }
+                    // Set approval transaction hash for receipt tracking
+                    if (approvalResult.hash) {
+                        setApprovalTxHash(approvalResult.hash as `0x${string}`);
+                        console.log('Approval transaction sent, hash:', approvalResult.hash);
+                    }
 
-                // The approval transaction will be confirmed by useEffect, then proceed to repay
-                return;
+                    // The approval transaction will be confirmed by useEffect, then proceed to repay
+                    return;
                 }
             }
 

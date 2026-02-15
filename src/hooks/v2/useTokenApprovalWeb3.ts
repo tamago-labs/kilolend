@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { useWriteContract, useConnection, usePublicClient } from 'wagmi';
 import { parseUnits, maxUint256, formatUnits } from 'viem';
 import { ERC20_ABI } from '@/utils/contractABIs';
-import { MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig';
+import { getMarketConfig } from '@/hooks/v2/useMarketContract';
 
 export interface ApprovalResult {
   success: boolean;
@@ -24,7 +24,7 @@ export const useTokenApprovalWeb3 = () => {
    * Check current allowance for a token
    */
   const checkAllowance = useCallback(async (
-    marketId: MarketId,
+    marketId: string,
     amount: string
   ): Promise<TokenAllowance> => {
     try {
@@ -32,12 +32,12 @@ export const useTokenApprovalWeb3 = () => {
         return { allowance: '0', hasEnoughAllowance: false };
       }
 
-      const marketConfig = MARKET_CONFIG_V1[marketId];
-      if (!marketConfig.marketAddress || !marketConfig.tokenAddress) {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig || !marketConfig.marketAddress || !marketConfig.tokenAddress) {
         return { allowance: '0', hasEnoughAllowance: false };
       }
 
-      // Skip approval check for native KAIA
+      // Skip approval check for native token
       if (marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
         return { allowance: 'unlimited', hasEnoughAllowance: true };
       }
@@ -65,13 +65,13 @@ export const useTokenApprovalWeb3 = () => {
       console.error('Error checking allowance:', error);
       return { allowance: '0', hasEnoughAllowance: false };
     }
-  }, [address]);
+  }, [address, publicClient]);
 
   /**
    * Approve token spending
    */
   const approveToken = useCallback(async (
-    marketId: MarketId,
+    marketId: string,
     amount?: string
   ): Promise<ApprovalResult> => {
     try {
@@ -79,12 +79,12 @@ export const useTokenApprovalWeb3 = () => {
         throw new Error('Wallet not connected');
       }
 
-      const marketConfig = MARKET_CONFIG_V1[marketId];
-      if (!marketConfig.marketAddress || !marketConfig.tokenAddress) {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig || !marketConfig.marketAddress || !marketConfig.tokenAddress) {
         throw new Error('Invalid market configuration');
       }
 
-      // Skip approval for native KAIA
+      // Skip approval for native token
       if (marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
         return { success: true };
       }
@@ -127,7 +127,7 @@ export const useTokenApprovalWeb3 = () => {
    * Check if approval is needed and approve if necessary
    */
   const ensureApproval = useCallback(async (
-    marketId: MarketId,
+    marketId: string,
     amount: string
   ): Promise<ApprovalResult> => {
     try {

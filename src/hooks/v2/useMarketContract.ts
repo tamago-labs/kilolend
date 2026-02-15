@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { useReadContract, useWriteContract, useChainId, useConnection } from 'wagmi';
 import { kaia } from 'wagmi/chains';
 import { CTOKEN_ABI, COMPTROLLER_ABI } from '@/utils/contractABIs';
-import { CONTRACT_ADDRESSES_V1, MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig';
+import { CHAIN_CONFIGS, CHAIN_CONTRACTS, CHAIN_MARKETS, ChainId, MarketKey } from '@/utils/chainConfig';
 import { parseUnits, formatUnits } from 'viem';
 import {
   getContract,
@@ -42,14 +42,99 @@ export interface TransactionResult {
 }
 
 interface MarketContractHook {
-  getMarketInfo: (marketId: MarketId) => Promise<MarketInfo | null>;
-  getUserPosition: (marketId: MarketId, userAddress: string) => Promise<UserPosition | null>;
-  supply: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
-  withdraw: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
-  borrow: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
-  repay: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
-  accrueInterest: (marketId: MarketId) => Promise<TransactionResult>;
+  getMarketInfo: (marketId: string) => Promise<MarketInfo | null>;
+  getUserPosition: (marketId: string, userAddress: string) => Promise<UserPosition | null>;
+  supply: (marketId: string, amount: string) => Promise<TransactionResult>;
+  withdraw: (marketId: string, amount: string) => Promise<TransactionResult>;
+  borrow: (marketId: string, amount: string) => Promise<TransactionResult>;
+  repay: (marketId: string, amount: string) => Promise<TransactionResult>;
+  accrueInterest: (marketId: string) => Promise<TransactionResult>;
 }
+
+// Helper function to parse marketId like "kaia-usdt" into chain and market key
+const parseMarketId = (marketId: string): { chainId: ChainId; marketKey: MarketKey } | null => {
+  const parts = marketId.split('-');
+  if (parts.length !== 2) return null;
+  
+  const [chain, marketKey] = parts;
+  if (!Object.keys(CHAIN_CONFIGS).includes(chain)) return null;
+  
+  return {
+    chainId: chain as ChainId,
+    marketKey: marketKey as MarketKey
+  };
+};
+
+// Helper function to get market config for a specific chain
+export const getMarketConfig = (marketId: string) => {
+  const parsed = parseMarketId(marketId);
+  if (!parsed) return null;
+  
+  const chainMarkets = CHAIN_MARKETS[parsed.chainId];
+  if (!chainMarkets || !chainMarkets[parsed.marketKey]) return null;
+  
+  const chainContracts = CHAIN_CONTRACTS[parsed.chainId];
+  if (!chainContracts) return null;
+  
+  // Map market keys to contract addresses with proper typing
+  const contractMap: Record<string, string> = {};
+  const tokenMap: Record<string, string> = {};
+
+  if (parsed.chainId === 'kaia') {
+    const kaiaContracts = CHAIN_CONTRACTS.kaia;
+    contractMap.usdt = kaiaContracts.cUSDT;
+    contractMap.six = kaiaContracts.cSIX;
+    contractMap.bora = kaiaContracts.cBORA;
+    contractMap.mbx = kaiaContracts.cMBX;
+    contractMap.kaia = kaiaContracts.cKAIA;
+    contractMap['staked-kaia'] = kaiaContracts.cStKAIA || kaiaContracts.cstKAIA;
+    
+    tokenMap.usdt = kaiaContracts.USDT;
+    tokenMap.six = kaiaContracts.SIX;
+    tokenMap.bora = kaiaContracts.BORA;
+    tokenMap.mbx = kaiaContracts.MBX;
+    tokenMap.kaia = kaiaContracts.KAIA;
+    tokenMap['staked-kaia'] = '0x42952b873ed6f7f0a7e4992e2a9818e3a9001995';
+  } else if (parsed.chainId === 'kub') {
+    const kubContracts = CHAIN_CONTRACTS.kub;
+    contractMap.kusdt = kubContracts.cKUSDT;
+    contractMap.kub = kubContracts.cKUB;
+    
+    tokenMap.kusdt = kubContracts.KUSDT;
+    tokenMap.kub = kubContracts.KUB;
+  } else if (parsed.chainId === 'etherlink') {
+    const etherlinkContracts = CHAIN_CONTRACTS.etherlink;
+    contractMap.usdt = etherlinkContracts.cUSDT;
+    contractMap.xtz = etherlinkContracts.cXTZ;
+    
+    tokenMap.usdt = etherlinkContracts.USDT;
+    tokenMap.xtz = etherlinkContracts.XTZ;
+  }
+  
+  const marketData = chainMarkets[parsed.marketKey];
+  const marketAddress = contractMap[parsed.marketKey];
+  const tokenAddress = tokenMap[parsed.marketKey];
+  
+  if (!marketData) return null;
+  
+   // Type assertion to fix TypeScript inference
+  const market = marketData as any;
+
+  return {
+    id: market.id,
+    name: market.name,
+    symbol: market.symbol,
+    decimals: market.decimals,
+    isActive: market.isActive,
+    isCollateralOnly: market.isCollateralOnly,
+    description: market.description,
+    interestModel: market.interestModel,
+    chainId: parsed.chainId,
+    marketAddress,
+    tokenAddress,
+    blocksPerYear: CHAIN_CONFIGS[parsed.chainId].blocksPerYear
+  };
+};
 
 /**
  * LINE SDK-based market contract hook
@@ -60,12 +145,11 @@ const useLineSdkMarketContract = (): MarketContractHook => {
   const { getMarketById } = useContractMarketStore();
   const { gasLimit } = useAppStore();
 
-  const getMarketInfo = useCallback(async (marketId: MarketId): Promise<MarketInfo | null> => {
+  const getMarketInfo = useCallback(async (marketId: string): Promise<MarketInfo | null> => {
     try {
-      const marketConfig = MARKET_CONFIG_V1[marketId];
-
-      if (!marketConfig.marketAddress) {
-        console.warn(`Market ${marketId} is collateral-only`);
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig || !marketConfig.marketAddress) {
+        console.warn(`Market ${marketId} not found or is collateral-only`);
         return null;
       }
 
@@ -96,8 +180,8 @@ const useLineSdkMarketContract = (): MarketContractHook => {
           ? Number((totalBorrows * BigInt(10000)) / totalLiquidity) / 100
           : 0;
 
-      // Blocks per year (~2s block time on Kaia)
-      const blocksPerYear = BigInt(365 * 24 * 60 * 60 / 2);
+      // Use chain-specific blocks per year
+      const blocksPerYear = BigInt(marketConfig.blocksPerYear);
 
       // APY calculations
       const scale = BigInt(10) ** BigInt(18);
@@ -113,7 +197,6 @@ const useLineSdkMarketContract = (): MarketContractHook => {
       ) / 100;
 
       // Calculate total supply in underlying tokens
-      // totalSupply (cTokens) * exchangeRate = total underlying supplied
       const totalSupplyUnderlying =
         (BigInt(totalSupply.toString()) * BigInt(exchangeRate.toString())) /
         BigInt(10 ** 18)
@@ -164,11 +247,24 @@ const useLineSdkMarketContract = (): MarketContractHook => {
   }, [getMarketById]);
 
   const getUserPosition = useCallback(
-    async (marketId: any, userAddress: string): Promise<UserPosition | null> => {
+    async (marketId: string, userAddress: string): Promise<UserPosition | null> => {
       try {
-        const CONFIG: any = MARKET_CONFIG_V1
-        const marketConfig = CONFIG[marketId];
-        if (!marketConfig.marketAddress) return null;
+        console.log("marketId --> ", marketId)
+        const marketConfig = getMarketConfig(marketId);
+        if (!marketConfig) {
+          console.warn(`Market config not found for ${marketId}`);
+          return null;
+        }
+        if (!marketConfig.marketAddress) {
+          console.warn(`Market address not found for ${marketId}`);
+          return null;
+        }
+
+        // Skip if market is not for KAIA chain (LINE SDK only supports KAIA)
+        if (marketConfig.chainId !== 'kaia') {
+          console.warn(`Skipping ${marketId}: LINE SDK only supports KAIA chain, got ${marketConfig.chainId}`);
+          return null;
+        }
 
         const contract = await getContract(marketConfig.marketAddress, CTOKEN_ABI, false);
         if (!contract) throw new Error('Failed to create contract instance');
@@ -206,14 +302,14 @@ const useLineSdkMarketContract = (): MarketContractHook => {
   );
 
   const sendContractTransaction = useCallback(
-    async (marketId: MarketId, methodName: string, args: any[], value?: string): Promise<TransactionResult> => {
+    async (marketId: string, methodName: string, args: any[], value?: string): Promise<TransactionResult> => {
       try {
         if (!account) {
           throw new Error('Wallet not connected');
         }
 
-        const marketConfig = MARKET_CONFIG_V1[marketId];
-        if (!marketConfig.marketAddress) {
+        const marketConfig = getMarketConfig(marketId);
+        if (!marketConfig || !marketConfig.marketAddress) {
           throw new Error(`Market not available for ${methodName}`);
         }
 
@@ -235,7 +331,7 @@ const useLineSdkMarketContract = (): MarketContractHook => {
         }
         const data = iface.encodeFunctionData(methodName, args);
 
-        // For native KAIA, we need to send value with the transaction
+        // For native tokens, we need to send value with the transaction
         const transactionValue = value || '0x0';
 
         // Prepare transaction for LINE MiniDapp
@@ -276,12 +372,13 @@ const useLineSdkMarketContract = (): MarketContractHook => {
   );
 
   const supply = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const marketConfig = MARKET_CONFIG_V1[marketId];
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig) return { hash: '', status: 'failed', error: 'Market not found' };
 
-      // For native KAIA, we need to send the value with the transaction
+      // For native tokens, we need to send the value with the transaction
       if (marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
-        // Native KAIA - send value with mint() call
+        // Native token - send value with mint() call
         const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
         const hexValue = '0x' + parsedAmount.toString(16);
         return sendContractTransaction(marketId, 'mint', [], hexValue);
@@ -295,28 +392,35 @@ const useLineSdkMarketContract = (): MarketContractHook => {
   );
 
   const withdraw = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const parsedAmount = parseTokenAmount(amount, MARKET_CONFIG_V1[marketId].decimals);
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig) return { hash: '', status: 'failed', error: 'Market not found' };
+      
+      const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
       return sendContractTransaction(marketId, 'redeemUnderlying', [parsedAmount]);
     },
     [sendContractTransaction]
   );
 
   const borrow = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const parsedAmount = parseTokenAmount(amount, MARKET_CONFIG_V1[marketId].decimals);
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig) return { hash: '', status: 'failed', error: 'Market not found' };
+      
+      const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
       return sendContractTransaction(marketId, 'borrow', [parsedAmount]);
     },
     [sendContractTransaction]
   );
 
   const repay = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const marketConfig = MARKET_CONFIG_V1[marketId];
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig) return { hash: '', status: 'failed', error: 'Market not found' };
 
-      // For native KAIA, we need to send the value with the transaction
+      // For native tokens, we need to send the value with the transaction
       if (marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
-        // Native KAIA - send value with repayBorrow() call (no parameters)
+        // Native token - send value with repayBorrow() call (no parameters)
         const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
         const hexValue = '0x' + parsedAmount.toString(16);
         return sendContractTransaction(marketId, 'repayBorrow', [], hexValue);
@@ -330,7 +434,7 @@ const useLineSdkMarketContract = (): MarketContractHook => {
   );
 
   const accrueInterest = useCallback(
-    async (marketId: MarketId): Promise<TransactionResult> => {
+    async (marketId: string): Promise<TransactionResult> => {
       return sendContractTransaction(marketId, 'accrueInterest', []);
     },
     [sendContractTransaction]
@@ -359,14 +463,11 @@ const useWeb3MarketContract = (): MarketContractHook => {
   // Write contracts for transactions
   const writeContract = useWriteContract();
 
-
-
-  const getMarketInfo = useCallback(async (marketId: MarketId): Promise<MarketInfo | null> => {
+  const getMarketInfo = useCallback(async (marketId: string): Promise<MarketInfo | null> => {
     try {
-      const marketConfig = MARKET_CONFIG_V1[marketId];
-
-      if (!marketConfig.marketAddress) {
-        console.warn(`Market ${marketId} is collateral-only`);
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig || !marketConfig.marketAddress) {
+        console.warn(`Market ${marketId} not found or is collateral-only`);
         return null;
       }
 
@@ -397,8 +498,8 @@ const useWeb3MarketContract = (): MarketContractHook => {
           ? Number((totalBorrows * BigInt(10000)) / totalLiquidity) / 100
           : 0;
 
-      // Blocks per year (~2s block time on Kaia)
-      const blocksPerYear = BigInt(365 * 24 * 60 * 60 / 2);
+      // Use chain-specific blocks per year
+      const blocksPerYear = BigInt(marketConfig.blocksPerYear);
 
       // APY calculations
       const scale = BigInt(10) ** BigInt(18);
@@ -460,11 +561,25 @@ const useWeb3MarketContract = (): MarketContractHook => {
   }, [getMarketById]);
 
   const getUserPosition = useCallback(
-    async (marketId: any, userAddress: string): Promise<UserPosition | null> => {
+    async (marketId: string, userAddress: string): Promise<UserPosition | null> => {
       try {
-        const CONFIG: any = MARKET_CONFIG_V1
-        const marketConfig = CONFIG[marketId];
-        if (!marketConfig.marketAddress) return null;
+        console.log("marketId --> ", marketId)
+        const marketConfig = getMarketConfig(marketId);
+        if (!marketConfig) {
+          console.warn(`Market config not found for ${marketId}`);
+          return null;
+        }
+        if (!marketConfig.marketAddress) {
+          console.warn(`Market address not found for ${marketId}`);
+          return null;
+        }
+
+        // Skip if market's chain doesn't match current chain (prevent cross-chain RPC calls)
+        const currentChainId = chainId === 8217 ? 'kaia' : chainId === 96 ? 'kub' : chainId === 42793 ? 'etherlink' : null;
+        if (currentChainId && marketConfig.chainId !== currentChainId) {
+          console.warn(`Skipping ${marketId}: chain mismatch - market is on ${marketConfig.chainId}, current chain is ${currentChainId}`);
+          return null;
+        }
 
         const contract = await getContract(marketConfig.marketAddress, CTOKEN_ABI, false);
         if (!contract) throw new Error('Failed to create contract instance');
@@ -496,51 +611,87 @@ const useWeb3MarketContract = (): MarketContractHook => {
         return null;
       }
     },
-    []
+    [chainId]
   );
 
   const supply = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
       try {
-        const marketConfig = MARKET_CONFIG_V1[marketId];
-        const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
+        // Try to get market from store first, fallback to getMarketConfig
+        let market = getMarketById(marketId);
+        let marketAddress: string | undefined;
+        let decimals: number;
+        let tokenAddress: string | undefined;
 
-        const args = marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
-          ? [] // Native KAIA - value will be in the transaction
-          : [parsedAmount]; // ERC20 token
-
-        // Note: For Web3 wallets, you'll need to implement proper transaction sending
-        // This is a placeholder - you'd use useWriteContract here
-        return {
-          hash: '',
-          status: 'failed',
-          error: 'Web3 transaction sending not implemented yet'
-        };
-      } catch (error: any) {
-        return {
-          hash: '',
-          status: 'failed',
-          error: error.message
-        };
-      }
-    },
-    []
-  );
-
-  const withdraw = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-
-      try {
-        const market = getMarketById(marketId);
-        if (!market) {
-          throw new Error('Market not found');
+        if (market && market.marketAddress) {
+          marketAddress = market.marketAddress;
+          decimals = market.decimals;
+          tokenAddress = market.tokenAddress;
+        } else {
+          // Fallback to getMarketConfig if store data is incomplete
+          const marketConfig = getMarketConfig(marketId);
+          if (!marketConfig || !marketConfig.marketAddress) {
+            throw new Error('Market not found or not properly configured');
+          }
+          marketAddress = marketConfig.marketAddress;
+          decimals = marketConfig.decimals;
+          tokenAddress = marketConfig.tokenAddress;
         }
 
-        const parsedAmount = parseUnits(amount, market.decimals);
+        const isNativeToken = tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+        const parsedAmount = parseUnits(amount, decimals);
 
         // Execute transaction
         const hash = await writeContract.mutateAsync({
-          address: market.marketAddress as `0x${string}`,
+          address: marketAddress as `0x${string}`,
+          abi: CTOKEN_ABI,
+          functionName: 'mint',
+          args: isNativeToken ? undefined : [parsedAmount],
+          value: isNativeToken ? parsedAmount : undefined,
+          chainId: isKAIAChain ? kaia.id : undefined,
+        });
+
+        return {
+          hash,
+          status: 'pending',
+        };
+      } catch (error: any) {
+        console.error('Supply error:', error);
+        return {
+          hash: '',
+          status: 'failed',
+          error: error.message || 'Supply failed',
+        };
+      }
+    },
+    [isKAIAChain, writeContract, getMarketById]
+  );
+
+  const withdraw = useCallback(
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      try {
+        // Try to get market from store first, fallback to getMarketConfig
+        let market = getMarketById(marketId);
+        let marketAddress: string | undefined;
+        let decimals: number;
+
+        if (market && market.marketAddress) {
+          marketAddress = market.marketAddress;
+          decimals = market.decimals;
+        } else {
+          const marketConfig = getMarketConfig(marketId);
+          if (!marketConfig || !marketConfig.marketAddress) {
+            throw new Error('Market not found or not properly configured');
+          }
+          marketAddress = marketConfig.marketAddress;
+          decimals = marketConfig.decimals;
+        }
+
+        const parsedAmount = parseUnits(amount, decimals);
+
+        // Execute transaction
+        const hash = await writeContract.mutateAsync({
+          address: marketAddress as `0x${string}`,
           abi: CTOKEN_ABI,
           functionName: 'redeemUnderlying',
           args: [parsedAmount],
@@ -559,41 +710,90 @@ const useWeb3MarketContract = (): MarketContractHook => {
           error: error.message || 'Withdraw failed',
         };
       }
-
     },
-    []
+    [isKAIAChain, writeContract, getMarketById]
   );
 
   const borrow = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      // Placeholder for Web3 implementation
-      return {
-        hash: '',
-        status: 'failed',
-        error: 'Web3 transaction sending not implemented yet'
-      };
-    },
-    []
-  );
-
-  const repay = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
       try {
-        const market = getMarketById(marketId);
-        if (!market) {
-          throw new Error('Market not found');
+        // Try to get market from store first, fallback to getMarketConfig
+        let market = getMarketById(marketId);
+        let marketAddress: string | undefined;
+        let decimals: number;
+
+        if (market && market.marketAddress) {
+          marketAddress = market.marketAddress;
+          decimals = market.decimals;
+        } else {
+          const marketConfig = getMarketConfig(marketId);
+          if (!marketConfig || !marketConfig.marketAddress) {
+            throw new Error('Market not found or not properly configured');
+          }
+          marketAddress = marketConfig.marketAddress;
+          decimals = marketConfig.decimals;
         }
 
-        const isNativeKAIA = market.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
-        const parsedAmount = parseUnits(amount, market.decimals);
+        const parsedAmount = parseUnits(amount, decimals);
 
         // Execute transaction
         const hash = await writeContract.mutateAsync({
-          address: market.marketAddress as `0x${string}`,
+          address: marketAddress as `0x${string}`,
+          abi: CTOKEN_ABI,
+          functionName: 'borrow',
+          args: [parsedAmount],
+          chainId: isKAIAChain ? kaia.id : undefined,
+        });
+
+        return {
+          hash,
+          status: 'pending',
+        };
+      } catch (error: any) {
+        console.error('Borrow error:', error);
+        return {
+          hash: '',
+          status: 'failed',
+          error: error.message || 'Borrow failed',
+        };
+      }
+    },
+    [isKAIAChain, writeContract, getMarketById]
+  );
+
+  const repay = useCallback(
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      try {
+        // Try to get market from store first, fallback to getMarketConfig
+        let market = getMarketById(marketId);
+        let marketAddress: string | undefined;
+        let decimals: number;
+        let tokenAddress: string | undefined;
+
+        if (market && market.marketAddress) {
+          marketAddress = market.marketAddress;
+          decimals = market.decimals;
+          tokenAddress = market.tokenAddress;
+        } else {
+          const marketConfig = getMarketConfig(marketId);
+          if (!marketConfig || !marketConfig.marketAddress) {
+            throw new Error('Market not found or not properly configured');
+          }
+          marketAddress = marketConfig.marketAddress;
+          decimals = marketConfig.decimals;
+          tokenAddress = marketConfig.tokenAddress;
+        }
+
+        const isNativeToken = tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE';
+        const parsedAmount = parseUnits(amount, decimals);
+
+        // Execute transaction
+        const hash = await writeContract.mutateAsync({
+          address: marketAddress as `0x${string}`,
           abi: CTOKEN_ABI,
           functionName: 'repayBorrow',
-          args: isNativeKAIA ? undefined : [parsedAmount],
-          value: isNativeKAIA ? parsedAmount : undefined,
+          args: isNativeToken ? undefined : [parsedAmount],
+          value: isNativeToken ? parsedAmount : undefined,
           chainId: isKAIAChain ? kaia.id : undefined,
         });
 
@@ -610,11 +810,11 @@ const useWeb3MarketContract = (): MarketContractHook => {
         };
       }
     },
-    []
+    [isKAIAChain, writeContract, getMarketById]
   );
 
   const accrueInterest = useCallback(
-    async (marketId: MarketId): Promise<TransactionResult> => {
+    async (marketId: string): Promise<TransactionResult> => {
       // Placeholder for Web3 implementation
       return {
         hash: '',
@@ -640,9 +840,6 @@ const useWeb3MarketContract = (): MarketContractHook => {
  * Unified market contract hook that supports both LINE SDK and Web3 Wallet modes
  * Similar to useBorrowingPowerV2 pattern
  */
-
-// TODO: rename to V2
-
 export const useMarketContract = (): MarketContractHook => {
   const { selectedAuthMethod } = useAuth();
 

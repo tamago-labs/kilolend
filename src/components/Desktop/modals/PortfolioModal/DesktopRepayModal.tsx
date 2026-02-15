@@ -140,6 +140,12 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
 
   const selectedMarketPosition = selectedMarket ? positions[selectedMarket.id] : null;
   const selectedMarketDebt = selectedMarketPosition?.borrowBalance || '0';
+
+  console.log("selectedMarket:", selectedMarket )
+  console.log("positions:", positions )
+  console.log("selectedMarketPosition: ", selectedMarketPosition)
+  console.log("selectedMarketDebt: ", selectedMarketDebt)
+
   const amountNum = parseFloat(amount || '0');
   const amountUSD = selectedMarket ? amountNum * selectedMarket.price : 0;
   const remainingDebt = parseFloat(selectedMarketDebt) - amountNum;
