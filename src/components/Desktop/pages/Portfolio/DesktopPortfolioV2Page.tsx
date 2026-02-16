@@ -130,6 +130,7 @@ export const DesktopPortfolioV2 = () => {
 
       // Get borrowing power data
       const borrowingPower = await calculateBorrowingPower(account);
+
       setBorrowingPowerData(borrowingPower);
 
       for (const market of currentChainMarkets) {

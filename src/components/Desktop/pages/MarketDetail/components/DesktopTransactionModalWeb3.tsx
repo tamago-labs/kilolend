@@ -7,9 +7,10 @@ import { ContractMarket } from '@/stores/contractMarketStore';
 import { formatUSD, formatPercent } from '@/utils/formatters';
 import { useMarketContract, TransactionResult } from '@/hooks/v2/useMarketContract';
 import { useTokenApprovalWeb3 } from '@/hooks/v2/useTokenApprovalWeb3';
-import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
+import { useComptrollerContract } from '@/hooks/v2/useComptrollerContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { ExternalLink, Check } from 'react-feather';
+import { useTokenBalancesV2 } from '@/hooks/useTokenBalancesV2';
 
 const ModalContent = styled.div`
   padding: 32px;
@@ -306,6 +307,9 @@ export const DesktopTransactionModalWeb3 = ({
   borrowingPowerData,
   maxBorrowData,
 }: DesktopTransactionModalWeb3Props) => {
+ 
+
+  const { refetch } = useTokenBalancesV2()
   const [currentStep, setCurrentStep] = useState<TransactionStep>('preview');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -358,6 +362,7 @@ export const DesktopTransactionModalWeb3 = ({
     setCurrentStep('confirmation');
 
     try {
+ 
       // Handle approvals and market entry if needed
       if (type === 'supply') {
         if (needsApproval && market.tokenAddress !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
@@ -378,6 +383,11 @@ export const DesktopTransactionModalWeb3 = ({
 
       if (result.status === 'pending' || result.status === 'confirmed') {
         setCurrentStep('success');
+
+         setTimeout(() => {
+          refetch()
+        }, 2000);
+        
       } else {
         throw new Error(result.error || 'Transaction failed');
       }
@@ -500,6 +510,7 @@ export const DesktopTransactionModalWeb3 = ({
         </>
       );
     } else {
+
       // Borrow preview with comprehensive information
       const totalCollateralValue = parseFloat(borrowingPowerData?.totalCollateralValue || '0');
       const totalBorrowValue = parseFloat(borrowingPowerData?.totalBorrowValue || '0');

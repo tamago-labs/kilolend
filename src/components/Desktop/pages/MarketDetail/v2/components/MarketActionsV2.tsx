@@ -11,6 +11,9 @@ import { validateAmountAgainstBalance, getSafeMaxAmount } from '@/utils/tokenUti
 import { useAuth } from '@/contexts/ChainContext';
 import { DesktopTransactionModalWeb3 } from '../../components/DesktopTransactionModalWeb3';
 import { DesktopTransactionModal } from "../../components/DesktopTransactionModal"
+import { useMultiChainMarketData } from '@/hooks/v2/useMultiChainMarketData';
+
+import { useInterval } from 'usehooks-ts'
 
 import { CHAIN_CONFIGS, CHAIN_MARKETS, ChainId, MarketKey } from '@/utils/chainConfig';
 
@@ -224,14 +227,17 @@ export const MarketActionsV2 = ({
   activeTab,
   onTabChange,
 }: MarketActionsV2Props) => {
+
+  const [delay, setDelay] = useState<number>(1000)
   const [amount, setAmount] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   
+  const { isLoading } = useMultiChainMarketData()
   const { account } = useWalletAccountStore();
   const { selectedAuthMethod } = useAuth();
   const { balances: tokenBalances } = useTokenBalancesV2();
-  const { calculateBorrowingPower, calculateMaxBorrowAmount } = useBorrowingPowerV2();
+  const { calculateBorrowingPower, calculateMaxBorrowAmount , isLoading: isBorrowingPowerLoading } = useBorrowingPowerV2();
   const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
   const [maxBorrowData, setMaxBorrowData] = useState<any>(null);
 
@@ -244,19 +250,23 @@ export const MarketActionsV2 = ({
   const fullPrecisionBalance = balanceData?.balance || '0';
 
   // Load borrowing power data when account changes
-  useEffect(() => {
-    const loadBorrowingData = async () => {
-      if (!account || !marketId) return;
+  // useEffect(() => {
+  //   const loadBorrowingData = async () => {
 
-      try {
-        const borrowingPower = await calculateBorrowingPower(account);
-        setBorrowingPowerData(borrowingPower);
-      } catch (error) {
-        console.error('Error loading borrowing data:', error);
-      }
-    };
-    loadBorrowingData();
-  }, [account, marketId]);
+  //     if (!account || !marketId || !isLoading) return;
+
+  //     try {
+  //       const borrowingPower = await calculateBorrowingPower(account);
+
+  //       console.log("origin borrowingPower:", borrowingPower)
+
+  //       setBorrowingPowerData(borrowingPower);
+  //     } catch (error) {
+  //       console.error('Error loading borrowing data:', error);
+  //     }
+  //   };
+  //   loadBorrowingData();
+  // }, [account, marketId, isLoading]);
 
   // Load max borrow data when asset is selected for borrow tab
   useEffect(() => {
@@ -338,6 +348,18 @@ export const MarketActionsV2 = ({
     setValidationError(null);
     onTabChange(tab);
   };
+
+  useInterval(
+    () => {
+      if (account && marketId && !isBorrowingPowerLoading && !isLoading) {
+        calculateBorrowingPower(account).then((borrowingPower) => {
+           setBorrowingPowerData(borrowingPower);
+           setDelay(60000)
+        })
+      }
+    },
+    delay,
+  )
 
   return (
     <>

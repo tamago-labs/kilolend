@@ -7,8 +7,8 @@ import { useCallback } from 'react';
 import { useAuth } from '@/contexts/ChainContext';
 import { useWeb3BorrowingPower } from "./useWeb3BorrowingPower"
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from "../v1/useMarketContract"
-import { useComptrollerContract } from '../v1/useComptrollerContract';
+import { useMarketContract } from "../v2/useMarketContract"
+import { useComptrollerContract } from '../v2/useComptrollerContract';
 
 export interface BorrowingPowerData {
   totalCollateralValue: string;

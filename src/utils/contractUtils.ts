@@ -30,7 +30,8 @@ export const getSigner = async (): Promise<ethers.JsonRpcSigner | null> => {
 export const getContract = async (
   address: string, 
   abi: any[], 
-  needsSigner: boolean = false
+  needsSigner: boolean = false,
+  chainId: number
 ): Promise<ethers.Contract | null> => {
   try {
     if (needsSigner) {
@@ -40,7 +41,17 @@ export const getContract = async (
       }
       return new ethers.Contract(address, abi, signer);
     } else {
-      const provider = getProvider();
+ 
+
+      const provider = new ethers.JsonRpcProvider(
+        chainId === 8217 ? 'https://public-en.node.kaia.io' :
+        chainId === 96 ? 'https://rpc.bitkubchain.io' :
+        chainId === 42793 ? 'https://node.mainnet.etherlink.com' :
+        'https://public-en.node.kaia.io'
+      );
+
+      console.log("provideer:", provider)
+
       return new ethers.Contract(address, abi, provider);
     }
   } catch (error) {

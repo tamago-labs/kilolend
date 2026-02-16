@@ -8,7 +8,7 @@ import { MarketHeaderV2 } from './components/MarketHeaderV2';
 import { MarketActionsV2 } from './components/MarketActionsV2';
 import { MarketInfoV2 } from './components/MarketInfoV2';
 import { MarketChartV2 } from './components/MarketChartV2';
-import { ArrowLeft, Loader } from "react-feather";
+import { ArrowLeft } from "react-feather";
 
 const MarketDetailContainer = styled.div`
   min-height: 100vh;
@@ -59,28 +59,39 @@ const RightColumn = styled.div`
   gap: 32px;
 `;
 
-const LoadingMessage = styled.div`
-  padding: 80px 40px;
+const LoadingState = styled.div`
   text-align: center;
+  padding: 80px 24px;
   color: #64748b;
   font-size: 16px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
 `;
 
 const LoadingSpinner = styled.div`
+  width: 48px;
+  height: 48px;
+  border: 4px solid #e2e8f0;
+  border-top: 4px solid #06C755;
+  border-radius: 50%;
   animation: spin 1s linear infinite;
-  
+  margin: 0 auto 24px;
+
   @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
+`;
+
+const LoadingTitle = styled.h3`
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 8px;
+`;
+
+const LoadingSubtitle = styled.p`
+  font-size: 14px;
+  color: #64748b;
+  margin-bottom: 32px;
 `;
 
 const ErrorMessage = styled.div`
@@ -147,12 +158,11 @@ export const DesktopMarketDetailV2 = ({ chain, token }: DesktopMarketDetailV2Pro
     return (
       <MarketDetailContainer>
         <MainContent>
-          <LoadingMessage>
-            <LoadingSpinner>
-              <Loader size={48} />
-            </LoadingSpinner>
-            Loading market data...
-          </LoadingMessage>
+          <LoadingState>
+            <LoadingSpinner />
+            <LoadingTitle>Loading Market Data</LoadingTitle>
+            <LoadingSubtitle>Please wait while we fetch the latest market information...</LoadingSubtitle>
+          </LoadingState>
         </MainContent>
       </MarketDetailContainer>
     );
@@ -180,12 +190,11 @@ export const DesktopMarketDetailV2 = ({ chain, token }: DesktopMarketDetailV2Pro
     return (
       <MarketDetailContainer>
         <MainContent>
-          <LoadingMessage>
-            <LoadingSpinner>
-              <Loader size={48} />
-            </LoadingSpinner>
-            Loading market data for {token} on {chainConfig.chainName}...
-          </LoadingMessage>
+          <LoadingState>
+            <LoadingSpinner />
+            <LoadingTitle>Loading Market Data</LoadingTitle>
+            <LoadingSubtitle>Fetching market data for {token} on {chainConfig.chainName}...</LoadingSubtitle>
+          </LoadingState>
         </MainContent>
       </MarketDetailContainer>
     );

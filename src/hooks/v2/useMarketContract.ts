@@ -569,7 +569,9 @@ const useWeb3MarketContract = (): MarketContractHook => {
   const getUserPosition = useCallback(
     async (marketId: string, userAddress: string): Promise<UserPosition | null> => {
       try {
+
         const marketConfig = getMarketConfig(marketId);
+
         if (!marketConfig) {
           console.warn(`Market config not found for ${marketId}`);
           return null;
@@ -586,14 +588,14 @@ const useWeb3MarketContract = (): MarketContractHook => {
           return null;
         }
 
-        const contract = await getContract(marketConfig.marketAddress, CTOKEN_ABI, false);
+        const contract = await getContract(marketConfig.marketAddress, CTOKEN_ABI, false, chainId);
         if (!contract) throw new Error('Failed to create contract instance');
 
         const [accountSnapshot, cTokenBalance] = await Promise.all([
           contract.getAccountSnapshot(userAddress),
           contract.balanceOf(userAddress),
         ]);
-
+        
         const [error, , borrowBalance, exchangeRateMantissa] = accountSnapshot;
 
         if (Number(error) !== 0) {
@@ -649,11 +651,16 @@ const useWeb3MarketContract = (): MarketContractHook => {
         // Execute transaction
         const hash = await writeContract.mutateAsync({
           address: marketAddress as `0x${string}`,
-          abi: CTOKEN_ABI,
+          abi: isNativeToken ? [{
+            "inputs": [],
+            "name": "mint",
+            "outputs": [{"internalType": "uint256", "name": "", "type": "uint256"}],
+            "stateMutability": "payable",
+            "type": "function"
+          }] : CTOKEN_ABI,
           functionName: 'mint',
           args: isNativeToken ? undefined : [parsedAmount],
-          value: isNativeToken ? parsedAmount : undefined,
-          chainId: isKAIAChain ? kaia.id : undefined,
+          value: isNativeToken ? parsedAmount : undefined
         });
 
         return {
@@ -745,8 +752,7 @@ const useWeb3MarketContract = (): MarketContractHook => {
           address: marketAddress as `0x${string}`,
           abi: CTOKEN_ABI,
           functionName: 'borrow',
-          args: [parsedAmount],
-          chainId: isKAIAChain ? kaia.id : undefined,
+          args: [parsedAmount]
         });
 
         return {
