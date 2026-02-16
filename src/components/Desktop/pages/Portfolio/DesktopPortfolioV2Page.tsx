@@ -41,6 +41,7 @@ import {
 import { useAuth } from '@/contexts/ChainContext';
 import { DesktopWithdrawModalWeb3 } from '../../modals/PortfolioModal/DesktopWithdrawModalWeb3';
 import { DesktopRepayModalWeb3 } from '../../modals/PortfolioModal/DesktopRepayModalWeb3';
+import { useMultiChainMarketData } from '@/hooks/v2/useMultiChainMarketData';
 
 interface Position {
   marketId: string;
@@ -63,10 +64,11 @@ export const DesktopPortfolioV2 = () => {
   // Wallet and market states
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
+  const multichainData = useMultiChainMarketData()
 
   const { balances, refetch } = useTokenBalancesV2();
   const { prices } = usePriceUpdates({
-    symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX", "XTZ" , "KUB"]
+    symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX", "XTZ", "KUB"]
   });
 
   // Portfolio positions state
@@ -115,10 +117,11 @@ export const DesktopPortfolioV2 = () => {
       setBorrowingPowerData(null);
       return;
     }
-  
+
     setIsLoading(true);
 
     try {
+
       const userPositions: Position[] = [];
 
       // Filter markets by current chain ID
@@ -131,7 +134,7 @@ export const DesktopPortfolioV2 = () => {
 
       for (const market of currentChainMarkets) {
         if (!market.isActive) continue;
- 
+
         const position = await getUserPosition(market.id as any, account);
 
         if (!position) continue;
@@ -192,7 +195,7 @@ export const DesktopPortfolioV2 = () => {
       setIsLoading(false);
     }
   }, [account, markets, chainId, getUserPosition, calculateBorrowingPower]);
- 
+
 
   useEffect(() => {
     if (account && chainId) {
@@ -201,8 +204,8 @@ export const DesktopPortfolioV2 = () => {
   }, [account, chainId])
 
   useInterval(
-    () => {  
-      if (account && !isLoading) {
+    () => {
+      if (account && !isLoading && !multichainData.isLoading) {
         fetchPositions()
         setDelay(60000)
       }

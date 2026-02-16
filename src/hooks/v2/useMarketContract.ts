@@ -56,10 +56,10 @@ interface MarketContractHook {
 const parseMarketId = (marketId: string): { chainId: ChainId; marketKey: MarketKey } | null => {
   const parts = marketId.split('-');
   if (parts.length !== 2) return null;
-  
+
   const [chain, marketKey] = parts;
   if (!Object.keys(CHAIN_CONFIGS).includes(chain)) return null;
-  
+
   return {
     chainId: chain as ChainId,
     marketKey: marketKey as MarketKey
@@ -68,15 +68,19 @@ const parseMarketId = (marketId: string): { chainId: ChainId; marketKey: MarketK
 
 // Helper function to get market config for a specific chain
 export const getMarketConfig = (marketId: string) => {
-  const parsed = parseMarketId(marketId);
+  let parsed = parseMarketId(marketId);
   if (!parsed) return null;
-  
+
+  if (parsed.marketKey === "stkaia") {
+    parsed.marketKey = "staked-kaia" as MarketKey
+  }
+
   const chainMarkets = CHAIN_MARKETS[parsed.chainId];
   if (!chainMarkets || !chainMarkets[parsed.marketKey]) return null;
-  
+
   const chainContracts = CHAIN_CONTRACTS[parsed.chainId];
   if (!chainContracts) return null;
-  
+
   // Map market keys to contract addresses with proper typing
   const contractMap: Record<string, string> = {};
   const tokenMap: Record<string, string> = {};
@@ -89,36 +93,38 @@ export const getMarketConfig = (marketId: string) => {
     contractMap.mbx = kaiaContracts.cMBX;
     contractMap.kaia = kaiaContracts.cKAIA;
     contractMap['staked-kaia'] = kaiaContracts.cStKAIA || kaiaContracts.cstKAIA;
-    
+    contractMap['st-kaia'] = kaiaContracts.cStKAIA || kaiaContracts.cstKAIA;
+
     tokenMap.usdt = kaiaContracts.USDT;
     tokenMap.six = kaiaContracts.SIX;
     tokenMap.bora = kaiaContracts.BORA;
     tokenMap.mbx = kaiaContracts.MBX;
     tokenMap.kaia = kaiaContracts.KAIA;
     tokenMap['staked-kaia'] = '0x42952b873ed6f7f0a7e4992e2a9818e3a9001995';
+    tokenMap['stkaia'] = '0x42952b873ed6f7f0a7e4992e2a9818e3a9001995';
   } else if (parsed.chainId === 'kub') {
     const kubContracts = CHAIN_CONTRACTS.kub;
     contractMap.kusdt = kubContracts.cKUSDT;
     contractMap.kub = kubContracts.cKUB;
-    
+
     tokenMap.kusdt = kubContracts.KUSDT;
     tokenMap.kub = kubContracts.KUB;
   } else if (parsed.chainId === 'etherlink') {
     const etherlinkContracts = CHAIN_CONTRACTS.etherlink;
     contractMap.usdt = etherlinkContracts.cUSDT;
     contractMap.xtz = etherlinkContracts.cXTZ;
-    
+
     tokenMap.usdt = etherlinkContracts.USDT;
     tokenMap.xtz = etherlinkContracts.XTZ;
   }
-  
+
   const marketData = chainMarkets[parsed.marketKey];
   const marketAddress = contractMap[parsed.marketKey];
   const tokenAddress = tokenMap[parsed.marketKey];
-  
+
   if (!marketData) return null;
-  
-   // Type assertion to fix TypeScript inference
+
+  // Type assertion to fix TypeScript inference
   const market = marketData as any;
 
   return {
@@ -395,7 +401,7 @@ export const getMarketConfig = (marketId: string) => {
 //     async (marketId: string, amount: string): Promise<TransactionResult> => {
 //       const marketConfig = getMarketConfig(marketId);
 //       if (!marketConfig) return { hash: '', status: 'failed', error: 'Market not found' };
-      
+
 //       const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
 //       return sendContractTransaction(marketId, 'redeemUnderlying', [parsedAmount]);
 //     },
@@ -406,7 +412,7 @@ export const getMarketConfig = (marketId: string) => {
 //     async (marketId: string, amount: string): Promise<TransactionResult> => {
 //       const marketConfig = getMarketConfig(marketId);
 //       if (!marketConfig) return { hash: '', status: 'failed', error: 'Market not found' };
-      
+
 //       const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
 //       return sendContractTransaction(marketId, 'borrow', [parsedAmount]);
 //     },
@@ -562,7 +568,7 @@ const useWeb3MarketContract = (): MarketContractHook => {
 
   const getUserPosition = useCallback(
     async (marketId: string, userAddress: string): Promise<UserPosition | null> => {
-      try { 
+      try {
         const marketConfig = getMarketConfig(marketId);
         if (!marketConfig) {
           console.warn(`Market config not found for ${marketId}`);
@@ -693,8 +699,7 @@ const useWeb3MarketContract = (): MarketContractHook => {
           address: marketAddress as `0x${string}`,
           abi: CTOKEN_ABI,
           functionName: 'redeemUnderlying',
-          args: [parsedAmount],
-          chainId: isKAIAChain ? kaia.id : undefined,
+          args: [parsedAmount]
         });
 
         return {
@@ -789,11 +794,16 @@ const useWeb3MarketContract = (): MarketContractHook => {
         // Execute transaction
         const hash = await writeContract.mutateAsync({
           address: marketAddress as `0x${string}`,
-          abi: CTOKEN_ABI,
+          abi: isNativeToken ? [{
+            "inputs": [],
+            "name": "repayBorrow",
+            "outputs": [],
+            "stateMutability": "payable",
+            "type": "function"
+          }] : CTOKEN_ABI,
           functionName: 'repayBorrow',
           args: isNativeToken ? undefined : [parsedAmount],
-          value: isNativeToken ? parsedAmount : undefined,
-          chainId: isKAIAChain ? kaia.id : undefined,
+          value: isNativeToken ? parsedAmount : undefined
         });
 
         return {

@@ -84,17 +84,8 @@ export const DesktopRepayModalWeb3 = ({ isOpen, onClose, preSelectedMarket }: De
         },
     });
 
-    useEffect(() => {
-        if (preSelectedMarket) {
-            setSelectedMarket(preSelectedMarket);
-        } else if (markets.length > 0) {
-            // Filter to only show markets where user has borrowed tokens
-            const borrowedMarkets = markets.filter(market => {
-                const position = getUserPosition && getUserPosition(market.id);
-                return position && (parseFloat(position.borrowBalance || '0') > 0 || parseFloat(position.borrowedBalance || '0') > 0);
-            });
-            setSelectedMarket(borrowedMarkets[0] || markets[0]);
-        }
+    useEffect(() => { 
+        preSelectedMarket && setSelectedMarket(preSelectedMarket);
     }, [preSelectedMarket, markets, getUserPosition]);
 
     // Reset state when modal opens/closes
@@ -252,35 +243,10 @@ export const DesktopRepayModalWeb3 = ({ isOpen, onClose, preSelectedMarket }: De
 
     const isValid = selectedMarket && amount && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(selectedMarketDebt);
 
-    // Filter markets to only show those where user has borrowed tokens
-    const availableMarkets = markets.filter(market => {
-        const position = getUserPosition && getUserPosition(market.id);
-        return position && (parseFloat(position.borrowBalance || '0') > 0 || parseFloat(position.borrowedBalance || '0') > 0);
-    });
+    
 
     const renderPreview = () => (
-        <>
-            {!preSelectedMarket && (
-                <MarketSelector>
-                    <Label>Select Asset</Label>
-                    <Select
-                        value={selectedMarket?.id || ''}
-                        onChange={(e) => {
-                            const market = markets.find(m => m.id === e.target.value);
-                            setSelectedMarket(market);
-                            setAmount('');
-                        }}
-                    >
-                        <option value="">Choose an asset</option>
-                        {availableMarkets.map(market => (
-                            <option key={market.id} value={market.id}>
-                                {market.symbol} - {market.borrowAPR.toFixed(2)}% APR
-                            </option>
-                        ))}
-                    </Select>
-                </MarketSelector>
-            )}
-
+        <> 
             <AmountInput>
                 <Label>Amount</Label>
                 <InputContainer>
