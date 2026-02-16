@@ -148,6 +148,7 @@ export const PRICE_API_CONFIG = {
   supportedTokens: ['KAIA', 'USDT', 'STAKED_KAIA', 'MARBLEX', 'BORA', 'SIX', 'KUB', 'XTZ'] as const,
   // Map API symbols to our token symbols
   symbolMapping: {
+    'STAKED_KAIA' : "stKAIA",
     'MARBLEX': 'MBX', // API uses MARBLEX, we use MBX
     'TEZOS': 'XTZ'    // Etherlink uses XTZ (Tezos) as native token
   },

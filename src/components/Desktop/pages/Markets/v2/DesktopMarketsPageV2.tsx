@@ -49,7 +49,7 @@ export const DesktopMarketsV2 = () => {
       id: 'all', 
       name: 'All Chains', 
       chainId: 0, 
-      icon: '/images/blockchain-icons/all-chains.png'
+      icon: ''
     },
     ...Object.values(CHAIN_CONFIGS).map(config => ({
       id: config.chainId.toString(),

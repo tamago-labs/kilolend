@@ -249,7 +249,8 @@ export const useWeb3BorrowingPower = () => {
       return [];
     }
 
-    const enteredMarkets = getAssetsInQuery.data as string[] || [];
+    // Safely get entered markets with null check
+    const enteredMarkets = (getAssetsInQuery.data as string[]) || [];
 
     // Filter markets by current chain to prevent cross-chain issues
     const currentChainMarkets = markets.filter(market => {
@@ -258,14 +259,15 @@ export const useWeb3BorrowingPower = () => {
     });
 
     return currentChainMarkets.map((market, index) => {
+      // Safely access query data with null checks
       const snapshotQuery = marketPositionQueries[index];
       const cTokenBalanceQuery = cTokenBalanceQueries[index];
       const exchangeRateQuery = exchangeRateQueries[index];
 
-      const snapshot = snapshotQuery.data as [bigint, bigint, bigint, bigint] | undefined;
-      const cTokenBalance = (cTokenBalanceQuery.data as bigint) || BigInt(0);
-      const exchangeRate = (exchangeRateQuery.data as bigint) || BigInt(10 ** 18);
-      const borrowBalance = (snapshot?.[2] as bigint) || BigInt(0);
+      const snapshot = snapshotQuery?.data as [bigint, bigint, bigint, bigint] | undefined;
+      const cTokenBalance = (cTokenBalanceQuery?.data as bigint) || BigInt(0);
+      const exchangeRate = (exchangeRateQuery?.data as bigint) || BigInt(10 ** 18);
+      const borrowBalance = snapshot?.[2] || BigInt(0);
 
       const supplyBalance = (cTokenBalance * exchangeRate) / BigInt(10 ** 18);
 
@@ -430,7 +432,7 @@ export const useWeb3BorrowingPower = () => {
         const isUserInMarket = borrowingPower.enteredMarketIds.includes(marketId);
 
         const liquidityQuery = marketLiquidityQueries[marketIndex];
-        const liquidityRaw = liquidityQuery.data as bigint;
+        const liquidityRaw = liquidityQuery?.data as bigint | undefined;
         const availableLiquidity = liquidityRaw
           ? formatUnits(liquidityRaw, market.decimals)
           : '0';
