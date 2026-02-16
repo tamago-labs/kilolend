@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DesktopBaseModal } from '../shared/DesktopBaseModal';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from '@/hooks/v1/useMarketContract';
-import { useUserPositions } from '@/hooks/v1/useUserPositions';
-import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
-import { useEventTracking } from '@/hooks/useEventTracking'; 
+import { useMarketContract } from '@/hooks/v2/useMarketContract';
+import { useBorrowingPowerV2 } from '@/hooks/v2/useBorrowingPower';
+import { useEventTracking } from '@/hooks/useEventTracking';
 import { ExternalLink, Check } from 'react-feather';
 import {
   ModalContent,
@@ -50,6 +49,7 @@ interface DesktopWithdrawModalProps {
 export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: DesktopWithdrawModalProps) => {
   const [selectedMarket, setSelectedMarket] = useState<any>(null);
   const [amount, setAmount] = useState('');
+  const [position, setPosition] = useState()
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<TransactionStep>('preview');
@@ -57,9 +57,8 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
 
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
-  const { withdraw } = useMarketContract();
-  const { positions } = useUserPositions();
-  const { calculateBorrowingPower } = useBorrowingPower();
+  const { withdraw, getUserPosition } = useMarketContract();
+  const { calculateBorrowingPower } = useBorrowingPowerV2();
   const {
     isTracking,
     trackedEvent,
@@ -71,17 +70,15 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
   } = useEventTracking(account);
 
   useEffect(() => {
-    if (preSelectedMarket) {
-      setSelectedMarket(preSelectedMarket);
-    } else if (markets.length > 0) {
-      // Filter to only show markets where user has supplied tokens
-      const suppliedMarkets = markets.filter(market => {
-        const position = positions[market.id];
-        return position && parseFloat(position.supplyBalance || '0') > 0;
-      });
-      setSelectedMarket(suppliedMarkets[0] || markets[0]);
-    }
-  }, [preSelectedMarket, markets, positions]);
+    preSelectedMarket && loadPosition(preSelectedMarket);
+  }, [preSelectedMarket]);
+
+  const loadPosition = useCallback(async (selectedMarket: any) => {
+    setSelectedMarket(selectedMarket)
+    const position = await getUserPosition(selectedMarket.id as any, account);
+    setPosition(position)
+
+  }, [account])
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -132,7 +129,7 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
 
   const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
 
-  const selectedMarketPosition = selectedMarket ? positions[selectedMarket.id] : null;
+  const selectedMarketPosition: any = position || null;
   const selectedMarketBalance = selectedMarketPosition?.supplyBalance || selectedMarketPosition?.suppliedBalance || '0';
   const amountNum = parseFloat(amount || '0');
   const amountUSD = selectedMarket ? amountNum * selectedMarket.price : 0;
@@ -143,7 +140,7 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
   useEffect(() => {
     const calculateImpact = async () => {
       if (!account || !selectedMarket || !amount) return;
-      
+
       try {
         const currentBorrowingPower = await calculateBorrowingPower(account);
         setBorrowingPowerData(currentBorrowingPower);
@@ -158,7 +155,7 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
   const currentHealthFactor = borrowingPowerData?.healthFactor ? parseFloat(borrowingPowerData.healthFactor) : 999;
   const totalCollateralValue = borrowingPowerData?.totalCollateralValue ? parseFloat(borrowingPowerData.totalCollateralValue) : 0;
   const totalBorrowValue = borrowingPowerData?.totalBorrowValue ? parseFloat(borrowingPowerData.totalBorrowValue) : 0;
-  
+
   // Calculate new health factor after withdrawal
   const newTotalCollateralValue = totalCollateralValue - amountUSD;
   const newHealthFactor = totalBorrowValue > 0 ? newTotalCollateralValue / totalBorrowValue : 999;
@@ -178,10 +175,17 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
     try {
       // Execute withdraw
       await withdraw(selectedMarket.id, amount);
-      
+
       // Start event tracking after transaction is sent
       console.log(`Withdraw transaction sent, starting event tracking for ${selectedMarket.id}`);
-      startTracking(selectedMarket.id, 'redeem');
+
+      const m: any = selectedMarket;
+      let marketId = m.id.split("kaia-")[1]
+      if (marketId === "stkaia") {
+        marketId = "staked-kaia"
+      }
+
+      startTracking(marketId, 'redeem');
 
       // Don't set success yet - wait for event tracking
       return;
@@ -207,34 +211,8 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
 
   const isValid = selectedMarket && amount && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(selectedMarketBalance);
 
-  // Filter markets to only show those where user has supplied tokens
-  const availableMarkets = markets.filter(market => {
-    const position = positions[market.id];
-    return position && parseFloat(position.suppliedBalance || '0') > 0;
-  });
-
   const renderPreview = () => (
     <>
-      {!preSelectedMarket && (
-        <MarketSelector>
-          <Label>Select Asset</Label>
-          <Select
-            value={selectedMarket?.id || ''}
-            onChange={(e) => {
-              const market = markets.find(m => m.id === e.target.value);
-              setSelectedMarket(market);
-              setAmount('');
-            }}
-          >
-            <option value="">Choose an asset</option>
-            {availableMarkets.map(market => (
-              <option key={market.id} value={market.id}>
-                {market.symbol} - {market.supplyAPY.toFixed(2)}% APY
-              </option>
-            ))}
-          </Select>
-        </MarketSelector>
-      )}
 
       <AmountInput>
         <Label>Amount</Label>
@@ -310,8 +288,8 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
         </WarningBox>
       )}
 
-      <ActionButton 
-        $primary 
+      <ActionButton
+        $primary
         $disabled={!isValid || isProcessing}
         onClick={handleWithdraw}
       >
@@ -426,7 +404,7 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
 
   return (
     <DesktopBaseModal isOpen={isOpen} onClose={handleClose} title="Withdraw Assets">
-      <ModalContent> 
+      <ModalContent>
         {renderContent()}
       </ModalContent>
     </DesktopBaseModal>

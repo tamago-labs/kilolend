@@ -136,7 +136,7 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
     }
   }, [hasTimedOut]);
 
-  const selectedMarketPosition = position || null;
+  const selectedMarketPosition: any = position || null;
   const selectedMarketDebt = selectedMarketPosition?.borrowBalance || '0';
 
   const amountNum = parseFloat(amount || '0');
