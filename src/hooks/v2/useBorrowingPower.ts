@@ -213,15 +213,18 @@ const useBorrowingPower = () => {
       userAddress: string
     ): Promise<MarketBorrowingData> => {
       try {
+
         const borrowingPower = await calculateBorrowingPower(userAddress);
+
         const market = markets.find((m) => m.id === marketId);
 
         if (!market) {
           throw new Error('Market not found');
         }
 
-        const position = await getUserPosition(marketId, userAddress);
-        const currentDebt = position?.borrowBalance || '0';
+        const position = await getUserPosition(marketId, userAddress); 
+        
+        const currentDebt = position?.borrowBalance || '0'; 
  
         const cTokenAddress = market.marketAddress
 
@@ -230,7 +233,7 @@ const useBorrowingPower = () => {
         }
 
         // Get real collateral factor from comptroller
-        const marketInfo = await getMarketInfo(cTokenAddress);
+        const marketInfo = await getMarketInfo(cTokenAddress); 
 
         // Check if user is in this market (has supplied and entered)
         const isUserInMarket = borrowingPower.enteredMarketIds.includes(marketId);

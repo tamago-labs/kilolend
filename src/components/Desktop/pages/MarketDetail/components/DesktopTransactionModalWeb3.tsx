@@ -6,7 +6,7 @@ import { BaseModal } from '@/components/Modal/BaseModal';
 import { ContractMarket } from '@/stores/contractMarketStore';
 import { formatUSD, formatPercent } from '@/utils/formatters';
 import { useMarketContract, TransactionResult } from '@/hooks/v2/useMarketContract';
-import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
+import { useTokenApprovalWeb3 } from '@/hooks/v2/useTokenApprovalWeb3';
 import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { ExternalLink, Check } from 'react-feather';
@@ -315,7 +315,7 @@ export const DesktopTransactionModalWeb3 = ({
 
   const { account } = useWalletAccountStore();
   const { supply, borrow } = useMarketContract();
-  const { checkAllowance, approveToken } = useTokenApproval();
+  const { checkAllowance, approveToken } = useTokenApprovalWeb3();
   const { enterMarkets, exitMarket, isMarketEntered } = useComptrollerContract();
 
   const marketId = market.id;

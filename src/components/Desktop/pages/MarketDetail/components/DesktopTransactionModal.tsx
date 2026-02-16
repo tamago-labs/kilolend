@@ -5,15 +5,14 @@ import { useState, useEffect } from 'react';
 import { BaseModal } from '@/components/Modal/BaseModal';
 import { MarketData } from '@/contexts/MarketContext';
 import { formatUSD, formatPercent } from '@/utils/formatters';
-import { useMarketContract, TransactionResult } from '@/hooks/v1/useMarketContract';
+import { useMarketContract, TransactionResult } from '@/hooks/v2/useMarketContract';
 import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
 import { useComptrollerContract } from '@/hooks/v1/useComptrollerContract';
 import { useEventTracking } from '@/hooks/useEventTracking';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
-import { useUserPositions } from '@/hooks/v1/useUserPositions';
-import { MARKET_CONFIG_V1 } from '@/utils/contractConfig';
+
 import { ExternalLink, Check } from 'react-feather';
+import { useTokenBalancesV2 } from '@/hooks/useTokenBalancesV2';
 
 const ModalContent = styled.div`
   padding: 32px;
@@ -316,8 +315,7 @@ interface DesktopTransactionModalProps {
   onClose: () => void;
   type: 'supply' | 'borrow';
   amount: string;
-  market: MarketData;
-  marketConfig: any;
+  market: any;
   displaySymbol: string;
   borrowingPowerData: any;
   maxBorrowData: any;
@@ -331,11 +329,13 @@ export const DesktopTransactionModal = ({
   type,
   amount,
   market,
-  marketConfig,
   displaySymbol,
   borrowingPowerData,
   maxBorrowData,
 }: DesktopTransactionModalProps) => {
+
+  const { refetch } = useTokenBalancesV2()
+
   const [currentStep, setCurrentStep] = useState<TransactionStep>('preview');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -347,8 +347,7 @@ export const DesktopTransactionModal = ({
   const { supply, borrow } = useMarketContract();
   const { checkAllowance, approveToken } = useTokenApproval();
   const { enterMarkets, exitMarket, isMarketEntered } = useComptrollerContract();
-  const { refreshBalances } = useMarketTokenBalances();
-  const { refreshPositions } = useUserPositions();
+
   const {
     isTracking,
     trackedEvent,
@@ -359,7 +358,8 @@ export const DesktopTransactionModal = ({
     reset: resetTracking
   } = useEventTracking(account);
 
-  const marketId = marketConfig?.id;
+  const marketId = market?.id;
+  const marketConfig = market
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -388,11 +388,10 @@ export const DesktopTransactionModal = ({
       setIsProcessing(false);
       setCurrentStep('success'); // Move to success step
 
-      // Refresh data after successful transaction
       setTimeout(() => {
-        refreshBalances();
-        refreshPositions();
+        refetch()
       }, 2000);
+
     }
   }, [trackedEvent, type]);
 
@@ -474,7 +473,13 @@ export const DesktopTransactionModal = ({
 
       // Start event tracking after transaction is sent
       console.log(`${type} transaction sent, starting event tracking for ${marketId}`);
-      startTracking(marketId, type === 'supply' ? 'mint' : 'borrow');
+
+      let mId = marketConfig.id.split("kaia-")[1]
+      if (mId === "stkaia") {
+        mId = "staked-kaia"
+      }
+
+      startTracking(mId, type === 'supply' ? 'mint' : 'borrow');
 
       // Don't set success yet - wait for event tracking
       return;
@@ -557,10 +562,6 @@ export const DesktopTransactionModal = ({
               <PreviewLabel>Expected Yearly Earnings</PreviewLabel>
               <PreviewValue>${yearlyEarnings.toFixed(2)}</PreviewValue>
             </PreviewRow>
-            {/*<PreviewRow>
-              <PreviewLabel>You will receive</PreviewLabel>
-              <PreviewValue>{expectedCTokens.toFixed(2)} c{displaySymbol}</PreviewValue>
-            </PreviewRow>*/}
           </PreviewSection>
 
           {needsApproval && (
@@ -608,7 +609,7 @@ export const DesktopTransactionModal = ({
       const utilizationAfter = totalCollateralValue > 0 ?
         (newTotalBorrowValueUSD / totalCollateralValue) * 100 : 0;
 
-      const yearlyInterest = amountNum * (market.borrowAPY / 100);
+      const yearlyInterest = amountNum * (market.borrowAPR / 100);
 
       let riskLevel: 'low' | 'medium' | 'high' | 'critical' = 'low';
       if (newHealthFactor < 1.2 || utilizationAfter > 80) riskLevel = 'critical';
@@ -628,7 +629,7 @@ export const DesktopTransactionModal = ({
             </PreviewRow>
             <PreviewRow>
               <PreviewLabel>Borrow APR</PreviewLabel>
-              <PreviewValue>{formatPercent(market.borrowAPY)}</PreviewValue>
+              <PreviewValue>{formatPercent(market.borrowAPR)}</PreviewValue>
             </PreviewRow>
             <PreviewRow>
               <PreviewLabel>Yearly Interest</PreviewLabel>
@@ -791,14 +792,8 @@ export const DesktopTransactionModal = ({
           </DetailRow>
           <DetailRow>
             <DetailLabel>{type === 'supply' ? 'Supply APY' : 'Borrow APR'}</DetailLabel>
-            <DetailValue>{formatPercent(type === 'supply' ? market.supplyAPY : market.borrowAPY)}</DetailValue>
+            <DetailValue>{formatPercent(type === 'supply' ? market.supplyAPY : market.borrowAPR)}</DetailValue>
           </DetailRow>
-          {type === 'borrow' && (
-            <DetailRow>
-              <DetailLabel>Estimated Yearly Interest</DetailLabel>
-              <DetailValue>{(amountNum * (market.borrowAPY / 100)).toFixed(4)} {displaySymbol}</DetailValue>
-            </DetailRow>
-          )}
           <DetailRow>
             <DetailLabel>Status</DetailLabel>
             <DetailValue>Confirmed</DetailValue>

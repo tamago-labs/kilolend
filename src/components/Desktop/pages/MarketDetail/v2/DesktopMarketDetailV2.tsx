@@ -2,7 +2,7 @@
 
 import styled from 'styled-components';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation'; 
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { MarketHeaderV2 } from './components/MarketHeaderV2';
 import { MarketActionsV2 } from './components/MarketActionsV2';
@@ -126,12 +126,18 @@ interface DesktopMarketDetailV2Props {
 }
 
 export const DesktopMarketDetailV2 = ({ chain, token }: DesktopMarketDetailV2Props) => {
+
+  const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { markets: contractMarkets, isLoading } = useContractMarketStore();
   const [mounted, setMounted] = useState(false);
-  const [activeTab, setActiveTab] = useState<'supply' | 'borrow'>('supply');
 
-  
+  // Parse the action parameter from URL and set initial tab
+  const initialAction = searchParams.get('action') as 'supply' | 'borrow' | null;
+  const [activeTab, setActiveTab] = useState<'supply' | 'borrow'>(
+    initialAction === 'supply' || initialAction === 'borrow' ? initialAction : 'supply'
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -155,13 +161,13 @@ export const DesktopMarketDetailV2 = ({ chain, token }: DesktopMarketDetailV2Pro
   // Get chain configuration
   const chainKey = chain.toUpperCase();
   const chainConfig = CHAIN_CONFIGS[chainKey];
-  
+
   if (!chainConfig) {
     return (
       <MarketDetailContainer>
         <MainContent>
           <BackButton onClick={() => router.push('/markets')}>
-            <ArrowLeft size={14}/> Back to Markets
+            <ArrowLeft size={14} /> Back to Markets
           </BackButton>
           <ErrorMessage>Chain not found: {chain}</ErrorMessage>
         </MainContent>
@@ -186,8 +192,8 @@ export const DesktopMarketDetailV2 = ({ chain, token }: DesktopMarketDetailV2Pro
   }
 
   // Find market by chainId AND token symbol
-  const market = contractMarkets.find(m => 
-    m.chainId === chainConfig.chainId && 
+  const market = contractMarkets.find(m =>
+    m.chainId === chainConfig.chainId &&
     m.symbol.toUpperCase() === token.toUpperCase()
   );
 
@@ -196,7 +202,7 @@ export const DesktopMarketDetailV2 = ({ chain, token }: DesktopMarketDetailV2Pro
       <MarketDetailContainer>
         <MainContent>
           <BackButton onClick={() => router.push('/markets')}>
-            <ArrowLeft size={14}/> Back to Markets
+            <ArrowLeft size={14} /> Back to Markets
           </BackButton>
           <ErrorMessage>
             Market not found for {token} on {chainConfig.chainName}
@@ -222,7 +228,7 @@ export const DesktopMarketDetailV2 = ({ chain, token }: DesktopMarketDetailV2Pro
     <MarketDetailContainer>
       <MainContent>
         <BackButton onClick={handleBack}>
-          <ArrowLeft size={14}/> Back to Markets
+          <ArrowLeft size={14} /> Back to Markets
         </BackButton>
 
         <MarketHeaderV2
@@ -247,7 +253,7 @@ export const DesktopMarketDetailV2 = ({ chain, token }: DesktopMarketDetailV2Pro
               market={market}
             />
           </LeftColumn>
-          
+
           <RightColumn>
             <MarketChartV2
               market={market}

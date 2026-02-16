@@ -4,12 +4,15 @@ import styled from 'styled-components';
 import { useState, useEffect } from 'react';
 import { ContractMarket } from '@/stores/contractMarketStore';
 import { formatUSD, formatPercent, isValidAmount, parseUserAmount } from '@/utils/formatters';
-import { useMarketTokenBalances } from '@/hooks/v1/useMarketTokenBalances';
+import { useTokenBalancesV2 } from '@/hooks/useTokenBalancesV2';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
-import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useBorrowingPowerV2 } from '@/hooks/v2/useBorrowingPower';
 import { validateAmountAgainstBalance, getSafeMaxAmount } from '@/utils/tokenUtils';
 import { useAuth } from '@/contexts/ChainContext';
 import { DesktopTransactionModalWeb3 } from '../../components/DesktopTransactionModalWeb3';
+import { DesktopTransactionModal } from "../../components/DesktopTransactionModal"
+
+import { CHAIN_CONFIGS, CHAIN_MARKETS, ChainId, MarketKey } from '@/utils/chainConfig';
 
 const ActionsContainer = styled.div`
   background: white;
@@ -163,11 +166,58 @@ const ErrorMessage = styled.div`
   margin-top: 8px;
 `;
 
+// Helper function to parse marketId like "kaia-usdt" into chain and market key
+const parseMarketId = (marketId: string): { chainId: ChainId; marketKey: MarketKey } | null => {
+  const parts = marketId.split('-');
+  if (parts.length !== 2) return null;
+
+  const [chain, marketKey] = parts;
+  if (!Object.keys(CHAIN_CONFIGS).includes(chain)) return null;
+
+  return {
+    chainId: chain as ChainId,
+    marketKey: marketKey as MarketKey
+  };
+};
+
+// Helper function to get balance by marketId from the new array-based structure
+const getBalanceByMarketId = (
+  marketId: string, 
+  balances: Array<{ symbol: string; balance: string; name: string; decimals: number; address?: string; isNative?: boolean }>
+) => {
+  const parsed = parseMarketId(marketId);
+  if (!parsed) return null;
+
+  // Handle special case for stkaia -> staked-kaia mapping
+  let marketKey = parsed.marketKey;
+  if (marketKey === 'stkaia') {
+    marketKey = 'staked-kaia' as MarketKey;
+  }
+
+  // Map market key to symbol
+  const symbolMap: Record<string, string> = {
+    'usdt': 'USDT',
+    'kaia': 'KAIA',
+    'six': 'SIX',
+    'bora': 'BORA',
+    'mbx': 'MBX',
+    'staked-kaia': 'STAKED_KAIA',
+    'kub': 'KUB',
+    'kusdt': 'KUSDT',
+    'xtz': 'XTZ'
+  };
+  
+  const symbol = symbolMap[marketKey];
+  const balance = balances.find(b => b.symbol === symbol);
+  
+  return balance;
+};
+
 interface MarketActionsV2Props {
   market: ContractMarket;
   activeTab: 'supply' | 'borrow';
   onTabChange: (tab: 'supply' | 'borrow') => void;
-}
+};
 
 export const MarketActionsV2 = ({
   market,
@@ -180,17 +230,18 @@ export const MarketActionsV2 = ({
   
   const { account } = useWalletAccountStore();
   const { selectedAuthMethod } = useAuth();
-  const { balances: tokenBalances, isLoading: balancesLoading } = useMarketTokenBalances();
-  const { calculateBorrowingPower, calculateMaxBorrowAmount } = useBorrowingPower();
+  const { balances: tokenBalances } = useTokenBalancesV2();
+  const { calculateBorrowingPower, calculateMaxBorrowAmount } = useBorrowingPowerV2();
   const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
   const [maxBorrowData, setMaxBorrowData] = useState<any>(null);
 
   // Get the market ID
-  const marketId = market.id;
+  const marketId = market.id; 
 
-  // Get user balance for the current asset
-  const userBalance = tokenBalances[marketId]?.formattedBalance || '0.00';
-  const fullPrecisionBalance = tokenBalances[marketId]?.fullPrecisionBalance || '0';
+  // Get user balance for the current asset using the new helper function
+  const balanceData = getBalanceByMarketId(marketId, tokenBalances);
+  const userBalance = balanceData?.balance || '0.00';
+  const fullPrecisionBalance = balanceData?.balance || '0';
 
   // Load borrowing power data when account changes
   useEffect(() => {
@@ -213,7 +264,7 @@ export const MarketActionsV2 = ({
       if (!marketId || !account || activeTab !== 'borrow') return;
 
       try {
-        const maxBorrow = await calculateMaxBorrowAmount(marketId as any, account);
+        const maxBorrow = await calculateMaxBorrowAmount(marketId as any, account); 
         setMaxBorrowData(maxBorrow);
       } catch (error) {
         console.error('Error loading max borrow data:', error);
@@ -372,6 +423,20 @@ export const MarketActionsV2 = ({
           maxBorrowData={maxBorrowData}
         />
       )}
+      
+       {selectedAuthMethod === 'line_sdk' && (
+        <DesktopTransactionModal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          type={activeTab}
+          amount={amount}
+          market={market}
+          displaySymbol={market.symbol}
+          borrowingPowerData={borrowingPowerData}
+          maxBorrowData={maxBorrowData}
+        />
+      )}
+
     </>
   );
 };
