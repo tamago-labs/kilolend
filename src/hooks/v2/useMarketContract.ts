@@ -14,7 +14,7 @@ import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useAppStore } from '@/stores/appStore';
 import { useAuth } from '@/contexts/ChainContext';
-import { useMarketContract as useLineSdkMarketContract } from "../useMarketContract"
+import { useMarketContract as useLineSdkMarketContract } from "../v1/useMarketContract"
 
 export interface MarketInfo {
   totalSupply: string;

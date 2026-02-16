@@ -7,7 +7,7 @@ import { useCallback } from 'react';
 import { useAuth } from '@/contexts/ChainContext';
 import { useWeb3BorrowingPower } from "./useWeb3BorrowingPower"
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from "./useMarketContract"
+import { useMarketContract } from "../v1/useMarketContract"
 import { useComptrollerContract } from '../v1/useComptrollerContract';
 
 export interface BorrowingPowerData {
@@ -127,14 +127,9 @@ const useBorrowingPower = () => {
         for (const market of filtered) {
 
           if (!market.isActive) continue;
+ 
 
-          const m: any = market;
-          let marketId = m.id.split("kaia-")[1]
-          if (marketId === "stkaia") {
-            marketId = "staked-kaia"
-          }
-
-          const position = await getUserPosition(marketId, userAddress);
+          const position = await getUserPosition(market.id, userAddress);
 
           if (!position) continue;
 
@@ -227,9 +222,7 @@ const useBorrowingPower = () => {
 
         const position = await getUserPosition(marketId, userAddress);
         const currentDebt = position?.borrowBalance || '0';
-
-        // Extract market key from marketId (e.g., 'kaia-usdt' -> 'usdt')
-        const marketKey = marketId.split('kaia-')[1];
+ 
         const cTokenAddress = market.marketAddress
 
         if (!cTokenAddress) {

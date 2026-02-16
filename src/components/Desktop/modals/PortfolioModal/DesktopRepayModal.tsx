@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DesktopBaseModal } from '../shared/DesktopBaseModal';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from '@/hooks/v1/useMarketContract';
+import { useMarketContract } from '@/hooks/v2/useMarketContract';
 import { useTokenApproval } from '@/hooks/v1/useTokenApproval';
-import { useUserPositions } from '@/hooks/v1/useUserPositions';
-import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useBorrowingPowerV2 } from '@/hooks/v2/useBorrowingPower';
 import { useEventTracking } from '@/hooks/useEventTracking';
 import { formatUSD } from '@/utils/formatters';
 import { ExternalLink, Check } from 'react-feather';
@@ -54,6 +53,7 @@ interface DesktopRepayModalProps {
 export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: DesktopRepayModalProps) => {
   const [selectedMarket, setSelectedMarket] = useState<any>(null);
   const [amount, setAmount] = useState('');
+  const [position, setPosition] = useState()
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<TransactionStep>('preview');
@@ -62,10 +62,10 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
 
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
-  const { repay } = useMarketContract();
+  const { repay, getUserPosition } = useMarketContract();
   const { checkAllowance, approveToken } = useTokenApproval();
-  const { positions } = useUserPositions();
-  const { calculateBorrowingPower } = useBorrowingPower();
+
+  const { calculateBorrowingPower } = useBorrowingPowerV2();
   const {
     isTracking,
     trackedEvent,
@@ -78,17 +78,15 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
   const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
 
   useEffect(() => {
-    if (preSelectedMarket) {
-      setSelectedMarket(preSelectedMarket);
-    } else if (markets.length > 0) {
-      // Filter to only show markets where user has borrowed tokens
-      const borrowedMarkets = markets.filter(market => {
-        const position = positions[market.id];
-        return position && parseFloat(position.borrowBalance || '0') > 0;
-      });
-      setSelectedMarket(borrowedMarkets[0] || markets[0]);
-    }
-  }, [preSelectedMarket, markets, positions]);
+    preSelectedMarket && loadPosition(preSelectedMarket);
+  }, [preSelectedMarket]);
+
+  const loadPosition = useCallback(async (selectedMarket: any) => {
+    setSelectedMarket(selectedMarket)
+    const position = await getUserPosition(selectedMarket.id as any, account);
+    setPosition(position)
+
+  }, [account])
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -138,13 +136,8 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
     }
   }, [hasTimedOut]);
 
-  const selectedMarketPosition = selectedMarket ? positions[selectedMarket.id] : null;
+  const selectedMarketPosition = position || null;
   const selectedMarketDebt = selectedMarketPosition?.borrowBalance || '0';
-
-  console.log("selectedMarket:", selectedMarket )
-  console.log("positions:", positions )
-  console.log("selectedMarketPosition: ", selectedMarketPosition)
-  console.log("selectedMarketDebt: ", selectedMarketDebt)
 
   const amountNum = parseFloat(amount || '0');
   const amountUSD = selectedMarket ? amountNum * selectedMarket.price : 0;
@@ -156,7 +149,7 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
   useEffect(() => {
     const calculateImpact = async () => {
       if (!account || !selectedMarket || !amount) return;
-      
+
       try {
         const currentBorrowingPower = await calculateBorrowingPower(account);
         setBorrowingPowerData(currentBorrowingPower);
@@ -171,12 +164,12 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
   const currentHealthFactor = borrowingPowerData?.healthFactor ? parseFloat(borrowingPowerData.healthFactor) : 999;
   const totalCollateralValue = borrowingPowerData?.totalCollateralValue ? parseFloat(borrowingPowerData.totalCollateralValue) : 0;
   const totalBorrowValue = borrowingPowerData?.totalBorrowValue ? parseFloat(borrowingPowerData.totalBorrowValue) : 0;
-  
+
   // Calculate new health factor after repayment
   const newTotalBorrowValue = totalBorrowValue - amountUSD;
   const newHealthFactor = newTotalBorrowValue > 0 ? totalCollateralValue / newTotalBorrowValue : 999;
   const healthFactorChange = newHealthFactor - currentHealthFactor;
-  
+
   // Calculate interest savings
   const dailyInterestRate = selectedMarket ? (selectedMarket.borrowAPR / 100) / 365 : 0;
   const dailyInterestSavings = amountUSD * dailyInterestRate;
@@ -195,9 +188,12 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
     setError(null);
 
     try {
+
       // Check if token approval is needed (for ERC20 tokens)
       if (selectedMarket?.tokenAddress !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
+
         const approvalStatus = await checkAllowance(selectedMarket.id, amount);
+
         if (!approvalStatus.hasEnoughAllowance) {
           setNeedsApproval(true);
           await approveToken(selectedMarket.id, amount);
@@ -207,10 +203,17 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
 
       // Execute repay
       await repay(selectedMarket.id, amount);
-      
+
       // Start event tracking after transaction is sent
       console.log(`Repay transaction sent, starting event tracking for ${selectedMarket.id}`);
-      startTracking(selectedMarket.id, 'repay');
+
+      const m: any = selectedMarket;
+      let marketId = m.id.split("kaia-")[1]
+      if (marketId === "stkaia") {
+        marketId = "staked-kaia"
+      }
+
+      startTracking(marketId, 'repay');
 
       // Don't set success yet - wait for event tracking
       return;
@@ -236,35 +239,8 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
 
   const isValid = selectedMarket && amount && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(selectedMarketDebt);
 
-  // Filter markets to only show those where user has borrowed tokens
-  const availableMarkets = markets.filter(market => {
-    const position = positions[market.id];
-    return position && parseFloat(position.borrowBalance || '0') > 0;
-  });
-
   const renderPreview = () => (
     <>
-      {!preSelectedMarket && (
-        <MarketSelector>
-          <Label>Select Asset</Label>
-          <Select
-            value={selectedMarket?.id || ''}
-            onChange={(e) => {
-              const market = markets.find(m => m.id === e.target.value);
-              setSelectedMarket(market);
-              setAmount('');
-            }}
-          >
-            <option value="">Choose an asset</option>
-            {availableMarkets.map(market => (
-              <option key={market.id} value={market.id}>
-                {market.symbol} - {market.borrowAPR.toFixed(2)}% APR
-              </option>
-            ))}
-          </Select>
-        </MarketSelector>
-      )}
-
       <AmountInput>
         <Label>Amount</Label>
         <InputContainer>
@@ -373,8 +349,8 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
         </WarningBox>
       )}
 
-      <ActionButton 
-        $primary 
+      <ActionButton
+        $primary
         $disabled={!isValid || isProcessing}
         onClick={handleRepay}
       >
@@ -462,7 +438,7 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
             <DetailLabel>Estimated Yearly Interest Savings</DetailLabel>
             <DetailValue>${(dailyInterestSavings * 365).toFixed(2)}</DetailValue>
           </DetailRow>
-        )} 
+        )}
         {transactionResult?.hash && (
           <DetailRow>
             <DetailLabel>Transaction</DetailLabel>
@@ -495,7 +471,7 @@ export const DesktopRepayModal = ({ isOpen, onClose, preSelectedMarket }: Deskto
 
   return (
     <DesktopBaseModal isOpen={isOpen} onClose={handleClose} title="Repay Assets">
-      <ModalContent> 
+      <ModalContent>
         {renderContent()}
       </ModalContent>
     </DesktopBaseModal>
