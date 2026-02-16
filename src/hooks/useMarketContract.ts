@@ -195,7 +195,7 @@ export const useMarketContract = (): MarketContractHook => {
           cTokenBalance: ethers.formatUnits(cTokenBalance, 8),
         };
       } catch (error) {
-        console.error(`Error getting user position for ${marketId}:`, error);
+        console.error(`Error getting user position for ${marketIdRaw}:`, error);
         return null;
       }
     },

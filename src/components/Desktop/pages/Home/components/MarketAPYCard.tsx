@@ -301,8 +301,6 @@ export const MarketAPYCard = () => {
   const { markets, isLoading } = useContractMarketStore();
   const router = useRouter();
 
-  console.log("markets:", markets)
-
   // Get top markets by APY from store
   const topMarkets = markets
     .filter(m => m.supplyAPY > 0)

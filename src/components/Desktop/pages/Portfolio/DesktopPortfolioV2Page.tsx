@@ -23,9 +23,6 @@ import { AgentWalletsBanner } from './components/AgentWalletsBanner';
 
 import { useInterval } from 'usehooks-ts'
 
-import { MARKET_CONFIG_V1 } from '@/utils/contractConfig';
-
-
 // Import styled components
 import {
   PortfolioContainer,
@@ -71,8 +68,6 @@ export const DesktopPortfolioV2 = () => {
   const { prices } = usePriceUpdates({
     symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX", "XTZ" , "KUB"]
   });
-
-
 
   // Portfolio positions state
   const [positions, setPositions] = useState<Position[]>([]);

@@ -114,6 +114,8 @@ export const useContractMarketStore = create<ContractMarketState>((set, get) => 
           price: data.price || 1,
           priceChange24h: data.priceChange24h,
           volume24h: data.volume24h,
+          marketAddress: data.marketAddress,
+          tokenAddress: data.tokenAddress,
           isActive: data.isActive !== undefined ? data.isActive : true,
           isCollateralOnly: data.isCollateralOnly || false,
           contractData: data,

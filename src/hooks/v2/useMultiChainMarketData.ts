@@ -26,19 +26,21 @@ export interface ChainMarketInfo {
   price?: number;
   priceChange24h?: number;
   volume24h?: number;
+  marketAddress?: string;
+  tokenAddress?: string;
 }
 
 // Helper function to fetch prices from backend API
-const fetchRealPrices = async (symbols: string[]): Promise<Record<string, { price: number, priceChange24h: number, volume24h: number  }>> => {
+const fetchRealPrices = async (symbols: string[]): Promise<Record<string, { price: number, priceChange24h: number, volume24h: number }>> => {
   try {
     const response = await fetch(PRICE_API_CONFIG.endpoint);
-    
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    
+
     const apiData = await response.json();
-    
+
     if (!apiData.success || !apiData.data) {
       throw new Error('Invalid API response format');
     }
@@ -49,7 +51,7 @@ const fetchRealPrices = async (symbols: string[]): Promise<Record<string, { pric
     // Process API data and map symbols
     apiData.data.forEach((tokenData: any) => {
       let mappedSymbol = tokenData.symbol;
-      
+
       // Handle symbol mapping (e.g., MARBLEX -> MBX)
       if (PRICE_API_CONFIG.symbolMapping[tokenData.symbol as keyof typeof PRICE_API_CONFIG.symbolMapping]) {
         mappedSymbol = PRICE_API_CONFIG.symbolMapping[tokenData.symbol as keyof typeof PRICE_API_CONFIG.symbolMapping];
@@ -89,7 +91,7 @@ export const useMultiChainMarketData = () => {
   const fetchChainMarkets = useCallback(async (
     chainId: ChainId,
     provider: ethers.JsonRpcProvider,
-    prices: Record<string, { price: number, priceChange24h: number, volume24h: number  }>
+    prices: Record<string, { price: number, priceChange24h: number, volume24h: number }>
   ): Promise<ChainMarketInfo[]> => {
     const config = CHAIN_CONFIGS[chainId];
     const contracts = CHAIN_CONTRACTS[chainId];
@@ -100,21 +102,22 @@ export const useMultiChainMarketData = () => {
 
     for (const [marketKey, marketConfig] of Object.entries(markets)) {
       try {
- 
+
         // Get cToken address
         const cTokenKey = `c${marketConfig.symbol}`;
         const cTokenAddress = (contracts as any)[cTokenKey];
- 
+        const tokenAddress = (contracts as any)[marketConfig.symbol];
+
         if (!cTokenAddress) {
           console.log(`No cToken address found for ${chainId}-${marketKey}`);
           continue;
         }
 
-        // Skip native tokens (they use special handling)
-        if (cTokenAddress.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'.toLowerCase()) {
-          console.log(`Skipping native token ${chainId}-${marketKey}`);
-          continue;
-        }
+        // Skip native tokens
+        // if (cTokenAddress.toLowerCase() === '0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee'.toLowerCase()) {
+        //   console.log(`Skipping native token ${chainId}-${marketKey}`);
+        //   continue;
+        // }
 
         const contract = new ethers.Contract(cTokenAddress, CTOKEN_ABI, provider);
 
@@ -139,7 +142,7 @@ export const useMultiChainMarketData = () => {
         // Compound V2 formula: ratePerBlock is in Ray (1e18 precision)
         // APY = (ratePerBlock * blocksPerYear * 10000) / 1e18 / 100
         const blocksPerYear = BigInt(config.blocksPerYear);
-        
+
         const scale = BigInt(10) ** BigInt(18);
 
         const supplyAPY = Number(
@@ -159,8 +162,6 @@ export const useMultiChainMarketData = () => {
         // Get token price from price updates
         const priceData = prices[marketConfig.symbol];
         const tokenPrice = priceData?.price || 1; // Fallback to $1
-
-
 
         // Convert to USD using real prices
         const totalSupplyUSD = (totalSupplyFormatted * tokenPrice);
@@ -186,7 +187,9 @@ export const useMultiChainMarketData = () => {
           exchangeRate: ethers.formatUnits(exchangeRate, 18),
           price: tokenPrice,
           priceChange24h: priceData?.priceChange24h || 0,
-          volume24h: priceData?.volume24h || 0
+          volume24h: priceData?.volume24h || 0,
+          marketAddress: cTokenAddress,
+          tokenAddress: tokenAddress
         });
 
         console.log(`✅ Fetched ${chainId}-${marketKey}:`, {
@@ -212,14 +215,14 @@ export const useMultiChainMarketData = () => {
 
     try {
       console.log('Starting multi-chain market data fetch...');
-      
+
       // Collect all symbols from all chains
       const allSymbols = [
         ...Object.keys(CHAIN_MARKETS.kaia).map(k => CHAIN_MARKETS.kaia[k as keyof typeof CHAIN_MARKETS.kaia].symbol),
         ...Object.keys(CHAIN_MARKETS.kub).map(k => CHAIN_MARKETS.kub[k as keyof typeof CHAIN_MARKETS.kub].symbol),
         ...Object.keys(CHAIN_MARKETS.etherlink).map(k => CHAIN_MARKETS.etherlink[k as keyof typeof CHAIN_MARKETS.etherlink].symbol)
       ];
-      
+
       console.log('Fetching token prices from API...');
       const prices = await fetchRealPrices(allSymbols);
       console.log(`✅ Fetched prices for ${Object.keys(prices).length} tokens`);
