@@ -1,0 +1,32 @@
+{
+  "name": "kilolend-unified-bot",
+  "version": "1.0.0",
+  "description": "Unified bot for KiloLend DeFi protocol - handles point tracking, oracle updates, and liquidations across multiple chains",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "defi",
+    "ethereum",
+    "kaia",
+    "kub",
+    "etherlink",
+    "liquidation",
+    "oracle",
+    "bot"
+  ],
+  "author": "KiloLend",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.9.0",
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

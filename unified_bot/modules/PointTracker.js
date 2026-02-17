@@ -1,0 +1,386 @@
+const { ethers } = require('ethers');
+const axios = require('axios');
+const BaseModule = require('./BaseModule');
+const { getChainContracts, getChainMarkets, getKiloDistribution } = require('../config/chains');
+
+// CToken ABI - events we need to listen to
+const CTOKEN_ABI = [
+  "event Mint(address minter, uint256 mintAmount, uint256 mintTokens)",
+  "event Redeem(address redeemer, uint256 redeemAmount, uint256 redeemTokens)",
+  "event Borrow(address borrower, uint borrowAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate)",
+  "event RepayBorrow(address payer, address borrower, uint repayAmount, uint accountBorrows, uint totalBorrows, uint borrowRateDiscountBps, uint actualBorrowRate)",
+  "function decimals() view returns (uint8)",
+  "function symbol() view returns (string)",
+  "function underlying() view returns (address)"
+];
+
+/**
+ * PointTracker - Tracks KILO points for supply/borrow activities across all chains
+ * 
+ * Responsibilities:
+ * - Monitor Mint/Redeem/Borrow/Repay events
+ * - Calculate KILO points based on TVL
+ * - Support per-chain KILO distribution
+ * - Daily point distribution
+ */
+class PointTracker extends BaseModule {
+  constructor(chainManager, options = {}) {
+    super('PointTracker', chainManager, options);
+    
+    // Configuration
+    this.apiBaseUrl = process.env.API_BASE_URL;
+    this.pollInterval = (parseInt(process.env.POLL_INTERVAL_SECONDS) || 60) * 1000;
+    this.scanWindowSeconds = parseInt(process.env.SCAN_WINDOW_SECONDS) || 60;
+    this.maxBlocksPerScan = parseInt(process.env.MAX_BLOCKS_PER_SCAN) || 100;
+    
+    // Per-chain configuration
+    this.chainId = options.chainId;
+    this.dailyKiloDistribution = this.chainId ? 
+      getKiloDistribution(this.chainId) : 0;
+    
+    // Chain-specific markets
+    this.markets = this.buildMarketsConfig();
+    
+    // Tracking state
+    this.lastProcessedBlocks = {};
+    this.statsManagers = {}; // One per chain
+    this.priceManagers = {};
+    this.balanceManagers = {};
+    
+    // Event counts
+    this.totalEvents = 0;
+  }
+
+  /**
+   * Build markets configuration for the chain
+   */
+  buildMarketsConfig() {
+    if (!this.chainId) return {};
+    
+    const chainContracts = getChainContracts(this.chainId);
+    const chainMarkets = getChainMarkets(this.chainId);
+    const markets = {};
+    
+    // Map cTokens to their underlying tokens
+    for (const [key, contractAddress] of Object.entries(chainContracts)) {
+      if (key.startsWith('c')) { // cTokens only
+        const symbol = key.substring(1); // Remove 'c' prefix
+        const marketInfo = Object.values(chainMarkets).find(m => m.symbol === symbol);
+        
+        if (marketInfo) {
+          const underlyingKey = symbol.toUpperCase();
+          const underlyingAddress = chainContracts[underlyingKey] || ethers.ZeroAddress;
+          
+          markets[contractAddress] = {
+            symbol: key,
+            underlying: underlyingAddress,
+            underlyingSymbol: marketInfo.symbol,
+            decimals: marketInfo.decimals
+          };
+        }
+      }
+    }
+    
+    return markets;
+  }
+
+  async initialize() {
+    // Initialize services for this chain
+    this.initializeServices();
+    
+    // Initialize block tracking
+    const provider = this.chainManager.getProvider(this.chainId);
+    this.lastProcessedBlocks[this.chainId] = await provider.getBlockNumber();
+    
+    this.log(`Tracking ${Object.keys(this.markets).length} markets`, 'info');
+    this.log(`Daily KILO distribution: ${this.dailyKiloDistribution.toLocaleString()}`, 'info');
+  }
+
+  initializeServices() {
+    // Simple in-memory stats tracking
+    this.statsManagers[this.chainId] = {
+      dailyStats: {},
+      currentDate: new Date().toISOString().split('T')[0],
+      users: new Set(),
+      totalEvents: 0,
+      
+      updateDailyStats(user, market, usdValue, type) {
+        const date = this.currentDate;
+        if (!this.dailyStats[date]) {
+          this.dailyStats[date] = {};
+        }
+        if (!this.dailyStats[date][user]) {
+          this.dailyStats[date][user] = {
+            mint: {},
+            redeem: {},
+            borrow: {},
+            repay: {}
+          };
+        }
+        
+        if (!this.dailyStats[date][user][type][market]) {
+          this.dailyStats[date][user][type][market] = 0;
+        }
+        
+        this.dailyStats[date][user][type][market] += usdValue;
+        this.users.add(user);
+        this.totalEvents++;
+      },
+      
+      getDailyStats(date) {
+        return this.dailyStats[date] || {};
+      },
+      
+      getUsers() {
+        return Array.from(this.users);
+      },
+      
+      getTotalEvents() {
+        return this.totalEvents;
+      }
+    };
+    
+    // Price manager (simplified - uses API)
+    this.priceManagers[this.chainId] = {
+      prices: {},
+      lastUpdate: null,
+      
+      // Symbol mappings from API to internal format
+      // API returns uppercase with underscores, we use lowercase from chains.js
+      symbolMap: {
+        'MARBLEX': 'mbx',
+        'STAKED_KAIA': 'stkaia'
+      },
+      
+      async fetchPrices() {
+        try {
+          const response = await axios.get(`${this.apiBaseUrl}/prices`, {
+            timeout: 10000
+          });
+          
+          if (response.data && response.data.success) {
+            const prices = {};
+            response.data.data.forEach(item => {
+              // Map API symbol to internal format
+              const mappedSymbol = this.symbolMap[item.symbol] || item.symbol.toLowerCase();
+              prices[mappedSymbol] = parseFloat(item.price);
+            });
+            this.prices = prices;
+            this.lastUpdate = new Date();
+          }
+        } catch (error) {
+          this.log(`Failed to fetch prices: ${error.message}`, 'warn');
+        }
+      },
+      
+      getPrice(symbol) {
+        return this.prices[symbol] || 0;
+      }
+    };
+    
+    // Balance manager (simplified)
+    this.balanceManagers[this.chainId] = {
+      async calculateTVLForUser(userAddress) {
+        // This would need to be implemented with actual balance queries
+        // For now, return 0 as placeholder
+        return 0;
+      }
+    };
+  }
+
+  async run() {
+    this.log('Starting point tracking...', 'info');
+    
+    // Fetch initial prices
+    await this.priceManagers[this.chainId].fetchPrices();
+    
+    // Start polling loop
+    this.processRecentEvents();
+    
+    this.pollingInterval = setInterval(() => {
+      this.processRecentEvents();
+    }, this.pollInterval);
+    
+    // Print daily summary every hour
+    this.summaryInterval = setInterval(() => {
+      this.printDailySummary();
+    }, 60 * 60 * 1000);
+    
+    this.log(`Polling every ${this.pollInterval / 1000}s, scanning ${this.scanWindowSeconds}s window`, 'info');
+  }
+
+  async processRecentEvents() {
+    try {
+      const provider = this.chainManager.getProvider(this.chainId);
+      const currentBlock = await provider.getBlockNumber();
+      
+      const blocksToScan = Math.min(this.scanWindowSeconds, this.maxBlocksPerScan);
+      const fromBlock = Math.max(
+        currentBlock - blocksToScan,
+        this.lastProcessedBlocks[this.chainId] || currentBlock - blocksToScan
+      );
+      const toBlock = currentBlock;
+
+      if (toBlock <= fromBlock) {
+        return;
+      }
+
+      await this.scanBlockRange(fromBlock, toBlock);
+      
+    } catch (error) {
+      this.handleError(error, 'processRecentEvents');
+    }
+  }
+
+  async scanBlockRange(fromBlock, toBlock) {
+    const provider = this.chainManager.getProvider(this.chainId);
+    let totalEvents = 0;
+    let successfulMarkets = 0;
+    let failedMarkets = 0;
+
+    for (const [cTokenAddress, market] of Object.entries(this.markets)) {
+      try {
+        const events = await this.getMarketEvents(cTokenAddress, market, fromBlock, toBlock);
+        
+        if (events.length > 0) {
+          this.log(`Processed ${events.length} events for ${market.symbol}`, 'info');
+          totalEvents += events.length;
+        }
+        
+        successfulMarkets++;
+        
+      } catch (error) {
+        this.handleError(error, `processing ${market.symbol}`);
+        failedMarkets++;
+      }
+    }
+
+    if (successfulMarkets > 0) {
+      this.lastProcessedBlocks[this.chainId] = toBlock;
+    }
+
+    if (totalEvents > 0) {
+      this.totalEvents += totalEvents;
+      this.log(`Scan complete: ${totalEvents} events (${successfulMarkets} markets)`, 'success');
+      this.recordSuccess();
+    }
+  }
+
+  async getMarketEvents(cTokenAddress, market, fromBlock, toBlock, maxRetries = 3) {
+    const provider = this.chainManager.getProvider(this.chainId);
+    const contract = new ethers.Contract(cTokenAddress, CTOKEN_ABI, provider);
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const [mintEvents, redeemEvents, borrowEvents, repayEvents] = await Promise.all([
+          contract.queryFilter(contract.filters.Mint(), fromBlock, toBlock),
+          contract.queryFilter(contract.filters.Redeem(), fromBlock, toBlock),
+          contract.queryFilter(contract.filters.Borrow(), fromBlock, toBlock),
+          contract.queryFilter(contract.filters.RepayBorrow(), fromBlock, toBlock)
+        ]);
+
+        const allEvents = [
+          ...mintEvents.map(e => ({ ...e, type: 'mint' })),
+          ...redeemEvents.map(e => ({ ...e, type: 'redeem' })),
+          ...borrowEvents.map(e => ({ ...e, type: 'borrow' })),
+          ...repayEvents.map(e => ({ ...e, type: 'repay' }))
+        ];
+
+        allEvents.sort((a, b) => {
+          if (a.blockNumber !== b.blockNumber) {
+            return a.blockNumber - b.blockNumber;
+          }
+          return a.transactionIndex - b.transactionIndex;
+        });
+
+        for (const event of allEvents) {
+          await this.handleEvent(event, market);
+        }
+
+        return allEvents;
+
+      } catch (error) {
+        if (attempt === maxRetries) {
+          throw error;
+        }
+        
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+        await this.sleep(delay);
+      }
+    }
+  }
+
+  async handleEvent(event, market) {
+    try {
+      const priceManager = this.priceManagers[this.chainId];
+      const statsManager = this.statsManagers[this.chainId];
+      
+      let amount, usdValue, user;
+      
+      switch (event.type) {
+        case 'mint':
+          user = event.args[0];
+          amount = event.args[1];
+          break;
+        case 'redeem':
+          user = event.args[0];
+          amount = event.args[1];
+          break;
+        case 'borrow':
+          user = event.args[0];
+          amount = event.args[1];
+          break;
+        case 'repay':
+          user = event.args[1]; // Borrower
+          amount = event.args[2];
+          break;
+      }
+      
+      const tokenAmount = parseFloat(this.formatTokenAmount(amount, market.decimals));
+      const tokenPrice = priceManager.getPrice(market.underlyingSymbol);
+      usdValue = tokenAmount * tokenPrice;
+      
+      statsManager.updateDailyStats(user, market.underlyingSymbol, usdValue, event.type);
+      
+      this.log(`${event.type.toUpperCase()}: ${user.slice(0, 8)}... $${usdValue.toFixed(2)} ${market.underlyingSymbol}`, 'info');
+      
+    } catch (error) {
+      this.handleError(error, 'handleEvent');
+    }
+  }
+
+  printDailySummary() {
+    const statsManager = this.statsManagers[this.chainId];
+    const today = new Date().toISOString().split('T')[0];
+    const dailyStats = statsManager.getDailyStats(today);
+    
+    this.log(`📊 Daily Summary (${today}):`, 'info');
+    this.log(`   Users: ${statsManager.getUsers().length}`, 'info');
+    this.log(`   Events: ${statsManager.getTotalEvents()}`, 'info');
+    this.log(`   KILO Distribution: ${this.dailyKiloDistribution.toLocaleString()}`, 'info');
+  }
+
+  async cleanup() {
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+    }
+    if (this.summaryInterval) {
+      clearInterval(this.summaryInterval);
+    }
+    this.log('PointTracker cleanup complete', 'success');
+  }
+
+  getHealthStatus() {
+    const baseStatus = super.getHealthStatus();
+    return {
+      ...baseStatus,
+      chainsTracked: 1,
+      marketsTracked: Object.keys(this.markets).length,
+      totalEvents: this.totalEvents,
+      dailyKiloDistribution: this.dailyKiloDistribution,
+      lastProcessedBlock: this.lastProcessedBlocks[this.chainId]
+    };
+  }
+}
+
+module.exports = PointTracker;
