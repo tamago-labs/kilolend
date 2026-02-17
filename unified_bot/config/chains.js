@@ -183,9 +183,9 @@ const CHAIN_MARKETS = {
 
 // KILO Points distribution per chain (daily)
 const KILO_DISTRIBUTION = {
-  kaia: 200000,
-  kub: 400000,
-  etherlink: 400000
+  kaia: 50000,
+  kub: 30000,
+  etherlink: 20000
 };
 
 // Helper function to get chain configuration

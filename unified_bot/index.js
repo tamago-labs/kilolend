@@ -5,7 +5,6 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config();
 
-
 const ChainManager = require('./services/ChainManager');
 const PointTracker = require('./modules/PointTracker');
 const OracleUpdater = require('./modules/OracleUpdater');

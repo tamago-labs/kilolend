@@ -2,7 +2,7 @@ const axios = require('axios');
 
 /**
  * KILO Point Calculation Engine
- * Handles complex point calculation and distribution logic
+ * Handles the complex point calculation and distribution logic
  */
 class KiloPointCalculator {
   constructor(dailyKiloDistribution = 100000) {
@@ -45,9 +45,7 @@ class KiloPointCalculator {
     }
   }
 
-  /**
-   * Get comprehensive multiplier for a user
-   */
+  // Get comprehensive multiplier for a user
   async getUserMultiplier(userAddress, userStats = null) {
     try {
       // Get base invite multiplier
@@ -62,9 +60,6 @@ class KiloPointCalculator {
     }
   }
 
-  /**
-   * Calculate KILO points for all users
-   */
   async calculateKiloPoints(userStats) {
     const users = Object.keys(userStats);
     if (users.length === 0) return [];
@@ -84,8 +79,8 @@ class KiloPointCalculator {
     for (const userAddress of users) {
       const stats = userStats[userAddress];
       
-      // Calculate user base points using 50/50 formula
-      const basePoints = stats.baseTVL * 0.5;
+      // Calculate user base points using the 50/50 formula
+      const basePoints = stats.baseTVL * 0.5; // we use reduce this weight if TVL is large enough
       const netPoints = Math.max(0, stats.netContribution) * 0.5; // Only positive net contribution counts
       const userBasePoints = basePoints + netPoints;
       
@@ -144,9 +139,6 @@ class KiloPointCalculator {
     return [];
   }
 
-  /**
-   * Distribute KILO proportionally based on weighted points
-   */
   distributeKilo(users, userStats, totalWeightedPoints) {
     console.log('\n💎 KILO DISTRIBUTION');
     console.log('====================');
@@ -205,9 +197,6 @@ class KiloPointCalculator {
     return distributions;
   }
 
-  /**
-   * Print distribution formula and examples
-   */
   printDistributionFormula(distributions) {
     console.log('📋 BALANCED DISTRIBUTION FORMULA EXAMPLE:');
     console.log('==========================================');

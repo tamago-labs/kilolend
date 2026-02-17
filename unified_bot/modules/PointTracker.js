@@ -1,6 +1,9 @@
 const { ethers } = require('ethers');
 const axios = require('axios');
 const BaseModule = require('./BaseModule');
+const DatabaseService = require('../services/DatabaseService');
+const BalanceManager = require('../services/BalanceManager');
+const KiloPointCalculator = require('../services/KiloPointCalculator');
 const { getChainContracts, getChainMarkets, getKiloDistribution } = require('../config/chains');
 
 // CToken ABI - events we need to listen to
@@ -49,6 +52,11 @@ class PointTracker extends BaseModule {
     
     // Event counts
     this.totalEvents = 0;
+    
+    // Services for user initialization
+    this.databaseService = new DatabaseService();
+    this.balanceManager = null; // Will be initialized after we have a provider
+    this.kiloCalculator = null;
   }
 
   /**
@@ -96,47 +104,222 @@ class PointTracker extends BaseModule {
     this.log(`Daily KILO distribution: ${this.dailyKiloDistribution.toLocaleString()}`, 'info');
   }
 
-  initializeServices() {
-    // Simple in-memory stats tracking
+    initializeServices() {
+    // Store API URL for use in nested functions
+    const apiBaseUrl = this.apiBaseUrl;
+    const chainId = this.chainId;
+    const self = this; // Store reference to PointTracker instance
+    
+    // Full StatsManager implementation
     this.statsManagers[this.chainId] = {
-      dailyStats: {},
+      dailyStats: {
+        users: new Set(),
+        totalEvents: 0,
+        userStats: {},
+        totalTVLContributed: 0,
+        totalNetContribution: 0,
+        tvlChanges: {},
+        borrowChanges: {}
+      },
       currentDate: new Date().toISOString().split('T')[0],
-      users: new Set(),
-      totalEvents: 0,
       
-      updateDailyStats(user, market, usdValue, type) {
-        const date = this.currentDate;
-        if (!this.dailyStats[date]) {
-          this.dailyStats[date] = {};
-        }
-        if (!this.dailyStats[date][user]) {
-          this.dailyStats[date][user] = {
-            mint: {},
-            redeem: {},
-            borrow: {},
-            repay: {}
+      getCurrentDate() {
+        return new Date().toISOString().split('T')[0];
+      },
+      
+      initializeUserStats(userAddress) {
+        if (!this.dailyStats.userStats[userAddress]) {
+          this.dailyStats.userStats[userAddress] = {
+            baseTVL: 0,
+            netContribution: 0,
+            basePoints: 0,
+            multiplier: 1.0,
+            finalKilo: 0,
+            activities: {
+              supplies: 0,
+              withdraws: 0,
+              borrows: 0,
+              repays: 0
+            },
+            balanceBreakdown: {},
+            lastBalanceUpdate: null
           };
         }
+      },
+      
+      updateUserStats(userAddress, usdValue, type) {
+        this.initializeUserStats(userAddress);
         
-        if (!this.dailyStats[date][user][type][market]) {
-          this.dailyStats[date][user][type][market] = 0;
+        const userStats = this.dailyStats.userStats[userAddress];
+        
+        switch (type) {
+          case 'mint':
+            userStats.activities.supplies++;
+            userStats.netContribution += usdValue;
+            this.dailyStats.totalTVLContributed += usdValue;
+            this.dailyStats.totalNetContribution += usdValue;
+            break;
+            
+          case 'redeem':
+            userStats.activities.withdraws++;
+            userStats.netContribution -= usdValue;
+            this.dailyStats.totalNetContribution -= usdValue;
+            break;
+            
+          case 'borrow':
+            userStats.activities.borrows++;
+            userStats.netContribution -= usdValue;
+            this.dailyStats.totalTVLContributed += usdValue;
+            this.dailyStats.totalNetContribution -= usdValue;
+            break;
+            
+          case 'repay':
+            userStats.activities.repays++;
+            userStats.netContribution += usdValue;
+            this.dailyStats.totalNetContribution += usdValue;
+            break;
         }
+      },
+      
+      initializeUserBaseTVL(userAddress, totalBaseTVL, marketBreakdown) {
+        this.initializeUserStats(userAddress);
         
-        this.dailyStats[date][user][type][market] += usdValue;
-        this.users.add(user);
-        this.totalEvents++;
+        const userStats = this.dailyStats.userStats[userAddress];
+        userStats.baseTVL = totalBaseTVL;
+        userStats.balanceBreakdown = marketBreakdown;
+        userStats.lastBalanceUpdate = new Date().toISOString();
+        
+        this.dailyStats.users.add(userAddress);
       },
       
-      getDailyStats(date) {
-        return this.dailyStats[date] || {};
+      updateUserBaseTVL(userAddress, baseTVLData) {
+        this.initializeUserStats(userAddress);
+        
+        const userStats = this.dailyStats.userStats[userAddress];
+        userStats.baseTVL = baseTVLData.totalBaseTVL;
+        userStats.balanceBreakdown = baseTVLData.marketBreakdown;
+        userStats.lastBalanceUpdate = new Date().toISOString();
       },
       
-      getUsers() {
-        return Array.from(this.users);
+      updateDailyStats(user, market, usdValue, type) {
+        const currentDate = this.getCurrentDate();
+        if (currentDate !== this.currentDate) {
+          this.currentDate = currentDate;
+          return true; // Signal that a new day started
+        }
+
+        this.dailyStats.users.add(user);
+        this.dailyStats.totalEvents++;
+
+        if (!this.dailyStats.tvlChanges[market]) {
+          this.dailyStats.tvlChanges[market] = 0;
+        }
+        if (!this.dailyStats.borrowChanges[market]) {
+          this.dailyStats.borrowChanges[market] = 0;
+        }
+
+        switch (type) {
+          case 'mint':
+            this.dailyStats.tvlChanges[market] += usdValue;
+            break;
+          case 'redeem':
+            this.dailyStats.tvlChanges[market] -= usdValue;
+            break;
+          case 'borrow':
+            this.dailyStats.borrowChanges[market] += usdValue;
+            break;
+          case 'repay':
+            this.dailyStats.borrowChanges[market] -= usdValue;
+            break;
+        }
+
+        this.updateUserStats(user, usdValue, type);
+        
+        return false; // No new day
+      },
+      
+      async printDailySummary(kiloCalculator, balanceManager = null, databaseService = null, chainId = null) {
+        console.log('\n📊 DAILY SUMMARY');
+        console.log('================');
+        console.log(`📅 Date: ${this.currentDate}`);
+        console.log(`👥 Unique Users: ${this.dailyStats.users.size}`);
+        console.log(`🎯 Total Events: ${this.dailyStats.totalEvents}`);
+        console.log(`💰 Total TVL Contributed: $${this.dailyStats.totalTVLContributed.toFixed(2)}`);
+        console.log(`📈 Total Net Contribution: $${this.dailyStats.totalNetContribution.toFixed(2)}`);
+        
+        console.log('\n💰 TVL Changes by Market:');
+        let totalTVLChange = 0;
+        for (const [market, change] of Object.entries(this.dailyStats.tvlChanges)) {
+          console.log(`  ${market}: ${change >= 0 ? '+' : ''}$${change.toFixed(2)}`);
+          totalTVLChange += change;
+        }
+        console.log(`  🏆 Net TVL Change: ${totalTVLChange >= 0 ? '+' : ''}$${totalTVLChange.toFixed(2)}`);
+
+        console.log('\n🏦 Borrow Changes by Market:');
+        let totalBorrowChange = 0;
+        for (const [market, change] of Object.entries(this.dailyStats.borrowChanges)) {
+          console.log(`  ${market}: ${change >= 0 ? '+' : ''}$${change.toFixed(2)}`);
+          totalBorrowChange += change;
+        }
+        console.log(`  🏆 Net Borrow Change: ${totalBorrowChange >= 0 ? '+' : ''}$${totalBorrowChange.toFixed(2)}`);
+
+        // Calculate base TVL for all users if balance manager is available
+        if (balanceManager) {
+          const userAddresses = Array.from(this.dailyStats.users);
+          if (userAddresses.length > 0) {
+            const baseTVLData = await balanceManager.calculateBaseTVLForUsers(userAddresses);
+            
+            // Update user stats with base TVL
+            for (const [userAddress, data] of Object.entries(baseTVLData)) {
+              this.updateUserBaseTVL(userAddress, data);
+            }
+          }
+        }
+
+        // Calculate and display KILO point distribution
+        let distributions = [];
+        if (Object.keys(this.dailyStats.userStats).length > 0) {
+          distributions = await kiloCalculator.calculateKiloPoints(this.dailyStats.userStats);
+        } else {
+          console.log('\n💎 No user activity for KILO distribution today');
+        }
+
+        // Store to database if available
+        if (databaseService && distributions && distributions.length > 0) {
+          console.log('\n💾 STORING TO DATABASE...');
+          console.log('==========================');
+          
+          const summary = {
+            uniqueUsers: this.dailyStats.users.size,
+            totalEvents: this.dailyStats.totalEvents,
+            totalTVLContributed: this.dailyStats.totalTVLContributed,
+            totalNetContribution: this.dailyStats.totalNetContribution,
+            netTVLChange: totalTVLChange,
+            netBorrowChange: totalBorrowChange,
+            tvlChangesByMarket: this.dailyStats.tvlChanges,
+            borrowChangesByMarket: this.dailyStats.borrowChanges
+          };
+
+          await databaseService.storeDailySummary(this.currentDate, distributions, summary);
+        } else if (databaseService && (!distributions || distributions.length === 0)) {
+          console.log('\n💾 No distributions to store to database');
+        }
+
+        console.log('================\n');
+        
+        return distributions;
+      },
+      
+      getUserStats() {
+        return this.dailyStats.userStats;
       },
       
       getTotalEvents() {
-        return this.totalEvents;
+        return this.dailyStats.totalEvents;
+      },
+      
+      getUsers() {
+        return Array.from(this.dailyStats.users);
       }
     };
     
@@ -154,7 +337,7 @@ class PointTracker extends BaseModule {
       
       async fetchPrices() {
         try {
-          const response = await axios.get(`${this.apiBaseUrl}/prices`, {
+          const response = await axios.get(`${apiBaseUrl}/prices`, {
             timeout: 10000
           });
           
@@ -169,7 +352,7 @@ class PointTracker extends BaseModule {
             this.lastUpdate = new Date();
           }
         } catch (error) {
-          this.log(`Failed to fetch prices: ${error.message}`, 'warn');
+          console.log(`[${chainId}] Failed to fetch prices: ${error.message}`);
         }
       },
       
@@ -186,6 +369,96 @@ class PointTracker extends BaseModule {
         return 0;
       }
     };
+    
+    // KILO Point Calculator
+    this.kiloCalculator = new KiloPointCalculator(this.dailyKiloDistribution);
+  }
+
+
+  /**
+   * Initialize existing users and calculate their base TVL
+   * This ensures users who contributed before the bot started are included
+   */
+  async initializeExistingUsers() {
+    try {
+      this.log('Initializing existing users...', 'info');
+      
+      // Fetch all users from the API
+      const allUsers = await this.databaseService.getAllUsers();
+      
+      if (allUsers.length === 0) {
+        this.log('No existing users found in the system', 'info');
+        return;
+      }
+      
+      this.log(`Found ${allUsers.length} existing users, calculating base TVL...`, 'info');
+      
+      // Initialize BalanceManager with provider and markets
+      const provider = this.chainManager.getProvider(this.chainId);
+      this.balanceManager = new BalanceManager(provider, this.markets);
+      
+      // Calculate base TVL for all existing users
+      const existingUserBaseTVL = await this.balanceManager.calculateBaseTVLForUsers(allUsers);
+      
+      const statsManager = this.statsManagers[this.chainId];
+      
+      // Initialize stats manager with existing users' base TVL
+      let usersWithTVL = 0;
+      let usersWithZeroTVL = 0;
+      let usersWithErrors = 0;
+      
+      for (const userAddress of allUsers) {
+        const baseTVLData = existingUserBaseTVL[userAddress];
+        
+        if (baseTVLData && baseTVLData.error) {
+          this.log(`Error calculating TVL for ${userAddress.slice(0, 8)}...: ${baseTVLData.error}`, 'error');
+          usersWithErrors++;
+          // Still initialize with zero TVL to ensure user is tracked
+          statsManager.initializeUserBaseTVL(userAddress, 0, {});
+        } else if (baseTVLData) {
+          if (baseTVLData.totalBaseTVL > 0) {
+            statsManager.initializeUserBaseTVL(
+              userAddress,
+              baseTVLData.totalBaseTVL,
+              baseTVLData.marketBreakdown
+            );
+            this.log(`Initialized ${userAddress.slice(0, 8)}... with ${baseTVLData.totalBaseTVL.toFixed(2)} base TVL`, 'info');
+            usersWithTVL++;
+          } else {
+            statsManager.initializeUserBaseTVL(
+              userAddress,
+              0,
+              baseTVLData.marketBreakdown
+            );
+            usersWithZeroTVL++;
+          }
+        } else {
+          this.log(`No TVL data found for ${userAddress.slice(0, 8)}...`, 'warning');
+          usersWithErrors++;
+          // Still initialize with zero TVL to ensure user is tracked
+          statsManager.initializeUserBaseTVL(userAddress, 0, {});
+        }
+      }
+      
+      this.log(`Initialization Complete:`, 'success');
+      this.log(`   • Total users loaded: ${allUsers.length}`, 'info');
+      this.log(`   • Users with TVL > 0: ${usersWithTVL}`, 'info');
+      this.log(`   • Users with TVL = 0: ${usersWithZeroTVL}`, 'info');
+      this.log(`   • Users with errors: ${usersWithErrors}`, 'info');
+      this.log(`   • Total users tracked: ${statsManager.getUsers().length}`, 'info');
+      
+      // Verify all users are being tracked
+      const trackedUsers = statsManager.getUsers();
+      if (trackedUsers.length !== allUsers.length) {
+        this.log(`Warning: Only ${trackedUsers.length}/${allUsers.length} users are being tracked!`, 'warning');
+      } else {
+        this.log(`All ${allUsers.length} users are successfully being tracked`, 'success');
+      }
+      
+    } catch (error) {
+      this.handleError(error, 'initializeExistingUsers');
+      this.log('Continuing without existing user data - new events will still be tracked', 'info');
+    }
   }
 
   async run() {
@@ -193,6 +466,9 @@ class PointTracker extends BaseModule {
     
     // Fetch initial prices
     await this.priceManagers[this.chainId].fetchPrices();
+    
+    // Initialize existing users with their base TVL
+    await this.initializeExistingUsers();
     
     // Start polling loop
     this.processRecentEvents();
@@ -351,13 +627,11 @@ class PointTracker extends BaseModule {
 
   printDailySummary() {
     const statsManager = this.statsManagers[this.chainId];
-    const today = new Date().toISOString().split('T')[0];
-    const dailyStats = statsManager.getDailyStats(today);
+    const kiloCalculator = this.kiloCalculator;
+    const balanceManager = this.balanceManager;
+    const databaseService = this.databaseService;
     
-    this.log(`📊 Daily Summary (${today}):`, 'info');
-    this.log(`   Users: ${statsManager.getUsers().length}`, 'info');
-    this.log(`   Events: ${statsManager.getTotalEvents()}`, 'info');
-    this.log(`   KILO Distribution: ${this.dailyKiloDistribution.toLocaleString()}`, 'info');
+    statsManager.printDailySummary(kiloCalculator, balanceManager, databaseService, this.chainId);
   }
 
   async cleanup() {
