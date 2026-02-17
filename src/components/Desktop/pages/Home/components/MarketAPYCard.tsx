@@ -1,9 +1,8 @@
 "use client";
 
 import styled from 'styled-components';
-import { useMarketContext } from '@/contexts/MarketContext';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import {  ArrowRight } from 'react-feather';
+import { ArrowRight, RefreshCw } from 'react-feather';
 import { useRouter } from 'next/navigation';
 
 // Market APY Card Styles
@@ -196,6 +195,16 @@ const TokenSymbol = styled.span`
   }
 `;
 
+const ChainBadge = styled.span`
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #475569;
+  text-transform: uppercase;
+`;
+
 const TokenFullName = styled.span`
   font-size: 12px;
   color: #64748b;
@@ -289,40 +298,37 @@ const TOKEN_NAMES: Record<string, string> = {
 };
 
 export const MarketAPYCard = () => {
-  const { state, actions } = useMarketContext();
-  const { markets: storeMarkets } = useContractMarketStore();
+  const { markets, isLoading } = useContractMarketStore();
   const router = useRouter();
 
-  // Get top markets by APY from context
-  const topMarkets = actions.getTopMarketsByAPY(5);
+  // Get top markets by APY from store
+  const topMarkets = markets
+    .filter(m => m.supplyAPY > 0)
+    .sort((a, b) => b.supplyAPY - a.supplyAPY)
+    .slice(0, 5);
+
   const isHighAPY = (apy: number) => apy >= 5.0;
 
   const handleNavigateToMarkets = () => {
     router.push('/markets');
   };
 
-  // Helper function to get token icon from store
-  const getTokenIcon = (symbol: string) => {
-    const market = storeMarkets.find(m => m.symbol.toUpperCase() === symbol.toUpperCase());
-    return market?.icon;
-  };
-
   // Helper function to render token icon with fallback
-  const renderTokenIcon = (symbol: string) => {
-    const iconUrl = getTokenIcon(symbol);
+  const renderTokenIcon = (market: any) => {
+    const iconUrl = market?.icon;
 
     if (iconUrl) {
-      return <TokenIcon src={iconUrl} alt={symbol} onError={(e) => {
+      return <TokenIcon src={iconUrl} alt={market.symbol} onError={(e) => {
         // Fallback to default icon if image fails to load
         e.currentTarget.style.display = 'none';
         e.currentTarget.nextElementSibling?.classList.remove('hidden');
       }} />;
     }
 
-    return <FallbackIcon>{symbol.slice(0, 2)}</FallbackIcon>;
+    return <FallbackIcon>{market.symbol.slice(0, 2)}</FallbackIcon>;
   };
 
-  if (state.isLoading && Object.keys(state.markets).length === 0) {
+  if (isLoading && markets.length === 0) {
     return (
       <APYCardWrapper>
         <CardHeader>
@@ -335,25 +341,6 @@ export const MarketAPYCard = () => {
             <SkeletonItem key={i} />
           ))}
         </LoadingSkeleton>
-      </APYCardWrapper>
-    );
-  }
-
-  if (state.error) {
-    return (
-      <APYCardWrapper>
-        <CardHeader>
-          <CardTitle>
-            Supply with Best Rates
-          </CardTitle>
-        </CardHeader>
-        <ErrorMessage>
-          <ErrorIcon>⚠️</ErrorIcon>
-          <div>Failed to load market data</div>
-          <div style={{ fontSize: '14px', marginTop: '8px' }}>
-            Please try again later
-          </div>
-        </ErrorMessage>
       </APYCardWrapper>
     );
   }
@@ -374,23 +361,24 @@ export const MarketAPYCard = () => {
       </CardHeader>
 
       <APYList>
-        {topMarkets.map(({ symbol, data }) => {
-          const displaySymbol = actions.getDisplaySymbol(symbol);
+        {topMarkets.map((market) => {
+          const isHigh = isHighAPY(market.supplyAPY);
           return (
             <APYItem
-              key={symbol}
-              $isHigh={isHighAPY(data.supplyAPY)}
+              key={market.id}
+              $isHigh={isHigh}
+              onClick={handleNavigateToMarkets}
             >
               <TokenInfo>
-                {renderTokenIcon(displaySymbol)}
+                {renderTokenIcon(market)}
                 <TokenName>
-                  <TokenSymbol>{displaySymbol}</TokenSymbol>
-                  <TokenFullName>{TOKEN_NAMES[displaySymbol] || displaySymbol}</TokenFullName>
+                  <TokenSymbol>{market.symbol}</TokenSymbol>
+                  <ChainBadge>{market.chainName}</ChainBadge>
                 </TokenName>
               </TokenInfo>
 
-              <APYPercentage $isHigh={isHighAPY(data.supplyAPY)}>
-                {data.supplyAPY.toFixed(2)}%
+              <APYPercentage $isHigh={isHigh}>
+                {market.supplyAPY.toFixed(2)}%
               </APYPercentage>
             </APYItem>
           );

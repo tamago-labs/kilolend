@@ -78,16 +78,7 @@ export const useMarketContract = (): MarketContractHook => {
         contract.borrowRatePerBlock(),
         contract.exchangeRateStored(),
       ]);
-
-      // console.log("Raw market data for", marketId, {
-      //   totalSupply: totalSupply.toString(),
-      //   totalBorrows: totalBorrows.toString(),
-      //   getCash: getCash.toString(),
-      //   supplyRatePerBlock: supplyRatePerBlock.toString(),
-      //   borrowRatePerBlock: borrowRatePerBlock.toString(),
-      //   exchangeRate: exchangeRate.toString(),
-      // });
-
+ 
       // Utilization = borrows / (cash + borrows)
       const totalLiquidity = getCash + totalBorrows;
       const utilizationRate =
@@ -161,8 +152,17 @@ export const useMarketContract = (): MarketContractHook => {
   }, [getMarketById]);
 
   const getUserPosition = useCallback(
-    async (marketId: any, userAddress: string): Promise<UserPosition | null> => {
+    async (marketIdRaw: any, userAddress: string): Promise<UserPosition | null> => {
       try {
+
+        let marketId = marketIdRaw
+        if (marketId.indexOf("kaia-") !== -1) {
+          marketId = marketId.split("kaia-")[1]
+        }
+        if (marketId === "stkaia") {
+          marketId = "staked-kaia"
+        }
+
         const CONFIG: any = MARKET_CONFIG
         const marketConfig = CONFIG[marketId];
         if (!marketConfig.marketAddress) return null;
@@ -195,7 +195,7 @@ export const useMarketContract = (): MarketContractHook => {
           cTokenBalance: ethers.formatUnits(cTokenBalance, 8),
         };
       } catch (error) {
-        console.error(`Error getting user position for ${marketId}:`, error);
+        console.error(`Error getting user position for ${marketIdRaw}:`, error);
         return null;
       }
     },

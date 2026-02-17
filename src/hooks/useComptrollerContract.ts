@@ -133,7 +133,7 @@ export const useComptrollerContract = (): ComptrollerContractHook => {
    */
   const getAllMarkets = useCallback(async (): Promise<string[]> => {
     try {
-      const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false);
+      const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false, 8217);
       if (!contract) throw new Error('Failed to create comptroller contract instance');
 
       const markets = await contract.getAllMarkets();
@@ -151,7 +151,7 @@ export const useComptrollerContract = (): ComptrollerContractHook => {
   const getAssetsIn = useCallback(
     async (userAddress: string): Promise<string[]> => {
       try {
-        const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false);
+        const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false, 8217);
         if (!contract) throw new Error('Failed to create comptroller contract instance');
 
         const assetsIn = await contract.getAssetsIn(userAddress);
@@ -171,7 +171,7 @@ export const useComptrollerContract = (): ComptrollerContractHook => {
   const getAccountLiquidity = useCallback(
     async (userAddress: string): Promise<AccountLiquidity> => {
       try {
-        const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false);
+        const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false, 8217);
         if (!contract) throw new Error('Failed to create comptroller contract instance');
 
         const [error, liquidity, shortfall] = await contract.getAccountLiquidity(userAddress);
@@ -217,7 +217,7 @@ export const useComptrollerContract = (): ComptrollerContractHook => {
       borrowAmount: string
     ): Promise<AccountLiquidity> => {
       try {
-        const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false);
+        const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false, 8217);
         if (!contract) throw new Error('Failed to create comptroller contract instance');
 
         const redeemTokensBN = ethers.parseUnits(redeemTokens, 8); // cTokens have 8 decimals
@@ -259,7 +259,7 @@ export const useComptrollerContract = (): ComptrollerContractHook => {
   const getMarketInfo = useCallback(
     async (cToken: string): Promise<MarketInfo> => {
       try {
-        const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false);
+        const contract = await getContract(CONTRACT_ADDRESSES.Comptroller, COMPTROLLER_ABI, false, 8217);
         if (!contract) throw new Error('Failed to create comptroller contract instance');
 
         const [isListed, collateralFactorMantissa] = await contract.markets(cToken);

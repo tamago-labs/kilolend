@@ -42,19 +42,21 @@ contract MultiMarketTest is Test {
         
         // Deploy interest rate models
         stableRateModel = new JumpRateModelV2(
-            1e16,   // 1% base rate for stables
-            5e16,   // 5% multiplier
-            100e16, // 100% jump multiplier
-            9e17,   // 90% kink
-            admin
+            2e16,         // 2% base rate
+            10e16,        // 10% multiplier
+            100e16,       // 100% jump multiplier
+            8e17,         // 80% kink
+            admin,        // owner
+            31536000      // blocksPerYear for Kaia (1 second block time)
         );
         
         volatileRateModel = new JumpRateModelV2(
-            3e16,   // 3% base rate for volatile assets
-            15e16,  // 15% multiplier
-            300e16, // 300% jump multiplier
-            8e17,   // 80% kink
-            admin
+            4e16,         // 4% base rate
+            15e16,        // 15% multiplier
+            200e16,       // 200% jump multiplier
+            8e17,         // 80% kink
+            admin,        // owner
+            31536000      // blocksPerYear for Kaia (1 second block time)
         );
         
         // Deploy cTokens

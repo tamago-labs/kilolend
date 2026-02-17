@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
-import styled from 'styled-components';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from '@/hooks/v1/useMarketContract'; 
-import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower'; 
-import { useTokenBalances } from '@/hooks/useTokenBalances';
+import { useMarketContract } from '@/hooks/v2/useMarketContract';
+import { useChainId } from "wagmi"
+import { useBorrowingPowerV2 } from '@/hooks/v2/useBorrowingPower';
+import { useTokenBalancesV2 } from '@/hooks/useTokenBalancesV2';
 import { usePriceUpdates } from '@/hooks/usePriceUpdates';
 
 // Import desktop components from Portfolio
@@ -14,213 +14,34 @@ import { DesktopPortfolioHeader } from './components/DesktopPortfolioHeader';
 import { DesktopPortfolioTabs } from './components/DesktopPortfolioTabs';
 import { DesktopPortfolioTable } from './components/DesktopPortfolioTable';
 import { DesktopEmptyState } from './components/DesktopEmptyState';
+import { PortfolioStats } from './components/PortfolioStats';
 import { DesktopWithdrawModal, DesktopRepayModal } from '@/components/Desktop/modals';
 
 // Import components from Balances
 import { MainWalletSection } from '../Balances/components/MainWalletSection';
 import { AgentWalletsBanner } from './components/AgentWalletsBanner';
 
-const PortfolioContainer = styled.div`
-  min-height: 100vh;
-  background: #f8fafc;
-`;
+import { useInterval } from 'usehooks-ts'
 
-const MainContent = styled.main`
-  max-width: 1400px;
-  margin: 0 auto;
-  padding: 32px;
-`;
-
-const LoadingState = styled.div`
-  text-align: center;
-  padding: 80px 24px;
-  color: #64748b;
-  font-size: 16px;
-`;
-
-const LoadingSpinner = styled.div`
-  width: 48px;
-  height: 48px;
-  border: 4px solid #e2e8f0;
-  border-top: 4px solid #06C755;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 24px;
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-const LoadingTitle = styled.h3`
-  font-size: 20px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const LoadingSubtitle = styled.p`
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 32px;
-`;
-
-// Enhanced Stats Grid for PortfolioV2
-const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-`;
-
-const StatCard = styled.div`
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  transition: all 0.3s ease;
-
-  &:hover { 
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
-  }
-`;
-
-const StatLabel = styled.div`
-  font-size: 14px;
-  color: #64748b;
-  margin-bottom: 8px;
-  font-weight: 500;
-`;
-
-const StatValue = styled.div`
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const StatChange = styled.div<{ $positive?: boolean }>`
-  font-size: 14px;
-  font-weight: 600;
-  color: ${({ $positive }) => $positive ? '#06C755' : '#ef4444'};
-  display: flex;
-  align-items: center;
-  gap: 4px;
-`;
-
-const DebtBadge = styled.span<{ $hasDebt: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${({ $hasDebt }) => $hasDebt ? '#fef3c7' : '#f0fdf4'};
-  color: ${({ $hasDebt }) => $hasDebt ? '#92400e' : '#166534'};
-  border: 1px solid ${({ $hasDebt }) => $hasDebt ? 'transparent' : '#06C755'};
-`;
-
-const HealthIndicator = styled.div<{ $level: 'safe' | 'warning' | 'danger' }>`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  background: ${({ $level }) => 
-    $level === 'safe' ? '#f0fdf4' :
-    $level === 'warning' ? '#fef3c7' :
-    '#fef2f2'
-  };
-  color: ${({ $level }) => 
-    $level === 'safe' ? '#166534' :
-    $level === 'warning' ? '#92400e' :
-    '#991b1b'
-  };
-`;
-
-// Side Tab Navigation
-const SideTabContainer = styled.div`
-  display: flex;
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  overflow: hidden;
-  margin-bottom: 32px;
-`;
-
-const SideTabNavigation = styled.div`
-  display: flex;
-  flex-direction: column;
-  width: 250px;
-  background: #f8fafc;
-  border-right: 1px solid #e2e8f0;
-`;
-
-const SideTabButton = styled.button<{ $active: boolean }>`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
-  background: ${({ $active }) => $active ? 'rgba(6, 199, 85, 0.1)' : 'transparent'};
-  color: ${({ $active }) => $active ? '#06C755' : '#64748b'};
-  border: none;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  border-left: 4px solid ${({ $active }) => $active ? '#06C755' : 'transparent'};
-  text-align: left;
-  width: 100%;
-
-  &:hover {
-    background: ${({ $active }) => $active ? 'rgba(6, 199, 85, 0.15)' : '#f1f5f9'};
-    color: ${({ $active }) => $active ? '#06C755' : '#1e293b'};
-  }
-
-  &:first-child {
-    border-top-left-radius: 16px;
-  }
-
-   
-`;
-
-const SideTabContent = styled.div`
-  flex: 1;
-  padding: 32px;
-  background: white;
-`;
-
-const ContentContainer = styled.div`
-  background: white;
-  border-radius: 16px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-  padding: 32px;
-  min-height: 400px;
-`;
-
-const ContentTitle = styled.h2`
-  font-size: 24px;
-  font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-`;
-
-const ContentSubtitle = styled.p`
-  font-size: 16px;
-  color: #64748b;
-  margin-bottom: 32px;
-  line-height: 1.6;
-`;
+// Import styled components
+import {
+  PortfolioContainer,
+  MainContent,
+  LoadingState,
+  LoadingSpinner,
+  LoadingTitle,
+  LoadingSubtitle,
+  SideTabContainer,
+  SideTabNavigation,
+  SideTabButton,
+  SideTabContent,
+  ContentTitle,
+  ContentSubtitle,
+} from './DesktopPortfolioV2Page.styles';
+import { useAuth } from '@/contexts/ChainContext';
+import { DesktopWithdrawModalWeb3 } from '../../modals/PortfolioModal/DesktopWithdrawModalWeb3';
+import { DesktopRepayModalWeb3 } from '../../modals/PortfolioModal/DesktopRepayModalWeb3';
+import { useMultiChainMarketData } from '@/hooks/v2/useMultiChainMarketData';
 
 interface Position {
   marketId: string;
@@ -234,12 +55,20 @@ interface Position {
 }
 
 export const DesktopPortfolioV2 = () => {
+
+  const { selectedAuthMethod } = useAuth()
+
+  const [delay, setDelay] = useState<number>(1000)
+  const chainId = useChainId();
+
   // Wallet and market states
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
-  const { balances } = useTokenBalances();
+  const multichainData = useMultiChainMarketData()
+
+  const { balances, refetch } = useTokenBalancesV2();
   const { prices } = usePriceUpdates({
-    symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX"]
+    symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX", "XTZ", "KUB"]
   });
 
   // Portfolio positions state
@@ -254,7 +83,7 @@ export const DesktopPortfolioV2 = () => {
     healthFactor: 999
   });
 
-  // Side tab state - Lending Positions is default (first)
+  // Side tab state - Lending Positions is default
   const [activeSideTab, setActiveSideTab] = useState<'lending' | 'wallet'>('lending');
 
   // Tab and sorting states (for lending positions)
@@ -268,12 +97,12 @@ export const DesktopPortfolioV2 = () => {
   const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
 
   // Hooks
-  const { getUserPosition } = useMarketContract(); 
-  const { calculateBorrowingPower } = useBorrowingPower(); 
+  const { getUserPosition } = useMarketContract();
+  const { calculateBorrowingPower, isLoading: isBorrowingPowerLoading } = useBorrowingPowerV2();
 
   // Calculate wallet balance value
   const calculateWalletBalanceValue = useCallback(() => {
-    return balances.reduce((total, token) => {
+    return balances.reduce((total: number, token: any) => {
       const priceKey = token.symbol === 'MBX' ? 'MARBLEX' : token.symbol;
       const price = prices[priceKey];
       const balance = parseFloat(token.balance || '0');
@@ -292,16 +121,23 @@ export const DesktopPortfolioV2 = () => {
     setIsLoading(true);
 
     try {
+
       const userPositions: Position[] = [];
+
+      // Filter markets by current chain ID
+      const currentChainMarkets = markets.filter(market => market.chainId === chainId);
+      console.log(`Fetching positions for chain ${chainId}, found ${currentChainMarkets.length} markets`);
 
       // Get borrowing power data
       const borrowingPower = await calculateBorrowingPower(account);
+
       setBorrowingPowerData(borrowingPower);
 
-      for (const market of markets) {
-        if (!market.isActive || !market.marketAddress) continue;
+      for (const market of currentChainMarkets) {
+        if (!market.isActive) continue;
 
         const position = await getUserPosition(market.id as any, account);
+
         if (!position) continue;
 
         const supplyBalance = parseFloat(position.supplyBalance || '0');
@@ -359,12 +195,24 @@ export const DesktopPortfolioV2 = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [account, markets, getUserPosition, calculateBorrowingPower]);
+  }, [account, markets, chainId, getUserPosition, calculateBorrowingPower]);
 
-  // Fetch positions when account or markets change
+
   useEffect(() => {
-    fetchPositions();
-  }, [fetchPositions]);
+    if (account && chainId) {
+      setDelay(1000)
+    }
+  }, [account, chainId])
+
+  useInterval(
+    () => {
+      if (account && !isLoading && !multichainData.isLoading) {
+        fetchPositions()
+        setDelay(60000)
+      }
+    },
+    delay,
+  )
 
   const handleAction = (action: string, position: Position) => {
     setSelectedPosition(position);
@@ -383,20 +231,21 @@ export const DesktopPortfolioV2 = () => {
     setWithdrawModalOpen(false);
     setRepayModalOpen(false);
     setSelectedPosition(null);
-    
+
     // Refresh data after modal closes
     setTimeout(() => {
       fetchPositions();
+      refetch();
     }, 1000);
   };
 
   // Filter and sort positions based on active tab and search
   const getFilteredAndSortedPositions = useCallback(() => {
     let filteredPositions = positions.filter(p => p.type === activeTab);
-    
+
     // Apply search filter
     if (searchTerm) {
-      filteredPositions = filteredPositions.filter(p => 
+      filteredPositions = filteredPositions.filter(p =>
         p.symbol.toLowerCase().includes(searchTerm.toLowerCase()) ||
         (p.market?.name || '').toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -438,94 +287,51 @@ export const DesktopPortfolioV2 = () => {
     </LoadingState>
   );
 
+  // Combined loading state for portfolio stats
+  const isDataLoading = isLoading || isBorrowingPowerLoading;
+
   // Enhanced stats calculation
   const walletBalanceValue = calculateWalletBalanceValue();
   const totalNetWorth = walletBalanceValue + portfolioStats.netPortfolioValue;
   const hasPositions = positions.length > 0;
   const hasBalances = balances.length > 0;
   const isConnected = !!account;
-  const hasDebt = portfolioStats.totalBorrowValue > 0;
-
-  const getHealthLevel = (healthFactor: number): 'safe' | 'warning' | 'danger' => {
-    if (healthFactor >= 1.5) return 'safe';
-    if (healthFactor >= 1.2) return 'warning';
-    return 'danger';
-  };
-
-  const getHealthText = (healthFactor: number): string => {
-    if (healthFactor >= 1.5) return 'Safe';
-    if (healthFactor >= 1.2) return 'Warning';
-    return 'Danger';
-  };
-
-  const healthLevel = getHealthLevel(portfolioStats.healthFactor);
-  const healthText = getHealthText(portfolioStats.healthFactor);
   const filteredPositions = getFilteredAndSortedPositions();
 
   return (
     <PortfolioContainer>
       <MainContent>
-        <DesktopPortfolioHeader 
+        <DesktopPortfolioHeader
           account={account}
-          isLoading={isLoading}
+          isLoading={isDataLoading}
         />
 
-       
         {/* Show loading state when account is connected and data is loading */}
         {(account && isLoading && borrowingPowerData === null) ? (
           renderLoadingState()
         ) : (
           <>
-            {/* Enhanced Portfolio Stats */}
+            {/* Portfolio Stats */}
             {account && (
-              <StatsGrid>
-                {/* Total Net Worth card removed */}
-
-                <StatCard>
-                  <StatLabel>Available Balance</StatLabel>
-                  <StatValue>${walletBalanceValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</StatValue>
-                  <StatChange $positive={true}>
-                    Wallet Tokens
-                  </StatChange>
-                </StatCard>
-
-                <StatCard>
-                  <StatLabel>Total Supply</StatLabel>
-                  <StatValue>${portfolioStats.totalSupplyValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</StatValue>
-                  <StatChange $positive={true}>
-                    Earning Interest
-                  </StatChange>
-                </StatCard>
-
-                <StatCard>
-                  <StatLabel>Total Borrow</StatLabel>
-                  <StatValue>${portfolioStats.totalBorrowValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</StatValue>
-                  <DebtBadge $hasDebt={hasDebt}>
-                    {hasDebt ? 'Active Debt' : '✅ No Debt'}
-                  </DebtBadge>
-                </StatCard>
-
-                <StatCard>
-                  <StatLabel>Health Factor</StatLabel>
-                  <StatValue>{portfolioStats.healthFactor.toFixed(2)}</StatValue>
-                  <HealthIndicator $level={healthLevel}>
-                    {healthText}
-                  </HealthIndicator>
-                </StatCard>
-              </StatsGrid>
+              <PortfolioStats
+                walletBalanceValue={walletBalanceValue}
+                totalSupplyValue={portfolioStats.totalSupplyValue}
+                totalBorrowValue={portfolioStats.totalBorrowValue}
+                healthFactor={portfolioStats.healthFactor}
+                isLoading={isDataLoading}
+              />
             )}
-
 
             {/* Side Tab Navigation */}
             <SideTabContainer>
               <SideTabNavigation>
-                <SideTabButton 
+                <SideTabButton
                   $active={activeSideTab === 'lending'}
                   onClick={() => setActiveSideTab('lending')}
                 >
                   Lending Positions
                 </SideTabButton>
-                <SideTabButton 
+                <SideTabButton
                   $active={activeSideTab === 'wallet'}
                   onClick={() => setActiveSideTab('wallet')}
                 >
@@ -542,7 +348,7 @@ export const DesktopPortfolioV2 = () => {
                     <ContentSubtitle>
                       Manage your lending activities and track your earnings.
                     </ContentSubtitle>
-                    
+
                     {hasPositions ? (
                       <>
                         <DesktopPortfolioTabs
@@ -553,7 +359,7 @@ export const DesktopPortfolioV2 = () => {
                           onSearchChange={setSearchTerm}
                           onSortChange={setSortBy}
                         />
-                        
+
                         <DesktopPortfolioTable
                           positions={filteredPositions}
                           onAction={handleAction}
@@ -572,9 +378,9 @@ export const DesktopPortfolioV2 = () => {
                     <ContentSubtitle>
                       Your available token balances that can be used for lending or borrowing.
                     </ContentSubtitle>
-                    
+
                     {hasBalances ? (
-                      <MainWalletSection 
+                      <MainWalletSection
                         balances={balances}
                         prices={prices}
                       />
@@ -588,15 +394,13 @@ export const DesktopPortfolioV2 = () => {
           </>
         )}
 
-        
-             {/* Show AI-Agent Wallets Banner for connected users */}
-            {account && <AgentWalletsBanner />}
-
+        {/* Show AI-Agent Wallets Banner for connected users */}
+        {account && <AgentWalletsBanner />}
 
       </MainContent>
 
       {/* Desktop Modals - Only show when visible state is true */}
-      {withdrawModalOpen && (
+      {(withdrawModalOpen && selectedAuthMethod === "line_sdk") && (
         <DesktopWithdrawModal
           isOpen={withdrawModalOpen}
           onClose={handleCloseModal}
@@ -604,13 +408,30 @@ export const DesktopPortfolioV2 = () => {
         />
       )}
 
-      {repayModalOpen && (
+      {(withdrawModalOpen && selectedAuthMethod === "web3_wallet") && (
+        <DesktopWithdrawModalWeb3
+          isOpen={withdrawModalOpen}
+          onClose={handleCloseModal}
+          preSelectedMarket={selectedPosition?.market}
+        />
+      )}
+
+      {(repayModalOpen && selectedAuthMethod === "line_sdk") && (
         <DesktopRepayModal
           isOpen={repayModalOpen}
           onClose={handleCloseModal}
           preSelectedMarket={selectedPosition?.market}
         />
       )}
+
+      {(repayModalOpen && selectedAuthMethod === "web3_wallet") && (
+        <DesktopRepayModalWeb3
+          isOpen={repayModalOpen}
+          onClose={handleCloseModal}
+          preSelectedMarket={selectedPosition?.market}
+        />
+      )}
+
     </PortfolioContainer>
   );
 };

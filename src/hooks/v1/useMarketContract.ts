@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { ethers } from 'ethers'; 
 import { CTOKEN_ABI } from '@/utils/contractABIs';
-import { MARKET_CONFIG_V1, MarketId } from '@/utils/contractConfig';
+import { getMarketConfig } from '@/hooks/v2/useMarketContract';
 import {
   getContract,
   parseTokenAmount, 
@@ -38,13 +38,13 @@ export interface TransactionResult {
 }
 
 interface MarketContractHook {
-  getMarketInfo: (marketId: MarketId) => Promise<MarketInfo | null>;
-  getUserPosition: (marketId: MarketId, userAddress: string) => Promise<UserPosition | null>;
-  supply: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
-  withdraw: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
-  borrow: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
-  repay: (marketId: MarketId, amount: string) => Promise<TransactionResult>;
-  accrueInterest: (marketId: MarketId) => Promise<TransactionResult>;
+  getMarketInfo: (marketId: string) => Promise<MarketInfo | null>;
+  getUserPosition: (marketId: string, userAddress: string) => Promise<UserPosition | null>;
+  supply: (marketId: string, amount: string) => Promise<TransactionResult>;
+  withdraw: (marketId: string, amount: string) => Promise<TransactionResult>;
+  borrow: (marketId: string, amount: string) => Promise<TransactionResult>;
+  repay: (marketId: string, amount: string) => Promise<TransactionResult>;
+  accrueInterest: (marketId: string) => Promise<TransactionResult>;
 }
 
 export const useMarketContract = (): MarketContractHook => {
@@ -53,12 +53,12 @@ export const useMarketContract = (): MarketContractHook => {
   const { getMarketById } = useContractMarketStore();
   const { gasLimit } = useAppStore();
 
-  const getMarketInfo = useCallback(async (marketId: MarketId): Promise<MarketInfo | null> => {
+  const getMarketInfo = useCallback(async (marketId: string): Promise<MarketInfo | null> => {
     try {
-      const marketConfig = MARKET_CONFIG_V1[marketId];
+      const marketConfig = getMarketConfig(marketId);
 
-      if (!marketConfig.marketAddress) {
-        console.warn(`Market ${marketId} is collateral-only`);
+      if (!marketConfig || !marketConfig.marketAddress) {
+        console.warn(`Market ${marketId} not found or is collateral-only`);
         return null;
       }
 
@@ -157,11 +157,10 @@ export const useMarketContract = (): MarketContractHook => {
   }, [getMarketById]);
 
   const getUserPosition = useCallback(
-    async (marketId: any, userAddress: string): Promise<UserPosition | null> => {
+    async (marketId: string, userAddress: string): Promise<UserPosition | null> => {
       try {
-        const CONFIG: any = MARKET_CONFIG_V1
-        const marketConfig = CONFIG[marketId];
-        if (!marketConfig.marketAddress) return null;
+        const marketConfig = getMarketConfig(marketId);
+        if (!marketConfig || !marketConfig.marketAddress) return null;
 
         const contract = await getContract(marketConfig.marketAddress, CTOKEN_ABI, false);
         if (!contract) throw new Error('Failed to create contract instance');
@@ -199,14 +198,14 @@ export const useMarketContract = (): MarketContractHook => {
   );
 
   const sendContractTransaction = useCallback(
-    async (marketId: MarketId, methodName: string, args: any[], value?: string): Promise<TransactionResult> => {
+    async (marketId: string, methodName: string, args: any[], value?: string): Promise<TransactionResult> => {
       try {
         if (!account) {
           throw new Error('Wallet not connected');
         }
 
-        const marketConfig = MARKET_CONFIG_V1[marketId];
-        if (!marketConfig.marketAddress) {
+        const marketConfig = getMarketConfig(marketId);
+        if (!marketConfig || !marketConfig.marketAddress) {
           throw new Error(`Market not available for ${methodName}`);
         }
  
@@ -271,8 +270,9 @@ export const useMarketContract = (): MarketContractHook => {
   );
 
   const supply = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const marketConfig = MARKET_CONFIG_V1[marketId];
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig) throw new Error(`Market ${marketId} not found`);
       
       // For native KAIA, we need to send the value with the transaction
       if (marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
@@ -290,24 +290,29 @@ export const useMarketContract = (): MarketContractHook => {
   );
 
   const withdraw = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const parsedAmount = parseTokenAmount(amount, MARKET_CONFIG_V1[marketId].decimals);
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig) throw new Error(`Market ${marketId} not found`);
+      const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
       return sendContractTransaction(marketId, 'redeemUnderlying', [parsedAmount]);
     },
     [sendContractTransaction]
   );
 
   const borrow = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const parsedAmount = parseTokenAmount(amount, MARKET_CONFIG_V1[marketId].decimals);
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig) throw new Error(`Market ${marketId} not found`);
+      const parsedAmount = parseTokenAmount(amount, marketConfig.decimals);
       return sendContractTransaction(marketId, 'borrow', [parsedAmount]);
     },
     [sendContractTransaction]
   );
 
   const repay = useCallback(
-    async (marketId: MarketId, amount: string): Promise<TransactionResult> => {
-      const marketConfig = MARKET_CONFIG_V1[marketId];
+    async (marketId: string, amount: string): Promise<TransactionResult> => {
+      const marketConfig = getMarketConfig(marketId);
+      if (!marketConfig) throw new Error(`Market ${marketId} not found`);
       
       // For native KAIA, we need to send the value with the transaction
       if (marketConfig.tokenAddress === '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
@@ -325,7 +330,7 @@ export const useMarketContract = (): MarketContractHook => {
   );
 
   const accrueInterest = useCallback(
-    async (marketId: MarketId): Promise<TransactionResult> => {
+    async (marketId: string): Promise<TransactionResult> => {
       return sendContractTransaction(marketId, 'accrueInterest', []);
     },
     [sendContractTransaction]

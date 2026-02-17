@@ -379,7 +379,6 @@ export const DesktopMarketActions = ({
           type={activeTab}
           amount={amount}
           market={market}
-          marketConfig={marketConfig}
           displaySymbol={displaySymbol}
           borrowingPowerData={borrowingPowerData}
           maxBorrowData={maxBorrowData}

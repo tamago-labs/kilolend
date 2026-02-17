@@ -14,7 +14,7 @@
     "@aws-sdk/client-bedrock-runtime": "^3.873.0",
     "@kaiachain/ethers-ext": "^2.1.0",
     "@line/liff": "^2.27.2",
-    "@linenext/dapp-portal-sdk": "1.4.6",
+    "@linenext/dapp-portal-sdk": "^1.5.2",
     "@metamask/sdk": "^0.33.1",
     "@next/third-parties": "^15.5.3",
     "@okxconnect/ui": "1.8.6",
@@ -36,6 +36,7 @@
     "react-qr-code": "^2.0.18",
     "remark-gfm": "^4.0.1",
     "styled-components": "^6.1.8",
+    "usehooks-ts": "^3.1.1",
     "viem": "^2.45.2",
     "wagmi": "^3.4.2",
     "zustand": "^5.0.6"

@@ -31,6 +31,7 @@ export type ModalType =
   | 'ai-deposit'
   | 'ai-withdraw'
   | 'lineMiniDApp'
+  | 'walletConnection'
   | null;
 
 interface ModalData {

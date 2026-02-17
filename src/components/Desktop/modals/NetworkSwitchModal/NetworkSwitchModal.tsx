@@ -1,7 +1,7 @@
 'use client';
 
 import styled from 'styled-components';
-import { kaia, kubChain } from '@/wagmi_config';
+import { kaia, kubChain, etherlink } from '@/wagmi_config';
 import { useSwitchChain, useChainId } from 'wagmi';
 
 const ModalOverlay = styled.div<{ $isOpen: boolean }>`
@@ -122,7 +122,12 @@ const chains = [
   {
     ...kubChain,
     icon: '/images/blockchain-icons/kub-chain-icon.png',
-    description: 'KUB Chain'
+    description: 'KUB Mainnet'
+  },
+  {
+    ...etherlink,
+    icon: '/images/blockchain-icons/etherlink-icon.png',
+    description: 'Etherlink Mainnet'
   }
 ];
 

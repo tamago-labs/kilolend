@@ -7,6 +7,7 @@ import "@kaiachain/contracts/access/Ownable.sol";
 import "./interfaces/PriceOracle.sol";
 import "./tokens/CErc20.sol";
 import "./interfaces/IOraklFeedRouter.sol";
+import "./interfaces/AggregatorV2V3Interface.sol";
 
 
 /**
@@ -17,6 +18,7 @@ import "./interfaces/IOraklFeedRouter.sol";
  *         - Pyth mode: fetches real-time prices from the Pyth oracle network, 
  *           including staleness checks and decimal adjustments.
  *         - Orakl mode: fetches real-time prices from Orakl Network feeds
+ *         - BKC mode: fetches real-time prices from BKC Chain's Chainlink-style aggregators
  *
  * @dev Prices are normalized to account for underlying token decimals:
  *      - For 18-decimal tokens: price = USD_price * 1e18
@@ -34,12 +36,18 @@ contract KiloPriceOracle is Ownable, PriceOracle {
     // Orakl price feeds (feed names like "BTC-USDT", "AAVE-KRW")
     mapping(address => string) public oraklFeeds;
 
-    // Oracle mode per token: 0=fallback, 1=pyth, 2=orakl
+    // BKC Chain aggregators (Chainlink-style price feed contracts)
+    mapping(address => address) public bkcAggregators;
+
+    // Oracle mode per token: 0=fallback, 1=pyth, 2=orakl, 3=bkc
     mapping(address => uint8) public oracleMode;
     mapping(address => uint256) public fallbackPrices;
 
     // Invert mode per token (default: false)
     mapping(address => bool) public invertMode;
+
+    // Native cToken symbols per chain (cKAIA for Kaia, cKUB for KUB, cEtherlink for Etherlink, etc.)
+    mapping(string => bool) public isNativeCToken;
 
     uint256 public stalenessThreshold;
 
@@ -56,8 +64,10 @@ contract KiloPriceOracle is Ownable, PriceOracle {
     event PricePosted(address asset, uint previousPriceMantissa, uint requestedPriceMantissa, uint newPriceMantissa);
     event PythFeedSet(address token, bytes32 priceId);
     event OraklFeedSet(address token, string feedName);
+    event BkcFeedSet(address token, address aggregator);
     event OracleModeSet(address token, uint8 mode);
     event StalenessThresholdUpdated(uint256 newThreshold);
+    event NativeCTokenSet(string symbol, bool isNative);
 
     modifier isWhitelisted() {
         require(whitelist[msg.sender], "Not whitelisted");
@@ -67,12 +77,15 @@ contract KiloPriceOracle is Ownable, PriceOracle {
     constructor() {
         stalenessThreshold = 3600; // 1 hour default
         whitelist[msg.sender] = true;
+        // Set cKAIA as native by default (Kaia chain)
+        isNativeCToken["cKAIA"] = true;
     }
  
 
     function _getUnderlyingAddress(CToken cToken) private view returns (address) {
         address asset;
-        if (compareStrings(cToken.symbol(), "cKAIA")) {
+        // Check if this is a native cToken (cKAIA, cKUB, cEtherlink, etc.)
+        if (isNativeCToken[cToken.symbol()]) {
             asset = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
         } else {
             asset = address(CErc20(address(cToken)).underlying());
@@ -93,6 +106,9 @@ contract KiloPriceOracle is Ownable, PriceOracle {
         } else if (mode == 2) {
             // Orakl mode
             basePrice = _getOraklPrice(underlying);
+        } else if (mode == 3) {
+            // BKC mode
+            basePrice = _getBKCPrice(underlying);
         } else {
             // Fallback mode (default)
             basePrice = fallbackPrices[underlying];
@@ -167,6 +183,31 @@ contract KiloPriceOracle is Ownable, PriceOracle {
         return price;
     }
 
+    function _getBKCPrice(address token) internal view returns (uint256) {
+        address aggregator = bkcAggregators[token];
+        require(aggregator != address(0), "BKC aggregator not set");
+        
+        (
+            ,
+            int256 answer,
+            ,
+            uint256 updatedAt,
+            
+        ) = AggregatorV2V3Interface(aggregator).latestRoundData();
+        
+        require(answer > 0, "Invalid BKC price");
+        require(block.timestamp - updatedAt <= stalenessThreshold, "BKC price too stale");
+        
+        uint256 price = uint256(answer);
+        
+        // BKC Chain uses 8 decimals for all price feeds
+        // Normalize from 8 decimals to 18 decimals (standard oracle format)
+        // Example: $1.00 = 100,000,000 (8 decimals) → 1e18 (normalized)
+        price = price * (10 ** (18 - 8)); // Multiply by 1e10
+        
+        return price; // Returns price in 1e18 format
+    }
+
     function _getUnderlyingDecimals(address underlying) private view returns (uint8) {
         // Handle native token (KAIA/ETH)
         if (underlying == 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE) {
@@ -235,6 +276,9 @@ contract KiloPriceOracle is Ownable, PriceOracle {
         } else if (mode == 2) {
             // Orakl mode
             basePrice = _getOraklPrice(underlying);
+        } else if (mode == 3) {
+            // BKC mode
+            basePrice = _getBKCPrice(underlying);
         } else {
             // Fallback mode (default)
             basePrice = fallbackPrices[underlying];
@@ -262,8 +306,21 @@ contract KiloPriceOracle is Ownable, PriceOracle {
         emit OraklFeedSet(token, feedName);
     }
 
+    /**
+     * @notice Set BKC aggregator for a token
+     * @dev BKC Chain uses Chainlink-style price aggregators with 8 decimal precision
+     * @param token The underlying token address
+     * @param aggregator The BKC Chain aggregator contract address
+     */
+    function setBKCFeed(address token, address aggregator) external onlyOwner {
+        require(aggregator != address(0), "Invalid aggregator address");
+        bkcAggregators[token] = aggregator;
+        oracleMode[token] = 3; // BKC mode
+        emit BkcFeedSet(token, aggregator);
+    }
+
     function setOracleMode(address token, uint8 mode) external onlyOwner {
-        require(mode <= 2, "Invalid mode");
+        require(mode <= 3, "Invalid mode");
         oracleMode[token] = mode;
         emit OracleModeSet(token, mode);
     }
@@ -284,6 +341,17 @@ contract KiloPriceOracle is Ownable, PriceOracle {
 
     function setInvertMode(address token, bool enabled) external onlyOwner {
         invertMode[token] = enabled;
+    }
+
+    /**
+     * @notice Set or unset a cToken symbol as native token wrapper
+     * @dev Native tokens (KAIA, KUB, XTZ, etc.) don't have an underlying ERC20 address
+     * @param symbol The cToken symbol (e.g., "cKAIA", "cKUB", "cEtherlink")
+     * @param isNative Whether this cToken wraps the native chain token
+     */
+    function setNativeCToken(string calldata symbol, bool isNative) external onlyOwner {
+        isNativeCToken[symbol] = isNative;
+        emit NativeCTokenSet(symbol, isNative);
     }
 
     function updatePythPrices(bytes[] calldata updateData) external payable {

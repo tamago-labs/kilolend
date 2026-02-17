@@ -1,284 +1,42 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect, useCallback } from 'react';
 import { DesktopBaseModal } from '../shared/DesktopBaseModal';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
-import { useMarketContract } from '@/hooks/v1/useMarketContract';
-import { useUserPositions } from '@/hooks/v1/useUserPositions';
-import { useBorrowingPower } from '@/hooks/v1/useBorrowingPower';
+import { useMarketContract } from '@/hooks/v2/useMarketContract';
+import { useBorrowingPowerV2 } from '@/hooks/v2/useBorrowingPower';
 import { useEventTracking } from '@/hooks/useEventTracking';
-import { formatUSD } from '@/utils/formatters';
 import { ExternalLink, Check } from 'react-feather';
-
-const ModalContent = styled.div` 
-  max-width: 520px;
-  width: 100%;
-`;
-
-const ModalSubtitle = styled.p`
-  font-size: 16px;
-  color: #64748b;
-  text-align: center;
-  margin-bottom: 32px;
-`;
-
-const MarketSelector = styled.div`
-  margin-bottom: 24px;
-`;
-
-const Label = styled.label`
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 16px;
-  background: white;
-  color: #1e293b;
-  cursor: pointer;
-
-  &:focus {
-    outline: none;
-    border-color: #06C755;
-    box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.1);
-  }
-`;
-
-const AmountInput = styled.div`
-  margin-bottom: 24px;
-`;
-
-const InputContainer = styled.div`
-  position: relative;
-  display: flex;
-  align-items: center;
-`;
-
-const Input = styled.input`
-  width: 100%;
-  padding: 16px 80px 16px 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 18px;
-  font-weight: 600;
-  background: white;
-  color: #1e293b;
-
-  &:focus {
-    outline: none;
-    border-color: #06C755;
-    box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.1);
-  }
-`;
-
-const MaxButton = styled.button`
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: #f1f5f9;
-  color: #64748b;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover {
-    background: #e2e8f0;
-    color: #475569;
-  }
-`;
-
-const BalanceInfo = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 8px;
-  font-size: 14px;
-  color: #64748b;
-`;
-
-const PreviewSection = styled.div`
-  background: #f8fafc;
-  border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
-`;
-
-const PreviewRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  &:last-child {
-    margin-bottom: 0;
-    padding-top: 16px;
-    border-top: 1px solid #e2e8f0;
-  }
-`;
-
-const PreviewLabel = styled.div`
-  font-size: 14px;
-  color: #64748b;
-`;
-
-const PreviewValue = styled.div`
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-`;
-
-const WarningBox = styled.div`
-  background: #fef3c7;
-  border: 1px solid #f59e0b;
-  border-radius: 8px;
-  padding: 16px;
-  margin-bottom: 24px;
-`;
-
-const WarningText = styled.div`
-  font-size: 14px;
-  color: #92400e;
-  line-height: 1.5;
-`;
-
-const ActionButton = styled.button<{ $primary?: boolean; $disabled?: boolean }>`
-  width: 100%;
-  padding: 16px;
-  margin-top: 24px;
-  background: ${({ $primary, $disabled }) => 
-    $disabled ? '#e2e8f0' : $primary ? '#06C755' : 'white'};
-  color: ${({ $primary, $disabled }) => 
-    $disabled ? '#94a3b8' : $primary ? 'white' : '#06C755'};
-  border: 1px solid ${({ $disabled }) => $disabled ? '#e2e8f0' : '#06C755'};
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: ${({ $disabled }) => $disabled ? 'not-allowed' : 'pointer'};
-  transition: all 0.3s;
-  margin-bottom: 12px;
-
-  &:hover {
-    background: ${({ $primary, $disabled }) => 
-      $disabled ? '#e2e8f0' : $primary ? '#059669' : '#06C755'};
-    color: ${({ $disabled }) => $disabled ? '#94a3b8' : 'white'};
-  }
-`;
-
-const CancelButton = styled.button`
-  width: 100%;
-  padding: 16px;
-  background: white;
-  color: #64748b;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s;
-
-  &:hover {
-    background: #f8fafc;
-  }
-`;
-
-const LoadingSpinner = styled.div`
-  width: 20px;
-  height: 20px;
-  border: 2px solid #e2e8f0;
-  border-top: 2px solid #06C755;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-right: 8px;
-
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-`;
-
-const SuccessIcon = styled.div`
-  width: 80px;
-  height: 80px;
-  background: #22c55e;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto 24px auto;
-  color: white;
-`;
-
-const SuccessMessage = styled.div`
-  text-align: center;
-  font-size: 20px;
-  font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 8px;
-`;
-
-const SuccessSubtext = styled.div`
-  text-align: center;
-  font-size: 16px;
-  color: #64748b;
-  margin-bottom: 32px;
-  line-height: 1.5;
-`;
-
-const TransactionDetails = styled.div`
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 12px;
-  padding: 16px;
-  margin-top: 20px;
-  text-align: left;
-`;
-
-const DetailRow = styled.div`
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-  
-  &:last-child {
-    margin-bottom: 0;
-  }
-`;
-
-const DetailLabel = styled.span`
-  font-size: 14px;
-  color: #166534;
-`;
-
-const DetailValue = styled.span`
-  font-size: 14px;
-  font-weight: 600;
-  color: #166534;
-`;
-
-const ClickableTransactionHash = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-
-  &:hover {
-    color: #059669;
-    text-decoration: underline;
-  }
-`;
+import {
+  ModalContent,
+  ModalSubtitle,
+  MarketSelector,
+  Label,
+  Select,
+  AmountInput,
+  InputContainer,
+  Input,
+  MaxButton,
+  BalanceInfo,
+  PreviewSection,
+  PreviewRow,
+  PreviewLabel,
+  PreviewValue,
+  WarningBox,
+  WarningText,
+  ActionButton,
+  CancelButton,
+  LoadingSpinner,
+  SuccessIcon,
+  SuccessMessage,
+  SuccessSubtext,
+  TransactionDetails,
+  DetailRow,
+  DetailLabel,
+  DetailValue,
+  ClickableTransactionHash
+} from './DesktopWithdrawModal.styles';
 
 type TransactionStep = 'preview' | 'confirmation' | 'success';
 
@@ -291,6 +49,7 @@ interface DesktopWithdrawModalProps {
 export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: DesktopWithdrawModalProps) => {
   const [selectedMarket, setSelectedMarket] = useState<any>(null);
   const [amount, setAmount] = useState('');
+  const [position, setPosition] = useState()
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentStep, setCurrentStep] = useState<TransactionStep>('preview');
@@ -298,9 +57,8 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
 
   const { account } = useWalletAccountStore();
   const { markets } = useContractMarketStore();
-  const { withdraw } = useMarketContract();
-  const { positions } = useUserPositions();
-  const { calculateBorrowingPower } = useBorrowingPower();
+  const { withdraw, getUserPosition } = useMarketContract();
+  const { calculateBorrowingPower } = useBorrowingPowerV2();
   const {
     isTracking,
     trackedEvent,
@@ -312,17 +70,15 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
   } = useEventTracking(account);
 
   useEffect(() => {
-    if (preSelectedMarket) {
-      setSelectedMarket(preSelectedMarket);
-    } else if (markets.length > 0) {
-      // Filter to only show markets where user has supplied tokens
-      const suppliedMarkets = markets.filter(market => {
-        const position = positions[market.id];
-        return position && parseFloat(position.supplyBalance || '0') > 0;
-      });
-      setSelectedMarket(suppliedMarkets[0] || markets[0]);
-    }
-  }, [preSelectedMarket, markets, positions]);
+    preSelectedMarket && loadPosition(preSelectedMarket);
+  }, [preSelectedMarket]);
+
+  const loadPosition = useCallback(async (selectedMarket: any) => {
+    setSelectedMarket(selectedMarket)
+    const position = await getUserPosition(selectedMarket.id as any, account);
+    setPosition(position)
+
+  }, [account])
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -373,7 +129,7 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
 
   const [borrowingPowerData, setBorrowingPowerData] = useState<any>(null);
 
-  const selectedMarketPosition = selectedMarket ? positions[selectedMarket.id] : null;
+  const selectedMarketPosition: any = position || null;
   const selectedMarketBalance = selectedMarketPosition?.supplyBalance || selectedMarketPosition?.suppliedBalance || '0';
   const amountNum = parseFloat(amount || '0');
   const amountUSD = selectedMarket ? amountNum * selectedMarket.price : 0;
@@ -384,7 +140,7 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
   useEffect(() => {
     const calculateImpact = async () => {
       if (!account || !selectedMarket || !amount) return;
-      
+
       try {
         const currentBorrowingPower = await calculateBorrowingPower(account);
         setBorrowingPowerData(currentBorrowingPower);
@@ -399,7 +155,7 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
   const currentHealthFactor = borrowingPowerData?.healthFactor ? parseFloat(borrowingPowerData.healthFactor) : 999;
   const totalCollateralValue = borrowingPowerData?.totalCollateralValue ? parseFloat(borrowingPowerData.totalCollateralValue) : 0;
   const totalBorrowValue = borrowingPowerData?.totalBorrowValue ? parseFloat(borrowingPowerData.totalBorrowValue) : 0;
-  
+
   // Calculate new health factor after withdrawal
   const newTotalCollateralValue = totalCollateralValue - amountUSD;
   const newHealthFactor = totalBorrowValue > 0 ? newTotalCollateralValue / totalBorrowValue : 999;
@@ -419,10 +175,17 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
     try {
       // Execute withdraw
       await withdraw(selectedMarket.id, amount);
-      
+
       // Start event tracking after transaction is sent
       console.log(`Withdraw transaction sent, starting event tracking for ${selectedMarket.id}`);
-      startTracking(selectedMarket.id, 'redeem');
+
+      const m: any = selectedMarket;
+      let marketId = m.id.split("kaia-")[1]
+      if (marketId === "stkaia") {
+        marketId = "staked-kaia"
+      }
+
+      startTracking(marketId, 'redeem');
 
       // Don't set success yet - wait for event tracking
       return;
@@ -448,34 +211,8 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
 
   const isValid = selectedMarket && amount && parseFloat(amount) > 0 && parseFloat(amount) <= parseFloat(selectedMarketBalance);
 
-  // Filter markets to only show those where user has supplied tokens
-  const availableMarkets = markets.filter(market => {
-    const position = positions[market.id];
-    return position && parseFloat(position.suppliedBalance || '0') > 0;
-  });
-
   const renderPreview = () => (
     <>
-      {!preSelectedMarket && (
-        <MarketSelector>
-          <Label>Select Asset</Label>
-          <Select
-            value={selectedMarket?.id || ''}
-            onChange={(e) => {
-              const market = markets.find(m => m.id === e.target.value);
-              setSelectedMarket(market);
-              setAmount('');
-            }}
-          >
-            <option value="">Choose an asset</option>
-            {availableMarkets.map(market => (
-              <option key={market.id} value={market.id}>
-                {market.symbol} - {market.supplyAPY.toFixed(2)}% APY
-              </option>
-            ))}
-          </Select>
-        </MarketSelector>
-      )}
 
       <AmountInput>
         <Label>Amount</Label>
@@ -551,8 +288,8 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
         </WarningBox>
       )}
 
-      <ActionButton 
-        $primary 
+      <ActionButton
+        $primary
         $disabled={!isValid || isProcessing}
         onClick={handleWithdraw}
       >
@@ -667,7 +404,7 @@ export const DesktopWithdrawModal = ({ isOpen, onClose, preSelectedMarket }: Des
 
   return (
     <DesktopBaseModal isOpen={isOpen} onClose={handleClose} title="Withdraw Assets">
-      <ModalContent> 
+      <ModalContent>
         {renderContent()}
       </ModalContent>
     </DesktopBaseModal>
