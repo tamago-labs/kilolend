@@ -40,7 +40,7 @@ export interface UserPointsResponse {
 }
 
 const LEADERBOARD_API_BASE = 'https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod';
-const TRIGGER_ENDPOINT = 'https://7pdgsmb6ay.ap-southeast-1.awsapprunner.com/trigger-daily-update';
+const TRIGGER_ENDPOINT = 'https://ekbtbfrmt5.ap-southeast-1.awsapprunner.com/trigger-daily-update';
 
 // Trigger daily update endpoint
 const triggerDailyUpdate = async () => {

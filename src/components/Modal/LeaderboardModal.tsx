@@ -259,7 +259,7 @@ interface LeaderboardData {
   share: number
 }
 
-const TRIGGER_ENDPOINT = 'https://7pdgsmb6ay.ap-southeast-1.awsapprunner.com/trigger-daily-update';
+const TRIGGER_ENDPOINT = 'https://ekbtbfrmt5.ap-southeast-1.awsapprunner.com/trigger-daily-update';
 
 // Trigger daily update endpoint
 const triggerDailyUpdate = async () => {
