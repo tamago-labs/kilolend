@@ -7,7 +7,6 @@ import { formatUSD, formatPercent, isValidAmount, parseUserAmount } from '@/util
 import { useTokenBalancesV2 } from '@/hooks/useTokenBalancesV2';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useBorrowingPowerV2 } from '@/hooks/v2/useBorrowingPower';
-import { validateAmountAgainstBalance, getSafeMaxAmount } from '@/utils/tokenUtils';
 import { useAuth } from '@/contexts/ChainContext';
 import { DesktopTransactionModalWeb3 } from '../../components/DesktopTransactionModalWeb3';
 import { DesktopTransactionModal } from "../../components/DesktopTransactionModal"
@@ -290,25 +289,27 @@ export const MarketActionsV2 = ({
       return;
     }
 
+    const numAmount = parseFloat(amount);
+
     if (activeTab === 'supply') {
       // Validate against wallet balance
-      const validation = validateAmountAgainstBalance(amount, fullPrecisionBalance, (marketId || 'kaia') as any);
-      if (!validation.isValid) {
-        setValidationError(validation.error || 'Insufficient balance');
+      const numBalance = parseFloat(fullPrecisionBalance);
+      if (numAmount > numBalance) {
+        setValidationError('Insufficient balance');
       } else {
         setValidationError(null);
       }
     } else if (activeTab === 'borrow' && maxBorrowData) {
       // Validate against max borrow amount
       const maxAmount = maxBorrowData.maxBorrowAmount || '0';
-      const validation = validateAmountAgainstBalance(amount, maxAmount, (marketId || 'kaia') as any);
-      if (!validation.isValid) {
-        setValidationError(validation.error || 'Amount exceeds borrow limit');
+      const numMax = parseFloat(maxAmount);
+      if (numAmount > numMax) {
+        setValidationError('Amount exceeds borrow limit');
       } else {
         setValidationError(null);
       }
     }
-  }, [amount, activeTab, fullPrecisionBalance, maxBorrowData, marketId]);
+  }, [amount, activeTab, fullPrecisionBalance, maxBorrowData]);
 
   const handleAmountChange = (value: string) => {
     setAmount(value);
@@ -317,14 +318,12 @@ export const MarketActionsV2 = ({
 
   const handleMax = () => {
     if (activeTab === 'supply') {
-      // Use safe maximum amount calculation for supply
-      const safeAmount = getSafeMaxAmount(fullPrecisionBalance, (marketId || 'kaia') as any);
-      setAmount(safeAmount);
+      // Use the full wallet balance
+      setAmount(fullPrecisionBalance);
     } else if (activeTab === 'borrow' && maxBorrowData) {
-      // Use max borrow amount for borrow
+      // Use the max borrow amount
       const maxAmount = maxBorrowData.maxBorrowAmount || '0';
-      const safeAmount = getSafeMaxAmount(maxAmount, (marketId || 'kaia') as any);
-      setAmount(safeAmount);
+      setAmount(maxAmount);
     }
   };
 

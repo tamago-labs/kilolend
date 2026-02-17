@@ -172,6 +172,18 @@ export const DesktopWithdrawModalWeb3 = ({ isOpen, onClose, preSelectedMarket }:
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
+    const getExplorerUrl = (txHash: string) => {
+        // Return appropriate explorer URL based on chain
+        if (selectedMarket?.chainName === 'KAIA') {
+            return `https://www.kaiascan.io/tx/${txHash}`;
+        } else if (selectedMarket?.chainName === 'KUB') {
+            return `https://www.kubscan.com/tx/${txHash}`;
+        } else if (selectedMarket?.chainName === 'Etherlink') {
+            return `https://explorer.etherlink.com/tx/${txHash}`;
+        }
+        return `https://explorer.etherlink.com/tx/${txHash}`; // Default to Etherlink
+    };
+
     const renderPreview = () => (
         <>
             <AmountInput>
@@ -329,7 +341,7 @@ export const DesktopWithdrawModalWeb3 = ({ isOpen, onClose, preSelectedMarket }:
                 {transactionResult?.hash && (
                     <DetailRow>
                         <DetailLabel>Transaction</DetailLabel>
-                        <ClickableTransactionHash onClick={() => handleExternalLink(`https://www.kaiascan.io/tx/${transactionResult.hash}`)}>
+                        <ClickableTransactionHash onClick={() => handleExternalLink(getExplorerUrl(transactionResult.hash))}>
                             <DetailValue>{`${transactionResult.hash.slice(0, 6)}...${transactionResult.hash.slice(-4)}`}</DetailValue>
                             <ExternalLink size={12} />
                         </ClickableTransactionHash>

@@ -11,6 +11,7 @@ import { useComptrollerContract } from '@/hooks/v2/useComptrollerContract';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { ExternalLink, Check } from 'react-feather';
 import { useTokenBalancesV2 } from '@/hooks/useTokenBalancesV2';
+import { useWaitForTransactionReceipt } from 'wagmi';
 
 const ModalContent = styled.div`
   padding: 32px;
@@ -316,6 +317,9 @@ export const DesktopTransactionModalWeb3 = ({
   const [needsApproval, setNeedsApproval] = useState(false);
   const [needsMarketEntry, setNeedsMarketEntry] = useState(false);
   const [transactionResult, setTransactionResult] = useState<TransactionResult | null>(null);
+  const [approvalTxHash, setApprovalTxHash] = useState<`0x${string}` | undefined>(undefined);
+  const [marketEntryTxHash, setMarketEntryTxHash] = useState<`0x${string}` | undefined>(undefined);
+  const [mainTxHash, setMainTxHash] = useState<`0x${string}` | undefined>(undefined);
 
   const { account } = useWalletAccountStore();
   const { supply, borrow } = useMarketContract();
@@ -325,6 +329,44 @@ export const DesktopTransactionModalWeb3 = ({
   const marketId = market.id;
   const displaySymbol = market.symbol;
 
+  // Wait for approval transaction receipt
+  // const { isSuccess: isApprovalConfirmed } = useWaitForTransactionReceipt({
+  //   hash: approvalTxHash,
+  //   query: {
+  //     enabled: !!approvalTxHash,
+  //   },
+  // });
+
+  // // Wait for market entry transaction receipt
+  // const { isSuccess: isMarketEntryConfirmed } = useWaitForTransactionReceipt({
+  //   hash: marketEntryTxHash,
+  //   query: {
+  //     enabled: !!marketEntryTxHash,
+  //   },
+  // });
+
+  // Wait for main transaction receipt (supply/borrow)
+  const { data: mainReceipt, isSuccess: isMainConfirmed } = useWaitForTransactionReceipt({
+    hash: mainTxHash,
+    query: {
+      enabled: !!mainTxHash,
+    },
+  });
+
+  // Handle main transaction confirmation
+  useEffect(() => {
+    if (isMainConfirmed && mainReceipt && mainTxHash) {
+      console.log('Main transaction confirmed:', mainReceipt);
+      setTransactionResult({
+        hash: mainTxHash,
+        status: 'confirmed'
+      });
+      setIsProcessing(false);
+      setCurrentStep('success');
+      refetch();
+    }
+  }, [isMainConfirmed, mainReceipt, mainTxHash]);
+
   // Reset state when modal opens/closes
   useEffect(() => {
     if (isOpen) {
@@ -332,6 +374,9 @@ export const DesktopTransactionModalWeb3 = ({
       setIsProcessing(false);
       setError(null);
       setTransactionResult(null);
+      setApprovalTxHash(undefined);
+      setMarketEntryTxHash(undefined);
+      setMainTxHash(undefined);
       checkRequirements();
     }
   }, [isOpen, type, marketId]);
@@ -362,15 +407,22 @@ export const DesktopTransactionModalWeb3 = ({
     setCurrentStep('confirmation');
 
     try {
- 
       // Handle approvals and market entry if needed
       if (type === 'supply') {
         if (needsApproval && market.tokenAddress !== '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE') {
-          await approveToken(marketId, amount);
+          const approvalResult = await approveToken(marketId, amount);
+          // if (approvalResult.hash) {
+          //   setApprovalTxHash(approvalResult.hash as `0x${string}`);
+          //   console.log('Approval transaction sent, hash:', approvalResult.hash);
+          // }
         }
 
         if (needsMarketEntry && market.marketAddress) {
-          await enterMarkets([market.marketAddress]);
+          const entryResult = await enterMarkets([market.marketAddress]);
+          // if (entryResult.hash) {
+          //   setMarketEntryTxHash(entryResult.hash as `0x${string}`);
+          //   console.log('Market entry transaction sent, hash:', entryResult.hash);
+          // }
         }
       }
 
@@ -379,24 +431,19 @@ export const DesktopTransactionModalWeb3 = ({
         ? await supply(marketId, amount)
         : await borrow(marketId, amount);
 
-      setTransactionResult(result);
-
-      if (result.status === 'pending' || result.status === 'confirmed') {
-        setCurrentStep('success');
-
-         setTimeout(() => {
-          refetch()
-        }, 2000);
-        
-      } else {
+      if (result.hash) {
+        setMainTxHash(result.hash as `0x${string}`);
+        console.log('Main transaction sent, hash:', result.hash);
+        // Keep isProcessing true until confirmation
+        // The useEffect will handle confirmation and set success
+      } else if (result.status === 'failed') {
         throw new Error(result.error || 'Transaction failed');
       }
     } catch (error: any) {
       console.error('Transaction error:', error);
       setError(error.message || 'Transaction failed');
-      setCurrentStep('confirmation');
-    } finally {
       setIsProcessing(false);
+      setCurrentStep('confirmation');
     }
   };
 
@@ -413,7 +460,7 @@ export const DesktopTransactionModalWeb3 = ({
     if (market.chainName === 'KAIA') {
       return `https://www.kaiascan.io/tx/${txHash}`;
     } else if (market.chainName === 'KUB') {
-      return `https://explorer.kubchain.com/tx/${txHash}`;
+      return `https://www.kubscan.com/tx/${txHash}`;
     } else if (market.chainName === 'Etherlink') {
       return `https://explorer.etherlink.com/tx/${txHash}`;
     }

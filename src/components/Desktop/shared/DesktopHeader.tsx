@@ -5,7 +5,7 @@ import { useState, useCallback } from 'react';
 import { useWalletAccountStore } from "@/components/Wallet/Account/auth.hooks";
 import { useKaiaWalletSdk } from "@/components/Wallet/Sdk/walletSdk.hooks";
 import Blockies from 'react-blockies';
-import { useChain } from '@/contexts/ChainContext';
+import { useAuth, useChain } from '@/contexts/ChainContext';
 import { Settings, Clock, CreditCard, DollarSign, LogOut, ChevronDown } from "react-feather"
 import { useModalStore } from '@/stores/modalStore';
 import { useAppStore } from '@/stores/appStore';
@@ -303,6 +303,9 @@ const NavDropdownItem = styled.div`
 `;
 
 export const DesktopHeader = () => {
+
+  const { selectedAuthMethod } = useAuth()
+
   const { openModal, closeModal, activeModal } = useModalStore();
   const { account, setAccount } = useWalletAccountStore();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -310,7 +313,7 @@ export const DesktopHeader = () => {
   const { disconnectWallet } = useKaiaWalletSdk();
   const { selectedChain } = useChain();
   const { isConnected: isWeb3Connected } = useConnection();
- 
+
   const disconnect = useDisconnect();
   const wagmiChainId = useChainId();
   const router = useRouter();
@@ -381,7 +384,7 @@ export const DesktopHeader = () => {
     });
 
     // Additional wagmi disconnect for web3_wallet mode
-    if (selectedChain === 'web3_wallet') { 
+    if (selectedChain === 'web3_wallet') {
       disconnect.mutate()
     }
 
@@ -548,9 +551,11 @@ export const DesktopHeader = () => {
                 />
                 {networkInfo.name}
               </NetworkBadge>
-              <IconButton onClick={handleSettings}>
-                <Settings size={20} />
-              </IconButton>
+              {selectedAuthMethod === "line_sdk" && (
+                <IconButton onClick={handleSettings}>
+                  <Settings size={20} />
+                </IconButton>
+              )} 
               <IconButton onClick={handleActivities}>
                 <Clock size={20} />
               </IconButton>

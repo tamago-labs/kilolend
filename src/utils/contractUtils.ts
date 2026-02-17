@@ -31,7 +31,7 @@ export const getContract = async (
   address: string, 
   abi: any[], 
   needsSigner: boolean = false,
-  chainId: number
+  chainId: number = 8217
 ): Promise<ethers.Contract | null> => {
   try {
     if (needsSigner) {
