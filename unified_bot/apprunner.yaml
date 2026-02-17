@@ -5,7 +5,8 @@ version: 1.0
 runtime: nodejs22
 build:
   commands:
-    build: npm install --production
+    build:
+      - npm install --production
   env:
     - name: NODE_ENV
       value: production
@@ -18,7 +19,6 @@ run:
   command: npm start
   network: 
     port: 3000
-    env: PORT
   env:
     - name: NODE_ENV
       value: production
@@ -63,4 +63,3 @@ run:
       value-from: "arn:aws:secretsmanager:ap-southeast-1:057386374967:secret:kilolend-nzMYtI"
     - name: ETHERLINK_PRIVATE_KEY
       value-from: "arn:aws:secretsmanager:ap-southeast-1:057386374967:secret:kilolend-nzMYtI"
-    
