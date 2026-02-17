@@ -1,0 +1,69 @@
+# AWS App Runner Configuration
+version: 1.0
+
+# Runtime configuration - using Node.js 22
+runtime: nodejs22
+build:
+  commands:
+    build:
+      - npm install --production
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: LOG_LEVEL
+      value: INFO
+
+# Runtime configuration
+run:
+  runtime-version: 22.14.0
+  command: npm start
+  network: 
+    port: 3000
+    env: PORT
+  env:
+    - name: NODE_ENV
+      value: production
+    - name: LOG_LEVEL
+      value: INFO
+    - name: PORT
+      value: "3000"
+    - name: ENABLED_CHAINS
+      value: kaia, kub, etherlink
+    - name: ENABLED_MODULES
+      value: pointtracker,oracle
+    - name: API_BASE_URL
+      value: https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod
+    - name: PRICE_API_URL
+      value: https://kvxdikvk5b.execute-api.ap-southeast-1.amazonaws.com/prod/prices
+    - name: POLL_INTERVAL_SECONDS
+      value: "60"
+    - name: SCAN_WINDOW_SECONDS
+      value: "60"
+    - name: MAX_BLOCKS_PER_SCAN
+      value: "100"
+    - name: UPDATE_INTERVAL_MINUTES
+      value: "120"
+    - name: MAX_GAS_PRICE_GWEI
+      value: "50"
+    - name: EXCLUDED_TOKENS
+      value: KAIA_USDT,KAIA_KAIA,KUB_KUSDT,ETHERLINK_USDT
+    - name: CHECK_INTERVAL_SECONDS
+      value: "60"
+    - name: MIN_PROFIT_USD
+      value: "10"
+    - name: MAX_GAS_PRICE_GWEI
+      value: "50"
+    - name: MAX_LIQUIDATION_USD
+      value: "5000"
+    - name: MIN_COLLATERAL_USD
+      value: "100"
+  secrets:
+    - name: API_KEY
+      value-from: "arn:aws:secretsmanager:ap-southeast-1:057386374967:secret:kilolend-api-key-dveRyo"
+    - name: KAIA_PRIVATE_KEY
+      value-from: "arn:aws:secretsmanager:ap-southeast-1:057386374967:secret:kilolend-nzMYtI"
+    - name: KUB_PRIVATE_KEY
+      value-from: "arn:aws:secretsmanager:ap-southeast-1:057386374967:secret:kilolend-nzMYtI"
+    - name: ETHERLINK_PRIVATE_KEY
+      value-from: "arn:aws:secretsmanager:ap-southeast-1:057386374967:secret:kilolend-nzMYtI"
+    
