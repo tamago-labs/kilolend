@@ -5,8 +5,7 @@ version: 1.0
 runtime: nodejs22
 build:
   commands:
-    build:
-      - npm install --production
+    build: npm install --production
   env:
     - name: NODE_ENV
       value: production
@@ -51,8 +50,6 @@ run:
       value: "60"
     - name: MIN_PROFIT_USD
       value: "10"
-    - name: MAX_GAS_PRICE_GWEI
-      value: "50"
     - name: MAX_LIQUIDATION_USD
       value: "5000"
     - name: MIN_COLLATERAL_USD
