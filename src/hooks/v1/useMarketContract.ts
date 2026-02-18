@@ -159,7 +159,9 @@ export const useMarketContract = (): MarketContractHook => {
   const getUserPosition = useCallback(
     async (marketId: string, userAddress: string): Promise<UserPosition | null> => {
       try {
+        
         const marketConfig = getMarketConfig(marketId);
+
         if (!marketConfig || !marketConfig.marketAddress) return null;
 
         const contract = await getContract(marketConfig.marketAddress, CTOKEN_ABI, false);

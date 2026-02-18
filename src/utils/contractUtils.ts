@@ -49,9 +49,7 @@ export const getContract = async (
         chainId === 42793 ? 'https://node.mainnet.etherlink.com' :
         'https://public-en.node.kaia.io'
       );
-
-      console.log("provideer:", provider)
-
+ 
       return new ethers.Contract(address, abi, provider);
     }
   } catch (error) {

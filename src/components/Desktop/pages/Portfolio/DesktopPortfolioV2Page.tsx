@@ -123,9 +123,9 @@ export const DesktopPortfolioV2 = () => {
     try {
 
       const userPositions: Position[] = [];
-
+ 
       // Filter markets by current chain ID
-      const currentChainMarkets = markets.filter(market => market.chainId === chainId);
+      const currentChainMarkets = selectedAuthMethod === "line_sdk" ? markets.filter(market => market.chainId === 8217) : markets.filter(market => market.chainId === chainId)
       console.log(`Fetching positions for chain ${chainId}, found ${currentChainMarkets.length} markets`);
 
       // Get borrowing power data
@@ -195,7 +195,7 @@ export const DesktopPortfolioV2 = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [account, markets, chainId, getUserPosition, calculateBorrowingPower]);
+  }, [account, markets, chainId, getUserPosition, calculateBorrowingPower, selectedAuthMethod]);
 
 
   useEffect(() => {
