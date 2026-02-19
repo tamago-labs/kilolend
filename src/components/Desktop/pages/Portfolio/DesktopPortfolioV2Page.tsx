@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract } from '@/hooks/v2/useMarketContract';
@@ -55,7 +56,7 @@ interface Position {
 }
 
 export const DesktopPortfolioV2 = () => {
-
+  const router = useRouter();
   const { selectedAuthMethod } = useAuth()
 
   const [delay, setDelay] = useState<number>(1000)
@@ -337,6 +338,12 @@ export const DesktopPortfolioV2 = () => {
                 >
                   Wallet Balances
                 </SideTabButton>
+                <SideTabButton
+                  $active={false}
+                  onClick={() => router.push('/agent-wallets')}
+                >
+                  Agent Wallets
+                </SideTabButton>
               </SideTabNavigation>
 
               <SideTabContent>
@@ -395,7 +402,7 @@ export const DesktopPortfolioV2 = () => {
         )}
 
         {/* Show AI-Agent Wallets Banner for connected users */}
-        {account && <AgentWalletsBanner />}
+        {/*{account && <AgentWalletsBanner />}*/}
 
       </MainContent>
 

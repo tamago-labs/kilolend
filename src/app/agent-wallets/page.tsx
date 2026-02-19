@@ -1,5 +1,5 @@
-import { DesktopAgentWalletsPage } from '@/components/Desktop/pages/AgentWallets/DesktopAgentWalletsPage';
+import { DesktopAgentWalletsV2Page } from '@/components/Desktop/pages/AgentWallets/DesktopAgentWalletsV2Page';
 
 export default function AgentWalletsPage() {
-  return <DesktopAgentWalletsPage />;
+  return <DesktopAgentWalletsV2Page />;
 }
