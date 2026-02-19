@@ -65,7 +65,7 @@ export const BalanceContent: React.FC<BalanceContentProps> = ({
 
   // Fetch prices for base tokens only (pegged tokens use the same price)
   const { prices } = usePriceUpdates({
-    symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX", "XTZ", "KUB"]
+    symbols: ["KAIA", "USDT", "stKAIA", "MBX", "BORA", "SIX", "XTZ", "KUB"]
   });
 
   // Helper function to get price for a token symbol
@@ -77,6 +77,7 @@ export const BalanceContent: React.FC<BalanceContentProps> = ({
       'KUSDT': 'USDT',
       'USDC': 1, // USDC is pegged to USD
       'WXTZ': 'XTZ',
+      'STAKED_KAIA' : "stKAIA"
     };
 
     const mappedPriceKey = priceMap[symbol];
@@ -335,7 +336,7 @@ export const BalanceContent: React.FC<BalanceContentProps> = ({
 
       <BalanceGrid>
         <BalanceCard>
-          <CardLabel>AI Wallet Balance</CardLabel>
+          <CardLabel>Agent Wallet Balance</CardLabel>
           <CardValue>${aiWalletBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</CardValue>
         </BalanceCard>
 

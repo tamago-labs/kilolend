@@ -19,10 +19,8 @@ export const useSendTransaction = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { gasLimit } = useAppStore();
-  
-  // Determine which network we're on based on environment
-  const isMainnet = process.env.NEXT_PUBLIC_CHAIN_ID === '8217';
-  const TOKENS = isMainnet ? KAIA_MAINNET_TOKENS : KAIA_TESTNET_TOKENS;
+   
+  const TOKENS = KAIA_MAINNET_TOKENS
 
   const sendTokens = useCallback(async ({
     tokenSymbol,
@@ -39,6 +37,9 @@ export const useSendTransaction = () => {
 
     try {
       if (isNative) {
+
+        console.log("before value")
+
         // Native KAIA transfer
         const valueInWei = ethers.parseEther(amount);
         const transaction = {
@@ -48,9 +49,12 @@ export const useSendTransaction = () => {
           gas: `0x${Math.min(gasLimit, 300000).toString(16)}`, // Use gas limit from store 
         };
 
+        console.log("before sending...")
+
         await sendTransaction([transaction]);
       } else {
         // ERC-20 token transfer
+
         const tokenConfig = TOKENS[tokenSymbol as keyof typeof TOKENS];
         if (!tokenConfig) {
           throw new Error('Token configuration not found');

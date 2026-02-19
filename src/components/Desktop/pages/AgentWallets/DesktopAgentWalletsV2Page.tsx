@@ -163,7 +163,7 @@ export const DesktopAgentWalletsV2Page = () => {
               Deposit Funds
             </ContentTitle>
             <ContentSubtitle>
-              Transfer tokens from your main wallet to your AI wallet for autonomous trading
+              Transfer tokens from your connected wallet to your Agent Wallet to enable automated execution
             </ContentSubtitle>
             <DepositContent 
               aiWalletData={aiWalletData}

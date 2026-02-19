@@ -1,5 +1,7 @@
 import styled from 'styled-components';
 import { KAIA_MAINNET_TOKENS } from '@/utils/tokenConfig';
+import { useCallback } from "react"
+
 
 // Styled components for main wallet section
 const PortfolioSection = styled.div`
@@ -165,12 +167,35 @@ export const MainWalletSection = ({ balances, prices }: MainWalletSectionProps) 
     return num.toLocaleString(undefined, { maximumFractionDigits: 4 });
   };
 
-  const getTokenValue = (token: any) => {
-    const priceKey = token.symbol === 'MBX' ? 'MARBLEX' : token.symbol;
+  const getTokenPrice = useCallback((symbol: string): number => {
+    // Handle special price mappings
+    const priceMap: Record<string, string | number> = {
+      'MBX': 'MARBLEX',
+      'KKUB': 'KUB',
+      'KUSDT': 'USDT',
+      'USDC': 1, // USDC is pegged to USD
+      'WXTZ': 'XTZ',
+      'STAKED_KAIA' : "stKAIA"
+    };
+
+    const mappedPriceKey = priceMap[symbol];
+
+    // If mappedPriceKey is a number (1 for USDC), return it directly
+    if (typeof mappedPriceKey === 'number') {
+      return mappedPriceKey;
+    }
+
+    // Otherwise, look up the price in the prices object
+    const priceKey = mappedPriceKey || symbol;
     const price = prices[priceKey];
-    const balance = parseFloat(token.balance || '0');
-    return price ? balance * price.price : 0;
-  };
+    return price ? price.price : 0;
+  }, [prices]);
+
+  const getTokenValue = useCallback((token: any) => { 
+    const price = getTokenPrice(token.symbol); 
+    const balance = parseFloat(token.balance || '0'); 
+    return price ? balance * price : 0;
+  },[getTokenPrice])
 
   return (
     <PortfolioSection>
