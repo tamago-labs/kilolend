@@ -445,7 +445,7 @@ export const DesktopHeader = () => {
   };
 
   const handleApiKeys = () => {
-    router.push('/api-keys');
+    router.push('/agent-wallets');
     setShowDropdown(false);
   };
 

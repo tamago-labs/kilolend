@@ -130,7 +130,7 @@ export const DesktopPortfolioV2 = () => {
     return balances.reduce((total: number, token: any) => { 
       const price = getTokenPrice(token.symbol); 
       const balance = parseFloat(token.balance || '0');
-      return total + (price ? balance * price.price : 0);
+      return total + (price ? balance * price : 0);
     }, 0);
   }, [balances, getTokenPrice]);
 
@@ -321,6 +321,7 @@ export const DesktopPortfolioV2 = () => {
   const hasBalances = balances.length > 0;
   const isConnected = !!account;
   const filteredPositions = getFilteredAndSortedPositions();
+
 
   return (
     <PortfolioContainer>

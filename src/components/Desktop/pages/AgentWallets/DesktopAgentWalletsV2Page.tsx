@@ -128,10 +128,10 @@ export const DesktopAgentWalletsV2Page = () => {
     { id: 'balance' as TabType, label: 'Balance' },
     { id: 'deposit' as TabType, label: 'Deposit' },
     { id: 'withdraw' as TabType, label: 'Withdraw' },
-    { id: 'activity' as TabType, label: 'Activity Log' },
+    // { id: 'activity' as TabType, label: 'Activity Log' },
     { id: 'apikeys' as TabType, label: 'API Keys' },
-    { id: 'skills' as TabType, label: 'Agent Skills' },
-    { id: 'security' as TabType, label: 'Security & Limits' },
+    // { id: 'skills' as TabType, label: 'Agent Skills' },
+    // { id: 'security' as TabType, label: 'Security & Limits' },
   ];
 
   const renderContent = () => {
@@ -178,7 +178,7 @@ export const DesktopAgentWalletsV2Page = () => {
               Withdraw Funds
             </ContentTitle>
             <ContentSubtitle>
-              Transfer tokens from your AI wallet back to your main wallet
+              Transfer tokens from your Agent Wallet back to your connected wallet
             </ContentSubtitle>
             <WithdrawContent 
               aiWalletData={aiWalletData}

@@ -123,8 +123,8 @@ export const BalanceContent: React.FC<BalanceContentProps> = ({
   const chainBalances = getBalancesByChain(selectedChain);
 
   // Filter out tokens with zero balance
-  // const nonZeroBalances = chainBalances.filter(b => parseFloat(b.balance) > 0);
-  const nonZeroBalances = chainBalances
+  const nonZeroBalances = chainBalances.filter(b => parseFloat(b.balance) > 0);
+  // const nonZeroBalances = chainBalances
 
   // Calculate balances
   const aiWalletBalance = calculateAIWalletBalance();
