@@ -307,6 +307,10 @@ async function main() {
   const app = express();
   const PORT = process.env.PORT || 3000;
   
+  // Middleware for JSON parsing and CORS
+  app.use(express.json());
+  app.use(cors());
+  
   // Health check endpoint
   app.get('/health', (req, res) => {
     const health = bot.getHealthStatus();
