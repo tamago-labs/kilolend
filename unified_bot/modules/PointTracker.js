@@ -127,6 +127,37 @@ class PointTracker extends BaseModule {
         return new Date().toISOString().split('T')[0];
       },
       
+      reset() {
+        // Store base TVL data before resetting to preserve it across day changes
+        const baseTVLStorage = {};
+        for (const [user, stats] of Object.entries(this.dailyStats.userStats)) {
+          if (stats.baseTVL > 0 || stats.balanceBreakdown) {
+            baseTVLStorage[user] = {
+              baseTVL: stats.baseTVL,
+              balanceBreakdown: stats.balanceBreakdown
+            };
+          }
+        }
+        
+        // Reset all daily stats
+        this.dailyStats = {
+          users: new Set(),
+          totalEvents: 0,
+          userStats: {},
+          totalTVLContributed: 0,
+          totalNetContribution: 0,
+          tvlChanges: {},
+          borrowChanges: {}
+        };
+        
+        // Restore base TVL data for users who had it
+        for (const [user, data] of Object.entries(baseTVLStorage)) {
+          this.initializeUserBaseTVL(user, data.baseTVL, data.balanceBreakdown);
+        }
+        
+        return baseTVLStorage;
+      },
+      
       initializeUserStats(userAddress) {
         if (!this.dailyStats.userStats[userAddress]) {
           this.dailyStats.userStats[userAddress] = {
@@ -205,6 +236,7 @@ class PointTracker extends BaseModule {
         const currentDate = this.getCurrentDate();
         if (currentDate !== this.currentDate) {
           this.currentDate = currentDate;
+          this.reset(); // Reset daily stats when a new day starts
           return true; // Signal that a new day started
         }
 
@@ -239,6 +271,20 @@ class PointTracker extends BaseModule {
       },
       
       async printDailySummary(kiloCalculator, balanceManager = null, databaseService = null, chainId = null) {
+        // Check if we need to reset daily stats before printing
+        const currentDate = this.getCurrentDate();
+        let dayChanged = false;
+        if (currentDate !== this.currentDate) {
+          this.currentDate = currentDate;
+          this.reset();
+          dayChanged = true;
+          
+          // Re-initialize existing users after day reset to ensure all database users are tracked
+          if (databaseService && balanceManager) {
+            await this.reinitializeExistingUsers(databaseService, balanceManager);
+          }
+        }
+        
         console.log('\n📊 DAILY SUMMARY');
         console.log('================');
         console.log(`📅 Date: ${this.currentDate}`);
@@ -320,6 +366,77 @@ class PointTracker extends BaseModule {
       
       getUsers() {
         return Array.from(this.dailyStats.users);
+      },
+      
+      /**
+       * Re-initialize existing users after daily reset
+       * Ensures users with base TVL are tracked even without daily activity
+       */
+      async reinitializeExistingUsers(databaseService, balanceManager) {
+        try {
+          console.log('\n🔄 RE-INITIALIZING USERS AFTER DAILY RESET...');
+          console.log('==========================================');
+          
+          // Get all users from the database
+          const allUsers = await databaseService.getAllUsers();
+          
+          if (allUsers.length === 0) {
+            console.log('💭 No existing users found in the system');
+            return;
+          }
+          
+          console.log(`🚀 Found ${allUsers.length} existing users, re-calculating base TVL...`);
+          
+          // Calculate base TVL for all existing users
+          const existingUserBaseTVL = await balanceManager.calculateBaseTVLForUsers(allUsers);
+          
+          // Re-initialize stats manager with existing users' base TVL
+          let usersWithTVL = 0;
+          let usersWithZeroTVL = 0;
+          let usersWithErrors = 0;
+          
+          for (const userAddress of allUsers) {
+            const baseTVLData = existingUserBaseTVL[userAddress];
+            
+            if (baseTVLData && baseTVLData.error) {
+              console.log(`❌ Error calculating TVL for ${userAddress.slice(0, 8)}...: ${baseTVLData.error}`);
+              usersWithErrors++;
+              // Still initialize with zero TVL to ensure user is tracked
+              this.initializeUserBaseTVL(userAddress, 0, {});
+              this.dailyStats.users.add(userAddress);
+            } else if (baseTVLData) {
+              if (baseTVLData.totalBaseTVL > 0) {
+                this.initializeUserBaseTVL(userAddress, baseTVLData.totalBaseTVL, baseTVLData.marketBreakdown);
+                this.dailyStats.users.add(userAddress);
+                console.log(`✅ Re-initialized ${userAddress.slice(0, 8)}... with ${baseTVLData.totalBaseTVL.toFixed(2)} base TVL (${baseTVLData.marketsWithBalance || 0} markets)`);
+                usersWithTVL++;
+              } else {
+                this.initializeUserBaseTVL(userAddress, 0, baseTVLData.marketBreakdown);
+                this.dailyStats.users.add(userAddress);
+                console.log(`💭 Re-initialized ${userAddress.slice(0, 8)}... with 0.00 base TVL (no balances)`);
+                usersWithZeroTVL++;
+              }
+            } else {
+              console.log(`⚠️  No TVL data found for ${userAddress.slice(0, 8)}...`);
+              usersWithErrors++;
+              // Still initialize with zero TVL to ensure user is tracked
+              this.initializeUserBaseTVL(userAddress, 0, {});
+              this.dailyStats.users.add(userAddress);
+            }
+          }
+          
+          console.log(`\n🏆 Re-initialization Complete:`);
+          console.log(`   • Total users re-loaded: ${allUsers.length}`);
+          console.log(`   • Users with TVL > 0: ${usersWithTVL}`);
+          console.log(`   • Users with TVL = 0: ${usersWithZeroTVL}`);
+          console.log(`   • Users with errors: ${usersWithErrors}`);
+          console.log(`   • Total users tracked: ${this.dailyStats.users.length}`);
+          console.log('==========================================\n');
+          
+        } catch (error) {
+          console.error('❌ Error re-initializing existing users:', error.message);
+          console.log('💡 Continuing without existing user data - new events will still be tracked');
+        }
       }
     };
     
