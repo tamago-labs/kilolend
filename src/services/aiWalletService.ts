@@ -31,6 +31,34 @@ interface CreateAIWalletResponse {
   };
 }
 
+interface GetAPIKeyResponse {
+  success: boolean;
+  userAddress: string;
+  aiWalletAddress: string;
+  apiKey: string | null;
+  apiKeyGeneratedAt: string;
+  agentId?: string | null;
+}
+
+interface CreateAPIKeyResponse {
+  success: boolean;
+  userAddress: string;
+  aiWalletAddress: string;
+  apiKey: string;
+  apiKeyGeneratedAt: string;
+  action: 'api_key_generated';
+}
+
+interface DeleteAPIKeyResponse {
+  success: boolean;
+  userAddress: string;
+  aiWalletAddress: string;
+  apiKey: null;
+  assignedAt: string;
+  agentId?: string | null;
+  action: 'api_key_deleted';
+}
+
 interface APIError {
   error: string;
   statusCode?: number;
@@ -160,6 +188,91 @@ class AIWalletService {
   }
 
   /**
+   * Get user's API key
+   */
+  async getAPIKey(userAddress: string): Promise<GetAPIKeyResponse> {
+    try {
+      const url = new URL(`${this.baseURL}/api-key`);
+      url.searchParams.append('userAddress', userAddress);
+
+      const response = await fetch(url.toString(), {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to get API key');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error getting API key:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate new API key for user
+   */
+  async createAPIKey(userAddress: string): Promise<CreateAPIKeyResponse> {
+    try {
+      const response = await fetch(`${this.baseURL}/api-key`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
+        },
+        body: JSON.stringify({ userAddress }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create API key');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error creating API key:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete user's API key
+   */
+  async deleteAPIKey(userAddress: string): Promise<DeleteAPIKeyResponse> {
+    try {
+      const url = new URL(`${this.baseURL}/api-key`);
+      url.searchParams.append('userAddress', userAddress);
+
+      const response = await fetch(url.toString(), {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Api-Key': this.apiKey,
+        },
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete API key');
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error deleting API key:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Get token balances for an AI wallet address
    * This method is deprecated - use useAITokenBalances hook instead
    */
@@ -280,4 +393,11 @@ class AIWalletService {
 }
 
 export const aiWalletService = new AIWalletService();
-export type { AIWalletStatus, CreateAIWalletResponse, APIError };
+export type { 
+  AIWalletStatus, 
+  CreateAIWalletResponse, 
+  GetAPIKeyResponse,
+  CreateAPIKeyResponse,
+  DeleteAPIKeyResponse,
+  APIError 
+};

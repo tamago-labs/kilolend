@@ -155,7 +155,7 @@ export const CHAIN_MARKETS = {
       id: 'kub-kusdt',
       name: 'KUB Tether USD',
       symbol: 'KUSDT',
-      decimals: 6,
+      decimals: 18,
       isActive: true,
       isCollateralOnly: false,
       description: 'USD-pegged stablecoin on KUB Chain',

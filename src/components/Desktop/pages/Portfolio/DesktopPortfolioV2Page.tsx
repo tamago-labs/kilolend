@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { useWalletAccountStore } from '@/components/Wallet/Account/auth.hooks';
 import { useContractMarketStore } from '@/stores/contractMarketStore';
 import { useMarketContract } from '@/hooks/v2/useMarketContract';
@@ -55,7 +56,7 @@ interface Position {
 }
 
 export const DesktopPortfolioV2 = () => {
-
+  const router = useRouter();
   const { selectedAuthMethod } = useAuth()
 
   const [delay, setDelay] = useState<number>(1000)
@@ -68,7 +69,7 @@ export const DesktopPortfolioV2 = () => {
 
   const { balances, refetch } = useTokenBalancesV2();
   const { prices } = usePriceUpdates({
-    symbols: ["KAIA", "USDT", "STAKED_KAIA", "MARBLEX", "BORA", "SIX", "XTZ", "KUB"]
+    symbols: ["KAIA", "USDT", "stKAIA", "MBX", "BORA", "SIX", "XTZ", "KUB"]
   });
 
   // Portfolio positions state
@@ -100,15 +101,38 @@ export const DesktopPortfolioV2 = () => {
   const { getUserPosition } = useMarketContract();
   const { calculateBorrowingPower, isLoading: isBorrowingPowerLoading } = useBorrowingPowerV2();
 
+  const getTokenPrice = useCallback((symbol: string): number => {
+    // Handle special price mappings
+    const priceMap: Record<string, string | number> = {
+      'MBX': 'MARBLEX',
+      'KKUB': 'KUB',
+      'KUSDT': 'USDT',
+      'USDC': 1, // USDC is pegged to USD
+      'WXTZ': 'XTZ',
+      'STAKED_KAIA' : "stKAIA"
+    };
+
+    const mappedPriceKey = priceMap[symbol];
+
+    // If mappedPriceKey is a number (1 for USDC), return it directly
+    if (typeof mappedPriceKey === 'number') {
+      return mappedPriceKey;
+    }
+
+    // Otherwise, look up the price in the prices object
+    const priceKey = mappedPriceKey || symbol;
+    const price = prices[priceKey];
+    return price ? price.price : 0;
+  }, [prices]);
+
   // Calculate wallet balance value
   const calculateWalletBalanceValue = useCallback(() => {
-    return balances.reduce((total: number, token: any) => {
-      const priceKey = token.symbol === 'MBX' ? 'MARBLEX' : token.symbol;
-      const price = prices[priceKey];
+    return balances.reduce((total: number, token: any) => { 
+      const price = getTokenPrice(token.symbol); 
       const balance = parseFloat(token.balance || '0');
-      return total + (price ? balance * price.price : 0);
+      return total + (price ? balance * price : 0);
     }, 0);
-  }, [balances, prices]);
+  }, [balances, getTokenPrice]);
 
   // Fetch user positions and borrowing power
   const fetchPositions = useCallback(async () => {
@@ -298,6 +322,7 @@ export const DesktopPortfolioV2 = () => {
   const isConnected = !!account;
   const filteredPositions = getFilteredAndSortedPositions();
 
+
   return (
     <PortfolioContainer>
       <MainContent>
@@ -336,6 +361,12 @@ export const DesktopPortfolioV2 = () => {
                   onClick={() => setActiveSideTab('wallet')}
                 >
                   Wallet Balances
+                </SideTabButton>
+                <SideTabButton
+                  $active={false}
+                  onClick={() => router.push('/agent-wallets')}
+                >
+                  Agent Wallets
                 </SideTabButton>
               </SideTabNavigation>
 
@@ -395,7 +426,7 @@ export const DesktopPortfolioV2 = () => {
         )}
 
         {/* Show AI-Agent Wallets Banner for connected users */}
-        {account && <AgentWalletsBanner />}
+        {/*{account && <AgentWalletsBanner />}*/}
 
       </MainContent>
 

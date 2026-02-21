@@ -18,6 +18,7 @@ import { signatureService } from '@/services/signatureService';
 import { useConnection, useChainId, useDisconnect } from 'wagmi';
 import { kaia, kubChain, etherlink } from '@/wagmi_config';
 
+
 const HeaderContainer = styled.header`
   display: flex;
   justify-content: space-between;
@@ -384,11 +385,13 @@ export const DesktopHeader = () => {
     });
 
     // Additional wagmi disconnect for web3_wallet mode
-    if (selectedChain === 'web3_wallet') {
-      disconnect.mutate()
-    }
+    // if (selectedChain === 'web3_wallet') {
+    disconnect.mutate()
+    // }
 
-  }, [disconnectWallet, disconnect, setAccount, account, selectedChain]);
+  }, [disconnectWallet, disconnect, setAccount, selectedChain]);
+
+  
 
   const handleSettings = () => {
     openModal('settings');
@@ -445,7 +448,7 @@ export const DesktopHeader = () => {
   };
 
   const handleApiKeys = () => {
-    router.push('/api-keys');
+    router.push('/agent-wallets');
     setShowDropdown(false);
   };
 
