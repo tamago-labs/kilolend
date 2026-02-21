@@ -194,6 +194,25 @@ const ConnectButton = styled.button`
   }
 `;
 
+const GetSkillsButton = styled.button`
+  background: white;
+  color: #06C755;
+  border: 2px solid #06C755;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s;
+  min-width: 120px;
+
+  &:hover {
+    background: #06C755;
+    color: white;
+    transform: translateY(-1px);
+  }
+`;
+
 const ConnectIcon = styled(Logo)`
   width: 22px;
   height: 22px;
@@ -457,6 +476,12 @@ export const DesktopHeader = () => {
     setShowDropdown(false);
   };
 
+  const handleGetSkills = () => {
+    const element = document.getElementById('openclaw-skills');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const formatAddress = (address: string) => {
     return `${address.slice(0, 6)}...${address.slice(-4)}`;
@@ -537,6 +562,9 @@ export const DesktopHeader = () => {
         </LeftSection>
 
         <RightSection>
+          <GetSkillsButton onClick={handleGetSkills}>
+            Get Skills
+          </GetSkillsButton>
           {!account ? (
             <ConnectButton onClick={() => openModal('walletConnection')}>
               <ConnectIcon />

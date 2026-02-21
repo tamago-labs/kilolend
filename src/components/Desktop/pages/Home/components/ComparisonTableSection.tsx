@@ -165,12 +165,12 @@ const comparisonData = [
     heyVincent: true,
     bankr: true,
   },
-  // {
-  //   capability: 'No External Dependencies',
-  //   kiloLend: true,
-  //   heyVincent: false,
-  //   bankr: true,
-  // },
+  {
+    capability: 'Natural Language Execution',
+    kiloLend: true,
+    heyVincent: false,
+    bankr: true,
+  },
   {
     capability: 'Native Borrowing & Yield',
     kiloLend: true,

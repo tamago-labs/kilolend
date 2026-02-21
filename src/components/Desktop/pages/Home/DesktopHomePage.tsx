@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { HeroSection } from './components/HeroSection';
 import { MarketSection } from './components/MarketSection';
 import { ComparisonTableSection } from './components/ComparisonTableSection';
-import { HowItWorksSection } from './components/HowItWorksSection';
+import { OpenClawSkillsCTASection } from './components/OpenClawSkillsCTASection';
 import { FAQSection } from './components/FAQSection'; 
 import { useRouter } from 'next/navigation';
 import { LineMiniDAppModal, DesktopAIAgentModal } from '../../modals';
@@ -41,7 +41,10 @@ export const DesktopHome = () => {
   };
 
   const handleAIAgent = () => {
-    openModal('ai-agent');
+    const element = document.getElementById('openclaw-skills');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+    }
   };
  
 
@@ -60,9 +63,9 @@ export const DesktopHome = () => {
           onGetStarted={handleGetStarted}
         />
 
-        <HowItWorksSection/>
-
         <ComparisonTableSection/>
+
+        <OpenClawSkillsCTASection/>
 
         <FAQSection/>
 
