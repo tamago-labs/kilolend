@@ -132,10 +132,11 @@ export const MarketSection = ({ onGetStarted }: MarketSectionProps) => {
       <ContentRow>
         <ContentCard>
           <ContentTitle>
-            Put your assets to work — whether human or AI-agent
+            DeFi Built Natively for Agents
           </ContentTitle>
           <ContentDescription>
-            KiloLend offers real-time market access. Supply assets to earn competitive yields, borrow against your collateral, or enable AI agents to automatically manage your positions for optimal returns.
+            KiloLend is not an agent layer on top of DeFi.<br />
+            We built DeFi markets specifically for programmable agents — while remaining simple for human users.
           </ContentDescription>
           <FeatureList>
             <FeatureItem>
@@ -144,15 +145,15 @@ export const MarketSection = ({ onGetStarted }: MarketSectionProps) => {
             </FeatureItem>
             <FeatureItem>
               <FeatureBullet>✓</FeatureBullet>
-              Automated lending, borrowing, and swaps
+              Secure HSM + session key architecture
             </FeatureItem>
             <FeatureItem>
               <FeatureBullet>✓</FeatureBullet>
-              Programmatic access via API keys
+              API keys and skills integration (no heavy dependencies)
             </FeatureItem>
             <FeatureItem>
               <FeatureBullet>✓</FeatureBullet>
-              On-chain execution with user controls
+              Built-in Agent Playground for safe testing and iteration
             </FeatureItem>
           </FeatureList>
         </ContentCard>

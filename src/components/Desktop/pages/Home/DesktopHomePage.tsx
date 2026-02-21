@@ -4,8 +4,8 @@ import styled from 'styled-components';
 import { useEffect, useState } from 'react';
 import { HeroSection } from './components/HeroSection';
 import { MarketSection } from './components/MarketSection';
-import { AISection } from './components/AISection';
-import { UserTypesSection } from './components/UserTypesSection';
+import { ComparisonTableSection } from './components/ComparisonTableSection';
+import { HowItWorksSection } from './components/HowItWorksSection';
 import { FAQSection } from './components/FAQSection'; 
 import { useRouter } from 'next/navigation';
 import { LineMiniDAppModal, DesktopAIAgentModal } from '../../modals';
@@ -60,9 +60,9 @@ export const DesktopHome = () => {
           onGetStarted={handleGetStarted}
         />
 
-        <AISection/>
+        <HowItWorksSection/>
 
-        <UserTypesSection/>
+        <ComparisonTableSection/>
 
         <FAQSection/>
 

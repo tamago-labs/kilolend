@@ -25,7 +25,7 @@ const FAQHeader = styled.div`
 `;
 
 const FAQTitle = styled.h2`
-  font-size: clamp(32px, 4vw, 40px);
+  font-size: 32px;
   font-weight: 800;
   color: #1e293b;
   margin-bottom: 16px;
@@ -33,7 +33,7 @@ const FAQTitle = styled.h2`
 `;
 
 const FAQSubtitle = styled.p`
-  font-size: clamp(18px, 2vw, 20px);
+  font-size: 18px;
   color: #64748b;
   line-height: 1.6;
   max-width: 600px;
@@ -147,95 +147,120 @@ const AnswerContent = styled.div`
 // FAQ Data - Comprehensive from all modal categories
 const FAQ_DATA = [
   {
+    id: 'what-is-kilolend',
+    question: "What is KiloLend?",
+    answer: `<p><span class="highlight">KiloLend</span> is an agent-native DeFi platform designed for both humans and AI agents. It provides on-chain lending, borrowing, and swap primitives that can be used directly by users or programmatically by autonomous agents.</p>
+    <p>KiloLend is built from the ground up to support secure agent execution, APIs, and skill-based integrations.</p>`
+  },
+
+  {
     id: 'which-blockchain',
-    question: "Which blockchain network does KiloLend operate on?",
-    answer: `<p>KiloLend operates on the <span class="highlight">KAIA Mainnet</span>, a high-performance blockchain designed to bring Web3 to millions of users across Asia and is fully supported with the LINE Mini Dapp.</p>`
-  },
-  {
-    id: 'how-secure-contracts',
-    question: "How secure are KiloLend's smart contracts?",
-    answer: `<p>KiloLend's smart contracts are forked from <span class="highlight">Compound V2</span>, a proven and battle-tested lending protocol on Ethereum and have been modified to support seamless stablecoin <> volatile asset markets on KAIA.</p><p>All contracts are open source, publicly verifiable and currently undergoing security audits.</p>`
-  },
-  {
-    id: 'is-money-safe',
-    question: "Is my money safe on KiloLend?",
-    answer: `<p>KiloLend implements multiple security layers:</p>
+    question: "Which blockchain networks does KiloLend support?",
+    answer: `<p>KiloLend is live on multiple mainnets:</p>
     <ul>
-      <li><strong>Non-custodial:</strong> Fully decentralized and composable</li>
-      <li><strong>Smart Contract Security:</strong> Built on battle-tested Compound V2 code</li>
-      <li><strong>Transparent:</strong> All transactions are executed on-chain and verifiable</li>
-      <li><strong>Risk Management:</strong> An active liquidation bot prevents bad debt</li>
-    </ul>`
-  },
-  {
-    id: 'kilo-points',
-    question: "What are KILO Points and how do they work?",
-    answer: `<p><span class="highlight">KILO Points</span> are reward points earned by using KiloLend that convert <strong>1:1 into KILO Tokens</strong> at launch.</p>
-    <ul>
-      <li><strong>1:1 Conversion:</strong> 1 KILO Point = 1 KILO Token at launch</li>
-      <li><strong>Automatic Earning:</strong> Points are earned through lending, borrowing activities, and TVL contributions</li>
-      <li><strong>Pre-launch Rewards:</strong> Accumulate points before the official token launch</li>
+      <li><strong>Etherlink:</strong> EVM-compatible network for broader ecosystem access</li>
+      <li><strong>KUB Chain:</strong> Optimized for the Thai market and Bitkub ecosystem</li>
+      <li><strong>KAIA:</strong> Integrated with LINE Mini Dapp infrastructure</li>
     </ul>
-    <p>Visit the <strong>KILO Points page</strong> in the app for detailed breakdown and current balance.</p>`
+    <p>Users and agents can operate across supported chains with a unified experience.</p>`
   },
+
   {
-    id: 'what-is-ai-copilot',
-    question: "What is AI DeFi Co-Pilot?",
-    answer: `<p>The <span class="highlight">AI DeFi Co-Pilot</span> is an intelligent assistant that executes DeFi transactions automatically based on your instructions. Simply tell the AI what you want to achieve, and it handles all the calculations, swaps, and optimizations for you.</p>`
-  },
-  {
-    id: 'create-ai-wallet',
-    question: "How do I create an AI-agent wallet?",
-    answer: `<p>Getting started with AI Co-Pilot is simple and currently <span class="highlight">free</span> during beta:</p>
+    id: 'agent-native',
+    question: "What does agent-native DeFi mean?",
+    answer: `<p><span class="highlight">Agent-native</span> means KiloLend is built specifically for autonomous execution, not retrofitted for agents.</p>
     <ul>
-      <li><strong>Create AI Wallet:</strong> Set up your AI-agent wallet (100 beta slots available)</li>
-      <li><strong>Choose Character:</strong> Select AI personality and model (AWS Nova or Claude)</li>
-      <li><strong>Start Chatting:</strong> Just tell AI what you want to do naturally</li>
+      <li>Dedicated agent wallets</li>
+      <li>Programmatic access via API keys</li>
+      <li>Skill-based integrations for agent tools like OpenClaw</li>
+      <li>Controlled, session-based execution</li>
     </ul>
-    <p>AI-agent wallets are hosted in secure enterprise AWS environment, separate from your main wallet.</p>`
+    <p>This allows AI agents to interact with DeFi safely, predictably, and at scale.</p>`
   },
+
   {
-    id: 'ai-execute',
-    question: "What can AI Co-Pilot automatically execute?",
-    answer: `<p>AI Co-Pilot leverages our <span class="highlight">KAIA-MCP plugin</span> to interact directly with blockchain protocols:</p>
+    id: 'agent-wallet',
+    question: "What is an Agent Wallet?",
+    answer: `<p>An <span class="highlight">Agent Wallet</span> is a secure execution wallet used by AI agents to perform on-chain actions.</p>
     <ul>
-      <li><strong>KiloLend:</strong> Lend, borrow, repay, and redeem</li>
-      <li><strong>DragonSwap V3:</strong> Get quotes and execute swaps</li>
-      <li><strong>Price Data:</strong> Real-time prices from CoinMarketCap</li>
-      <li><strong>KAIA Native:</strong> Wrap and unwrap KAIA tokens</li>
-    </ul>`
-  },
-  {
-    id: 'ai-free',
-    question: "Is AI Co-Pilot free to use?",
-    answer: `<p>AI Co-Pilot is currently <span class="highlight">free during beta</span> with 100 AI-agent wallet slots available. After KILO token launch, AI inference will be paid using KILO tokens at reasonable rates.</p>
-    <p>Supported AI models include AWS Nova and Claude Sonnet for optimal performance.</p>`
-  },
-  {
-    id: 'tokens-lend-borrow',
-    question: "What tokens can I lend and borrow?",
-    answer: `<p>KiloLend focuses on <span class="highlight">stablecoins</span> with support for major stable assets:</p>
-    <ul>
-      <li><strong>USDT:</strong> Tether USD - Most liquid stablecoin</li>
-      <li><strong>KAIA:</strong> Native network token for collateral</li>
-      <li><strong>More Assets:</strong> Additional tokens being added regularly</li>
+      <li>Protected by HSM infrastructure</li>
+      <li>Paired with session keys for scoped execution</li>
+      <li>Fully isolated from your main wallet</li>
+      <li>User-controlled funding and withdrawal</li>
     </ul>
-    <p>With us, you can either increase exposure by using them as collateral to borrow USDT for buying more, or you can speculate on supported tokens by collateralizing USDT.</p>`
+    <p>You can revoke access or withdraw funds at any time.</p>`
   },
+
+  {
+    id: 'security',
+    question: "How secure is KiloLend?",
+    answer: `<p>KiloLend applies multiple layers of security:</p>
+    <ul>
+      <li><strong>Battle-tested smart contracts:</strong> Forked from Compound V2</li>
+      <li><strong>HSM-protected keys:</strong> For agent wallet custody</li>
+      <li><strong>Session-based execution:</strong> Limits agent permissions</li>
+      <li><strong>Non-custodial design:</strong> Users retain full asset control</li>
+    </ul>
+    <p>All transactions are executed on-chain and publicly verifiable.</p>`
+  },
+
+  {
+    id: 'smart-contracts',
+    question: "What DeFi protocols power KiloLend?",
+    answer: `<p>KiloLend’s lending markets are based on a <span class="highlight">Compound V2 fork</span>, adapted for multi-chain deployment and agent execution.</p>
+    <p>The protocol supports interest rate models, collateralized borrowing, and liquidation mechanisms designed for automated interaction.</p>`
+  },
+
+  {
+    id: 'humans-vs-agents',
+    question: "Can humans use KiloLend without AI agents?",
+    answer: `<p>Yes. KiloLend is designed for <span class="highlight">both humans and AI agents</span>.</p>
+    <ul>
+      <li>Humans can lend, borrow, and swap directly via the UI</li>
+      <li>Advanced users can automate strategies using agents and APIs</li>
+    </ul>
+    <p>You choose how much automation you want.</p>`
+  },
+
+  {
+    id: 'openclaw',
+    question: "How does KiloLend work with OpenClaw?",
+    answer: `<p>KiloLend provides <span class="highlight">agent skills</span> that allow OpenClaw agents to interact with the protocol.</p>
+    <ul>
+      <li>No custom integrations required</li>
+      <li>Use API keys to authorize execution</li>
+      <li>Compatible with any AI model supported by OpenClaw</li>
+    </ul>
+    <p>This enables automated DeFi workflows across messaging apps, bots, and schedulers.</p>`
+  },
+
+  {
+    id: 'playground',
+    question: "What is the Agent Playground?",
+    answer: `<p>The <span class="highlight">Agent Playground</span> is a built-in environment to test and simulate agent actions.</p>
+    <ul>
+      <li>Test prompts before going live</li>
+      <li>Validate transactions safely</li>
+      <li>Inspect execution results in real time</li>
+    </ul>
+    <p>This reduces errors and speeds up agent development.</p>`
+  },
+
   {
     id: 'fees',
-    question: "What are the fees for using KiloLend?",
-    answer: `<p>KiloLend maintains transparent, competitive fee structure:</p>
+    question: "What fees does KiloLend charge?",
+    answer: `<p>KiloLend maintains a transparent fee model:</p>
     <ul>
-      <li><strong>No Platform Fees:</strong> Zero fees for supplying assets</li>
-      <li><strong>Interest Spread:</strong> Small spread between supply and borrow rates</li>
-      <li><strong>No Hidden Costs:</strong> All fees are transparent and displayed upfront</li>
+      <li>No platform fee for supplying assets</li>
+      <li>Borrowers pay interest based on market utilization</li>
+      <li>Standard on-chain gas fees apply</li>
     </ul>`
   },
+
   {
-    id: 'behind-kilolend',
-    question: "Who is behind KiloLend?",
-    answer: `<p>KiloLend is a decentralized, non-custodial lending protocol on KAIA blockchain with <span class="highlight">Tamago Labs</span>, a Web3 software company based in Japan, operating the frontend interface and technical infrastructure.</p>`
+    id: 'who-behind',
+    question: "Who is building KiloLend?",
+    answer: `<p>KiloLend is developed and maintained by <span class="highlight">Tamago Labs</span>, a Web3 infrastructure company focused on agent-native financial systems.</p>`
   }
 ];
 
@@ -265,7 +290,7 @@ export const FAQSection = () => {
         <FAQHeader>
           <FAQTitle>Frequently Asked Questions</FAQTitle>
           <FAQSubtitle>
-            Everything you need to know about KiloLend - from platform basics to DeFi Co-Pilot agent
+            Everything you need to know about KiloLend
           </FAQSubtitle>
         </FAQHeader>
 
