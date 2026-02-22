@@ -13,6 +13,7 @@ export { DesktopWithdrawModal, DesktopRepayModal } from './PortfolioModal';
 export { DesktopBaseModal } from './shared';
 
 export { DesktopAIChatPanel } from "./DesktopAIChatPanel"
+export { DesktopAIChatPanelV2 } from "./DesktopAIChatPanelV2"
 
 //  
 export type { DesktopWalletAddressModalProps } from './WalletAddressModal';

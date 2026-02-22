@@ -7,7 +7,7 @@ import { DesktopHeader } from './DesktopHeader';
 import { DesktopFooter } from "./DesktopFooter"
 import { MarketDataProvider } from '@/components/MarketDataProvider';
 import { MarketProvider } from '@/contexts/MarketContext'; 
-import { LineMiniDAppModal, DesktopAIChatPanel } from '../modals';
+import { LineMiniDAppModal, DesktopAIChatPanelV2 } from '../modals';
 import { useModalStore } from '@/stores/modalStore';
 
 const AppContainer = styled.div`
@@ -67,7 +67,7 @@ export const DesktopBootstrap = ({ className, children }: DesktopBootstrapProps)
                             {children}
                         </MainContent>
                         <DesktopFooter />
-                        <DesktopAIChatPanel 
+                        <DesktopAIChatPanelV2 
                             isOpen={isAIPanelOpen} 
                             onToggle={handleAIToggle} 
                         />
