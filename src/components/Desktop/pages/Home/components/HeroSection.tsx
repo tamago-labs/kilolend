@@ -336,7 +336,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop, onAIAgent }: HeroSecti
   const router = useRouter();
   const { selectedChain } = useChain();
   const [tooltipVisible, setTooltipVisible] = useState<string | null>(null);
- 
+
 
   return (
     <HeroSectionWrapper>
@@ -344,7 +344,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop, onAIAgent }: HeroSecti
         <HeroContent>
           <HeroTitle>DeFi Built for AI Agents — Simple for You</HeroTitle>
           <HeroSubtitle>
-           KiloLend brings AI-agent-powered DeFi to everyone, enabling automated lending, borrowing, and swaps with simple user access and LINE-based login.
+           KiloLend is an agent-native DeFi platform for lending, borrowing, and swaps. Built for agents, simple for humans.
           </HeroSubtitle>
 
           <CTAContainer>
@@ -454,7 +454,7 @@ export const HeroSection = ({ onGetStarted, onTryDesktop, onAIAgent }: HeroSecti
                   <AnimatedChatBubble $isUser={false} $delay={10}>
                     🐍 You can borrow 50 KAIA! Your health factor is strong at 2.0 🛡️
                   </AnimatedChatBubble>
-                </AIResponse> 
+                </AIResponse>
               </ChatInterface>
             </PhoneScreen>
           </PhoneFrame>
