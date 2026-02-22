@@ -342,12 +342,14 @@ export const APIKeysContent: React.FC<APIKeysContentProps> = ({ aiWalletData, is
         )}
       </ContentCard>
 
-      {/* Info Section */}
+      {/* API Usage Guide */}
       <ContentCard style={{ marginTop: '24px' }}>
         <CardHeader>
-          <CardTitle>About API Keys</CardTitle>
+          <CardTitle>Quick Start</CardTitle>
         </CardHeader>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+           
+          
           <div style={{ 
             display: 'flex', 
             alignItems: 'flex-start', 
@@ -370,12 +372,33 @@ export const APIKeysContent: React.FC<APIKeysContentProps> = ({ aiWalletData, is
               flexShrink: 0
             }}>1</div>
             <div>
-              <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>Programmatic Access</div>
+              <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>Test Your API Key</div>
               <div style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
-                Use your API key to interact with your AI wallet programmatically for automated trading and operations.
+                Check your wallet balance using the streaming API:
+                <div style={{ 
+                  background: '#1e293b', 
+                  color: '#f8fafc', 
+                  padding: '12px', 
+                  borderRadius: '6px', 
+                  fontFamily: 'monospace', 
+                  fontSize: '13px',
+                  marginTop: '8px',
+                  marginBottom: '8px',
+                  overflowX: 'auto'
+                }}>
+                  curl -X POST "https://api.kilolend.xyz/stream" \<br/>
+                  &nbsp;&nbsp;-H "Authorization: Bearer $YOUR_API_KEY" \<br/>
+                  &nbsp;&nbsp;-H "Content-Type: application/json" \<br/>
+                  &nbsp;&nbsp;-d '&#123;'<br/>
+                  &nbsp;&nbsp;&nbsp;&nbsp;"prompt": "Check my wallet balance",<br/>
+                  &nbsp;&nbsp;&nbsp;&nbsp;"chain_id": 8217<br/>
+                  &nbsp;&nbsp;'&#125;' \<br/>
+                  &nbsp;&nbsp;--no-buffer
+                </div>
               </div>
             </div>
           </div>
+
           <div style={{ 
             display: 'flex', 
             alignItems: 'flex-start', 
@@ -398,37 +421,23 @@ export const APIKeysContent: React.FC<APIKeysContentProps> = ({ aiWalletData, is
               flexShrink: 0
             }}>2</div>
             <div>
-              <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>Security</div>
+              <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>Get User Info</div>
               <div style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
-                Keep your API key secure. Never share it with others. Revoke immediately if compromised.
-              </div>
-            </div>
-          </div>
-          <div style={{ 
-            display: 'flex', 
-            alignItems: 'flex-start', 
-            gap: '12px',
-            padding: '16px',
-            background: '#f8fafc',
-            borderRadius: '12px'
-          }}>
-            <div style={{
-              width: '24px',
-              height: '24px',
-              background: '#dbeafe',
-              borderRadius: '50%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#3b82f6',
-              fontSize: '12px',
-              fontWeight: 700,
-              flexShrink: 0
-            }}>3</div>
-            <div>
-              <div style={{ fontWeight: 600, color: '#1e293b', marginBottom: '4px' }}>One Key Per Account</div>
-              <div style={{ fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
-                During early access, each account is limited to one API key for enhanced security and monitoring.
+                Verify your setup by retrieving your wallet addresses:
+                <div style={{ 
+                  background: '#1e293b', 
+                  color: '#f8fafc', 
+                  padding: '12px', 
+                  borderRadius: '6px', 
+                  fontFamily: 'monospace', 
+                  fontSize: '13px',
+                  marginTop: '8px',
+                  marginBottom: '8px'
+                }}>
+                  curl -X GET "https://api.kilolend.xyz/user-info" \<br/>
+                  &nbsp;&nbsp;-H "Authorization: Bearer $YOUR_API_KEY"
+                </div>
+                This returns your user address and AI wallet address.
               </div>
             </div>
           </div>
